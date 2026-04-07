@@ -1,7 +1,0 @@
-192.168.65.1()--query--tables(delete from table_user_online where time < 1775534207) (11:06:47 07/04/2026)
-192.168.65.1()--query--tables(delete from table_user_online where time < 1775534399) (11:09:59 07/04/2026)
-192.168.65.1()--query--tables(delete from table_user_online where time < 1775534470) (11:11:10 07/04/2026)
-192.168.65.1()--query--tables(delete from table_user_online where time < 1775534479) (11:11:19 07/04/2026)
-192.168.65.1()--query--tables(delete from table_user_online where time < 1775534493) (11:11:33 07/04/2026)
-192.168.65.1()--query--tables(delete from table_user_online where time < 1775534532) (11:12:12 07/04/2026)
-192.168.65.1()--query--tables(delete from table_user_online where time < 1775534533) (11:12:13 07/04/2026)
