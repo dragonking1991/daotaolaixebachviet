@@ -294,6 +294,18 @@
 
 							$data['type'] = $type;
 							$data['hienthi'] = 1;
+
+							/* Auto-generate QR image for type 'qr' */
+							if($type == 'qr' && $cccd != '')
+							{
+								require_once LIBRARIES.'phpqrcode.php';
+								$qr_content = "TTGDNN BACH VIET\nHo ten: ".$data['tenvi']."\nCCCD: ".$data['cccd']."\nHang GPLX: ".$data['hang']."\nSo tien: ".$data['gia']." VND";
+								$qr_filename = 'qr-'.$data['cccd'].'.png';
+								$qr_filepath = ROOT.'/../upload/product/'.$qr_filename;
+								QRcode::png($qr_content, $qr_filepath, QR_ECLEVEL_H, 10, 4);
+								$data['photo'] = $qr_filename;
+							}
+
 							$proimport = $d->rawQueryOne("select id from #_product where cccd = ? and type = ? limit 0,1",array($cccd,$type));
 
 							if(isset($proimport['id']) && $proimport['id'] > 0)
