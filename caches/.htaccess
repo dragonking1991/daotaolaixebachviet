@@ -1,0 +1,75 @@
+RewriteEngine on
+Options -Indexes
+
+RewriteCond %{HTTP_USER_AGENT} ^(.*)(Bytedance|Bytespider)(.*)$ [NC]
+RewriteRule .* – [F,L]
+RewriteCond %{QUERY_STRING} .*(doc|xlsx|\.txt|ppt|xls|csv|shtml|docx|pptx|xml|jsp|asp).* [NC]
+RewriteRule .* -  [F,L]
+RewriteCond %{REQUEST_URI} /wp- [NC]
+RewriteRule ^ - [F]
+
+RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+DirectoryIndex index.php
+
+RewriteRule ^thumb/([0-9]+)x([0-9]+)/([0-9]+)/(.*)$ timthumb_watermark.php?w=$1&h=$2&zc=$3&q=90&src=http://%{HTTP_HOST}/$4&wm=0&wl=0&wmr=0  [L]
+
+ErrorDocument 404 http://%{HTTP_HOST}/404.php
+
+RewriteRule ^sitemap.xml$ sitemap.php [L]
+RewriteRule ^admin$ admin/index.php [L]
+RewriteRule ^admin/$ admin/index.php [L]
+
+RewriteRule ^&p=([0-9]+)$ index.php?&p=$1  [L]
+
+RewriteRule ^([a-zA-Z0-9_-]+)$ index.php?com=$1  [L]
+RewriteRule ^([a-zA-Z0-9_-]+)&p=([0-9]+)$ index.php?com=$1&p=$2  [L]
+
+RewriteRule ^([a-zA-Z0-9_-]+)/keyword=(.*)$ index.php?com=$1&keyword=$2  [L]
+RewriteRule ^([a-zA-Z0-9_-]+)/keyword=(.*)&p=([0-9]+)$ index.php?com=$1&keyword=$2&p=$3  [L]
+
+
+## EXPIRES CACHING ##
+<IfModule mod_expires.c>
+ExpiresActive on
+ExpiresDefault "access plus 1 month"
+ExpiresByType application/javascript "access plus 1 year"
+ExpiresByType image/x-ico "access plus 1 year"
+ExpiresByType image/jpg "access plus 14 days"
+ExpiresByType image/jpeg "access plus 14 days"
+ExpiresByType image/gif "access plus 14 days"
+ExpiresByType image/png "access plus 14 days"
+ExpiresByType text/css "access plus 14 days"
+ExpiresByType text/html "access 1 month"
+ExpiresByType application/pdf "access 1 month"
+ExpiresByType text/x-javascript "access 1 month"
+ExpiresByType application/x-shockwave-flash "access 1 month"
+</IfModule>
+
+<IfModule mod_deflate.c>
+AddOutputFilterByType DEFLATE text/html
+AddOutputFilterByType DEFLATE text/css
+AddOutputFilterByType DEFLATE text/javascript
+AddOutputFilterByType DEFLATE text/xml
+AddOutputFilterByType DEFLATE text/plain
+AddOutputFilterByType DEFLATE image/x-icon
+AddOutputFilterByType DEFLATE image/svg+xml
+AddOutputFilterByType DEFLATE application/rss+xml
+AddOutputFilterByType DEFLATE application/javascript
+AddOutputFilterByType DEFLATE application/x-javascript
+AddOutputFilterByType DEFLATE application/xml
+AddOutputFilterByType DEFLATE application/xhtml+xml
+AddOutputFilterByType DEFLATE application/x-font
+AddOutputFilterByType DEFLATE application/x-font-truetype
+AddOutputFilterByType DEFLATE application/x-font-ttf
+AddOutputFilterByType DEFLATE application/x-font-otf
+AddOutputFilterByType DEFLATE application/x-font-opentype
+AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+AddOutputFilterByType DEFLATE font/ttf
+AddOutputFilterByType DEFLATE font/otf
+AddOutputFilterByType DEFLATE font/opentype
+BrowserMatch ^Mozilla/4 gzip-only-text/html
+BrowserMatch ^Mozilla/4\.0[678] no-gzip
+BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+</IfModule>
+## EXPIRES CACHING ##

@@ -1,0 +1,115 @@
+@CHARSET "utf-8";
+.pagination ul li.active,
+.pagination ul li.inactive:hover{
+	color:#009cff;
+    cursor: default;
+}
+.pagination ul li.inactive{
+	border: 1px solid #eaeaea; cursor: default;
+}
+.pagination ul li.actived{color:#009cff;background-color:#009cff;}
+.data ul li{
+    list-style: none;
+    font:normal 13px verdana;
+}
+
+.pagination{  width: 100%; float:right; height: 25px; margin-top:15px;position: absolute;bottom: -15px;}
+.pagination ul li{
+    list-style: none;
+    float: left; margin: 0 3px;
+    border: 1px solid #eee;
+    padding: 2px 6px 2px 6px;
+    font: bold 11px arial;
+	color: #000;
+}
+.pagination ul li a{
+	color:#000;
+	text-decoration:none;
+}
+.pagination ul li:hover{
+    background-color:#009cff;
+    cursor: pointer; color: #fff;
+}
+/* paging 2 */
+1{
+	width:1000px;
+	float:left;	
+}
+1 .pagination ul li.active,
+1 .pagination ul li.inactive:hover{
+	color:#009cff;
+    cursor: default;
+}
+1 .pagination ul li.inactive{
+	border: 1px solid #eaeaea; cursor: default;
+}
+1 .pagination ul li.actived{color:#009cff;background-color:#009cff;}
+1 .data ul li{
+    list-style: none;
+    font:normal 13px verdana;
+}
+
+1 .pagination{  width: 300px; float:right; height: 25px; margin-top:15px;}
+1 .pagination ul li{
+    list-style: none;
+    float: left; margin: 0 3px;
+    border: 1px solid #fff;
+	border-radius:10px;
+    padding: 2px 6px 2px 6px;
+    font: bold 11px arial;
+	color: #fff;
+}
+1 .pagination ul li a{
+	color:#fff;
+	text-decoration:none;
+}
+1 .pagination ul li:hover{
+    background-color:#009cff;
+    cursor: pointer; color: #fff;
+}
+/* paging 2 */
+2{
+	width:1000px;
+	float:left;	
+}
+2 .pagination ul li.active,
+2 .pagination ul li.inactive:hover{
+	color:#009cff;
+    cursor: default;
+}
+2 .pagination ul li.inactive{
+	border: 1px solid #eaeaea; cursor: default;
+}
+2 .pagination ul li.actived{color:#009cff;background-color:#009cff;}
+2 .data ul li{
+    list-style: none;
+    font:normal 13px verdana;
+}
+
+2 .pagination{  width: 300px; float:right; height: 25px; margin-top:15px;}
+2 .pagination ul li{
+    list-style: none;
+    float: left; margin: 0 3px;
+    border: 1px solid #fff;
+	border-radius:10px;
+    padding: 2px 6px 2px 6px;
+    font: bold 11px arial;
+	color: #fff;
+}
+2 .pagination ul li a{
+	color:#fff;
+	text-decoration:none;
+}
+2 .pagination ul li:hover{
+    background-color:#009cff;
+    cursor: pointer; color: #fff;
+}
+
+.go_button{
+	background-color:#009cff;
+	border:1px solid #fff;
+	color:#cc0000;padding:2px 6px;
+	cursor:pointer;position:absolute;margin-top:-1px;
+}
+.total{	float:right;font-family:arial;color:#999; text-indent: -9999999999999px;}
+

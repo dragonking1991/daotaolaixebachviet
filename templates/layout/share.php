@@ -1,0 +1,4 @@
+<div class="a2a_kit a2a_kit_size_32 a2a_default_style share" style="height:50px;" data-a2a-title="Share"><a class="a2a_dd" href="<?=$func->getCurrentPageURL()?>"></a><a class="a2a_button_facebook"></a><a class="a2a_button_twitter"></a><a class="a2a_button_facebook_messenger"></a><div class="zalo-share-button" data-href="<?=$func->getCurrentPageURL()?>" data-oaid="<?=($optsetting['oaidzalo']!='')?$optsetting['oaidzalo']:'579745863508352884'?>" data-layout="3" data-color="blue" data-customize=false></div></div><style type="text/css">.a2a_svg{height: 30px !important}</style>
+
+<script src="https://sp.zalo.me/plugins/sdk.js"></script>
+<script async src="https://static.addtoany.com/menu/page.js"></script>
