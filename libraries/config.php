@@ -106,7 +106,11 @@
 	/* Cấu hình base */
 	$http = 'http://';
 
-	$config_url = $config['database']['server-name'].$config['database']['url'];
+	$server_name = $_SERVER["SERVER_NAME"];
+	if (isset($_SERVER["SERVER_PORT"]) && $_SERVER["SERVER_PORT"] != '80' && $_SERVER["SERVER_PORT"] != '443') {
+		$server_name .= ':'.$_SERVER["SERVER_PORT"];
+	}
+	$config_url = $server_name.$config['database']['url'];
 	$config_base = $http.$config_url;
 
 	/* Cấu hình login */
