@@ -29,6 +29,9 @@
 		}
 	}
 
+	/* Lấy danh sách kỳ sát hạch */
+	$items_kysathach = $d->rawQuery("select * from #_kysathach where hienthi = 1 order by ngay_sathach desc, id desc");
+
 	/* breadCrumbs */
 	if(isset($title_crumb) && $title_crumb != '') $breadcr->setBreadCrumbs($com,$title_crumb);
 	$breadcrumbs = $breadcr->getBreadCrumbs();

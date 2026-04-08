@@ -368,7 +368,45 @@
                         </li>
                     <?php } } ?>
                 <?php } ?>
-
+<!-- Quản lý Kỳ Sát Hạch -->
+                <?php
+                    $active_ky = "";
+                    $menuopen_ky = "";
+                    if($com=='kysathach')
+                    {
+                        $active_ky = 'active';
+                        $menuopen_ky = 'menu-open';
+                    }
+                ?>
+                <li class="nav-item has-treeview <?=$menuopen_ky?>">
+                    <a class="nav-link <?=$active_ky?>" href="#" title="Quản lý Kỳ Sát Hạch">
+                        <i class="nav-icon text-sm fas fa-clipboard-list"></i>
+                        <p>
+                            QL Kỳ Sát Hạch
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <?php
+                            $active_ky_man = "";
+                            if($com=='kysathach' && ($act=='man' || $act=='add' || $act=='edit')) $active_ky_man = "active";
+                        ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?=$active_ky_man?>" href="index.php?com=kysathach&act=man" title="Danh sách kỳ sát hạch">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Danh sách</p>
+                            </a>
+                        </li>
+                        <?php
+                            $active_ky_upload = "";
+                            if($com=='kysathach' && ($act=='upload' || $act=='uploadExcel')) $active_ky_upload = "active";
+                        ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?=$active_ky_upload?>" href="index.php?com=kysathach&act=upload" title="Upload QR Excel">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Upload QR</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 <!-- Bài viết (Có cấp) -->
                 <?php if(isset($config['news'])) { ?>
                     <?php foreach($config['news'] as $k => $v) { if(!isset($disabled['news'][$k])) { if(!empty($v['dropdown'])) { ?>
@@ -383,6 +421,7 @@
                                 $menuopen = 'menu-open';
                             }
                         ?>
+                        
                         <li class="nav-item has-treeview <?=$menuopen?> <?=$none?>">
                             <a class="nav-link <?=$active?>" href="#" title="Quản lý <?=$v['title_main']?>">
                                 <i class="nav-icon text-sm fas fa-book"></i>
@@ -468,6 +507,7 @@
                         </ul>
                     </li>
                 <?php } ?>
+
 
                 <!-- Cart -->
                 <?php if(isset($config['order']['active']) && $config['order']['active'] == true) { ?>

@@ -298,11 +298,12 @@
 							/* Auto-generate QR image for type 'qr' */
 							if($type == 'qr' && $cccd != '')
 							{
-								require_once LIBRARIES.'phpqrcode.php';
+								require_once LIBRARIES.'qr_helper.php';
 								$qr_content = "TTGDNN BACH VIET\nHo ten: ".$data['tenvi']."\nCCCD: ".$data['cccd']."\nHang GPLX: ".$data['hang']."\nSo tien: ".$data['gia']." VND";
 								$qr_filename = 'qr-'.$data['cccd'].'.png';
 								$qr_filepath = ROOT.'/../upload/product/'.$qr_filename;
-								QRcode::png($qr_content, $qr_filepath, QR_ECLEVEL_H, 10, 4);
+								$logo_path = ROOT.'/../assets/images/logo-vietcombank.png';
+								generateQRWithLogo($qr_content, $qr_filepath, $logo_path);
 								$data['photo'] = $qr_filename;
 							}
 

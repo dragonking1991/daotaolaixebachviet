@@ -23,12 +23,19 @@ NN_FRAMEWORK.BackToTop = function(){
     $('body').on("click",".frm_tracuu ul li",function() {
         $(".frm_tracuu ul li").removeClass('active');
         $(this).addClass('active');
+        var type = $(this).data('type');
+        if(type == 'qr') {
+            $('.frm_kysathach').show();
+        } else {
+            $('.frm_kysathach').hide();
+        }
         return false; 
     });
 
     $('body').on("click",".c_tracuu",function() {
-        var cccd = $('.cccd').val();
+        var cccd = $('#input_cccd').val();
         var type = $('.frm_tracuu ul li.active').data('type');
+        var id_kysathach = '';
         if(cccd=='') {
             alert('Vui lòng nhập số CCCD');
             return false; 
@@ -37,6 +44,13 @@ NN_FRAMEWORK.BackToTop = function(){
             alert("CCCD phải từ 11 đến 12 ký tự!");
             return false; 
         }
+        if(type == 'qr') {
+            id_kysathach = $('#id_kysathach').val();
+            if(!id_kysathach) {
+                alert('Vui lòng chọn kỳ sát hạch');
+                return false;
+            }
+        }
         if(cccd)
         {             
             $.ajax({
@@ -44,7 +58,7 @@ NN_FRAMEWORK.BackToTop = function(){
                 type: "POST",
                 dataType: 'html',
                 async: false,
-                data: {cccd:cccd,type:type},
+                data: {cccd:cccd,type:type,id_kysathach:id_kysathach},
                 success: function(result){
                     $(".ketqua").html(result);
                     $.fancybox.open($('.ketqua'));
