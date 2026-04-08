@@ -3,7 +3,7 @@ FROM php:7.4-apache
 # Enable Apache modules
 RUN a2enmod rewrite headers expires deflate
 
-# Install PHP extensions needed by the project
+# Install PHP extensions + MariaDB server in one layer
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg62-turbo-dev \
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libcurl4-openssl-dev \
     unzip \
+    mariadb-server \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo \
@@ -42,10 +43,20 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html/
 
-# Railway uses $PORT env var; configure Apache to listen on it
+# Configure Apache: listen on port 8080 (Fly.io internal)
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
-RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+
+# Initialize MariaDB data directory
+RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld \
+    && mysql_install_db --user=mysql --datadir=/var/lib/mysql 2>/dev/null
+
+# Make startup script executable
+RUN chmod +x /var/www/html/start.sh
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/upload
+
+EXPOSE 8080
+CMD ["/var/www/html/start.sh"]

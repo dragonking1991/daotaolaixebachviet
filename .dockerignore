@@ -1,0 +1,16 @@
+.git
+docker-compose.yml
+README-ADMIN.md
+README-FRONTEND.md
+logs/
+caches/
+thumbs/
+.gitignore
+fly.toml
+watermark/
+assets/coming/
+assets/fotorama/
+assets/magiczoomplus/
+assets/simplyscroll/
+assets/sliderengine/
+assets/photobox/
