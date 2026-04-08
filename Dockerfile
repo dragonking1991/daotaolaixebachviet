@@ -42,18 +42,19 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
-COPY . /var/www/html/
-
 # Configure Apache ServerName
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 
-# Initialize MariaDB data directory
+# Initialize MariaDB data directory (before COPY to cache this layer)
 RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld \
     && mysql_install_db --user=mysql --datadir=/var/lib/mysql 2>/dev/null
 
-# Make startup script executable
+# Copy startup script first (rarely changes)
+COPY start.sh /var/www/html/start.sh
 RUN chmod +x /var/www/html/start.sh
+
+# Copy application files
+COPY . /var/www/html/
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
