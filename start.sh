@@ -7,18 +7,28 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
   mysql_install_db --user=mysql --datadir=/var/lib/mysql
 fi
 
-# Ensure socket directory exists
+# Ensure socket/run directory exists
 mkdir -p /run/mysqld
 chown mysql:mysql /run/mysqld
 
-# Start MariaDB
-mysqld_safe &
+# Clean stale PID/socket files from previous crash or stop
+rm -f /run/mysqld/mysqld.pid /run/mysqld/mysqld.sock
+
+# Ensure correct ownership on data dir
+chown -R mysql:mysql /var/lib/mysql
+
+# Start MariaDB directly (not via mysqld_safe to avoid PID issues)
+mysqld --user=mysql --datadir=/var/lib/mysql --socket=/run/mysqld/mysqld.sock --pid-file=/run/mysqld/mysqld.pid &
 
 # Wait for MySQL to be ready (up to 60 seconds)
 for i in $(seq 1 60); do
   if mysqladmin ping -h localhost --silent 2>/dev/null; then
     echo "MariaDB is ready."
     break
+  fi
+  if [ "$i" -eq 60 ]; then
+    echo "ERROR: MariaDB failed to start in 60s"
+    exit 1
   fi
   echo "Waiting for MariaDB... ($i)"
   sleep 1
