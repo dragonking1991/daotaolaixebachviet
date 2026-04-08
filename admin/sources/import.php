@@ -299,7 +299,11 @@
 							if($type == 'qr' && $cccd != '')
 							{
 								require_once LIBRARIES.'qr_helper.php';
-								$qr_content = "TTGDNN BACH VIET\nHo ten: ".$data['tenvi']."\nCCCD: ".$data['cccd']."\nHang GPLX: ".$data['hang']."\nSo tien: ".$data['gia']." VND";
+								$nameNoAccent = strtoupper(removeVietnameseDiacritics($data['tenvi']));
+								$nameNoSpace = str_replace(' ', '', $nameNoAccent);
+								$dateSuffix = date('Ymd');
+								$transferMsg = $nameNoSpace . ' ' . $data['cccd'] . ' ' . $dateSuffix;
+								$qr_content = buildVietQRPayload(VIETQR_ACCOUNT_NO, VIETQR_BANK_BIN, (int)$data['gia'], $transferMsg);
 								$qr_filename = 'qr-'.$data['cccd'].'.png';
 								$qr_filepath = ROOT.'/../upload/product/'.$qr_filename;
 								$logo_path = ROOT.'/../assets/images/logo-vietcombank.png';

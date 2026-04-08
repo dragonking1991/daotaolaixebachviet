@@ -212,7 +212,13 @@ function uploadExcel_kysathach()
 		// Generate QR
 		$setting = $d->rawQueryOne("select * from #_setting limit 0,1");
 		$company = isset($setting['tenvi']) ? $setting['tenvi'] : '';
-		$qr_content = $company . "\n" . $hoTen . "\n" . $cccd . "\n" . $hang . "\n" . number_format((float)$soTien, 0, ',', '.');
+
+		// Build VietQR bank transfer payload
+		$nameNoAccent = strtoupper(removeVietnameseDiacritics($hoTen));
+		$nameNoSpace = str_replace(' ', '', $nameNoAccent);
+		$dateSuffix = date('Ymd', strtotime($ky['ngay_sathach']));
+		$transferMsg = $nameNoSpace . ' ' . $cccd . ' ' . $dateSuffix;
+		$qr_content = buildVietQRPayload(VIETQR_ACCOUNT_NO, VIETQR_BANK_BIN, (int)$soTien, $transferMsg);
 		$qr_filename = 'qr-' . $cccd . '.png';
 		$qr_path = ROOT . '/../upload/product/' . $qr_filename;
 		generateQRWithLogo($qr_content, $qr_path, $logo_path);
