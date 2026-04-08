@@ -4,6 +4,7 @@ services:
     name: bachviet-daotao
     region: singapore
     plan: free
+    healthCheckPath: /robots.txt
     envVars:
       - key: PORT
         value: "10000"
