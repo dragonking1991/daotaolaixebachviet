@@ -39,5 +39,13 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
 # Set working directory
 WORKDIR /var/www/html
 
+# Copy application files
+COPY . /var/www/html/
+
+# Railway uses $PORT env var; configure Apache to listen on it
+RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/upload
