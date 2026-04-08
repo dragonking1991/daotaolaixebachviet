@@ -1,6 +1,4 @@
 <?php
-    ini_set('display_errors', 1);
-    error_reporting(E_ALL);
     session_start();
     require_once "libraries/wejnswpwhitespacefix.php";
     define('LIBRARIES','./libraries/');
@@ -14,11 +12,7 @@
     require_once LIBRARIES.'autoload.php';
     new AutoLoad();
     $injection = new AntiSQLInjection();
-    try {
-        $d = new PDODb($config['database']);
-    } catch (Exception $e) {
-        die("DB Error: " . $e->getMessage());
-    }
+    $d = new PDODb($config['database']);
     $seo = new Seo($d);
     $emailer = new Email($d);
     $router = new AltoRouter();

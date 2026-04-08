@@ -36,7 +36,6 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "date.timezone = Asia/Ho_Chi_Minh" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "display_errors = On" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "pdo_mysql.default_socket = /run/mysqld/mysqld.sock" >> /usr/local/etc/php/conf.d/uploads.ini
 
 # Set working directory
@@ -49,15 +48,12 @@ RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld \
     && mysql_install_db --user=mysql --datadir=/var/lib/mysql 2>/dev/null
 
-# Copy startup script first (rarely changes)
-COPY start.sh /var/www/html/start.sh
-RUN chmod +x /var/www/html/start.sh
-
 # Copy application files
 COPY . /var/www/html/
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html \
+RUN chmod +x /var/www/html/start.sh \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/upload
 
 ENV PORT=10000

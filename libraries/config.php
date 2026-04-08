@@ -25,7 +25,7 @@
 			'server-name' => $_SERVER["SERVER_NAME"],
 			'url' => '/',
 			'type' => 'mysql',
-			'host' => getenv('MYSQLHOST') ?: '127.0.0.1',
+			'host' => getenv('MYSQLHOST') ?: 'localhost',
 			'username' => getenv('MYSQLUSER') ?: 'daotaola6686_db',
 			'password' => getenv('MYSQLPASSWORD') ?: 'localpass123',
 			'dbname' => getenv('MYSQLDATABASE') ?: 'daotaola6686_db',
