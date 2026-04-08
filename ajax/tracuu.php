@@ -62,13 +62,11 @@
 			<div style="text-align:center; padding:10px 0;">
 				<p style="margin:0 0 4px 0; font-size:16px; font-weight:700; color:#1a1a2e;">Thanh toán qua mã QR</p>
 				<p style="margin:0 0 12px 0; font-size:12px; color:#888;">Kiểm tra kỹ thông tin trước khi chuyển khoản</p>
-				<?php if($tracuu['photo']!='') { ?>
-					<div style="background:linear-gradient(135deg,#f5f7fa 0%,#e8ecf1 100%); border-radius:12px; padding:16px; display:inline-block;">
-						<p style="margin:0 0 2px 0; font-size:13px; color:#666; font-weight:600;"><?=strtoupper($tracuu['ten'])?></p>
-						<p style="margin:0 0 10px 0; font-size:12px; color:#888;">CCCD: <?=$tracuu['cccd']?></p>
-						<img src="<?=UPLOAD_PRODUCT_L.$tracuu['photo']?>" alt="<?=$tracuu['ten']?>" style="max-width:250px; width:100%;">
-					</div>
-				<?php } ?>
+				<div style="background:linear-gradient(135deg,#f5f7fa 0%,#e8ecf1 100%); border-radius:12px; padding:16px; display:inline-block;">
+					<p style="margin:0 0 2px 0; font-size:13px; color:#666; font-weight:600;"><?=strtoupper($tracuu['ten'])?></p>
+					<p style="margin:0 0 10px 0; font-size:12px; color:#888;">CCCD: <?=$tracuu['cccd']?></p>
+					<img src="ajax/qr_image.php?id=<?=$tracuu['id']?>&v=<?=time()?>" alt="<?=$tracuu['ten']?>" style="max-width:250px; width:100%;" loading="lazy">
+				</div>
 			</div>
 
 			<div style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:14px 16px; margin-top:16px; font-size:13px; color:#333; line-height:1.6;">
