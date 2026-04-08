@@ -14,7 +14,11 @@
     require_once LIBRARIES.'autoload.php';
     new AutoLoad();
     $injection = new AntiSQLInjection();
-    $d = new PDODb($config['database']);
+    try {
+        $d = new PDODb($config['database']);
+    } catch (Exception $e) {
+        die("DB Error: " . $e->getMessage());
+    }
     $seo = new Seo($d);
     $emailer = new Email($d);
     $router = new AltoRouter();
