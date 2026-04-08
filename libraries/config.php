@@ -104,17 +104,21 @@
 	error_reporting(($config['website']['error-reporting']) ? E_ALL : 0);
 
 	/* Cấu hình base */
-	$http = 'http://';
+	/* Detect reverse proxy (Fly.io, Render, etc.) */
 	if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-		$http = 'https://';
+		$_SERVER['HTTPS'] = 'on';
 	}
+	if (!empty($_SERVER['HTTP_FLY_FORWARDED_PROTO']) && $_SERVER['HTTP_FLY_FORWARDED_PROTO'] === 'https') {
+		$_SERVER['HTTPS'] = 'on';
+	}
+	$http = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
 
 	$server_name = $_SERVER["SERVER_NAME"];
 	$external_port = $_SERVER["SERVER_PORT"] ?? '80';
 	if (!empty($_SERVER['HTTP_X_FORWARDED_PORT'])) {
 		$external_port = $_SERVER['HTTP_X_FORWARDED_PORT'];
-	} elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
-		$external_port = ($_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? '443' : '80';
+	} elseif (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+		$external_port = '443';
 	}
 	if ($external_port != '80' && $external_port != '443') {
 		$server_name .= ':'.$external_port;
