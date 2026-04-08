@@ -1,7 +1,13 @@
 #!/bin/bash
 set -e
 
-# Initialize MariaDB data directory if empty (Fly.io volume mount replaces build-time data)
+# Configure Apache to listen on $PORT (set by Render/Fly/Railway)
+PORT=${PORT:-10000}
+echo "Listen ${PORT}" > /etc/apache2/ports.conf
+sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf
+echo "Starting on port ${PORT}"
+
+# Initialize MariaDB data directory if empty
 if [ ! -d "/var/lib/mysql/mysql" ]; then
   echo "Initializing MariaDB data directory..."
   mysql_install_db --user=mysql --datadir=/var/lib/mysql

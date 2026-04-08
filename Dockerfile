@@ -43,9 +43,8 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html/
 
-# Configure Apache: listen on port 8080 (Fly.io internal)
+# Configure Apache ServerName
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
-RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 # Initialize MariaDB data directory
 RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld \
@@ -58,5 +57,6 @@ RUN chmod +x /var/www/html/start.sh
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/upload
 
-EXPOSE 8080
+ENV PORT=10000
+EXPOSE 10000
 CMD ["/var/www/html/start.sh"]
