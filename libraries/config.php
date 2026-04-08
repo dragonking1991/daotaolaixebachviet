@@ -20,7 +20,7 @@
 			'email' => '',
 			'timefinish' => ''
 		),
-		'arrayDomainSSL' => array(),
+		'arrayDomainSSL' => array('bachviet-daotao.fly.dev', 'bachviet-daotao.onrender.com'),
 		'database' => array(
 			'server-name' => $_SERVER["SERVER_NAME"],
 			'url' => '/',
@@ -112,10 +112,6 @@
 		$_SERVER['HTTPS'] = 'on';
 	}
 	$http = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
-	// DEBUG: remove after fix
-	if (isset($_GET['dbg_proto'])) {
-		die("XFP=" . ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? 'unset') . " HTTPS=" . ($_SERVER['HTTPS'] ?? 'unset') . " http=$http");
-	}
 
 	$server_name = $_SERVER["SERVER_NAME"];
 	$external_port = $_SERVER["SERVER_PORT"] ?? '80';
