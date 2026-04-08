@@ -13,4 +13,4 @@ CREATE TABLE IF NOT EXISTS table_kysathach (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Add id_kysathach to product table for linking QR records to kỳ sát hạch
--- ALTER TABLE table_product ADD COLUMN id_kysathach INT DEFAULT 0;
+ALTER TABLE table_product ADD COLUMN IF NOT EXISTS id_kysathach INT DEFAULT 0;
