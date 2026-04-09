@@ -1367,6 +1367,9 @@ div.dmsp ul li:hover ul{
 	width:100%;
 	max-width: 500px;
 }
+.ketqua.fancybox-content{
+	padding: 34px;
+}
 .ketqua ul{
 	list-style:none;
 }

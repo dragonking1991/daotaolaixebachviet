@@ -13,6 +13,11 @@ services:
         condition: service_healthy
     environment:
       - APACHE_DOCUMENT_ROOT=/var/www/html
+      - MYSQLHOST=db
+      - MYSQLPORT=3306
+      - MYSQLDATABASE=daotaola6686_db
+      - MYSQLUSER=daotaola6686_db
+      - MYSQLPASSWORD=localpass123
 
   db:
     image: mysql:8.0

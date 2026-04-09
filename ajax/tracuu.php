@@ -23,21 +23,28 @@
 	// Get kỳ sát hạch info and company name for QR display
 	$ky_info = null;
 	$company_name = '';
+	$company_logo = '';
 	if(!empty($tracuu) && $type == 'qr') {
 		if($tracuu['id_kysathach'] > 0) {
 			$ky_info = $d->rawQueryOne("select * from #_kysathach where id = ? limit 0,1", array($tracuu['id_kysathach']));
 		}
 		$setting = $d->rawQueryOne("select tenvi from #_setting limit 0,1");
 		$company_name = isset($setting['tenvi']) ? $setting['tenvi'] : '';
+		$logo = $d->rawQueryOne("select photo from #_photo where type = ? and act = ? and hienthi > 0 limit 0,1", array('logo', 'photo_static'));
+		$company_logo = (!empty($logo['photo'])) ? 'upload/photo/'.$logo['photo'] : '';
 	}
 ?>
 
 <?php if(!empty($tracuu)) { ?>
 	<?php if($type=='qr') { ?>
-		<div style="max-width:420px; margin:0 auto; font-family:Arial,sans-serif;">
-			<div style="background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%); border-radius:16px; padding:24px; margin-bottom:16px;">
-				<h2 style="margin:0 0 6px 0; font-size:22px; color:#1a1a2e;">Kết quả tra cứu thí sinh</h2>
-				<p style="margin:0; color:#1a6fbf; font-size:13px; font-weight:600;">@ <?=strtoupper($company_name)?></p>
+		<div style="max-width:420px; margin:0 auto; font-family:Arial,sans-serif; border:1px solid #e8eeff; border-radius:16px; padding:10px;">
+			<div style="background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%); border-radius:12px; padding:24px; margin-bottom:16px;">
+				<?php if($company_logo != '') { ?>
+					<div style="text-align:center; margin:0 auto; width: 90px;">
+						<img src="<?=$company_logo?>" alt="<?=$company_name?>">
+					</div>
+				<?php } ?>
+				<h2 style="margin:0 0 6px 0; font-size:20px; color:#1a1a2e; text-align:center;">Kết quả tra cứu thí sinh</h2>
 
 				<div style="background:#fff; border-radius:12px; padding:20px; margin-top:16px; display:flex; flex-wrap:wrap; gap:4px;">
 					<div style="flex:1; min-width:50%;">
