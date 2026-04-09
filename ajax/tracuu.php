@@ -37,7 +37,7 @@
 
 <?php if(!empty($tracuu)) { ?>
 	<?php if($type=='qr') { ?>
-		<div style="max-width:420px; margin:0 auto; font-family:Arial,sans-serif; border:1px solid #e8eeff; border-radius:16px; padding:10px;">
+		<div style="max-width:420px; margin:0 auto; font-family:Arial,sans-serif; border:1px solid #108824; border-radius:16px; padding:10px;">
 			<div style="background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%); border-radius:12px; padding:24px; margin-bottom:16px;">
 				<?php if($company_logo != '') { ?>
 					<div style="text-align:center; margin:0 auto; width: 90px;">
