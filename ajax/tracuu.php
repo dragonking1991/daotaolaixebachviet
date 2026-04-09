@@ -37,46 +37,47 @@
 
 <?php if(!empty($tracuu)) { ?>
 	<?php if($type=='qr') { ?>
-		<div style="max-width:420px; margin:0 auto; font-family:Arial,sans-serif; border:1px solid #108824; border-radius:16px; padding:10px;">
-			<div style="background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%); border-radius:12px; padding:24px; margin-bottom:16px;">
+			<div style="max-width:420px; margin:0 auto; font-family:Arial,sans-serif; border:1px solid #108824; border-radius:16px; padding:5px;">
+			<div style="background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%); border-radius:12px; padding:12px; margin-bottom:8px;">
 				<?php if($company_logo != '') { ?>
-					<div style="text-align:center; margin:0 auto; width: 90px;">
+					<div style="text-align:center; margin:0 auto; width: 60px;">
 						<img src="<?=$company_logo?>" alt="<?=$company_name?>">
 					</div>
 				<?php } ?>
-				<h2 style="margin:0 0 6px 0; font-size:20px; color:#1a1a2e; text-align:center;">Kết quả tra cứu thí sinh</h2>
+				<h2 style="margin:0 0 3px 0; font-size:16px; color:#1a1a2e; text-align:center;">Kết quả tra cứu thí sinh</h2>
 
-				<div style="background:#fff; border-radius:12px; padding:20px; margin-top:16px; display:flex; flex-wrap:wrap; gap:4px;">
-					<div style="flex:1; min-width:50%;">
-						<p style="margin:0 0 4px 0; font-size:12px; color:#888;">Họ và tên</p>
-						<p style="margin:0; font-size:16px; font-weight:700; color:#1a1a2e;"><?=strtoupper($tracuu['ten'])?></p>
+				<div style="background:#fff; border-radius:12px; padding:10px; margin-top:8px; display:flex; flex-wrap:wrap; gap:2px;">
+					<div style="flex:1; min-width:40%;">
+						<p style="margin:0 0 2px 0; font-size:11px; color:#888;">Họ và tên</p>
+						<p style="margin:0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=strtoupper($tracuu['ten'])?></p>
 					</div>
 					<div style="flex:1; min-width:40%;">
-						<p style="margin:0 0 4px 0; font-size:12px; color:#888;">Ngày sinh</p>
-						<p style="margin:0; font-size:16px; font-weight:700; color:#1a1a2e;"><?=$tracuu['ngaysinh']?></p>
+						<p style="margin:0 0 2px 0; font-size:11px; color:#888;">Ngày sinh</p>
+						<p style="margin:0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=$tracuu['ngaysinh']?></p>
 					</div>
-					<div style="flex:1; min-width:50%; margin-top:16px;">
-						<p style="margin:0 0 4px 0; font-size:12px; color:#888;">Kỳ sát hạch</p>
-						<p style="margin:0; font-size:16px; font-weight:700; color:#1a1a2e;"><?=($ky_info ? date('d-m-Y', strtotime($ky_info['ngay_sathach'])) : '---')?></p>
+					<div style="flex:1; min-width:40%; margin-top:8px;">
+						<p style="margin:0 0 2px 0; font-size:11px; color:#888;">Kỳ sát hạch</p>
+						<p style="margin:0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=($ky_info ? date('d-m-Y', strtotime($ky_info['ngay_sathach'])) : '---')?></p>
 					</div>
-					<div style="flex:1; min-width:40%; margin-top:16px;">
-						<p style="margin:0 0 4px 0; font-size:12px; color:#888;">Hạng GPLX</p>
-						<p style="margin:0; font-size:16px; font-weight:700; color:#1a1a2e;"><?=$tracuu['hang']?></p>
+					<div style="flex:1; min-width:40%; margin-top:8px;">
+						<p style="margin:0 0 2px 0; font-size:11px; color:#888;">Hạng GPLX</p>
+						<p style="margin:0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=$tracuu['hang']?></p>
 					</div>
 				</div>
 			</div>
 
-			<div style="text-align:center; padding:10px 0;">
-				<p style="margin:0 0 4px 0; font-size:16px; font-weight:700; color:#1a1a2e;">Thanh toán qua mã QR</p>
-				<p style="margin:0 0 12px 0; font-size:12px; color:#888;">Kiểm tra kỹ thông tin trước khi chuyển khoản</p>
-				<div style="background:linear-gradient(135deg,#f5f7fa 0%,#e8ecf1 100%); border-radius:12px; padding:16px; display:inline-block;">
-					<p style="margin:0 0 2px 0; font-size:13px; color:#666; font-weight:600;"><?=strtoupper($tracuu['ten'])?></p>
-					<p style="margin:0 0 10px 0; font-size:12px; color:#888;">CCCD: <?=$tracuu['cccd']?></p>
-					<img src="ajax/qr_image.php?id=<?=$tracuu['id']?>&v=<?=time()?>" alt="<?=$tracuu['ten']?>" style="max-width:250px; width:100%;" loading="lazy">
+			<div style="text-align:center; padding:5px 0;">
+				<p style="margin:0 0 2px 0; font-size:14px; font-weight:700; color:#1a1a2e;">Thanh toán qua mã QR</p>
+				<p style="margin:0 0 6px 0; font-size:11px; color:#888;">Kiểm tra kỹ thông tin trước khi chuyển khoản</p>
+				<div style="background:linear-gradient(135deg,#f5f7fa 0%,#e8ecf1 100%); border-radius:12px; padding:8px; display:inline-block;">
+					<p style="margin:0 0 6px 0; font-size:11px; color:#888;">CCCD: <?=$tracuu['cccd']?></p>
+					<div style="max-width:90px; width:100%; margin:0 auto; display:block;">
+						<img src="ajax/qr_image.php?id=<?=$tracuu['id']?>&v=<?=time()?>" alt="<?=$tracuu['ten']?>"  loading="lazy">
+					</div>
 				</div>
 			</div>
 
-			<div style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:14px 16px; margin-top:16px; font-size:13px; color:#333; line-height:1.6;">
+			<div style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:12px; color:#333; line-height:1.4;">
 				<span style="color:#e65100;">⚠</span> Học viên sử dụng <b><i>ứng dụng ngân hàng (Mobile Banking)</i></b> để thanh toán. <b>Không sử dụng</b> ví điện tử (Momo, Viettel Money, ZaloPay...) để tránh lỗi xử lý giao dịch.
 			</div>
 		</div>
