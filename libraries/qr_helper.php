@@ -4,7 +4,7 @@
  * Change these values to match your receiving bank account
  */
 define('VIETQR_BANK_BIN', '970436');           // Vietcombank
-define('VIETQR_ACCOUNT_NO', 'IZPVEI60921BFG4RDY0'); // Account number
+define('VIETQR_ACCOUNT_NO', 'IZPVEI61026P6RUNK40'); // Account number
 
 /**
  * Build VietQR EMVCo payload for bank transfer
