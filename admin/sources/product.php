@@ -63,6 +63,9 @@
 		case "delete":
 			delete_item();
 			break;
+		case "deleteAllData":
+			deleteAllData_product();
+			break;
 
 		/* Size */
 		case "man_size":
@@ -518,6 +521,37 @@
 			$func->transfer("Xóa dữ liệu thành công", "index.php?com=product&act=man&type=".$type."&p=".$curPage.$strUrl);
 		} 
 		else $func->transfer("Không nhận được dữ liệu", "index.php?com=product&act=man&type=".$type."&p=".$curPage.$strUrl, false);
+	}
+
+	/* Delete all data */
+	function deleteAllData_product()
+	{
+		global $d, $strUrl, $func, $curPage, $com, $type;
+
+		$count = $d->rawQueryOne("select count(*) as num from #_product where type = ?", array($type));
+		$total = $count['num'];
+
+		// Delete photos
+		$items = $d->rawQuery("select id, photo from #_product where type = ? and photo != ''", array($type));
+		foreach($items as $item)
+		{
+			$func->delete_file(UPLOAD_PRODUCT.$item['photo']);
+		}
+
+		// Delete gallery
+		$galleries = $d->rawQuery("select id, photo, taptin from #_gallery where kind = ? and com = ?", array('man', $com));
+		foreach($galleries as $gal)
+		{
+			$func->delete_file(UPLOAD_PRODUCT.$gal['photo']);
+			$func->delete_file(UPLOAD_FILE.$gal['taptin']);
+		}
+
+		// Delete records
+		$d->rawQuery("delete from #_gallery where kind = ? and com = ?", array('man', $com));
+		$d->rawQuery("delete from #_seo where com = ? and act = ? and type = ?", array($com, 'man', $type));
+		$d->rawQuery("delete from #_product where type = ?", array($type));
+
+		$func->transfer("Đã xóa toàn bộ $total bản ghi", "index.php?com=product&act=man&type=".$type."&p=".$curPage.$strUrl);
 	}
 
 	/* Get size */
