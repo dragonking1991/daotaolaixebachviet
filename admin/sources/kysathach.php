@@ -179,7 +179,6 @@ function uploadExcel_kysathach()
 	else
 		$objReader = PHPExcel_IOFactory::createReader('Excel5');
 
-	$objReader->setReadDataOnly(true);
 	$objPHPExcel = $objReader->load($inputFileName);
 	$sheet = $objPHPExcel->getSheet(0);
 	$highestRow = $sheet->getHighestRow();
@@ -188,11 +187,37 @@ function uploadExcel_kysathach()
 	$ky = $d->rawQueryOne("select * from #_kysathach where id = ? limit 0,1", array($id_kysathach));
 	$type = 'qr';
 
-	// Include QR library
-	require_once LIBRARIES.'qr_helper.php';
-	$logo_path = ROOT.'/../assets/images/logo-vietcombank.png';
+	// Build row → QR image map from Excel column G drawings
+	$qrImageMap = array();
+	foreach($sheet->getDrawingCollection() as $drawing)
+	{
+		$coords = $drawing->getCoordinates();
+		if(!preg_match('/^([A-Z]+)(\d+)$/', $coords, $matches)) continue;
+		if($matches[1] !== 'G') continue;
+		$drawingRow = (int)$matches[2];
+
+		$imgData = null;
+		if($drawing instanceof PHPExcel_Worksheet_MemoryDrawing)
+		{
+			ob_start();
+			call_user_func($drawing->getRenderingFunction(), $drawing->getImageResource());
+			$imgData = ob_get_clean();
+		}
+		elseif($drawing instanceof PHPExcel_Worksheet_Drawing)
+		{
+			$path = $drawing->getPath();
+			if(!empty($path))
+			{
+				$imgData = @file_get_contents($path);
+				if($imgData === false) $imgData = null;
+			}
+		}
+
+		if(!empty($imgData)) $qrImageMap[$drawingRow] = $imgData;
+	}
 
 	$imported = 0;
+	$skippedQrRows = array();
 	for($row = 2; $row <= $highestRow; $row++)
 	{
 		$stt      = trim($sheet->getCell('A'.$row)->getValue());
@@ -201,6 +226,11 @@ function uploadExcel_kysathach()
 		$cccd     = trim($sheet->getCell('D'.$row)->getValue());
 		$hang     = trim($sheet->getCell('E'.$row)->getValue());
 		$soTien   = trim($sheet->getCell('F'.$row)->getValue());
+		$qrImageData = null;
+		for($r = $row; $r <= $row + 6; $r++)
+		{
+			if(isset($qrImageMap[$r])) { $qrImageData = $qrImageMap[$r]; break; }
+		}
 
 		if(empty($hoTen) || empty($cccd)) continue;
 
@@ -209,19 +239,17 @@ function uploadExcel_kysathach()
 		// Check if record exists
 		$existing = $d->rawQueryOne("select id from #_product where cccd = ? and type = ? limit 0,1", array($cccd, $type));
 
-		// Generate QR
-		$setting = $d->rawQueryOne("select * from #_setting limit 0,1");
-		$company = isset($setting['tenvi']) ? $setting['tenvi'] : '';
-
-		// Build VietQR bank transfer payload
-		$nameNoAccent = strtoupper(removeVietnameseDiacritics($hoTen));
-		$nameNoSpace = str_replace(' ', '', $nameNoAccent);
-		$dateSuffix = date('Ymd', strtotime($ky['ngay_sathach']));
-		$transferMsg = $nameNoSpace . ' ' . $cccd . ' ' . $dateSuffix;
-		$qr_content = buildVietQRPayload(VIETQR_ACCOUNT_NO, VIETQR_BANK_BIN, (int)$soTien, $transferMsg);
-		$qr_filename = 'qr-' . $cccd . '.png';
-		$qr_path = ROOT . '/../upload/product/' . $qr_filename;
-		generateQRWithLogo($qr_content, $qr_path, $logo_path);
+		$qr_filename = '';
+		if($qrImageData !== null)
+		{
+			$qr_filename = 'qr-' . $cccd . '.png';
+			$qr_path = ROOT . '/../upload/product/' . $qr_filename;
+			file_put_contents($qr_path, $qrImageData);
+		}
+		else
+		{
+			$skippedQrRows[] = $row;
+		}
 
 		$data = array(
 			'tenvi'          => $hoTen,
@@ -235,7 +263,6 @@ function uploadExcel_kysathach()
 			'hienthi'        => 1,
 			'id_kysathach'   => $id_kysathach
 		);
-
 		if($existing && $existing['id'])
 		{
 			$d->where('id', $existing['id']);
@@ -250,7 +277,11 @@ function uploadExcel_kysathach()
 		$imported++;
 	}
 
-	$func->transfer("Import thành công $imported bản ghi cho kỳ sát hạch: " . $ky['ten_viettat'] . " - " . $ky['loai_sathach'], "index.php?com=kysathach&act=upload");
+	$message = "Import thành công $imported bản ghi cho kỳ sát hạch: " . $ky['ten_viettat'] . " - " . $ky['loai_sathach'];
+	if(count($skippedQrRows) > 0) {
+		$message .= "<br>Cảnh báo: Bỏ qua lưu QR tại các dòng không có ảnh QR: ".implode(', ', $skippedQrRows);
+	}
+	$func->transfer($message, "index.php?com=kysathach&act=upload");
 }
 
 function get_data_kysathach()

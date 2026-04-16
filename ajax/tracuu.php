@@ -69,10 +69,9 @@
 			<div style="text-align:center; padding:5px 0;">
 				<p style="margin:0 0 2px 0; font-size:14px; font-weight:700; color:#1a1a2e;">Thanh toán qua mã QR</p>
 				<p style="margin:0 0 6px 0; font-size:11px; color:#888;">Kiểm tra kỹ thông tin trước khi chuyển khoản</p>
-				<div style="background:linear-gradient(135deg,#f5f7fa 0%,#e8ecf1 100%); border-radius:12px; padding:8px; display:inline-block;">
-					<p style="margin:0 0 6px 0; font-size:11px; color:#888;">CCCD: <?=$tracuu['cccd']?></p>
-					<div style="max-width:90px; width:100%; margin:0 auto; display:block;">
-						<img src="ajax/qr_image.php?id=<?=$tracuu['id']?>&v=<?=time()?>" alt="<?=$tracuu['ten']?>"  loading="lazy">
+				<div style="">
+					<div style="max-width:140px; width:100%; margin:0 auto; display:block;">
+						<img src="ajax/qr_image.php?id=<?=$tracuu['id']?>&v=<?=time()?>" alt="<?=$tracuu['ten']?>"  loading="lazy" style="border:1px solid #108824; border-radius:8px;">
 					</div>
 				</div>
 			</div>

@@ -55,7 +55,7 @@
 		</div>
 	</form>
 
-	<p style="font-size: 14px; font-weight: bold; color: red; padding-top: 10px; padding-left: 10px;">Mẫu file Excel: STT | Họ tên | Ngày sinh | Số căn cước | Hạng GPLX | Số tiền</p>
+	<p style="font-size: 14px; font-weight: bold; color: red; padding-top: 10px; padding-left: 10px;">Mẫu file Excel: STT | Họ tên | Ngày sinh | Số căn cước | Hạng GPLX | Số tiền | Mã QR (cột G - ảnh)</p>
 </section>
 
 <script type="text/javascript">

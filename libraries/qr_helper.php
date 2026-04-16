@@ -4,7 +4,55 @@
  * Change these values to match your receiving bank account
  */
 define('VIETQR_BANK_BIN', '970436');           // Vietcombank
-define('VIETQR_ACCOUNT_NO', 'IZPVEI61026P6RUNK40'); // Account number
+
+function normalizeVietQRBankBin($bankBin)
+{
+	return preg_replace('/\s+/', '', trim((string)$bankBin));
+}
+
+function normalizeVietQRAccountNo($accountNo)
+{
+	return preg_replace('/\s+/', '', trim((string)$accountNo));
+}
+
+function decodeVietQROptions($options)
+{
+	if(is_array($options)) return $options;
+	if(!is_string($options) || trim($options) === '') return array();
+
+	$decoded = json_decode($options, true);
+	return is_array($decoded) ? $decoded : array();
+}
+
+function getVietQRAccountNoFromOptions($options, $fallbackAccountNo = null)
+{
+	$options = decodeVietQROptions($options);
+	$keys = array('qr_account_no', 'account_no', 'account_number', 'so_tai_khoan', 'tai_khoan', 'stk', 'bank_account');
+
+	foreach($keys as $key) {
+		if(isset($options[$key]) && trim((string)$options[$key]) !== '') {
+			return normalizeVietQRAccountNo($options[$key]);
+		}
+	}
+
+	return normalizeVietQRAccountNo($fallbackAccountNo === null ? '' : $fallbackAccountNo);
+}
+
+function getVietQRConfigError($accountNo = null, $bankBin = null)
+{
+	$bankBin = normalizeVietQRBankBin($bankBin === null ? VIETQR_BANK_BIN : $bankBin);
+	$accountNo = normalizeVietQRAccountNo($accountNo === null ? '' : $accountNo);
+
+	if($bankBin === '' || !preg_match('/^\d{6}$/', $bankBin)) {
+		return 'Invalid VietQR bank BIN configuration.';
+	}
+
+	if($accountNo === '' || !preg_match('/^[A-Za-z0-9]{6,32}$/', $accountNo)) {
+		return 'Invalid VietQR account number in QR data. Please import a valid bank account or virtual account identifier for each QR row.';
+	}
+
+	return '';
+}
 
 /**
  * Build VietQR EMVCo payload for bank transfer
@@ -14,10 +62,17 @@ define('VIETQR_ACCOUNT_NO', 'IZPVEI61026P6RUNK40'); // Account number
  * @param string $bankBin    Bank BIN (e.g. 970436 for Vietcombank)
  * @param int    $amount     Amount in VND (0 = no amount)
  * @param string $message    Transfer description
- * @return string EMVCo QR payload string
+ * @return string|false EMVCo QR payload string
  */
 function buildVietQRPayload($accountNo, $bankBin, $amount = 0, $message = '')
 {
+	$bankBin = normalizeVietQRBankBin($bankBin);
+	$accountNo = normalizeVietQRAccountNo($accountNo);
+
+	if(getVietQRConfigError($accountNo, $bankBin) !== '') {
+		return false;
+	}
+
 	// TLV helper: ID (2 chars) + Length (2 chars zero-padded) + Value
 	$tlv = function($id, $value) {
 		return $id . str_pad(strlen($value), 2, '0', STR_PAD_LEFT) . $value;
@@ -118,6 +173,106 @@ function removeVietnameseDiacritics($str)
 		'Ỳ'=>'Y','Ý'=>'Y','Ỷ'=>'Y','Ỹ'=>'Y','Ỵ'=>'Y'
 	);
 	return strtr($str, $map);
+}
+
+/**
+ * Build VietQR payload and immediately decode it to verify the embedded details.
+ * Returns the same array as decodeVietQRPayload() plus a 'payload' key.
+ * Use this when you need to display the actual account number reflected from the QR.
+ *
+ * @param string $accountNo  Recipient account number
+ * @param string $bankBin    Bank BIN
+ * @param int    $amount     Amount in VND (0 = no amount)
+ * @param string $message    Transfer description
+ * @return array Keys: payload, bank_bin, account_no, amount, message, config_error
+ */
+function buildVietQRPayloadWithInfo($accountNo, $bankBin, $amount = 0, $message = '')
+{
+	$bankBin = normalizeVietQRBankBin($bankBin);
+	$accountNo = normalizeVietQRAccountNo($accountNo);
+	$configError = getVietQRConfigError($accountNo, $bankBin);
+
+	if($configError !== '') {
+		return array(
+			'payload' => '',
+			'bank_bin' => $bankBin,
+			'account_no' => $accountNo,
+			'amount' => (int)$amount,
+			'message' => $message,
+			'config_error' => $configError
+		);
+	}
+
+	$payload = buildVietQRPayload($accountNo, $bankBin, $amount, $message);
+	$info = decodeVietQRPayload($payload);
+	if($info === false) {
+		return array('payload' => $payload, 'bank_bin' => $bankBin, 'account_no' => $accountNo, 'amount' => $amount, 'message' => $message, 'config_error' => '');
+	}
+	$info['payload'] = $payload;
+	$info['config_error'] = '';
+	return $info;
+}
+
+/**
+ * Parse a flat EMVCo TLV string into an associative array [id => value]
+ */
+function parseTLV($data)
+{
+	$result = array();
+	$i = 0;
+	$len = strlen($data);
+	while($i + 4 <= $len) {
+		$id  = substr($data, $i, 2);
+		$length = (int)substr($data, $i + 2, 2);
+		$i += 4;
+		if($i + $length > $len) break;
+		$result[$id] = substr($data, $i, $length);
+		$i += $length;
+	}
+	return $result;
+}
+
+/**
+ * Decode a VietQR EMVCo payload and return the embedded bank details.
+ * Returns array with keys: bank_bin, account_no, amount, message
+ * Returns false if the payload is malformed or missing required fields.
+ */
+function decodeVietQRPayload($payload)
+{
+	// Strip the 4-char CRC suffix before parsing
+	if(strlen($payload) < 4) return false;
+	$data = substr($payload, 0, -4);
+
+	$fields = parseTLV($data);
+
+	// Merchant Account Info is tag 38
+	if(!isset($fields['38'])) return false;
+
+	$merchantFields = parseTLV($fields['38']);
+
+	// Consumer info is sub-tag 01 inside tag 38
+	if(!isset($merchantFields['01'])) return false;
+
+	$bankInfoFields = parseTLV($merchantFields['01']);
+
+	$bankBin   = isset($bankInfoFields['00']) ? $bankInfoFields['00'] : null;
+	$accountNo = isset($bankInfoFields['01']) ? $bankInfoFields['01'] : null;
+
+	if(!$accountNo) return false;
+
+	$amount  = isset($fields['54']) ? (int)$fields['54'] : 0;
+	$message = '';
+	if(isset($fields['62'])) {
+		$addlFields = parseTLV($fields['62']);
+		$message = isset($addlFields['08']) ? $addlFields['08'] : '';
+	}
+
+	return array(
+		'bank_bin'   => $bankBin,
+		'account_no' => $accountNo,
+		'amount'     => $amount,
+		'message'    => $message,
+	);
 }
 
 /**

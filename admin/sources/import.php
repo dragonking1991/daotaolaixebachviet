@@ -218,6 +218,60 @@
 		}
 	}
 
+	function normalizeImportHeaderLabel($label)
+	{
+		$label = strtolower(trim((string)$label));
+		$search = array('à','á','ả','ã','ạ','ă','ằ','ắ','ẳ','ẵ','ặ','â','ầ','ấ','ẩ','ẫ','ậ','đ','è','é','ẻ','ẽ','ẹ','ê','ề','ế','ể','ễ','ệ','ì','í','ỉ','ĩ','ị','ò','ó','ỏ','õ','ọ','ô','ồ','ố','ổ','ỗ','ộ','ơ','ờ','ớ','ở','ỡ','ợ','ù','ú','ủ','ũ','ụ','ư','ừ','ứ','ử','ữ','ự','ỳ','ý','ỷ','ỹ','ỵ');
+		$replace = array('a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','d','e','e','e','e','e','e','e','e','e','e','e','i','i','i','i','i','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','u','u','u','u','u','u','u','u','u','u','u','y','y','y','y','y');
+		$label = str_replace($search, $replace, $label);
+		return preg_replace('/[^a-z0-9]+/', '', $label);
+	}
+
+	function findImportHeaderColumnIndex($worksheet, $highestColumnIndex, $aliases)
+	{
+		for($column = 0; $column < $highestColumnIndex; $column++)
+		{
+			$headerValue = $worksheet->getCellByColumnAndRow($column, 1)->getValue();
+			$headerValue = normalizeImportHeaderLabel($headerValue);
+
+			if($headerValue !== '' && in_array($headerValue, $aliases, true)) return $column;
+		}
+
+		return null;
+	}
+
+	function buildQrImageMapFromDrawings($worksheet)
+	{
+		$map = array();
+		foreach($worksheet->getDrawingCollection() as $drawing)
+		{
+			$coords = $drawing->getCoordinates();
+			if(!preg_match('/^([A-Z]+)(\d+)$/', $coords, $matches)) continue;
+			if($matches[1] !== 'G') continue;
+			$drawingRow = (int)$matches[2];
+
+			$imgData = null;
+			if($drawing instanceof PHPExcel_Worksheet_MemoryDrawing)
+			{
+				ob_start();
+				call_user_func($drawing->getRenderingFunction(), $drawing->getImageResource());
+				$imgData = ob_get_clean();
+			}
+			elseif($drawing instanceof PHPExcel_Worksheet_Drawing)
+			{
+				$path = $drawing->getPath();
+				// Handle ZIP archive paths (XLSX files)
+				if(!empty($path)) {
+					$imgData = @file_get_contents($path);
+					if($imgData === false) $imgData = null;
+				}
+			}
+
+			if(!empty($imgData)) $map[$drawingRow] = $imgData;
+		}
+		return $map;
+	}
+
 	/* Upload excel */
 	function uploadExcel()
 	{
@@ -230,6 +284,8 @@
 			if($file_type == "application/vnd.ms-excel" || $file_type == "application/x-ms-excel" || $file_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 			{
 				$mess = '';
+				$warning = '';
+				$skippedQrRows = array();
 				$filename = $func->changeTitle($_FILES["file-excel"]["name"]);
 				move_uploaded_file($_FILES["file-excel"]["tmp_name"],$filename);			
 				
@@ -244,6 +300,7 @@
 					$highestRow = $worksheet->getHighestRow();
 					$highestColumn = $worksheet->getHighestColumn();
 					$highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn);
+					$qrImageMap = buildQrImageMapFromDrawings($worksheet);
 
 					$nrColumns = ord($highestColumn) - 64;
 
@@ -277,6 +334,13 @@
 							$cell = $worksheet->getCellByColumnAndRow(6, $row);
 							$gxn = $cell->getValue();
 
+/* Find QR image for this row from Excel column G */
+								$qrImageData = null;
+								for($r = $row; $r <= $row + 6; $r++)
+								{
+									if(isset($qrImageMap[$r])) { $qrImageData = $qrImageMap[$r]; break; }
+							}
+
 							/* Gán dữ liệu */
 							$data = array();
 							$data['stt'] = (int)$stt;
@@ -292,26 +356,27 @@
 
 							$data['gia'] = (isset($gia) && $gia != '') ? str_replace(".","",$gia) : 0;
 
+
 							$data['type'] = $type;
 							$data['hienthi'] = 1;
 
-							/* Auto-generate QR image for type 'qr' */
-							if($type == 'qr' && $cccd != '')
-							{
-								require_once LIBRARIES.'qr_helper.php';
-								$nameNoAccent = strtoupper(removeVietnameseDiacritics($data['tenvi']));
-								$nameNoSpace = str_replace(' ', '', $nameNoAccent);
-								$dateSuffix = date('Ymd');
-								$transferMsg = $nameNoSpace . ' ' . $data['cccd'] . ' ' . $dateSuffix;
-								$qr_content = buildVietQRPayload(VIETQR_ACCOUNT_NO, VIETQR_BANK_BIN, (int)$data['gia'], $transferMsg);
-								$qr_filename = 'qr-'.$data['cccd'].'.png';
-								$qr_filepath = ROOT.'/../upload/product/'.$qr_filename;
-								$logo_path = ROOT.'/../assets/images/logo-vietcombank.png';
-								generateQRWithLogo($qr_content, $qr_filepath, $logo_path);
-								$data['photo'] = $qr_filename;
+/* Save QR image directly from Excel column G for type 'qr' */
+								if($type == 'qr' && $cccd != '')
+								{
+									if($qrImageData !== null)
+									{
+										$qr_filename = 'qr-'.$data['cccd'].'.png';
+										$qr_filepath = ROOT.'/../upload/product/'.$qr_filename;
+										file_put_contents($qr_filepath, $qrImageData);
+										$data['photo'] = $qr_filename;
+									}
+									else
+									{
+										$skippedQrRows[] = $row;
+								}
 							}
 
-							$proimport = $d->rawQueryOne("select id from #_product where cccd = ? and type = ? limit 0,1",array($cccd,$type));
+								$proimport = $d->rawQueryOne("select id from #_product where cccd = ? and type = ? limit 0,1",array($cccd,$type));
 
 							if(isset($proimport['id']) && $proimport['id'] > 0)
 							{
@@ -339,6 +404,11 @@
 					}
 				}
 
+				if(count($skippedQrRows) > 0)
+				{
+					$warning = 'Cảnh báo: Bỏ qua lưu QR tại các dòng không có ảnh QR: '.implode(', ', $skippedQrRows)."<br>";
+				}
+
 				/* Xóa tập tin sau khi đã import xong */
 				unlink($filename);
 
@@ -346,10 +416,12 @@
 				if($mess == '')
 				{
 					$mess = "Import danh sách thành công";
+					if($warning != '') $mess .= "<br>".$warning;
 					$func->transfer($mess, "index.php?com=import&act=man&type=".$type);
 				}
 				else
 				{
+					if($warning != '') $mess .= $warning;
 					$func->transfer($mess, "index.php?com=import&act=man&type=".$type, false);
 				}
 			}
