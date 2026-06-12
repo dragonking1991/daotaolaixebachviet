@@ -36,6 +36,7 @@
                         <ul class="nav nav-treeview">
                             <?php if(isset($value['product'])) { foreach($value['product'] as $k) { ?>
                                 <?php
+                                    if($k === 'cabin') continue;
                                     $disabled['product'][$k] = 1;
                                     $v = $config['product'][$k];
                                     $none = "";
@@ -271,6 +272,7 @@
                 <?php if(isset($config['product'])) { ?>
                     <?php foreach($config['product'] as $k => $v) { if(!isset($disabled['product'][$k])) { ?>
                         <?php
+                            if($k === 'cabin') continue;
                             $none = "";
                             $active = "";
                             $menuopen = "";

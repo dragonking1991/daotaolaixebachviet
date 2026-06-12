@@ -48,7 +48,6 @@
 								<label for="selectall-checkbox" class="custom-control-label"></label>
 							</div>
 						</th>
-						<th class="align-middle text-center" width="8%">STT</th>
 						<th class="align-middle">Họ tên</th>
 						<th class="align-middle" width="14%">Ngày sinh</th>
 						<th class="align-middle" width="16%">CCCD</th>
@@ -68,9 +67,6 @@
 										<input type="checkbox" class="custom-control-input select-checkbox" id="select-checkbox-<?=$items_data[$i]['id']?>" value="<?=$items_data[$i]['id']?>">
 										<label for="select-checkbox-<?=$items_data[$i]['id']?>" class="custom-control-label"></label>
 									</div>
-								</td>
-								<td class="align-middle">
-									<input type="number" class="form-control form-control-mini m-auto update-stt" min="0" value="<?=$items_data[$i]['stt']?>" data-id="<?=$items_data[$i]['id']?>" data-table="product">
 								</td>
 								<td class="align-middle">
 									<a class="text-dark" href="<?=$linkEdit?>&id=<?=$items_data[$i]['id']?>" title="<?=htmlspecialchars($items_data[$i]['tenvi'])?>"><?=htmlspecialchars($items_data[$i]['tenvi'])?></a>

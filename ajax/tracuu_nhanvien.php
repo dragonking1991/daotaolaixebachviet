@@ -244,6 +244,14 @@
 		$nguoiPhuThuoc = trim((string)($employee['payroll_so_npt'] ?? ''));
 		if($nguoiPhuThuoc === '') $nguoiPhuThuoc = trim((string)($employee['payroll_nguoi_phu_thuoc'] ?? ''));
 		if($nguoiPhuThuoc === '') $nguoiPhuThuoc = '-';
+		$boPhanHienThi = trim((string)($employee['hang'] ?? ''));
+		if($boPhanHienThi === '')
+		{
+			$payrollDepartment = trim((string)($employee['payroll_department'] ?? ''));
+			if($payrollDepartment === 'van_phong') $boPhanHienThi = 'Bộ phận văn phòng';
+			elseif($payrollDepartment === 'giao_vien') $boPhanHienThi = 'Bộ phận giáo viên';
+		}
+		if($boPhanHienThi === '') $boPhanHienThi = '-';
 
 		ob_start();
 		?>
@@ -253,7 +261,7 @@
 				<div><strong>Họ và tên:</strong><br><?=htmlspecialchars($employee['ten'])?></div>
 				<div><strong>Mã tra cứu:</strong><br><?=htmlspecialchars($employee['ma_tra_cuu'])?></div>
 				<div><strong>CCCD:</strong><br><?=htmlspecialchars($employee['cccd'])?></div>
-				<div><strong>Bộ phận:</strong><br><?=htmlspecialchars($employee['hang'])?></div>
+				<div><strong>Bộ phận:</strong><br><?=htmlspecialchars($boPhanHienThi)?></div>
 				<div><strong>Chức vụ:</strong><br><?=htmlspecialchars($employee['khoa'])?></div>
 				<?php if(!empty($employee['ngaysinh'])) { ?><div><strong>Ngày sinh:</strong><br><?=htmlspecialchars($employee['ngaysinh'])?></div><?php } ?>
 			</div>
@@ -341,10 +349,25 @@
 		$nguoiPhuThuoc = trim((string)($employee['payroll_so_npt'] ?? ''));
 		if($nguoiPhuThuoc === '') $nguoiPhuThuoc = trim((string)($employee['payroll_nguoi_phu_thuoc'] ?? ''));
 		if($nguoiPhuThuoc === '') $nguoiPhuThuoc = '-';
+		$boPhanHienThi = trim((string)($employee['hang'] ?? ''));
+		if($boPhanHienThi === '')
+		{
+			$payrollDepartment = trim((string)($employee['payroll_department'] ?? ''));
+			if($payrollDepartment === 'van_phong') $boPhanHienThi = 'Bộ phận văn phòng';
+			elseif($payrollDepartment === 'giao_vien') $boPhanHienThi = 'Bộ phận giáo viên';
+		}
+		if($boPhanHienThi === '') $boPhanHienThi = '-';
 		$luongThucNhan = parsePayrollNumericValue($employee['payroll_luong_thuc_nhan'] ?? '');
 		$bhxh = parsePayrollNumericValue($employee['payroll_nld_nop_bhxh_10_5'] ?? '');
 		$thueTncn = parsePayrollNumericValue($employee['payroll_thue_tncn'] ?? '');
-		$nhan = $luongThucNhan - $bhxh - $thueTncn;
+		$phuCapKpi = parsePayrollNumericValue($employee['payroll_khac_dt_khac'] ?? '');
+		$phuCapComXang = parsePayrollNumericValue($employee['payroll_tien_com'] ?? '') + parsePayrollNumericValue($employee['payroll_phu_cap_xang_xe'] ?? '');
+		$thanhToanChieuSinh = parsePayrollNumericValue($employee['payroll_chieu_sinh_tttn'] ?? '');
+		$phuCapDienThoai = parsePayrollNumericValue($employee['payroll_dien_thoai'] ?? '');
+		$lamThemGio = parsePayrollNumericValue($employee['payroll_lam_them_gio'] ?? '');
+		$dayLtSh = parsePayrollNumericValue($employee['payroll_day_lt_sat_hach'] ?? '');
+		$thuongLe = parsePayrollNumericValue($employee['payroll_thuong_le_tet'] ?? '');
+		$luongCanBan = $luongThucNhan - ($phuCapKpi + $thanhToanChieuSinh + $phuCapComXang + $phuCapDienThoai + $lamThemGio + $dayLtSh + $thuongLe) + $bhxh + $thueTncn;
 
 		$rowStyle = 'display:grid; grid-template-columns:minmax(200px,260px) 1fr; gap:6px 12px; padding:5px 0; border-bottom:1px solid #f3f4f6;';
 		$labelStyle = 'font-weight:600; color:#374151;';
@@ -358,7 +381,7 @@
 				<div><strong>Họ và tên:</strong><br><?=htmlspecialchars($employee['ten'])?></div>
 				<div><strong>Mã tra cứu:</strong><br><?=htmlspecialchars($employee['ma_tra_cuu'])?></div>
 				<div><strong>CCCD:</strong><br><?=htmlspecialchars($employee['cccd'])?></div>
-				<div><strong>Bộ phận:</strong><br><?=htmlspecialchars($employee['hang'])?></div>
+				<div><strong>Bộ phận:</strong><br><?=htmlspecialchars($boPhanHienThi)?></div>
 				<div><strong>Chức vụ:</strong><br><?=htmlspecialchars($employee['khoa'])?></div>
 				<?php if(!empty($employee['ngaysinh'])) { ?><div><strong>Ngày sinh:</strong><br><?=htmlspecialchars($employee['ngaysinh'])?></div><?php } ?>
 			</div>
@@ -367,18 +390,18 @@
 				<div>
 					<div style="<?=$rowStyle?> font-weight:700;"><div style="<?=$labelStyle?>">TT chuyển</div><div style="<?=$valStyle?> color:#1d4ed8;"><?=fmtMoney($employee['payroll_luong_thuc_nhan'])?></div></div>
 					<div style="height:6px;"></div>
-					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">L căn bản</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_luong_chinh'])?></div></div>
+					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">L căn bản</div><div style="<?=$valStyle?>"><?=fmtMoneyInt($luongCanBan)?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Phụ cấp TN</div><div style="<?=$valStyle?>">-</div></div>
-					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Phụ cấp chuyên cần + KPI</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_tien_com'])?></div></div>
+					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Phụ cấp chuyên cần + KPI</div><div style="<?=$valStyle?>"><?=fmtMoneyInt($phuCapKpi)?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Thanh toán TN + CP chiêu sinh</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_chieu_sinh_tttn'])?></div></div>
-					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Phụ cấp cơm + xăng</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_phu_cap_xang_xe'])?></div></div>
+					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Phụ cấp cơm + xăng</div><div style="<?=$valStyle?>"><?=fmtMoneyInt($phuCapComXang)?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Phụ cấp điện thoại</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_dien_thoai'])?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">L làm thêm giờ</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_lam_them_gio'])?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Dạy LT + SH</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_day_lt_sat_hach'])?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Thưởng lễ</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_thuong_le_tet'])?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">BHXH 10.5%</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_nld_nop_bhxh_10_5'])?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Thuế TNCN</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_thue_tncn'])?></div></div>
-					<div style="<?=$rowStyle?> font-weight:700;"><div style="<?=$labelStyle?>">Nhận</div><div style="<?=$valStyle?> color:#1d4ed8;"><?=($nhan > 0 ? number_format($nhan, 0, ',', '.') : fmtMoney($employee['payroll_luong_thuc_nhan']))?></div></div>
+					<div style="<?=$rowStyle?> font-weight:700;"><div style="<?=$labelStyle?>">Nhận</div><div style="<?=$valStyle?> color:#1d4ed8;"><?=fmtMoney($employee['payroll_luong_thuc_nhan'])?></div></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Người phụ thuộc</div><div style="<?=$valStyle?>"><?=htmlspecialchars($nguoiPhuThuoc)?></div></div>
 				</div>
 			</div>

@@ -73,7 +73,9 @@
                                 <label for="selectall-checkbox" class="custom-control-label"></label>
                             </div>
                         </th>
-                        <th class="align-middle text-center" width="10%">STT</th>
+                        <?php if($_GET['type']!='nhan-vien') { ?>
+                            <th class="align-middle text-center" width="10%">STT</th>
+                        <?php } ?>
 						<?php if(isset($config['product'][$type]['show_images']) && $config['product'][$type]['show_images'] == true) { ?>
 							<th class="align-middle">Hình</th>
 						<?php } ?>
@@ -160,9 +162,11 @@
                                         <label for="select-checkbox-<?=$items[$i]['id']?>" class="custom-control-label"></label>
                                     </div>
                                 </td>
-                                <td class="align-middle">
-                                    <input type="number" class="form-control form-control-mini m-auto update-stt" min="0" value="<?=$items[$i]['stt']?>" data-id="<?=$items[$i]['id']?>" data-table="product">
-                                </td>
+                                <?php if($_GET['type']!='nhan-vien') { ?>
+                                    <td class="align-middle">
+                                        <input type="number" class="form-control form-control-mini m-auto update-stt" min="0" value="<?=$items[$i]['stt']?>" data-id="<?=$items[$i]['id']?>" data-table="product">
+                                    </td>
+                                <?php } ?>
                                 <?php if(isset($config['product'][$type]['show_images']) && $config['product'][$type]['show_images'] == true) { ?>
                                     <td class="align-middle">
                                     	<a href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>"><img class="rounded img-preview" onerror="src='assets/images/noimage.png'" src="<?=THUMBS?>/<?=$config['product'][$type]['thumb']?>/<?=UPLOAD_PRODUCT_L.$items[$i]['photo']?>" alt="<?=$items[$i]['tenvi']?>"></a>
