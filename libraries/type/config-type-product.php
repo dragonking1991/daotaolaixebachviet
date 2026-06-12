@@ -3,6 +3,10 @@
     $config['product'][$nametype]['title_main'] = "Giấy phép lái xe";
     $config['product'][$nametype]['import'] = true;
 
+    $nametype = "nhan-vien";
+    $config['product'][$nametype]['title_main'] = "Nhân viên";
+    $config['product'][$nametype]['import'] = true;
+
     $nametype = "gxn";
     $config['product'][$nametype]['title_main'] = "Giấy xác nhận";
     $config['product'][$nametype]['import'] = true;

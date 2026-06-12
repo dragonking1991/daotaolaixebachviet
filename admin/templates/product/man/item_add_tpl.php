@@ -174,6 +174,13 @@
 		                                        <input type="text" class="form-control for-seo" name="data[cccd]" id="cccd" placeholder="CCCD" value="<?=@$item['cccd']?>">
 		                                    </div>
 
+											<?php if($_GET['type']=='nhan-vien') { ?>
+												<div class="form-group">
+													<label for="ma_tra_cuu">Mã tra cứu:</label>
+													<input type="text" class="form-control for-seo" name="data[ma_tra_cuu]" id="ma_tra_cuu" placeholder="Mã tra cứu" value="<?=@$item['ma_tra_cuu']?>">
+												</div>
+											<?php } ?>
+
 		                                    <?php if($_GET['type']=='gplx') { ?>
 			                                    <div class="form-group">
 			                                        <label for="gplx">Số GPLX:</label>
@@ -181,25 +188,44 @@
 			                                    </div>
 		                                	<?php } ?>
 
-		                                	 <?php if($_GET['type']=='gxn' or $_GET['type']=='qr') { ?>
+		                                	 <?php if($_GET['type']=='gxn' or $_GET['type']=='qr' || $_GET['type']=='nhan-vien') { ?>
 		                                		<div class="form-group">
-			                                        <label for="hang">Hạng đào tạo:</label>
-			                                        <input type="text" class="form-control for-seo" name="data[hang]" id="hang" placeholder="Hạng đào tạo" value="<?=@$item['hang']?>">
+				                                        <label for="hang"><?=$_GET['type']=='nhan-vien' ? 'Bộ phận:' : 'Hạng đào tạo:'?></label>
+				                                        <input type="text" class="form-control for-seo" name="data[hang]" id="hang" placeholder="<?=$_GET['type']=='nhan-vien' ? 'Bộ phận' : 'Hạng đào tạo'?>" value="<?=@$item['hang']?>">
 			                                    </div>
 			                                <?php } ?>
 
 
-		                                	 <?php if($_GET['type']=='gxn') { ?>
+		                                	 <?php if($_GET['type']=='gxn' || $_GET['type']=='nhan-vien') { ?>
 			                                    <div class="form-group">
-			                                        <label for="khoa">Khóa học:</label>
-			                                        <input type="text" class="form-control for-seo" name="data[khoa]" id="khoa" placeholder="Khóa học" value="<?=@$item['khoa']?>">
+				                                        <label for="khoa"><?=$_GET['type']=='nhan-vien' ? 'Chức vụ:' : 'Khóa học:'?></label>
+				                                        <input type="text" class="form-control for-seo" name="data[khoa]" id="khoa" placeholder="<?=$_GET['type']=='nhan-vien' ? 'Chức vụ' : 'Khóa học'?>" value="<?=@$item['khoa']?>">
 			                                    </div>
 
-		                                		<div class="form-group">
-			                                        <label for="gxn">Số giấy xác nhận:</label>
-			                                        <input type="text" class="form-control for-seo" name="data[gxn]" id="gxn" placeholder="Giấy xác nhận" value="<?=@$item['gxn']?>">
-			                                    </div>
+				                                	<?php if($_GET['type']=='gxn') { ?>
+		                                			<div class="form-group">
+				                                        	<label for="gxn">Số giấy xác nhận:</label>
+				                                        	<input type="text" class="form-control for-seo" name="data[gxn]" id="gxn" placeholder="Giấy xác nhận" value="<?=@$item['gxn']?>">
+				                                    	</div>
+				                                	<?php } ?>
 		                                	<?php } ?>
+
+			                                <?php if($_GET['type']=='nhan-vien') { ?>
+			                                	<div class="form-group">
+					                                <label for="payroll_phong_ban">Phòng ban payroll:</label>
+					                                <input type="text" class="form-control for-seo" name="data[payroll_phong_ban]" id="payroll_phong_ban" placeholder="Phòng ban payroll" value="<?=@$item['payroll_phong_ban']?>">
+			                                	</div>
+
+			                                	<div class="form-group">
+					                                <label for="payroll_tong_thu_nhap">Tổng thu nhập:</label>
+					                                <input type="text" class="form-control for-seo" name="data[payroll_tong_thu_nhap]" id="payroll_tong_thu_nhap" placeholder="Tổng thu nhập" value="<?=@$item['payroll_tong_thu_nhap']?>">
+			                                	</div>
+
+			                                	<div class="form-group">
+					                                <label for="payroll_luong_thuc_nhan">Lương thực nhận:</label>
+					                                <input type="text" class="form-control for-seo" name="data[payroll_luong_thuc_nhan]" id="payroll_luong_thuc_nhan" placeholder="Lương thực nhận" value="<?=@$item['payroll_luong_thuc_nhan']?>">
+			                                	</div>
+			                                <?php } ?>
 
 		                                	<?php if(isset($config['product'][$type]['gia']) && $config['product'][$type]['gia'] == true) { ?>
 										    	<div class="form-group col-md-12">

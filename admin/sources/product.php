@@ -326,6 +326,12 @@
 			$data['giakm'] = (isset($data['giakm']) && $data['giakm'] != '') ? $data['giakm'] : 0;
 			$data['hienthi'] = (isset($data['hienthi'])) ? 1 : 0;
 			$data['type'] = $type;
+
+			if($type == 'nhan-vien')
+			{
+				$employeeCccd = (isset($data['cccd'])) ? trim((string)$data['cccd']) : '';
+				if($employeeCccd !== '') $data['ma_tra_cuu'] = $employeeCccd;
+			}
 		}
 
 		$savehere = (isset($_POST['save-here'])) ? true : false;

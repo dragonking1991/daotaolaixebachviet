@@ -42,6 +42,16 @@
     $config['static'][$nametype]['height'] = 200;
     $config['static'][$nametype]['img_type'] = '.jpg|.gif|.png|.jpeg|.gif|.JPG|.PNG|.JPEG|.Png|.GIF';
 
+    $nametype = "tra-cuu-nhan-vien";
+    $config['static'][$nametype]['title_main'] = "Tra cứu nhân viên";
+    $config['static'][$nametype]['noidung'] = true;
+    $config['static'][$nametype]['noidung_cke'] = true;
+    $config['static'][$nametype]['images'] = true;
+    $config['static'][$nametype]['seo'] = true;
+    $config['static'][$nametype]['width'] = 300;
+    $config['static'][$nametype]['height'] = 200;
+    $config['static'][$nametype]['img_type'] = '.jpg|.gif|.png|.jpeg|.gif|.JPG|.PNG|.JPEG|.Png|.GIF';
+
     /* Footer */
     $nametype = "footer";
     $config['static'][$nametype]['title_main'] = "Footer";

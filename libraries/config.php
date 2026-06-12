@@ -113,15 +113,18 @@
 	}
 	$http = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
 
-	$server_name = $_SERVER["SERVER_NAME"];
-	$external_port = $_SERVER["SERVER_PORT"] ?? '80';
-	if (!empty($_SERVER['HTTP_X_FORWARDED_PORT'])) {
-		$external_port = $_SERVER['HTTP_X_FORWARDED_PORT'];
-	} elseif (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
-		$external_port = '443';
-	}
-	if ($external_port != '80' && $external_port != '443') {
-		$server_name .= ':'.$external_port;
+	$server_name = !empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER["SERVER_NAME"];
+	if(strpos($server_name, ':') === false)
+	{
+		$external_port = $_SERVER["SERVER_PORT"] ?? '80';
+		if (!empty($_SERVER['HTTP_X_FORWARDED_PORT'])) {
+			$external_port = $_SERVER['HTTP_X_FORWARDED_PORT'];
+		} elseif (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+			$external_port = '443';
+		}
+		if ($external_port != '80' && $external_port != '443') {
+			$server_name .= ':'.$external_port;
+		}
 	}
 	$config_url = $server_name.$config['database']['url'];
 	$config_base = $http.$config_url;

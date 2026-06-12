@@ -68,6 +68,47 @@ NN_FRAMEWORK.BackToTop = function(){
         return false; 
     });
 
+    $('body').on('submit', '#employee-lookup-form', function(e) {
+        e.preventDefault();
+        var keyword = $.trim($('#employee_lookup_keyword').val());
+
+        if(keyword == '') {
+            alert('Vui lòng nhập mã tra cứu hoặc CCCD');
+            return false;
+        }
+
+        $.ajax({
+            url: 'ajax/tracuu_nhanvien.php',
+            type: 'POST',
+            dataType: 'html',
+            data: {
+                action: 'lookup',
+                keyword: keyword
+            },
+            success: function(result) {
+                $('.employee-lookup-result').html(result);
+            }
+        });
+
+        return false;
+    });
+
+    $('body').on('submit', '#employee-reference-update-form', function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: 'ajax/tracuu_nhanvien.php',
+            type: 'POST',
+            dataType: 'html',
+            data: $(this).serialize() + '&action=update',
+            success: function(result) {
+                $('.employee-lookup-result').html(result);
+            }
+        });
+
+        return false;
+    });
+
 };
 
 /* Alt images */

@@ -79,8 +79,15 @@
 						<?php } ?>
 						<th class="align-middle" style="width:15%">Tên</th>
                         <th class="align-middle" style="width:15%">Ngày sinh</th>
+                        <?php if($_GET['type']=='nhan-vien') { ?>
+                            <th class="align-middle" style="width:15%">Mã tra cứu</th>
+                        <?php } ?>
                         <th class="align-middle" style="width:15%">CCCD</th>
-                        <th class="align-middle" style="width:15%"><?php if($_GET['type']=='gxn') echo 'Giấy xác nhận';else if($_GET['type']=='qr') echo 'Hạng'; else echo 'GPLX' ?></th>
+                        <th class="align-middle" style="width:15%"><?php if($_GET['type']=='gxn') echo 'Giấy xác nhận'; else if($_GET['type']=='qr') echo 'Hạng'; else if($_GET['type']=='nhan-vien') echo 'Bộ phận'; else echo 'GPLX' ?></th>
+                        <?php if($_GET['type']=='nhan-vien') { ?>
+                            <th class="align-middle" style="width:15%">Chức vụ</th>
+                            <th class="align-middle" style="width:15%">Lương thực nhận</th>
+                        <?php } ?>
 
                         <?php if($_GET['type']=='qr') { ?>
                             <th class="align-middle" style="width:15%">Số tiền</th>
@@ -101,6 +108,32 @@
                 <?php } else { ?>
                     <tbody>
                         <?php for($i=0;$i<count($items);$i++) {
+                            $payrollDetail = array(
+                                'Số ngày làm việc' => $items[$i]['payroll_so_ngay_lam_viec'],
+                                'Lương chính' => $items[$i]['payroll_luong_chinh'],
+                                'Thưởng lễ tết' => $items[$i]['payroll_thuong_le_tet'],
+                                'Tiền cơm' => $items[$i]['payroll_tien_com'],
+                                'Phụ cấp xăng xe' => $items[$i]['payroll_phu_cap_xang_xe'],
+                                'Dạy LT Sát hạch' => $items[$i]['payroll_day_lt_sat_hach'],
+                                'Chiêu sinh TTTN' => $items[$i]['payroll_chieu_sinh_tttn'],
+                                'Khác (DT - Khác)' => $items[$i]['payroll_khac_dt_khac'],
+                                'Làm thêm giờ' => $items[$i]['payroll_lam_them_gio'],
+                                'Điện thoại' => $items[$i]['payroll_dien_thoai'],
+                                'Tổng thu nhập' => $items[$i]['payroll_tong_thu_nhap'],
+                                'NLD Nộp BHXH 10.5%' => $items[$i]['payroll_nld_nop_bhxh_10_5'],
+                                'TT Nộp BHXH 21.5%' => $items[$i]['payroll_tt_nop_bhxh_21_5'],
+                                'Thu nhập chịu thuế' => $items[$i]['payroll_thu_nhap_chiu_thue'],
+                                'Giảm trừ gia cảnh' => $items[$i]['payroll_giam_tru_gia_canh'],
+                                'Số NPT' => $items[$i]['payroll_so_npt'],
+                                'Người phụ thuộc' => $items[$i]['payroll_nguoi_phu_thuoc'],
+                                'Thu nhập tính thuế' => $items[$i]['payroll_thu_nhap_tinh_thue'],
+                                'Bậc' => $items[$i]['payroll_bac'],
+                                'Thuế TNCN' => $items[$i]['payroll_thue_tncn'],
+                                'Lương thực nhận' => $items[$i]['payroll_luong_thuc_nhan'],
+                                'Nghĩa vụ GV' => $items[$i]['payroll_nghia_vu_gv']
+                            );
+                            $payrollDetailJson = htmlspecialchars(json_encode($payrollDetail, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+
                         	$linkID = "";
 							if($items[$i]['id_list']) $linkID .= "&id_list=".$items[$i]['id_list'];
 							if($items[$i]['id_cat']) $linkID .= "&id_cat=".$items[$i]['id_cat'];
@@ -130,6 +163,12 @@
                                     <a class="text-dark" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>"><?=$items[$i]['ngaysinh']?></a>
                                 </td>
 
+                                <?php if($_GET['type']=='nhan-vien') { ?>
+                                    <td class="align-middle">
+                                        <a class="text-dark" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>"><?=$items[$i]['ma_tra_cuu']?></a>
+                                    </td>
+                                <?php } ?>
+
                                 <td class="align-middle">
                                     <a class="text-dark" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>"><?=$items[$i]['cccd']?></a>
                                 </td>
@@ -139,6 +178,15 @@
                                         <?php if($_GET['type']=='gxn')echo $items[$i]['gxn']; else if($_GET['type']=='gplx')echo $items[$i]['gplx']; else echo $items[$i]['hang'];?>
                                     </a>
                                 </td>
+
+                                <?php if($_GET['type']=='nhan-vien') { ?>
+                                    <td class="align-middle">
+                                        <a class="text-dark" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>"><?=$items[$i]['khoa']?></a>
+                                    </td>
+                                    <td class="align-middle">
+                                        <a class="text-dark" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>"><?=$items[$i]['payroll_luong_thuc_nhan']?></a>
+                                    </td>
+                                <?php } ?>
 
                                 <?php if($_GET['type']=='qr') { ?>
                                     <td class="align-middle"><?php if($items[$i]['gia']>0) echo $func->format_money($items[$i]['gia'])?></td>
@@ -180,6 +228,9 @@
 								            </ul>
 		                            	</div>
                                     <?php } ?>
+                                    <?php if($_GET['type']=='nhan-vien') { ?>
+                                    	<a class="text-info mr-2 btn-payroll-detail" href="#" data-toggle="modal" data-target="#modal-payroll-detail" data-name="<?=htmlspecialchars($items[$i]['tenvi'], ENT_QUOTES, 'UTF-8')?>" data-reference="<?=htmlspecialchars($items[$i]['ma_tra_cuu'], ENT_QUOTES, 'UTF-8')?>" data-payroll="<?=$payrollDetailJson?>" title="chi tiết"><i class="fas fa-receipt"></i></a>
+                                    <?php } ?>
                                     <a class="text-primary mr-2" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
                                     <a class="text-danger" id="delete-item" data-url="<?=$linkDelete?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
                                 </td>
@@ -200,6 +251,36 @@
     </div>
 </section>
 
+<?php if($_GET['type']=='nhan-vien') { ?>
+<div class="modal fade" id="modal-payroll-detail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">chi tiết</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2"><strong>Nhân viên:</strong> <span id="payroll-detail-name"></span></p>
+                <p class="mb-3"><strong>Mã tra cứu:</strong> <span id="payroll-detail-reference"></span></p>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:40%">Thông tin</th>
+                                <th>Giá trị</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payroll-detail-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php } ?>
+
 <script type="text/javascript">
 $(document).ready(function(){
 	$('#btn-delete-all-data').click(function(e){
@@ -208,5 +289,33 @@ $(document).ready(function(){
 			window.location.href = 'index.php?com=product&act=deleteAllData&type=<?=$type?><?=$strUrl?>';
 		}
 	});
+
+    $('body').on('click', '.btn-payroll-detail', function(e){
+        e.preventDefault();
+
+        var name = $(this).data('name') || '';
+        var reference = $(this).data('reference') || '';
+        var payrollRaw = $(this).attr('data-payroll') || '{}';
+        var payrollData = {};
+
+        try {
+            payrollData = JSON.parse(payrollRaw);
+        } catch(err) {
+            payrollData = {};
+        }
+
+        $('#payroll-detail-name').text(name);
+        $('#payroll-detail-reference').text(reference);
+
+        var rows = '';
+        Object.keys(payrollData).forEach(function(label){
+            var value = (payrollData[label] || '').toString().trim();
+            if(value === '') value = '-';
+            rows += '<tr><td><strong>' + $('<div>').text(label).html() + '</strong></td><td>' + $('<div>').text(value).html() + '</td></tr>';
+        });
+
+        if(rows === '') rows = '<tr><td colspan="2" class="text-center">Không có dữ liệu payroll</td></tr>';
+        $('#payroll-detail-body').html(rows);
+    });
 });
 </script>

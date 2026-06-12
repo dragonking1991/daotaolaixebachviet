@@ -145,6 +145,14 @@
 			$title_crumb = 'Tra cứu';
 			break;
 
+			case 'tra-cuu-nhan-vien':
+				$source = "tracuu";
+				$template = "tracuu/nhanvien";
+				$type = 'tra-cuu-nhan-vien';
+				$seo->setSeo('type','article');
+				$title_crumb = 'Tra cứu nhân viên';
+				break;
+
 		case 'lien-he':
 			$source = "contact";
 			$template = "contact/contact";
