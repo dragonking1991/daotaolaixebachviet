@@ -49,7 +49,33 @@ CALL add_column_if_missing('table_product', 'payroll_thue_tncn', "`payroll_thue_
 CALL add_column_if_missing('table_product', 'payroll_luong_thuc_nhan', "`payroll_luong_thuc_nhan` VARCHAR(120) NOT NULL DEFAULT '' AFTER `payroll_thue_tncn`");
 CALL add_column_if_missing('table_product', 'payroll_nghia_vu_gv', "`payroll_nghia_vu_gv` VARCHAR(120) NOT NULL DEFAULT '' AFTER `payroll_luong_thuc_nhan`");
 
+-- Phân loại bộ phận: 'giao_vien' hoặc 'van_phong'
+CALL add_column_if_missing('table_product', 'payroll_department', "`payroll_department` VARCHAR(40) NOT NULL DEFAULT '' AFTER `payroll_nghia_vu_gv`");
+
+-- Số học viên điều hành từng loại (chỉ áp dụng cho giáo viên)
+CALL add_column_if_missing('table_product', 'payroll_td', "`payroll_td` INT NULL DEFAULT NULL AFTER `payroll_department`");
+CALL add_column_if_missing('table_product', 'payroll_ss', "`payroll_ss` INT NULL DEFAULT NULL AFTER `payroll_td`");
+CALL add_column_if_missing('table_product', 'payroll_c1', "`payroll_c1` INT NULL DEFAULT NULL AFTER `payroll_ss`");
+CALL add_column_if_missing('table_product', 'payroll_ce', "`payroll_ce` INT NULL DEFAULT NULL AFTER `payroll_c1`");
+
 DROP PROCEDURE IF EXISTS add_column_if_missing;
+
+-- Bảng cấu hình đơn giá học viên (admin có thể chỉnh sửa qua giao diện)
+CREATE TABLE IF NOT EXISTS `table_payroll_config` (
+	`config_key` VARCHAR(64) NOT NULL,
+	`config_value` BIGINT NOT NULL DEFAULT 0,
+	`label` VARCHAR(120) NOT NULL DEFAULT '',
+	PRIMARY KEY (`config_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Giá trị mặc định — chỉ insert nếu chưa tồn tại
+INSERT INTO `table_payroll_config` (`config_key`, `config_value`, `label`)
+VALUES
+	('payroll_rate_td',  1000000, 'Đơn giá TĐ (đ/học viên)'),
+	('payroll_rate_ss',  2000000, 'Đơn giá SS (đ/học viên)'),
+	('payroll_rate_c1',  2000000, 'Đơn giá C1 (đ/học viên)'),
+	('payroll_rate_ce',  1100000, 'Đơn giá CE (đ/học viên)')
+ON DUPLICATE KEY UPDATE `config_key` = `config_key`;
 
 SET @index_exists = (
 	SELECT COUNT(1)

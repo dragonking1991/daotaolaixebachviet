@@ -68,18 +68,89 @@ Vẫn lưu `options2` như bản ghi nguồn để trace/debug.
 - Gán `current_department` cho các nhân viên kế tiếp tới khi gặp bộ phận mới.
 - Có field DB riêng để lưu phòng ban payroll phục vụ tra cứu.
 
+### 5) Sheet Selection — Chỉ Đọc Sheet "L"
+
+- Khi import file `.xlsm` / `.xlsx`, chỉ xử lý sheet có tên là **`L`**, bỏ qua tất cả các sheet khác (`BK TT`, `Bảng kê GV`, `Bảng kê VP`, `Bảng kê đóng BHXH`, `Sheet4`…).
+- Nếu file không có sheet `L`, báo lỗi rõ ràng thay vì import sai sheet.
+
+### 6) Phân Loại Bộ Phận Trong Sheet L
+
+- Dòng aggregate chứa text **`Bộ phận giáo viên`** (không phân biệt hoa thường, có thể có khoảng trắng thừa) là mốc phân chia:
+  - Các nhân viên **phía trên** dòng này thuộc bộ phận **`van_phong`**.
+  - Các nhân viên **phía dưới** dòng này thuộc bộ phận **`giao_vien`**.
+- Giá trị `payroll_department` được lưu vào DB theo hai nhóm trên.
+
+### 7) Cột Bổ Sung Cho Giáo Viên (TĐ, SS, C1, CE)
+
+- Với nhân viên thuộc bộ phận `giao_vien`, đọc thêm bốn cột sau từ sheet L và lưu vào DB:
+
+| Tên cột Excel | Field DB          | Kiểu  | Ý nghĩa                            |
+|---------------|-------------------|-------|------------------------------------|
+| TĐ            | `payroll_td`      | INT   | Số học viên điều hành loại TĐ      |
+| SS            | `payroll_ss`      | INT   | Số học viên điều hành loại SS      |
+| C1            | `payroll_c1`      | INT   | Số học viên điều hành loại C1      |
+| CE            | `payroll_ce`      | INT   | Số học viên điều hành loại CE      |
+
+- Với nhân viên văn phòng, các field này để NULL.
+
+### 8) Config Đơn Giá Học Viên (Per-Type Rate)
+
+Lưu config trong một bảng/file riêng để admin có thể chỉnh sửa sau mà không cần sửa code:
+
+| Loại | Đơn giá mặc định |
+|------|-----------------|
+| TĐ   | 1.000.000 VNĐ   |
+| SS   | 2.000.000 VNĐ   |
+| C1   | 2.000.000 VNĐ   |
+| CE   | 1.100.000 VNĐ   |
+
+Config key đề xuất: `payroll_rate_td`, `payroll_rate_ss`, `payroll_rate_c1`, `payroll_rate_ce`.
+
+### 9) Public Tra Cứu — Hiển Thị Theo Bộ Phận
+
+#### Giáo viên
+
+Màn tra cứu public chỉ hiển thị các mục sau (theo thứ tự):
+
+| Mục                            | Nguồn dữ liệu                                                   |
+|--------------------------------|-----------------------------------------------------------------|
+| Lương thực nhận                | `payroll_luong_thuc_nhan`                                       |
+| Khoản phải nộp                 | `payroll_nghia_vu_gv`                                           |
+| **Nhận**                       | `payroll_luong_thuc_nhan` − `payroll_nghia_vu_gv`               |
+| Lương CE                       | `payroll_ce` × config `payroll_rate_ce`                         |
+| L theo danh sách phân xe       | `payroll_td`×`rate_td` + `payroll_ss`×`rate_ss` + `payroll_c1`×`rate_c1` |
+| B(TĐ) — K116                   | `payroll_td`                                                    |
+| B(SS) — K195                   | `payroll_ss`                                                    |
+| C1 — K11                       | `payroll_c1`                                                    |
+| Thưởng lễ                      | `payroll_thuong_le_tet`                                         |
+| Thanh toán TN + CP chiêu sinh  | `payroll_chieu_sinh_tttn`                                       |
+| Phụ cấp thêm                   | `payroll_phu_cap_xang_xe`                                       |
+| BHXH                           | `payroll_nld_nop_bhxh`                                          |
+| Thuế TNCN (nếu có)             | `payroll_thue_tncn`                                             |
+| **Nhận** (kiểm tra lại)        | tổng kiểm tra cuối phiếu                                        |
+| Người phụ thuộc                | `payroll_nguoi_phu_thuoc`                                       |
+
+#### Văn phòng
+
+Màn tra cứu public hiển thị phiếu lương theo dạng nhân viên văn phòng (layout như hiện tại với các mục: TT chuyển, L căn bản, Phụ cấp TN, Phụ cấp chuyên cần + KPI, Thanh toán TN + CP chiêu sinh, Phụ cấp cơm + xăng, Phụ cấp điện thoại, L làm thêm giờ, Dạy LT + SH, Thưởng lễ, BHXH 10.5%, Thuế TNCN, Nhận, Người phụ thuộc).
+
 ## Scope
 
 ### In Scope
 
-1. Thêm migration DB cho các field mới (tham chiếu tra cứu + payroll + phòng ban payroll).
-2. Cập nhật import `nhan-vien` trong `admin/sources/import.php` theo Option B.
-3. Cập nhật rule insert/update để không phụ thuộc CCCD khi import từ payroll.
-4. Đồng bộ dữ liệu tối thiểu với các field cũ đang dùng trong giao diện hiện tại (`tenvi`, `khoa`, `hang`, `cccd`).
+1. Thêm migration DB cho các field mới (tham chiếu tra cứu + payroll + phòng ban payroll + `payroll_td/ss/c1/ce`).
+2. Thêm bảng/cấu hình `payroll_config` để lưu đơn giá từng loại học viên (TĐ, SS, C1, CE).
+3. Cập nhật import `nhan-vien` trong `admin/sources/import.php`:
+   - Chỉ đọc sheet có tên `L`.
+   - Phân tách bộ phận theo dòng `Bộ phận giáo viên`.
+   - Đọc cột TĐ, SS, C1, CE cho nhân viên giáo viên.
+4. Cập nhật rule insert/update để không phụ thuộc CCCD khi import từ payroll.
+5. Đồng bộ dữ liệu tối thiểu với các field cũ đang dùng trong giao diện hiện tại (`tenvi`, `khoa`, `hang`, `cccd`).
+6. Public tra cứu hiển thị phiếu lương theo bộ phận (giáo viên / văn phòng).
 
 ### Out of Scope
 
-1. Không triển khai tính lương tự động.
+1. Không triển khai tính lương tự động ngoài các công thức tra cứu public đã mô tả.
 2. Không làm versioning nhiều kỳ lương trong cùng change này.
 3. Không refactor toàn bộ màn admin ngoài phần cần để hiển thị/chỉnh sửa field mới.
 
@@ -89,3 +160,8 @@ Vẫn lưu `options2` như bản ghi nguồn để trace/debug.
 2. Mỗi nhân viên được lưu đủ dữ liệu payroll trong cột DB riêng.
 3. Nhân viên chưa có CCCD vẫn được import và tra cứu qua field tham chiếu mới.
 4. Dòng aggregate được map thành thông tin phòng ban cho đúng nhóm nhân viên.
+5. Chỉ sheet `L` được xử lý; import file có nhiều sheet không bị lệch dữ liệu.
+6. Nhân viên thuộc đúng bộ phận (`giao_vien` / `van_phong`) dựa trên vị trí tương đối so với dòng `Bộ phận giáo viên`.
+7. Giáo viên có đủ 4 field học viên `payroll_td/ss/c1/ce`; văn phòng để NULL.
+8. Admin có thể xem và chỉnh sửa đơn giá học viên qua config mà không cần deploy lại.
+9. Public tra cứu giáo viên hiển thị phiếu lương đúng công thức; tra cứu văn phòng hiển thị layout văn phòng.

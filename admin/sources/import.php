@@ -289,6 +289,31 @@
 		return trim((string)$value);
 	}
 
+	function parseImportIntegerValue($rawValue)
+	{
+		$rawValue = trim((string)$rawValue);
+		if($rawValue === '') return null;
+
+		$normalized = str_replace(array("\xc2\xa0", ' '), '', $rawValue);
+		if($normalized === '') return null;
+
+		if(preg_match('/^-?\d+$/', $normalized)) return (int)$normalized;
+
+		if(preg_match('/^-?\d{1,3}([.,]\d{3})+$/', $normalized))
+		{
+			$normalized = str_replace(array('.', ','), '', $normalized);
+			return (int)$normalized;
+		}
+
+		if(preg_match('/^-?\d+[.,]\d+$/', $normalized))
+		{
+			$normalized = str_replace(',', '.', $normalized);
+			return (int)round((float)$normalized);
+		}
+
+		return null;
+	}
+
 	function detectEmployeeDepartmentFromRow($rowValues)
 	{
 		$nonEmptyValues = array();
@@ -458,9 +483,25 @@
 
 				$objPHPExcel = PHPExcel_IOFactory::load($filename);
 
+				// Task 16: Với nhan-vien, kiểm tra file có sheet "L" không trước khi xử lý
+				if($type == 'nhan-vien')
+				{
+					$sheetNames = array();
+					foreach($objPHPExcel->getWorksheetIterator() as $_ws) $sheetNames[] = $_ws->getTitle();
+					if(!in_array('L', $sheetNames, true))
+					{
+						$mess = 'Không tìm thấy sheet có tên "L" trong file. Các sheet hiện có: '.htmlspecialchars(implode(', ', $sheetNames)).'. Vui lòng kiểm tra lại file lương (.xlsm/.xlsx).';
+						@unlink($filename);
+						$template = "import/man/items";
+						return;
+					}
+				}
 				foreach ($objPHPExcel->getWorksheetIterator() as $worksheet) 
 				{
 					$worksheetTitle = $worksheet->getTitle();
+					// Task 16: Với nhan-vien chỉ xử lý sheet "L"; bỏ qua tất cả sheet khác
+					if($type == 'nhan-vien' && $worksheetTitle !== 'L') continue;
+
 					$highestRow = $worksheet->getHighestRow();
 					$highestColumn = $worksheet->getHighestColumn();
 					$highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn);
@@ -470,7 +511,10 @@
 
 					if($type == 'nhan-vien')
 					{
-						$headerRow = detectEmployeeHeaderRow($worksheet, $highestRow, $highestColumnIndex);
+					// Task 16: Nếu không có dữ liệu nào thì bỏ qua (tránh trường hợp sheet rỗng)
+					if($highestRow <= 1) { $mess .= 'Sheet "L" không có dữ liệu.<br>'; continue; }
+
+					$headerRow = detectEmployeeHeaderRow($worksheet, $highestRow, $highestColumnIndex);
 						$employeeColumnIndex = getEmployeeImportColumnIndex($worksheet, $highestColumnIndex, $headerRow);
 						$dataStartRow = $headerRow + 1;
 
@@ -499,7 +543,15 @@
 
 						if($nameColumn === null || ($baseSalaryColumn === null && $totalIncomeColumn === null && $netSalaryColumn === null)) continue;
 
+						// Task 19: Cột học viên điều hành (GV)
+						$tdColumn = findImportHeaderMapColumnIndex($headerMap, array('td'));
+						$ssColumn = findImportHeaderMapColumnIndex($headerMap, array('ss'));
+						$c1Column = findImportHeaderMapColumnIndex($headerMap, array('c1'));
+						$ceColumn = findImportHeaderMapColumnIndex($headerMap, array('ce'));
+
 						$currentDepartment = '';
+						// Task 17: Flag theo dõi đã qua dòng "Bộ phận giáo viên" chưa
+						$isGiaoVienSection = false;
 
 						for($row = $dataStartRow; $row <= $highestRow; $row++)
 						{
@@ -516,6 +568,8 @@
 							if($departmentFromRow !== '')
 							{
 								$currentDepartment = $departmentFromRow;
+								// Task 17: Nhận diện mốc "Bộ phận giáo viên"
+								if(!$isGiaoVienSection && stripos(normalizeImportHeaderLabel($departmentFromRow), 'bophangiaovien') !== false) $isGiaoVienSection = true;
 								continue;
 							}
 
@@ -530,12 +584,40 @@
 							if(isEmployeeDepartmentSummaryRow($employeeName, $employeeOrder))
 							{
 								$currentDepartment = $employeeName;
+								// Task 17: Kiểm tra lần nữa khi phát hiện qua isEmployeeDepartmentSummaryRow
+								if(!$isGiaoVienSection && stripos(normalizeImportHeaderLabel($employeeName), 'bophangiaovien') !== false) $isGiaoVienSection = true;
 								continue;
 							}
 
 							if($employeeName === '') continue;
 							if($employeeCccd !== '') $employeeReference = $employeeCccd;
 							if($employeeReference === '') $employeeReference = buildEmployeeReferenceCode($worksheetTitle, $employeeOrder, $employeeName);
+
+							// Task 17: Phân loại bộ phận
+							$payrollDeptClassification = $isGiaoVienSection ? 'giao_vien' : 'van_phong';
+
+							// Task 19: Đọc cột học viên điều hành (chỉ GV)
+							$payrollTd = null;
+							$payrollSs = null;
+							$payrollC1 = null;
+							$payrollCe = null;
+							if($isGiaoVienSection)
+							{
+								$rawTd = ($tdColumn !== null) ? getImportCellStringValue($worksheet, $tdColumn, $row) : getEmployeeRowValueByAliases($rowDetail, array('cot35'));
+								$rawSs = ($ssColumn !== null) ? getImportCellStringValue($worksheet, $ssColumn, $row) : getEmployeeRowValueByAliases($rowDetail, array('cot36'));
+								$rawC1 = ($c1Column !== null) ? getImportCellStringValue($worksheet, $c1Column, $row) : getEmployeeRowValueByAliases($rowDetail, array('cot37'));
+								$rawCe = ($ceColumn !== null) ? getImportCellStringValue($worksheet, $ceColumn, $row) : getEmployeeRowValueByAliases($rowDetail, array('cot38'));
+
+								$parsedTd = parseImportIntegerValue($rawTd);
+								$parsedSs = parseImportIntegerValue($rawSs);
+								$parsedC1 = parseImportIntegerValue($rawC1);
+								$parsedCe = parseImportIntegerValue($rawCe);
+
+								if($parsedTd !== null) $payrollTd = $parsedTd;
+								if($parsedSs !== null) $payrollSs = $parsedSs;
+								if($parsedC1 !== null) $payrollC1 = $parsedC1;
+								if($parsedCe !== null) $payrollCe = $parsedCe;
+							}
 
 							$payrollWorkingDays = getEmployeeRowValueByAliases($rowDetail, array('songaylamviec'));
 							$payrollBaseSalary = getEmployeeRowValueByAliases($rowDetail, array('luongchinh'));
@@ -595,6 +677,12 @@
 							$data['payroll_thue_tncn'] = ($payrollPersonalTax !== '') ? htmlspecialchars($payrollPersonalTax) : '';
 							$data['payroll_luong_thuc_nhan'] = ($payrollNetSalary !== '') ? htmlspecialchars($payrollNetSalary) : '';
 							$data['payroll_nghia_vu_gv'] = ($payrollTeacherDuty !== '') ? htmlspecialchars($payrollTeacherDuty) : '';
+							// Task 17 + 19: Lưu phân loại bộ phận và số học viên
+							$data['payroll_department'] = $payrollDeptClassification;
+							$data['payroll_td'] = $payrollTd;
+							$data['payroll_ss'] = $payrollSs;
+							$data['payroll_c1'] = $payrollC1;
+							$data['payroll_ce'] = $payrollCe;
 							$data['type'] = $type;
 							$data['hienthi'] = 1;
 							$data['options2'] = json_encode(array(

@@ -58,7 +58,7 @@ function cabin_course_week_bounds($course)
 
 function cabin_render_panel($d, $student, $course, $weekStart)
 {
-    $maxStudentSlots = 3;
+    $maxStudentSlots = 1;
     list($minWeekStart, $maxWeekStart) = cabin_course_week_bounds($course);
     $weekStart = cabin_week_start($weekStart);
     if($weekStart < $minWeekStart) $weekStart = $minWeekStart;
@@ -190,7 +190,7 @@ function cabin_render_panel($d, $student, $course, $weekStart)
                 $html .= '<span style="display:inline-block; padding:4px 8px; border-radius:4px; background:#f8d7da; color:#721c24; font-size:12px;">Đã đủ</span>';
                 $html .= '<div style="font-size:11px; color:#666; margin-top:4px;">'.$count.'/'.$capacity.'</div>';
             } elseif($studentLimitReached) {
-                $html .= '<span style="display:inline-block; padding:4px 8px; border-radius:4px; background:#fff3cd; color:#856404; font-size:12px;">Tối đa 3 ca</span>';
+                $html .= '<span style="display:inline-block; padding:4px 8px; border-radius:4px; background:#fff3cd; color:#856404; font-size:12px;">Tối đa 1 ca</span>';
                 $html .= '<div style="font-size:11px; color:#666; margin-top:4px;">'.$count.'/'.$capacity.'</div>';
             } elseif($canRegister) {
                 $btnLabel = ($studentRegCount > 0) ? 'Đăng ký thêm' : 'Đăng ký';
@@ -248,7 +248,7 @@ if($action === 'lookup')
 
 if($action === 'register')
 {
-    $maxStudentSlots = 3;
+    $maxStudentSlots = 1;
     $id_hocvien = isset($_POST['id_hocvien']) ? (int)$_POST['id_hocvien'] : 0;
     $ngay_hoc = isset($_POST['ngay_hoc']) ? trim($_POST['ngay_hoc']) : '';
     $ca = isset($_POST['ca']) ? (int)$_POST['ca'] : 0;
@@ -310,7 +310,7 @@ if($action === 'register')
         if(count($studentRegs) >= $maxStudentSlots) {
             $d->rollback();
             $html = cabin_render_panel($d, $student, $course, $weekStart);
-            cabin_json(false, 'Mỗi học viên chỉ được đăng ký tối đa 3 ca trong 1 khóa.', $html);
+            cabin_json(false, 'Mỗi học viên chỉ được đăng ký tối đa 1 ca trong 1 khóa.', $html);
         }
 
         // Khóa theo ngày + ca toàn hệ thống (không tách khóa học).

@@ -108,6 +108,15 @@
                 <?php } else { ?>
                     <tbody>
                         <?php for($i=0;$i<count($items);$i++) {
+                            $departmentLabel = $items[$i]['hang'];
+                            if($_GET['type']=='nhan-vien')
+                            {
+                                $positionLabel = trim((string)$items[$i]['khoa']);
+                                if(trim((string)$departmentLabel) === '' && mb_strtolower($positionLabel, 'UTF-8') === 'nhân viên')
+                                {
+                                    $departmentLabel = 'Bộ phận văn phòng';
+                                }
+                            }
                             $payrollDetail = array(
                                 'Số ngày làm việc' => $items[$i]['payroll_so_ngay_lam_viec'],
                                 'Lương chính' => $items[$i]['payroll_luong_chinh'],
@@ -130,7 +139,11 @@
                                 'Bậc' => $items[$i]['payroll_bac'],
                                 'Thuế TNCN' => $items[$i]['payroll_thue_tncn'],
                                 'Lương thực nhận' => $items[$i]['payroll_luong_thuc_nhan'],
-                                'Nghĩa vụ GV' => $items[$i]['payroll_nghia_vu_gv']
+                                'Nghĩa vụ GV' => $items[$i]['payroll_nghia_vu_gv'],
+                                'TĐ' => $items[$i]['payroll_td'],
+                                'SS' => $items[$i]['payroll_ss'],
+                                'C1' => $items[$i]['payroll_c1'],
+                                'CE' => $items[$i]['payroll_ce']
                             );
                             $payrollDetailJson = htmlspecialchars(json_encode($payrollDetail, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
 
@@ -175,7 +188,7 @@
 
                                 <td class="align-middle">
                                     <a class="text-dark" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>">
-                                        <?php if($_GET['type']=='gxn')echo $items[$i]['gxn']; else if($_GET['type']=='gplx')echo $items[$i]['gplx']; else echo $items[$i]['hang'];?>
+                                        <?php if($_GET['type']=='gxn')echo $items[$i]['gxn']; else if($_GET['type']=='gplx')echo $items[$i]['gplx']; else echo $departmentLabel;?>
                                     </a>
                                 </td>
 
