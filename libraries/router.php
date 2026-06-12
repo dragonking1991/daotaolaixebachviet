@@ -153,6 +153,14 @@
 				$title_crumb = 'Tra cứu nhân viên';
 				break;
 
+		case 'dang-ky-hoc-cabin':
+			$source = "dangky_cabin";
+			$template = "cabin/cabin";
+			$type = 'dang-ky-hoc-cabin';
+			$seo->setSeo('type','article');
+			$title_crumb = 'Đăng ký ngày học cabin';
+			break;
+
 		case 'lien-he':
 			$source = "contact";
 			$template = "contact/contact";

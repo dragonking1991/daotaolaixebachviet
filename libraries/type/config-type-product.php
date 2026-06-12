@@ -21,4 +21,8 @@
     $config['product'][$nametype]['height'] = 300;
     $config['product'][$nametype]['thumb'] = '100x100x1';
     $config['product'][$nametype]['img_type'] = '.jpg|.gif|.png|.jpeg|.gif|.JPG|.PNG|.JPEG|.Png|.GIF';
+
+    $nametype = "cabin";
+    $config['product'][$nametype]['title_main'] = "Học viên cabin";
+    $config['product'][$nametype]['import'] = true;
 ?>

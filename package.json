@@ -1,0 +1,19 @@
+{
+  "name": "daotaolaixebachviet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Utility scripts to run local PHP/MySQL stack for daotaolaixebachviet.edu.vn",
+  "scripts": {
+    "dev": "docker compose up --build",
+    "up": "docker compose up -d --build",
+    "down": "docker compose down",
+    "stop": "docker compose stop",
+    "restart": "npm run down && npm run up",
+    "logs": "docker compose logs -f --tail=100 web",
+    "logs:db": "docker compose logs -f --tail=100 db",
+    "ps": "docker compose ps",
+    "open": "open http://localhost:8080",
+    "db:cli": "docker exec -it bachviet_db mysql -uroot -proot123 daotaola6686_db",
+    "migrate:cabin": "sh -c 'docker exec -i bachviet_db mysql -uroot -proot123 daotaola6686_db < migration_cabin.sql'"
+  }
+}

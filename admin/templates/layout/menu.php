@@ -508,6 +508,45 @@
                     </li>
                 <?php } ?>
 
+                <?php
+                    $active_cabin = "";
+                    $menuopen_cabin = "";
+                    if($com=='cabin')
+                    {
+                        $active_cabin = 'active';
+                        $menuopen_cabin = 'menu-open';
+                    }
+                ?>
+                <li class="nav-item has-treeview <?=$menuopen_cabin?>">
+                    <a class="nav-link <?=$active_cabin?>" href="#" title="Quản lý khóa học cabin">
+                        <i class="nav-icon text-sm fas fa-shuttle-van"></i>
+                        <p>
+                            QL Học Cabin
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <?php
+                            $active_cabin_man = "";
+                            if($com=='cabin' && ($act=='man' || $act=='add' || $act=='edit' || $act=='dangky' || $act=='data')) $active_cabin_man = "active";
+                        ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?=$active_cabin_man?>" href="index.php?com=cabin&act=man" title="Danh sách khóa học cabin">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Danh sách khóa</p>
+                            </a>
+                        </li>
+                        <?php
+                            $active_cabin_upload = "";
+                            if($com=='cabin' && ($act=='upload' || $act=='uploadExcel')) $active_cabin_upload = "active";
+                        ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?=$active_cabin_upload?>" href="index.php?com=cabin&act=upload" title="Import học viên cabin">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Import học viên</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
 
                 <!-- Cart -->
                 <?php if(isset($config['order']['active']) && $config['order']['active'] == true) { ?>
