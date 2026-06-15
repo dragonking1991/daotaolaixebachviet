@@ -176,9 +176,9 @@ function cabin_render_panel($d, $student, $course, $weekStart)
                 $html .= '<span style="color:#999;">-</span>';
             } elseif($already) {
                 $html .= '<span style="display:inline-block; padding:4px 8px; border-radius:4px; background:#d4edda; color:#155724; font-size:12px;">Đã đăng ký</span>';
-                if(!$closed && !$isPast) {
-                    $html .= '<div style="margin-top:6px;"><button type="button" class="btn-cabin-cancel" data-hocvien="'.$student['id'].'" data-ngay="'.$date.'" data-ca="'.$ca.'" data-week-start="'.$weekStart.'" style="padding:4px 10px; border:1px solid #dc3545; border-radius:4px; background:#fff; color:#dc3545; font-size:12px;">Hủy ca này</button></div>';
-                }
+                // if(!$closed && !$isPast) {
+                //     $html .= '<div style="margin-top:6px;"><button type="button" class="btn-cabin-cancel" data-hocvien="'.$student['id'].'" data-ngay="'.$date.'" data-ca="'.$ca.'" data-week-start="'.$weekStart.'" style="padding:4px 10px; border:1px solid #dc3545; border-radius:4px; background:#fff; color:#dc3545; font-size:12px;">Hủy ca này</button></div>';
+                // }
                 $html .= '<div style="font-size:11px; color:#666; margin-top:4px;">'.$count.'/'.$capacity.'</div>';
             } elseif($closed) {
                 $html .= '<span style="display:inline-block; padding:4px 8px; border-radius:4px; background:#f8d7da; color:#721c24; font-size:12px;">Đã khóa</span>';

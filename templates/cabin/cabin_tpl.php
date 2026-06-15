@@ -3,7 +3,13 @@
 
     <div class="content-main" style="margin-bottom:15px;">
         <p style="margin-bottom:8px;">Học viên nhập CCCD để tra cứu và đăng ký lịch học cabin theo tuần.</p>
-        <p style="margin:0; color:#d35400;"><strong>Lưu ý:</strong> Học viên có mặt trước giờ học ít nhất 15 phút để điểm danh.</p>
+        <p style="margin:0; color:#d35400;">
+            <strong>Lưu ý:</strong> 
+            <br />
+            Học viên có mặt trước giờ học ít nhất 15 phút để điểm danh.
+            <br />
+            Lịch sau khi đăng ký sẽ không được hủy, vui lòng sắp xếp theo lịch đã đăng ký để bảo đảm tiến độ khóa học.
+        </p>
         <p style="margin:6px 0 0 0; color:#c0392b;"><strong>Nếu hệ thống đã khóa đăng ký:</strong> vui lòng liên hệ văn phòng để được hỗ trợ sắp lịch.</p>
     </div>
 
