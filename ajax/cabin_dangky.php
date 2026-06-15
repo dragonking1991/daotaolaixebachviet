@@ -149,7 +149,7 @@ function cabin_render_panel($d, $student, $course, $weekStart)
     }
     $html .= '</tr></thead><tbody>';
 
-    for($ca = 1; $ca <= 4; $ca++)
+    foreach(array_keys($slots) as $ca)
     {
         $slot = $slots[$ca];
         $html .= '<tr>';

@@ -3,8 +3,8 @@
  * Cấu hình lịch học cabin dùng chung cho admin, frontend và AJAX.
  *
  * Quy tắc:
- *  - 1 ngày có tối đa 4 ca, mỗi ca 2 tiếng.
- *  - Thứ 2 → Thứ 6: đủ 4 ca (8-10h, 10-12h, 12-14h, 14-16h).
+ *  - 1 ngày có tối đa 3 ca, mỗi ca 2 tiếng.
+ *  - Thứ 2 → Thứ 6: Ca 1 (8-10h), Ca 2 (10-12h), Ca 4 (14-16h).
  *  - Thứ 7 (buổi sáng): chỉ có Ca 1 và Ca 2.
  *  - Chủ nhật: không có ca nào.
  *  - Mỗi ca có tối đa N lịch đăng ký (suc_chua_ca, mặc định 3).
@@ -12,7 +12,7 @@
 
 if (!function_exists('cabin_time_slots')) {
     /**
-     * Trả về định nghĩa toàn bộ 4 ca.
+     * Trả về định nghĩa các ca (Ca 3 đã bị bỏ).
      * @return array[ca => ['ca'=>int,'label'=>string,'gio_b_d'=>'HH:MM','gio_kt'=>'HH:MM']]
      */
     function cabin_time_slots()
@@ -20,8 +20,7 @@ if (!function_exists('cabin_time_slots')) {
         return array(
             1 => array('ca' => 1, 'label' => 'Ca 1', 'gio_b_d' => '08:00', 'gio_kt' => '10:00'),
             2 => array('ca' => 2, 'label' => 'Ca 2', 'gio_b_d' => '10:00', 'gio_kt' => '12:00'),
-            3 => array('ca' => 3, 'label' => 'Ca 3', 'gio_b_d' => '12:00', 'gio_kt' => '14:00'),
-            4 => array('ca' => 4, 'label' => 'Ca 4', 'gio_b_d' => '14:00', 'gio_kt' => '16:00'),
+            4 => array('ca' => 4, 'label' => 'Ca 3', 'gio_b_d' => '14:00', 'gio_kt' => '16:00'),
         );
     }
 }
@@ -36,7 +35,7 @@ if (!function_exists('cabin_ca_for_dow')) {
     {
         $dow = (int) $dow;
         if ($dow >= 1 && $dow <= 5) {
-            return array(1, 2, 3, 4); // Thứ 2 - Thứ 6
+            return array(1, 2, 4); // Thứ 2 - Thứ 6
         }
         if ($dow === 6) {
             return array(1, 2); // Thứ 7 sáng
