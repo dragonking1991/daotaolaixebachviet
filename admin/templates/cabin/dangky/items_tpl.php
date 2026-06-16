@@ -4,6 +4,7 @@
 	$id_kh = $kh_info['id'];
 	$linkFilter = "index.php?com=cabin&act=dangky&id=".$id_kh;
 	$linkExport = "index.php?com=cabin&act=exportExcel&id=".$id_kh;
+	$linkAdd = "index.php?com=cabin&act=add_dangky&id=".$id_kh;
 	$keyword = isset($_GET['keyword']) ? $_GET['keyword'] : '';
 	$ngayHoc = isset($ngay_hoc_filter) ? $ngay_hoc_filter : '';
 	$ca = isset($ca_filter) ? (int)$ca_filter : 0;
@@ -24,6 +25,7 @@
 <section class="content">
 	<div class="card-footer text-sm sticky-top">
 		<a class="btn btn-sm bg-gradient-secondary text-white" href="index.php?com=cabin&act=man" title="Quay lại"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
+		<a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm đăng ký"><i class="fas fa-plus mr-2"></i>Thêm đăng ký</a>
 		<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkExport?>" title="Xuất Excel"><i class="fas fa-file-excel mr-2"></i>Xuất Excel</a>
 	</div>
 
@@ -73,6 +75,7 @@
 						<th class="align-middle text-center" width="10%">Ca</th>
 						<th class="align-middle text-center" width="16%">Giờ học</th>
 						<th class="align-middle" width="12%">Ngày đăng ký</th>
+						<th class="align-middle text-center" width="10%">Thao tác</th>
 					</tr>
 				</thead>
 				<?php if(empty($items_dk)) { ?>
@@ -94,6 +97,10 @@
 								<td class="align-middle text-center"><?=$caText?></td>
 								<td class="align-middle text-center"><?=$gio?></td>
 								<td class="align-middle"><?=($row['ngaytao'] > 0) ? date('H:i d/m/Y', $row['ngaytao']) : ''?></td>
+								<td class="align-middle text-center text-md text-nowrap">
+									<a class="text-primary mr-2" href="index.php?com=cabin&act=edit_dangky&id=<?=(int)$row['id']?>&p=<?=$curPage?>" title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
+									<a class="text-danger" id="delete-item" data-url="index.php?com=cabin&act=delete_dangky&id=<?=(int)$row['id']?>&p=<?=$curPage?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
+								</td>
 							</tr>
 						<?php } ?>
 					</tbody>
@@ -101,6 +108,10 @@
 			</table>
 		</div>
 	</div>
+
+		<div class="card-footer text-sm">
+			<a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm đăng ký"><i class="fas fa-plus mr-2"></i>Thêm đăng ký</a>
+		</div>
 
 	<?php if($paging_dk) { ?>
 		<div class="card-footer text-sm pb-0"><?=$paging_dk?></div>

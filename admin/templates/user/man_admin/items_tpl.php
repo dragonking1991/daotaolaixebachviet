@@ -3,6 +3,10 @@
     $linkAdd = "index.php?com=user&act=add_admin&p=".$curPage;
 	$linkEdit = "index.php?com=user&act=edit_admin&p=".$curPage;
 	$linkDelete = "index.php?com=user&act=delete_admin&p=".$curPage;
+    $isRootUser = !$func->check_permission();
+    $canAddAdmin = $isRootUser || (isset($_SESSION['list_quyen']) && in_array('user_add_admin', $_SESSION['list_quyen']));
+    $canEditAdmin = $isRootUser || (isset($_SESSION['list_quyen']) && in_array('user_edit_admin', $_SESSION['list_quyen']));
+    $canDeleteAdmin = $isRootUser || (isset($_SESSION['list_quyen']) && in_array('user_delete_admin', $_SESSION['list_quyen']));
 ?>
 
 <!-- Content Header -->
@@ -20,8 +24,12 @@
 <!-- Main content -->
 <section class="content">
     <div class="card-footer text-sm sticky-top">
-        <a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm mới"><i class="fas fa-plus mr-2"></i>Thêm mới</a>
-        <a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa tất cả</a>
+        <?php if($canAddAdmin) { ?>
+            <a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm mới"><i class="fas fa-plus mr-2"></i>Thêm mới</a>
+        <?php } ?>
+        <?php if($canDeleteAdmin) { ?>
+            <a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa tất cả</a>
+        <?php } ?>
         <div class="form-inline form-search d-inline-block align-middle ml-3">
             <div class="input-group input-group-sm">
                 <input class="form-control form-control-navbar text-sm" type="search" id="keyword" placeholder="Tìm kiếm" aria-label="Tìm kiếm" value="<?=(isset($_GET['keyword'])) ? $_GET['keyword'] : ''?>" onkeypress="doEnter(event,'keyword','<?=$linkMan?>')">
@@ -68,26 +76,46 @@
                                     </div>
                                 </td>
                                 <td class="align-middle">
-                                    <input type="number" class="form-control form-control-mini m-auto update-stt" min="0" value="<?=$items[$i]['stt']?>" data-id="<?=$items[$i]['id']?>" data-table="user">
+                                    <?php if($canEditAdmin) { ?>
+                                        <input type="number" class="form-control form-control-mini m-auto update-stt" min="0" value="<?=$items[$i]['stt']?>" data-id="<?=$items[$i]['id']?>" data-table="user">
+                                    <?php } else { ?>
+                                        <span class="text-secondary"><?=$items[$i]['stt']?></span>
+                                    <?php } ?>
                                 </td>
                                 <td class="align-middle">
-                                    <a class="text-dark" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['username']?>"><?=$items[$i]['username']?></a>
+                                        <?php if($canEditAdmin) { ?>
+                                            <a class="text-dark" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['username']?>"><?=$items[$i]['username']?></a>
+                                        <?php } else { ?>
+                                            <span class="text-dark"><?=$items[$i]['username']?></span>
+                                        <?php } ?>
                                 </td>
                                 <td class="align-middle">
-                                    <a class="text-dark" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['ten']?>"><?=$items[$i]['ten']?></a>
+                                        <?php if($canEditAdmin) { ?>
+                                            <a class="text-dark" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['ten']?>"><?=$items[$i]['ten']?></a>
+                                        <?php } else { ?>
+                                            <span class="text-dark"><?=$items[$i]['ten']?></span>
+                                        <?php } ?>
                                 </td>
                                 <td class="align-middle">
-                                    <a class="text-dark" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['email']?>"><?=$items[$i]['email']?></a>
+                                        <?php if($canEditAdmin) { ?>
+                                            <a class="text-dark" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['email']?>"><?=$items[$i]['email']?></a>
+                                        <?php } else { ?>
+                                            <span class="text-dark"><?=$items[$i]['email']?></span>
+                                        <?php } ?>
                                 </td>
                                 <td class="align-middle text-center">
                                 	<div class="custom-control custom-checkbox my-checkbox">
-                                        <input type="checkbox" class="custom-control-input show-checkbox" id="show-checkbox-<?=$items[$i]['id']?>" data-table="user" data-id="<?=$items[$i]['id']?>" data-loai="hienthi" <?=($items[$i]['hienthi'])?'checked':''?>>
+                                            <input type="checkbox" class="custom-control-input show-checkbox" id="show-checkbox-<?=$items[$i]['id']?>" data-table="user" data-id="<?=$items[$i]['id']?>" data-loai="hienthi" <?=($items[$i]['hienthi'])?'checked':''?> <?=($canEditAdmin)?'':'disabled'?>>
                                         <label for="show-checkbox-<?=$items[$i]['id']?>" class="custom-control-label"></label>
                                     </div>
                                 </td>
                                 <td class="align-middle text-center text-md text-nowrap">
-                                    <a class="text-primary mr-2" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
-                                    <a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
+                                    <?php if($canEditAdmin) { ?>
+                                        <a class="text-primary mr-2" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
+                                    <?php } ?>
+                                    <?php if($canDeleteAdmin) { ?>
+                                        <a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
+                                    <?php } ?>
                                 </td>
                             </tr>
                         <?php } ?>
@@ -102,7 +130,11 @@
         </div>
     <?php } ?>
     <div class="card-footer text-sm">
-        <a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm mới"><i class="fas fa-plus mr-2"></i>Thêm mới</a>
-        <a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa tất cả</a>
+        <?php if($canAddAdmin) { ?>
+            <a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm mới"><i class="fas fa-plus mr-2"></i>Thêm mới</a>
+        <?php } ?>
+        <?php if($canDeleteAdmin) { ?>
+            <a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa tất cả</a>
+        <?php } ?>
     </div>
 </section>

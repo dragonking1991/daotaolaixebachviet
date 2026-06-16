@@ -88,12 +88,37 @@
 						else
 							$quyen_user = $com.'_'.$act;
 
+						$quyen_aliases = array($quyen_user);
+						if($com == 'cabin')
+						{
+							if(in_array($act, array('man', 'add', 'edit', 'delete', 'data', 'deleteData', 'deleteAllData', 'ajaxData', 'dangky', 'add_dangky', 'edit_dangky', 'save_dangky', 'delete_dangky', 'exportExcel')))
+							{
+								$quyen_aliases[] = 'cabin_man';
+								$quyen_aliases[] = 'product_man_cabin';
+							}
+							if(in_array($act, array('upload', 'uploadExcel')))
+							{
+								$quyen_aliases[] = 'cabin_upload';
+								$quyen_aliases[] = 'import_man_cabin';
+							}
+						}
+
 						if($quyen_user == '_'){
 							$quyen_user=='';
 						}
 						if(isset($_SESSION['list_quyen']))
 						{
-							if(!in_array($quyen_user, $_SESSION['list_quyen']))
+							$accessGranted = false;
+							foreach($quyen_aliases as $quyen_alias)
+							{
+								if(in_array($quyen_alias, $_SESSION['list_quyen']))
+								{
+									$accessGranted = true;
+									break;
+								}
+							}
+
+							if(!$accessGranted)
 							{
 								$func->transfer("Bạn không có quyền vào khu vực này","index.php", false);
 								exit;

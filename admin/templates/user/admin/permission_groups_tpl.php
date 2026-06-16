@@ -3,6 +3,10 @@
     $linkAdd = "index.php?com=user&act=add_permission_group&p=".$curPage;
 	$linkEdit = "index.php?com=user&act=edit_permission_group&p=".$curPage;
 	$linkDelete = "index.php?com=user&act=delete_permission_group&p=".$curPage;
+    $isRootUser = !$func->check_permission();
+    $canAddPermissionGroup = $isRootUser || (isset($_SESSION['list_quyen']) && in_array('user_add_permission_group', $_SESSION['list_quyen']));
+    $canEditPermissionGroup = $isRootUser || (isset($_SESSION['list_quyen']) && in_array('user_edit_permission_group', $_SESSION['list_quyen']));
+    $canDeletePermissionGroup = $isRootUser || (isset($_SESSION['list_quyen']) && in_array('user_delete_permission_group', $_SESSION['list_quyen']));
 ?>
 
 <!-- Content Header -->
@@ -20,8 +24,12 @@
 <!-- Main content -->
 <section class="content">
     <div class="card-footer text-sm sticky-top">
-        <a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm mới"><i class="fas fa-plus mr-2"></i>Thêm mới</a>
-        <a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa tất cả</a>
+        <?php if($canAddPermissionGroup) { ?>
+            <a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm mới"><i class="fas fa-plus mr-2"></i>Thêm mới</a>
+        <?php } ?>
+        <?php if($canDeletePermissionGroup) { ?>
+            <a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa tất cả</a>
+        <?php } ?>
         <div class="form-inline form-search d-inline-block align-middle ml-3">
             <div class="input-group input-group-sm">
                 <input class="form-control form-control-navbar text-sm" type="search" id="keyword" placeholder="Tìm kiếm" aria-label="Tìm kiếm" value="<?=(isset($_GET['keyword'])) ? $_GET['keyword'] : ''?>" onkeypress="doEnter(event,'keyword','<?=$linkMan?>')">
@@ -66,20 +74,32 @@
                                     </div>
                                 </td>
                                 <td class="align-middle">
-                                    <input type="number" class="form-control form-control-mini m-auto update-stt" min="0" value="<?=$items[$i]['stt']?>" data-id="<?=$items[$i]['id']?>" data-table="permission_group">
+                                    <?php if($canEditPermissionGroup) { ?>
+                                        <input type="number" class="form-control form-control-mini m-auto update-stt" min="0" value="<?=$items[$i]['stt']?>" data-id="<?=$items[$i]['id']?>" data-table="permission_group">
+                                    <?php } else { ?>
+                                        <span class="text-secondary"><?=$items[$i]['stt']?></span>
+                                    <?php } ?>
                                 </td>
                                 <td class="align-middle">
-                                    <a class="text-dark" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['ten']?>"><?=$items[$i]['ten']?></a>
+                                    <?php if($canEditPermissionGroup) { ?>
+                                        <a class="text-dark" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['ten']?>"><?=$items[$i]['ten']?></a>
+                                    <?php } else { ?>
+                                        <span class="text-dark"><?=$items[$i]['ten']?></span>
+                                    <?php } ?>
                                 </td>
                                 <td class="align-middle text-center">
                                 	<div class="custom-control custom-checkbox my-checkbox">
-                                        <input type="checkbox" class="custom-control-input show-checkbox" id="show-checkbox-<?=$items[$i]['id']?>" value="<?=$items[$i]['id']?>" data-table="permission_group" data-id="<?=$items[$i]['id']?>" data-loai="hienthi" <?=($items[$i]['hienthi'])?'checked':''?>>
+                                        <input type="checkbox" class="custom-control-input show-checkbox" id="show-checkbox-<?=$items[$i]['id']?>" value="<?=$items[$i]['id']?>" data-table="permission_group" data-id="<?=$items[$i]['id']?>" data-loai="hienthi" <?=($items[$i]['hienthi'])?'checked':''?> <?=($canEditPermissionGroup)?'':'disabled'?>>
                                         <label for="show-checkbox-<?=$items[$i]['id']?>" class="custom-control-label"></label>
                                     </div>
                                 </td>
                                 <td class="align-middle text-center text-md text-nowrap">
-                                    <a class="text-primary mr-2" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
-                                    <a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
+                                    <?php if($canEditPermissionGroup) { ?>
+                                        <a class="text-primary mr-2" href="<?=$linkEdit?>&id=<?=$items[$i]['id']?>" title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
+                                    <?php } ?>
+                                    <?php if($canDeletePermissionGroup) { ?>
+                                        <a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
+                                    <?php } ?>
                                 </td>
                             </tr>
                         <?php } ?>
@@ -94,7 +114,11 @@
         </div>
     <?php } ?>
     <div class="card-footer text-sm">
-        <a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm mới"><i class="fas fa-plus mr-2"></i>Thêm mới</a>
-        <a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa tất cả</a>
+        <?php if($canAddPermissionGroup) { ?>
+            <a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm mới"><i class="fas fa-plus mr-2"></i>Thêm mới</a>
+        <?php } ?>
+        <?php if($canDeletePermissionGroup) { ?>
+            <a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa tất cả</a>
+        <?php } ?>
     </div>
 </section>

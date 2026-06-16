@@ -319,8 +319,8 @@
 			<div style="margin-bottom:18px;">
 				<h3 style="margin:0 0 10px 0; font-size:17px; color:#0f766e;">Phiếu lương giáo viên</h3>
 				<div>
-					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Lương thực nhận</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_luong_thuc_nhan'])?></div></div>
-					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Khoản phải nộp</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_nghia_vu_gv'])?></div></div>
+					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">TT chuyển khoản</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_luong_thuc_nhan'])?></div></div>
+					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Lương căn bản</div><div style="<?=$valStyle?>"><?=fmtMoney($employee['payroll_nghia_vu_gv'])?></div></div>
 					<div style="<?=$rowStyle?> font-weight:700;"><div style="<?=$labelStyle?>">Nhận</div><div style="<?=$valStyle?> color:#0f766e;"><?=($nhan > 0 ? number_format($nhan, 0, ',', '.') : '-')?></div></div>
 					<div style="height:10px;"></div>
 					<div style="<?=$rowStyle?>"><div style="<?=$labelStyle?>">Lương CE</div><div style="<?=$valStyle?>"><?=fmtMoneyInt($luongCe)?></div></div>

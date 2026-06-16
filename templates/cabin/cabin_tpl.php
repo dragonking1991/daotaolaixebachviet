@@ -2,15 +2,21 @@
     <div class="title-main"><span>Đăng ký ngày học cabin</span></div>
 
     <div class="content-main" style="margin-bottom:15px;">
-        <p style="margin-bottom:8px;">Học viên nhập CCCD để tra cứu và đăng ký lịch học cabin theo tuần.</p>
+        
+
+
+        <p style="margin-bottom:8px;">Học viên nhập CCCD để tra cứu và đăng ký lịch học cabin theo khóa.</p>
         <p style="margin:0; color:#d35400;">
             <strong>Lưu ý:</strong> 
             <br />
-            Học viên có mặt trước giờ học ít nhất 15 phút để điểm danh.
+            Học viên phải học đủ 2 giờ/ 1 ca.
             <br />
-            Lịch sau khi đăng ký sẽ không được hủy, vui lòng sắp xếp theo lịch đã đăng ký để bảo đảm tiến độ khóa học.
+            Quý học viên vui lòng ăn mặc lịch sự, có mặt trước ca học ít nhất 15 phút để tránh ảnh hưởng đến ca sau.
+            <br />
+            Lịch sau khi đăng ký sẽ không được hủy, quý học viên vui lòng sắp xếp theo lịch đã đăng ký để bảo đảm tiến độ khóa học.
+            <br />
+            Sau thời gian diễn ra khóa học cabin, hệ thống đăng ký sẽ bị khóa, nếu học viên học cabin vui lòng liên hệ văn phòng để được xếp lịch cabin.
         </p>
-        <p style="margin:6px 0 0 0; color:#c0392b;"><strong>Nếu hệ thống đã khóa đăng ký:</strong> vui lòng liên hệ văn phòng để được hỗ trợ sắp lịch.</p>
     </div>
 
     <div class="frm_tracuu" style="padding:14px;">

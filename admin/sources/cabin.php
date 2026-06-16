@@ -4,51 +4,98 @@ if(!defined('SOURCES')) die("Error");
 switch($act)
 {
 	case "man":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		get_items_cabin();
 		$template = "cabin/man/items";
 		break;
 	case "add":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		get_items_cabin();
 		$template = "cabin/man/items";
 		break;
 	case "edit":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		get_items_cabin();
 		$template = "cabin/man/items";
 		break;
 	case "save":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		save_item_cabin();
 		break;
 	case "delete":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		delete_item_cabin();
 		break;
 	case "upload":
+		if(cabin_permission_denied(array('cabin_upload', 'import_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		$template = "cabin/upload/items";
 		break;
 	case "uploadExcel":
+		if(cabin_permission_denied(array('cabin_upload', 'import_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		uploadExcel_cabin();
 		break;
 	case "data":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		get_data_cabin();
 		$template = "cabin/data/items";
 		break;
 	case "deleteData":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		deleteData_cabin();
 		break;
 	case "deleteAllData":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		deleteAllData_cabin();
 		break;
 	case "ajaxData":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		ajaxData_cabin();
 		break;
 	case "dangky":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		get_dangky_cabin();
 		$template = "cabin/dangky/items";
 		break;
+	case "add_dangky":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		add_dangky_cabin();
+		$template = "cabin/dangky/item_add";
+		break;
+	case "edit_dangky":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		edit_dangky_cabin();
+		$template = "cabin/dangky/item_add";
+		break;
+	case "save_dangky":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		save_dangky_cabin();
+		break;
+	case "delete_dangky":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		delete_dangky_cabin();
+		break;
 	case "exportExcel":
+		if(cabin_permission_denied(array('cabin_man', 'product_man_cabin'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		exportExcel_cabin();
 		break;
 	default:
 		$template = "404";
+}
+
+function cabin_permission_denied($permissions = array())
+{
+	global $func, $login_admin;
+
+	if(!$func->check_permission()) return false;
+	if(!isset($_SESSION[$login_admin]['active']) || $_SESSION[$login_admin]['active'] != true) return true;
+	if(!isset($_SESSION['list_quyen']) || !is_array($_SESSION['list_quyen'])) return true;
+
+	foreach($permissions as $permission)
+	{
+		if(in_array($permission, $_SESSION['list_quyen'])) return false;
+	}
+
+	return true;
 }
 
 function get_items_cabin()
@@ -499,6 +546,187 @@ function get_dangky_cabin()
 	if($ngay_hoc_filter != '') $url .= '&ngay_hoc='.urlencode($ngay_hoc_filter);
 	if($ca_filter > 0) $url .= '&ca='.$ca_filter;
 	$paging_dk = $func->pagination($total, $per_page, $curPage, $url);
+}
+
+function add_dangky_cabin()
+{
+	global $d, $func, $kh_info, $hocvien_list, $slots;
+
+	require_once LIBRARIES.'cabin_config.php';
+
+	$id_kh = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+	if(!$id_kh)
+		$func->transfer("Không nhận được dữ liệu", "index.php?com=cabin&act=man", false);
+
+	$kh_info = $d->rawQueryOne("select * from #_cabin_khoahoc where id = ? limit 0,1", array($id_kh));
+	if(!$kh_info || !$kh_info['id'])
+		$func->transfer("Khóa học cabin không tồn tại", "index.php?com=cabin&act=man", false);
+
+	$hocvien_list = $d->rawQuery(
+		"select id, tenvi, cccd from #_product where id_cabin_khoahoc = ? and type = 'cabin' and hienthi >= 0 order by tenvi asc",
+		array($id_kh)
+	);
+
+	$slots = cabin_time_slots();
+}
+
+function edit_dangky_cabin()
+{
+	global $d, $func, $curPage, $item_dk, $kh_info, $hocvien_list, $slots;
+
+	require_once LIBRARIES.'cabin_config.php';
+
+	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+	if(!$id)
+		$func->transfer("Không nhận được dữ liệu", "index.php?com=cabin&act=man", false);
+
+	$item_dk = $d->rawQueryOne("select * from #_cabin_dangky where id = ? limit 0,1", array($id));
+	if(!$item_dk || !$item_dk['id'])
+		$func->transfer("Đăng ký này không tồn tại", "index.php?com=cabin&act=man", false);
+
+	$kh_info = $d->rawQueryOne("select * from #_cabin_khoahoc where id = ? limit 0,1", array((int)$item_dk['id_khoahoc']));
+	if(!$kh_info || !$kh_info['id'])
+		$func->transfer("Khóa học cabin không tồn tại", "index.php?com=cabin&act=man", false);
+
+	$hocvien_list = $d->rawQuery(
+		"select id, tenvi, cccd from #_product where id_cabin_khoahoc = ? and type = 'cabin' and hienthi >= 0 order by tenvi asc",
+		array((int)$kh_info['id'])
+	);
+
+	$slots = cabin_time_slots();
+
+	if(!$hocvien_list)
+		$func->transfer("Khóa học chưa có học viên", "index.php?com=cabin&act=dangky&id=".(int)$kh_info['id']."&p=".$curPage, false);
+}
+
+function save_dangky_cabin()
+{
+	global $d, $func, $curPage;
+
+	require_once LIBRARIES.'cabin_config.php';
+
+	if(empty($_POST))
+		$func->transfer("Không nhận được dữ liệu", "index.php?com=cabin&act=man", false);
+
+	$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+	$data = isset($_POST['data']) ? $_POST['data'] : array();
+
+	$id_khoahoc = isset($data['id_khoahoc']) ? (int)$data['id_khoahoc'] : 0;
+	$id_hocvien = isset($data['id_hocvien']) ? (int)$data['id_hocvien'] : 0;
+	$ngay_hoc = isset($data['ngay_hoc']) ? trim($data['ngay_hoc']) : '';
+	$ca = isset($data['ca']) ? (int)$data['ca'] : 0;
+
+	if($ngay_hoc != '' && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $ngay_hoc))
+	{
+		list($dNgay, $mNgay, $yNgay) = explode('/', $ngay_hoc);
+		$ngay_hoc = $yNgay.'-'.$mNgay.'-'.$dNgay;
+	}
+
+	if($id > 0)
+	{
+		$current = $d->rawQueryOne("select * from #_cabin_dangky where id = ? limit 0,1", array($id));
+		if(!$current || !$current['id'])
+			$func->transfer("Đăng ký này không tồn tại", "index.php?com=cabin&act=man", false);
+
+		if($id_khoahoc <= 0) $id_khoahoc = (int)$current['id_khoahoc'];
+	}
+
+	$redirectList = "index.php?com=cabin&act=dangky&id=".$id_khoahoc."&p=".$curPage;
+	$redirectForm = ($id > 0)
+		? "index.php?com=cabin&act=edit_dangky&id=".$id."&p=".$curPage
+		: "index.php?com=cabin&act=add_dangky&id=".$id_khoahoc."&p=".$curPage;
+
+	if($id_khoahoc <= 0)
+		$func->transfer("Không nhận được dữ liệu khóa học", "index.php?com=cabin&act=man", false);
+
+	$kh_info = $d->rawQueryOne("select * from #_cabin_khoahoc where id = ? limit 0,1", array($id_khoahoc));
+	if(!$kh_info || !$kh_info['id'])
+		$func->transfer("Khóa học cabin không tồn tại", "index.php?com=cabin&act=man", false);
+
+	if($id_hocvien <= 0 || $ngay_hoc == '' || $ca <= 0)
+		$func->transfer("Vui lòng nhập đầy đủ thông tin", $redirectForm, false);
+
+	if(!preg_match('/^\d{4}-\d{2}-\d{2}$/', $ngay_hoc) || !cabin_is_valid_slot($ngay_hoc, $ca))
+		$func->transfer("Ngày học hoặc ca học không hợp lệ", $redirectForm, false);
+
+	if($ngay_hoc < $kh_info['ngay_batdau'] || $ngay_hoc > $kh_info['ngay_ketthuc'])
+		$func->transfer("Ngày học phải nằm trong thời gian khóa", $redirectForm, false);
+
+	$slotTimes = cabin_slot_times($ca);
+	if(empty($slotTimes))
+		$func->transfer("Không tìm thấy cấu hình ca học", $redirectForm, false);
+
+	$hocvien = $d->rawQueryOne(
+		"select id, cccd from #_product where id = ? and id_cabin_khoahoc = ? and type = 'cabin' and hienthi >= 0 limit 0,1",
+		array($id_hocvien, $id_khoahoc)
+	);
+	if(!$hocvien || !$hocvien['id'])
+		$func->transfer("Học viên không thuộc khóa học đã chọn", $redirectForm, false);
+
+	$paramsDuplicate = array($id_khoahoc, $id_hocvien, $ngay_hoc, $ca);
+	$sqlDuplicate = "select id from #_cabin_dangky where id_khoahoc = ? and id_hocvien = ? and ngay_hoc = ? and ca = ?";
+	if($id > 0)
+	{
+		$sqlDuplicate .= " and id <> ?";
+		$paramsDuplicate[] = $id;
+	}
+	$sqlDuplicate .= " limit 0,1";
+
+	$exists = $d->rawQueryOne($sqlDuplicate, $paramsDuplicate);
+	if($exists && $exists['id'])
+		$func->transfer("Lịch này đã tồn tại cho học viên", $redirectForm, false);
+
+	$capacity = max(1, (int)$kh_info['suc_chua_ca']);
+	$paramsCapacity = array($ngay_hoc, $ca);
+	$sqlCapacity = "select count(*) as total from #_cabin_dangky where ngay_hoc = ? and ca = ?";
+	if($id > 0)
+	{
+		$sqlCapacity .= " and id <> ?";
+		$paramsCapacity[] = $id;
+	}
+	$slotCount = $d->rawQueryOne($sqlCapacity, $paramsCapacity);
+	if((int)$slotCount['total'] >= $capacity)
+		$func->transfer("Ca học đã đủ sức chứa", $redirectForm, false);
+
+	$dataSave = array(
+		'id_khoahoc' => $id_khoahoc,
+		'id_hocvien' => $id_hocvien,
+		'cccd' => (string)$hocvien['cccd'],
+		'ngay_hoc' => $ngay_hoc,
+		'ca' => $ca,
+		'gio_b_d' => $slotTimes['gio_b_d'],
+		'gio_kt' => $slotTimes['gio_kt'],
+		'trang_thai' => 1
+	);
+
+	if($id > 0)
+	{
+		$d->where('id', $id);
+		if($d->update('cabin_dangky', $dataSave)) $func->transfer("Cập nhật đăng ký thành công", $redirectList);
+		else $func->transfer("Cập nhật đăng ký thất bại", $redirectForm, false);
+	}
+	else
+	{
+		$dataSave['ngaytao'] = time();
+		if($d->insert('cabin_dangky', $dataSave)) $func->transfer("Thêm đăng ký thành công", $redirectList);
+		else $func->transfer("Thêm đăng ký thất bại", $redirectForm, false);
+	}
+}
+
+function delete_dangky_cabin()
+{
+	global $d, $func, $curPage;
+
+	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+	if(!$id)
+		$func->transfer("Không nhận được dữ liệu", "index.php?com=cabin&act=man", false);
+
+	$item = $d->rawQueryOne("select id, id_khoahoc from #_cabin_dangky where id = ? limit 0,1", array($id));
+	if(!$item || !$item['id'])
+		$func->transfer("Đăng ký này không tồn tại", "index.php?com=cabin&act=man", false);
+
+	$d->rawQuery("delete from #_cabin_dangky where id = ?", array($id));
+	$func->transfer("Xóa đăng ký thành công", "index.php?com=cabin&act=dangky&id=".(int)$item['id_khoahoc']."&p=".$curPage);
 }
 
 function exportExcel_cabin()

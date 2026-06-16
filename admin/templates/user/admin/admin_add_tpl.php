@@ -28,6 +28,12 @@
             </div>
             <div class="card-body">
 				<div class="row">
+					<div class="form-group col-xl-4 col-lg-6 col-md-6">
+						<?php if(isset($config['permission']) && $config['permission'] == true) { ?>
+							<label for="permission">Nhóm quyền:</label>
+							<?=$func->get_permission(@$item['id_nhomquyen'])?>
+						<?php } ?>
+					</div>
 					<?php if(isset($changepass) && $changepass != '') { ?>
 						<div class="form-group col-xl-4 col-lg-6 col-md-6">
 							<label for="old-password">Mật khẩu cũ:</label>

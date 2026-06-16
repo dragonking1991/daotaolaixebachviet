@@ -4,10 +4,12 @@
 	switch($act)
 	{
 		case "capnhat":
+			if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('setting_capnhat', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 			get_setting();
 			$template = "setting/man/item_add";
 			break;
 		case "save":
+			if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('setting_capnhat', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 			save_setting();
 			break;
 			

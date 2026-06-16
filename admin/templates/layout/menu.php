@@ -374,13 +374,15 @@
                 <?php
                     $active_ky = "";
                     $menuopen_ky = "";
+                    $none_ky = "";
+                    if(isset($kiemtra) && $kiemtra == true) if($func->check_access('kysathach', 'man', '', null, 'phrase-1') && $func->check_access('kysathach', 'upload', '', null, 'phrase-1')) $none_ky = "d-none";
                     if($com=='kysathach')
                     {
                         $active_ky = 'active';
                         $menuopen_ky = 'menu-open';
                     }
                 ?>
-                <li class="nav-item has-treeview <?=$menuopen_ky?>">
+                <li class="nav-item has-treeview <?=$menuopen_ky?> <?=$none_ky?>">
                     <a class="nav-link <?=$active_ky?>" href="#" title="Quản lý Kỳ Sát Hạch">
                         <i class="nav-icon text-sm fas fa-clipboard-list"></i>
                         <p>
@@ -391,21 +393,29 @@
                     <ul class="nav nav-treeview">
                         <?php
                             $active_ky_man = "";
+                            $none_ky_man = "";
+                            if(isset($kiemtra) && $kiemtra == true) if($func->check_access('kysathach', 'man', '', null, 'phrase-1')) $none_ky_man = "d-none";
                             if($com=='kysathach' && ($act=='man' || $act=='add' || $act=='edit')) $active_ky_man = "active";
                         ?>
-                        <li class="nav-item">
+                        <li class="nav-item <?=$none_ky_man?>">
+                            <?php if(!isset($kiemtra) || $kiemtra == false || !$func->check_access('kysathach', 'man', '', null, 'phrase-1')) { ?>
                             <a class="nav-link <?=$active_ky_man?>" href="index.php?com=kysathach&act=man" title="Danh sách kỳ sát hạch">
                                 <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Danh sách</p>
                             </a>
+                            <?php } ?>
                         </li>
                         <?php
                             $active_ky_upload = "";
+                            $none_ky_upload = "";
+                            if(isset($kiemtra) && $kiemtra == true) if($func->check_access('kysathach', 'upload', '', null, 'phrase-1')) $none_ky_upload = "d-none";
                             if($com=='kysathach' && ($act=='upload' || $act=='uploadExcel')) $active_ky_upload = "active";
                         ?>
-                        <li class="nav-item">
+                        <li class="nav-item <?=$none_ky_upload?>">
+                            <?php if(!isset($kiemtra) || $kiemtra == false || !$func->check_access('kysathach', 'upload', '', null, 'phrase-1')) { ?>
                             <a class="nav-link <?=$active_ky_upload?>" href="index.php?com=kysathach&act=upload" title="Upload QR Excel">
                                 <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Upload QR</p>
                             </a>
+                            <?php } ?>
                         </li>
                     </ul>
                 </li>
@@ -513,13 +523,23 @@
                 <?php
                     $active_cabin = "";
                     $menuopen_cabin = "";
+                    $none_cabin = "";
+                    $can_cabin_man = true;
+                    $can_cabin_upload = true;
+                    if(isset($kiemtra) && $kiemtra == true)
+                    {
+                        $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
+                        $can_cabin_man = in_array('cabin_man', $list_quyen) || in_array('product_man_cabin', $list_quyen);
+                        $can_cabin_upload = in_array('cabin_upload', $list_quyen) || in_array('import_man_cabin', $list_quyen);
+                        if(!$can_cabin_man && !$can_cabin_upload) $none_cabin = "d-none";
+                    }
                     if($com=='cabin')
                     {
                         $active_cabin = 'active';
                         $menuopen_cabin = 'menu-open';
                     }
                 ?>
-                <li class="nav-item has-treeview <?=$menuopen_cabin?>">
+                <li class="nav-item has-treeview <?=$menuopen_cabin?> <?=$none_cabin?>">
                     <a class="nav-link <?=$active_cabin?>" href="#" title="Quản lý khóa học cabin">
                         <i class="nav-icon text-sm fas fa-shuttle-van"></i>
                         <p>
@@ -530,18 +550,22 @@
                     <ul class="nav nav-treeview">
                         <?php
                             $active_cabin_man = "";
+                            $none_cabin_man = "";
+                            if(isset($kiemtra) && $kiemtra == true && !$can_cabin_man) $none_cabin_man = "d-none";
                             if($com=='cabin' && ($act=='man' || $act=='add' || $act=='edit' || $act=='dangky' || $act=='data')) $active_cabin_man = "active";
                         ?>
-                        <li class="nav-item">
+                        <li class="nav-item <?=$none_cabin_man?>">
                             <a class="nav-link <?=$active_cabin_man?>" href="index.php?com=cabin&act=man" title="Danh sách khóa học cabin">
                                 <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Danh sách khóa</p>
                             </a>
                         </li>
                         <?php
                             $active_cabin_upload = "";
+                            $none_cabin_upload = "";
+                            if(isset($kiemtra) && $kiemtra == true && !$can_cabin_upload) $none_cabin_upload = "d-none";
                             if($com=='cabin' && ($act=='upload' || $act=='uploadExcel')) $active_cabin_upload = "active";
                         ?>
-                        <li class="nav-item">
+                        <li class="nav-item <?=$none_cabin_upload?>">
                             <a class="nav-link <?=$active_cabin_upload?>" href="index.php?com=cabin&act=upload" title="Import học viên cabin">
                                 <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Import học viên</p>
                             </a>
@@ -790,7 +814,28 @@
                 <?php } ?>
 
                 <!-- User -->
-                <?php if(isset($config['user']['active']) && $config['user']['active'] == true && !$func->check_permission()) { ?>
+                <?php
+                    $showUserMenu = false;
+                    if(isset($config['user']['active']) && $config['user']['active'] == true)
+                    {
+                        if(!$func->check_permission())
+                        {
+                            $showUserMenu = true;
+                        }
+                        else if(isset($_SESSION['list_quyen']))
+                        {
+                            foreach($_SESSION['list_quyen'] as $userMenuPermission)
+                            {
+                                if(strpos($userMenuPermission, 'user_') === 0)
+                                {
+                                    $showUserMenu = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                ?>
+                <?php if($showUserMenu) { ?>
                     <?php
                         $none = "";
                         $active = "";
@@ -811,9 +856,11 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <?php if(isset($config['permission']) && $config['permission'] == true) {
+                                $none = "";
                                 $active = "";
+                                if(isset($kiemtra) && $kiemtra == true) if($func->check_access('user', 'permission_group', '', null, 'phrase-1')) $none = "d-none";
                                 if($act=='permission_group' || $act=='add_permission_group' || $act=='edit_permission_group') $active = "active"; ?>
-                                <li class="nav-item"><a class="nav-link <?=$active?>" href="index.php?com=user&act=permission_group" title="Nhóm quyền"><i class="nav-icon text-sm far fa-caret-square-right"></i><p>Nhóm quyền</p></a></li>
+                                <li class="nav-item <?=$none?>"><a class="nav-link <?=$active?>" href="index.php?com=user&act=permission_group" title="Nhóm quyền"><i class="nav-icon text-sm far fa-caret-square-right"></i><p>Nhóm quyền</p></a></li>
                             <?php } ?>
                             <?php
                                 $active = "";
@@ -821,14 +868,11 @@
                             ?>
                             <li class="nav-item"><a class="nav-link <?=$active?>" href="index.php?com=user&act=admin_edit" title="Thông tin admin"><i class="nav-icon text-sm far fa-caret-square-right"></i><p>Thông tin admin</p></a></li>
                             <?php if(isset($config['user']['admin']) && $config['user']['admin'] == true) {
+                                $none = "";
                                 $active = "";
+                                if(isset($kiemtra) && $kiemtra == true) if($func->check_access('user', 'man_admin', '', null, 'phrase-1')) $none = "d-none";
                                 if($act=='man_admin' || $act=='add_admin' || $act=='edit_admin') $active = "active"; ?>
-                                <li class="nav-item"><a class="nav-link <?=$active?>" href="index.php?com=user&act=man_admin" title="Tài khoản admin"><i class="nav-icon text-sm far fa-caret-square-right"></i><p>Tài khoản admin</p></a></li>
-                            <?php } ?>
-                            <?php if(isset($config['user']['visitor']) && $config['user']['visitor'] == true) {
-                                $active = "";
-                                if($com=='user' && ($act=='man' || $act=='add' || $act=='edit')) $active = "active"; ?>
-                                <li class="nav-item"><a class="nav-link <?=$active?>" href="index.php?com=user&act=man" title="Tài khoản khách"><i class="nav-icon text-sm far fa-caret-square-right"></i><p>Tài khoản khách</p></a></li>
+                                <li class="nav-item <?=$none?>"><a class="nav-link <?=$active?>" href="index.php?com=user&act=man_admin" title="Tài khoản admin"><i class="nav-icon text-sm far fa-caret-square-right"></i><p>Tài khoản admin</p></a></li>
                             <?php } ?>
                         </ul>
                     </li>

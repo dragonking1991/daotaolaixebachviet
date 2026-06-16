@@ -820,6 +820,110 @@
 	            </div>
 	        </div>
 	    <?php } ?>
+	    <?php if(isset($config['user']['active']) && $config['user']['active'] == true) { ?>
+	    <div class="card card-permission card-primary card-outline text-sm">
+	        <div class="card-header">
+	            <h3 class="card-title">Quản lý user</h3>
+	            <div class="card-tools">
+	                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+	            </div>
+	        </div>
+	        <div class="card-body">
+	            <?php if(isset($config['permission']) && $config['permission'] == true) { ?>
+	            <div class="form-group row">
+	                <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3">Nhóm quyền:</label>
+	                <div class="col-md-7">
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-user-permission-group-view" value="user_permission_group" <?=(isset($ds_quyen) && in_array('user_permission_group', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-user-permission-group-view" class="custom-control-label font-weight-normal">Xem danh sách</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-user-permission-group-add" value="user_add_permission_group" <?=(isset($ds_quyen) && in_array('user_add_permission_group', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-user-permission-group-add" class="custom-control-label font-weight-normal">Thêm mới</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-user-permission-group-edit" value="user_edit_permission_group" <?=(isset($ds_quyen) && in_array('user_edit_permission_group', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-user-permission-group-edit" class="custom-control-label font-weight-normal">Chỉnh sửa</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-user-permission-group-delete" value="user_delete_permission_group" <?=(isset($ds_quyen) && in_array('user_delete_permission_group', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-user-permission-group-delete" class="custom-control-label font-weight-normal">Xóa</label>
+	                    </div>
+	                </div>
+	            </div>
+	            <?php } ?>
+	            <?php if(isset($config['user']['admin']) && $config['user']['admin'] == true) { ?>
+	            <div class="form-group row">
+	                <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3">Tài khoản admin:</label>
+	                <div class="col-md-7">
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-user-admin-view" value="user_man_admin" <?=(isset($ds_quyen) && in_array('user_man_admin', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-user-admin-view" class="custom-control-label font-weight-normal">Xem danh sách</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-user-admin-add" value="user_add_admin" <?=(isset($ds_quyen) && in_array('user_add_admin', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-user-admin-add" class="custom-control-label font-weight-normal">Thêm mới</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-user-admin-edit" value="user_edit_admin" <?=(isset($ds_quyen) && in_array('user_edit_admin', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-user-admin-edit" class="custom-control-label font-weight-normal">Chỉnh sửa</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-user-admin-delete" value="user_delete_admin" <?=(isset($ds_quyen) && in_array('user_delete_admin', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-user-admin-delete" class="custom-control-label font-weight-normal">Xóa</label>
+	                    </div>
+	                </div>
+	            </div>
+	            <?php } ?>
+	        </div>
+	    </div>
+	    <?php } ?>
+	    <div class="card card-permission card-primary card-outline text-sm">
+	        <div class="card-header">
+	            <h3 class="card-title">Quản lý Học Cabin</h3>
+	            <div class="card-tools">
+	                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+	            </div>
+	        </div>
+	        <div class="card-body">
+	            <div class="form-group row">
+	                <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3">Khóa học cabin:</label>
+	                <div class="col-md-7">
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-cabin-view" value="cabin_man" <?=(isset($ds_quyen) && in_array('cabin_man', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-cabin-view" class="custom-control-label font-weight-normal">Xem danh sách</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-cabin-upload" value="cabin_upload" <?=(isset($ds_quyen) && in_array('cabin_upload', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-cabin-upload" class="custom-control-label font-weight-normal">Import học viên</label>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <div class="card card-permission card-primary card-outline text-sm">
+	        <div class="card-header">
+	            <h3 class="card-title">Quản lý Kỳ Sát Hạch</h3>
+	            <div class="card-tools">
+	                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+	            </div>
+	        </div>
+	        <div class="card-body">
+	            <div class="form-group row">
+	                <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3">Kỳ sát hạch:</label>
+	                <div class="col-md-7">
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-kysathach-view" value="kysathach_man" <?=(isset($ds_quyen) && in_array('kysathach_man', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-kysathach-view" class="custom-control-label font-weight-normal">Xem danh sách</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-kysathach-upload" value="kysathach_upload" <?=(isset($ds_quyen) && in_array('kysathach_upload', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-kysathach-upload" class="custom-control-label font-weight-normal">Upload QR</label>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
 	    <div class="card card-permission card-primary card-outline text-sm">
             <div class="card-header">
                 <h3 class="card-title">Quản lý thông tin công ty</h3>
@@ -847,6 +951,11 @@
 
 <!-- Phân quyền js -->
 <script type="text/javascript">
+	function setPermissionGroupState($card, checked)
+	{
+		$card.find('input[type=checkbox]').not('#selectall-checkbox').prop('checked', checked);
+	}
+
 	function LoadCheck()
 	{
 		if(jQuery('.card-permission').find("input[type=checkbox]:checked").length == jQuery('.card-permission').find("input[type=checkbox]").length)
@@ -860,6 +969,24 @@
 	}
 	LoadCheck();
 	jQuery(document).ready(function(){
+		jQuery('.card-permission').each(function(){
+			var $card = jQuery(this);
+			if(!$card.find('.quick-permission-actions').length)
+			{
+				$card.find('.card-header .card-tools').prepend('<div class="btn-group btn-group-sm quick-permission-actions mr-2"><button type="button" class="btn btn-outline-primary js-permission-check-all">Chọn tất cả</button><button type="button" class="btn btn-outline-secondary js-permission-uncheck-all">Bỏ chọn</button></div>');
+			}
+		});
+
+		jQuery(document).on('click', '.js-permission-check-all', function(){
+			setPermissionGroupState(jQuery(this).closest('.card-permission'), true);
+			LoadCheck();
+		});
+
+		jQuery(document).on('click', '.js-permission-uncheck-all', function(){
+			setPermissionGroupState(jQuery(this).closest('.card-permission'), false);
+			LoadCheck();
+		});
+
 		jQuery("input#selectall-checkbox").click(function(){
 			$this = jQuery(this);
 			if($this.prop('checked'))

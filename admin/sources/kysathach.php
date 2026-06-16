@@ -3,39 +3,50 @@ if(!defined('SOURCES')) die("Error");
 
 switch($act)
 {
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 	case "man":
 		get_items_kysathach();
 		$template = "kysathach/man/items";
 		break;
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 	case "add":
 		$template = "kysathach/man/item_add";
 		break;
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 	case "edit":
 		get_item_kysathach();
 		$template = "kysathach/man/item_add";
 		break;
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 	case "save":
 		save_item_kysathach();
 		break;
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 	case "delete":
 		delete_item_kysathach();
 		break;
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_upload', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 	case "upload":
 		get_items_kysathach_all();
 		$template = "kysathach/upload/items";
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_upload', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		break;
 	case "uploadExcel":
 		uploadExcel_kysathach();
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		break;
 	case "data":
 		get_data_kysathach();
 		$template = "kysathach/data/items";
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		break;
 	case "deleteData":
 		deleteData_kysathach();
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		break;
 	case "deleteAllData":
 		deleteAllData_kysathach();
+		if($func->check_permission() && (!isset($_SESSION['list_quyen']) || !in_array('kysathach_man', $_SESSION['list_quyen']))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		break;
 	case "ajaxData":
 		ajaxData_kysathach();

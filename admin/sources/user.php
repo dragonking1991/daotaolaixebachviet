@@ -20,7 +20,7 @@
 		case "man_admin":
 			/* Kiểm tra active user admin */
 			if(!isset($config['user']['admin']) || $config['user']['admin'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_man_admin'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -31,7 +31,7 @@
 		case "add_admin":
 			/* Kiểm tra active user admin */
 			if(!isset($config['user']['admin']) || $config['user']['admin'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_add_admin'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -41,7 +41,7 @@
 		case "edit_admin":
 			/* Kiểm tra active user admin */
 			if(!isset($config['user']['admin']) || $config['user']['admin'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_edit_admin'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -57,7 +57,7 @@
 		case "delete_admin":
 			/* Kiểm tra active user admin */
 			if(!isset($config['user']['admin']) || $config['user']['admin'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_delete_admin'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -69,7 +69,7 @@
 		case "man":
 			/* Kiểm tra active user visitor */
 			if(!isset($config['user']['visitor']) || $config['user']['visitor'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_man'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -80,7 +80,7 @@
 		case "add":
 			/* Kiểm tra active user visitor */
 			if(!isset($config['user']['visitor']) || $config['user']['visitor'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_add'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -90,7 +90,7 @@
 		case "edit":
 			/* Kiểm tra active user visitor */
 			if(!isset($config['user']['visitor']) || $config['user']['visitor'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_edit'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -106,7 +106,7 @@
 		case "delete":
 			/* Kiểm tra active user visitor */
 			if(!isset($config['user']['visitor']) || $config['user']['visitor'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_delete'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -118,7 +118,7 @@
 		case "permission_group":
 			/* Kiểm tra active phân quyền */
 			if(!isset($config['permission']) || $config['permission'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_permission_group'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -129,7 +129,7 @@
 		case "add_permission_group":
 			/* Kiểm tra active phân quyền */
 			if(!isset($config['permission']) || $config['permission'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_add_permission_group'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -139,7 +139,7 @@
 		case "edit_permission_group":
 			/* Kiểm tra active phân quyền */
 			if(!isset($config['permission']) || $config['permission'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_edit_permission_group'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -150,17 +150,12 @@
 		case "save_permission_group":
 			/* Kiểm tra active phân quyền */
 			if(!isset($config['permission']) || $config['permission'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
-			{
-				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
-				exit;
-			}
 			save_permission_group();
 			break;
 		case "delete_permission_group":
 			/* Kiểm tra active phân quyền */
 			if(!isset($config['permission']) || $config['permission'] == false) $func->transfer("Trang không tồn tại", "index.php", false);
-			if($func->check_permission())
+			if(user_permission_denied('user_delete_permission_group'))
 			{
 				$func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 				exit;
@@ -170,6 +165,17 @@
 
 		default:
 			$template = "404";
+	}
+
+	function user_permission_denied($permission='')
+	{
+		global $func, $login_admin;
+
+		if(!$func->check_permission()) return false;
+		if(!$permission) return true;
+		if(isset($_SESSION[$login_admin]['active']) && $_SESSION[$login_admin]['active'] == true && isset($_SESSION['list_quyen']) && in_array($permission, $_SESSION['list_quyen'])) return false;
+
+		return true;
 	}
 
 	/* Get phân quyền */
@@ -229,6 +235,15 @@
 		global $d, $func, $curPage;
 
 		$id = htmlspecialchars($_POST['id']);
+
+		if($id)
+		{
+			if(user_permission_denied('user_edit_permission_group')) $func->transfer("Bạn không có quyền thực hiện thao tác này", "index.php?com=user&act=permission_group&p=".$curPage, false);
+		}
+		else
+		{
+			if(user_permission_denied('user_add_permission_group')) $func->transfer("Bạn không có quyền thực hiện thao tác này", "index.php?com=user&act=permission_group&p=".$curPage, false);
+		}
 
 		/* Post dữ liệu */
 		$data = (isset($_POST['data'])) ? $_POST['data'] : null;
@@ -409,6 +424,15 @@
 		
 		$id = htmlspecialchars($_POST['id']);
 
+		if($id)
+		{
+			if(user_permission_denied('user_edit_admin')) $func->transfer("Bạn không có quyền thực hiện thao tác này", "index.php?com=user&act=man_admin&p=".$curPage, false);
+		}
+		else
+		{
+			if(user_permission_denied('user_add_admin')) $func->transfer("Bạn không có quyền thực hiện thao tác này", "index.php?com=user&act=man_admin&p=".$curPage, false);
+		}
+
 		/* Post dữ liệu */
 		$data = (isset($_POST['data'])) ? $_POST['data'] : null;
 		if($data)
@@ -541,6 +565,15 @@
 		if(empty($_POST)) $func->transfer("Không nhận được dữ liệu", "index.php?com=user&act=man&p=".$curPage, false);
 
 		$id = htmlspecialchars($_POST['id']);
+
+		if($id)
+		{
+			if(user_permission_denied('user_edit')) $func->transfer("Bạn không có quyền thực hiện thao tác này", "index.php?com=user&act=man&p=".$curPage, false);
+		}
+		else
+		{
+			if(user_permission_denied('user_add')) $func->transfer("Bạn không có quyền thực hiện thao tác này", "index.php?com=user&act=man&p=".$curPage, false);
+		}
 
 		/* Post dữ liệu */
 		$data = (isset($_POST['data'])) ? $_POST['data'] : null;

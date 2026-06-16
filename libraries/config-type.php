@@ -76,11 +76,11 @@
 
     /* Quản lý tài khoản */
     $config['user']['active'] = true;
-    $config['user']['admin'] = false;
-    $config['user']['visitor'] = false;
+    $config['user']['admin'] = true;
+    $config['user']['visitor'] = true;
 
     /* Quản lý phân quyền */
-    $config['permission'] = false;
+    $config['permission'] = true;
 
     /* Quản lý địa điểm */
     $config['places']['active'] = false;
