@@ -698,10 +698,12 @@
 
 							if($employeeCccd !== '')
 							{
-								$proimport = $d->rawQueryOne("select id from #_product where cccd = ? and type = ? limit 0,1", array($employeeCccd, $type));
+								$proimport = $d->rawQueryOne("select id, ma_tra_cuu from #_product where cccd = ? and type = ? limit 0,1", array($employeeCccd, $type));
 
 								if(isset($proimport['id']) && $proimport['id'] > 0)
 								{
+									// CCCD đã tồn tại: chỉ cập nhật dữ liệu lương/thông tin khác, không ghi đè mã tra cứu hiện có.
+									if($type == 'nhan-vien') unset($data['ma_tra_cuu']);
 									$d->where('type', $type);
 									$d->where('cccd', $employeeCccd);
 									if(!$d->update('product', $data)) $mess .= 'Lỗi tại dòng: '.$row."<br>";

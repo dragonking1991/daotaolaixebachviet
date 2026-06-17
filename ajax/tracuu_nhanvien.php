@@ -420,6 +420,7 @@
 	}
 
 	$action = (isset($_POST['action']) && $_POST['action'] != '') ? htmlspecialchars($_POST['action']) : 'lookup';
+	if($action === 'update') $action = 'update_reference';
 	$keyword = (isset($_POST['keyword']) && $_POST['keyword'] != '') ? normalizeEmployeeLookupText($_POST['keyword']) : '';
 
 	if($action === 'lookup')

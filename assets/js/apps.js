@@ -73,7 +73,7 @@ NN_FRAMEWORK.BackToTop = function(){
         var keyword = $.trim($('#employee_lookup_keyword').val());
 
         if(keyword == '') {
-            alert('Vui lòng nhập mã tra cứu hoặc CCCD');
+            alert('Vui lòng nhập mã tra cứu');
             return false;
         }
 
@@ -100,7 +100,7 @@ NN_FRAMEWORK.BackToTop = function(){
             url: 'ajax/tracuu_nhanvien.php',
             type: 'POST',
             dataType: 'html',
-            data: $(this).serialize() + '&action=update',
+            data: $(this).serialize() + '&action=update_reference',
             success: function(result) {
                 $('.employee-lookup-result').html(result);
             }

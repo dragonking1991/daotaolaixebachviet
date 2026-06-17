@@ -86,6 +86,7 @@
 									<?php } else { ?>
 										<span class="badge badge-secondary">0</span>
 									<?php } ?>
+									<div class="mt-1"><a href="index.php?com=cabin&act=full_dangky&id=<?=$items[$i]['id']?>" class="badge badge-primary" title="Xem full lịch">Full lịch</a></div>
 								</td>
 								<td class="align-middle"><?=($items[$i]['ngaytao'] > 0) ? date('H:i d-m-Y', $items[$i]['ngaytao']) : ''?></td>
 								<td class="align-middle"><?=htmlspecialchars($items[$i]['user_tao'])?></td>
@@ -97,6 +98,7 @@
 										data-ngay-ketthuc="<?=$items[$i]['ngay_ketthuc']?>"
 										data-suc-chua="<?=(int)$items[$i]['suc_chua_ca']?>"
 										title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
+									<a class="text-info mr-2" href="index.php?com=cabin&act=full_dangky&id=<?=$items[$i]['id']?>" title="Full lịch đăng ký"><i class="far fa-calendar-alt"></i></a>
 									<a class="text-success mr-2" href="index.php?com=cabin&act=upload&id=<?=$items[$i]['id']?>" title="Import học viên"><i class="fas fa-file-upload"></i></a>
 									<a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
 								</td>

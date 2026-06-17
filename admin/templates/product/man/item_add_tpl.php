@@ -497,6 +497,22 @@
 <?php if(isset($config['product'][$type]['giakm']) && $config['product'][$type]['giakm'] == true) { ?>
 	<script type="text/javascript">
 		function roundNumber(rnum, rlength)
+++ before
+<?php if(isset($type) && $type == 'nhan-vien') { ?>
+<script type="text/javascript">
+$(document).ready(function(){
+	// Khi sửa CCCD: tự update ma_tra_cuu nếu đang khớp với CCCD cũ
+	var _cccdOrig = $('#cccd').val().trim();
+	$('#cccd').on('input change', function(){
+		var newCccd = $(this).val().trim();
+		var curRef  = $('#ma_tra_cuu').val().trim();
+		if(curRef === '' || curRef === _cccdOrig) {
+			$('#ma_tra_cuu').val(newCccd);
+		}
+	});
+});
+</script>
+<?php } ?>
 		{
 			return Math.round(rnum*Math.pow(10,rlength))/Math.pow(10,rlength);
 		}

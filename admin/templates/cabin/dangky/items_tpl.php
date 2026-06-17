@@ -5,6 +5,7 @@
 	$linkFilter = "index.php?com=cabin&act=dangky&id=".$id_kh;
 	$linkExport = "index.php?com=cabin&act=exportExcel&id=".$id_kh;
 	$linkAdd = "index.php?com=cabin&act=add_dangky&id=".$id_kh;
+	$linkFull = "index.php?com=cabin&act=full_dangky&id=".$id_kh;
 	$keyword = isset($_GET['keyword']) ? $_GET['keyword'] : '';
 	$ngayHoc = isset($ngay_hoc_filter) ? $ngay_hoc_filter : '';
 	$ca = isset($ca_filter) ? (int)$ca_filter : 0;
@@ -26,6 +27,7 @@
 	<div class="card-footer text-sm sticky-top">
 		<a class="btn btn-sm bg-gradient-secondary text-white" href="index.php?com=cabin&act=man" title="Quay lại"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
 		<a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkAdd?>" title="Thêm đăng ký"><i class="fas fa-plus mr-2"></i>Thêm đăng ký</a>
+		<a class="btn btn-sm bg-gradient-info text-white" href="<?=$linkFull?>" title="Xem full lịch"><i class="far fa-calendar-alt mr-2"></i>Full lịch</a>
 		<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkExport?>" title="Xuất Excel"><i class="fas fa-file-excel mr-2"></i>Xuất Excel</a>
 	</div>
 

@@ -1,7 +1,9 @@
 <?php
 	$isEdit = isset($item_dk) && isset($item_dk['id']) && (int)$item_dk['id'] > 0;
 	$id_kh = isset($kh_info['id']) ? (int)$kh_info['id'] : 0;
-	$linkMan = "index.php?com=cabin&act=dangky&id=".$id_kh."&p=".$curPage;
+	$returnAct = isset($_REQUEST['return_act']) ? trim($_REQUEST['return_act']) : '';
+	if(!in_array($returnAct, array('dangky', 'full_dangky'))) $returnAct = 'dangky';
+	$linkMan = "index.php?com=cabin&act=".$returnAct."&id=".$id_kh."&p=".$curPage;
 	$linkSave = "index.php?com=cabin&act=save_dangky&p=".$curPage;
 	$selectedHocvien = $isEdit ? (int)$item_dk['id_hocvien'] : 0;
 	$selectedNgayHoc = $isEdit ? date('d/m/Y', strtotime($item_dk['ngay_hoc'])) : '';
@@ -72,6 +74,7 @@
 			<button type="reset" class="btn btn-sm bg-gradient-secondary"><i class="fas fa-redo mr-2"></i>Làm lại</button>
 			<a class="btn btn-sm bg-gradient-danger" href="<?=$linkMan?>" title="Thoát"><i class="fas fa-sign-out-alt mr-2"></i>Thoát</a>
 			<input type="hidden" name="id" value="<?php if($isEdit) echo (int)$item_dk['id']; else echo 0; ?>">
+			<input type="hidden" name="return_act" value="<?=$returnAct?>">
 		</div>
 	</form>
 </section>

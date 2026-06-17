@@ -91,7 +91,7 @@
 						$quyen_aliases = array($quyen_user);
 						if($com == 'cabin')
 						{
-							if(in_array($act, array('man', 'add', 'edit', 'delete', 'data', 'deleteData', 'deleteAllData', 'ajaxData', 'dangky', 'add_dangky', 'edit_dangky', 'save_dangky', 'delete_dangky', 'exportExcel')))
+							if(in_array($act, array('man', 'add', 'edit', 'delete', 'data', 'saveData', 'deleteData', 'deleteAllData', 'ajaxData', 'dangky', 'full_dangky', 'autofill_dangky', 'add_dangky', 'edit_dangky', 'save_dangky', 'delete_dangky', 'exportExcel')))
 							{
 								$quyen_aliases[] = 'cabin_man';
 								$quyen_aliases[] = 'product_man_cabin';

@@ -2,6 +2,7 @@
 	$id_kh = $kh_info['id'];
 	$linkMan = "index.php?com=cabin&act=data&id=".$id_kh."&p=".$curPage;
 	$linkEdit = "index.php?com=product&act=edit&type=cabin&p=1";
+	$linkSave = "index.php?com=cabin&act=saveData&p=".$curPage;
 	$linkDelete = "index.php?com=cabin&act=deleteData&id_kh=".$id_kh."&p=".$curPage;
 	$linkDeleteAll = "index.php?com=cabin&act=deleteAllData&id_kh=".$id_kh;
 ?>
@@ -20,6 +21,7 @@
 <section class="content">
 	<div class="card-footer text-sm sticky-top">
 		<a class="btn btn-sm bg-gradient-secondary text-white" href="index.php?com=cabin&act=man" title="Quay lại"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
+		<a class="btn btn-sm bg-gradient-primary text-white" href="#" data-toggle="modal" data-target="#modal-student" title="Thêm học viên"><i class="fas fa-plus mr-2"></i>Thêm học viên</a>
 		<a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa đã chọn"><i class="far fa-trash-alt mr-2"></i>Xóa đã chọn</a>
 		<a class="btn btn-sm bg-gradient-dark text-white" href="#" id="btn-delete-all-data" title="Xóa toàn bộ dữ liệu"><i class="fas fa-trash mr-2"></i>Xóa toàn bộ</a>
 		<div class="form-inline form-search d-inline-block align-middle ml-3">
@@ -81,7 +83,14 @@
 									</div>
 								</td>
 								<td class="align-middle text-center text-md text-nowrap">
-									<a class="text-primary mr-2" href="<?=$linkEdit?>&id=<?=$items_data[$i]['id']?>" title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
+									<a class="text-primary mr-2 btn-edit-student" href="#"
+										data-id="<?=$items_data[$i]['id']?>"
+										data-ten="<?=htmlspecialchars($items_data[$i]['tenvi'], ENT_QUOTES)?>"
+										data-ngaysinh="<?=htmlspecialchars($items_data[$i]['ngaysinh'], ENT_QUOTES)?>"
+										data-cccd="<?=htmlspecialchars($items_data[$i]['cccd'], ENT_QUOTES)?>"
+										data-hang="<?=htmlspecialchars($items_data[$i]['hang'], ENT_QUOTES)?>"
+										data-hienthi="<?=(int)$items_data[$i]['hienthi']?>"
+										title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
 									<a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items_data[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
 								</td>
 							</tr>
@@ -98,13 +107,84 @@
 
 	<div class="card-footer text-sm">
 		<a class="btn btn-sm bg-gradient-secondary text-white" href="index.php?com=cabin&act=man" title="Quay lại"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
+		<a class="btn btn-sm bg-gradient-primary text-white" href="#" data-toggle="modal" data-target="#modal-student" title="Thêm học viên"><i class="fas fa-plus mr-2"></i>Thêm học viên</a>
 		<a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa đã chọn"><i class="far fa-trash-alt mr-2"></i>Xóa đã chọn</a>
 		<a class="btn btn-sm bg-gradient-dark text-white" href="#" id="btn-delete-all-data" title="Xóa toàn bộ dữ liệu"><i class="fas fa-trash mr-2"></i>Xóa toàn bộ</a>
 	</div>
 </section>
 
+<div class="modal fade" id="modal-student" tabindex="-1" role="dialog" aria-labelledby="modal-student-label" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<form method="post" action="<?=$linkSave?>" class="validation-form" novalidate>
+				<div class="modal-header">
+					<h5 class="modal-title" id="modal-student-label">Thêm học viên cabin</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<input type="hidden" name="id" id="student-id" value="0">
+					<input type="hidden" name="id_kh" value="<?=$id_kh?>">
+
+					<div class="form-group">
+						<label for="student-ten">Họ tên <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" name="data[tenvi]" id="student-ten" required>
+					</div>
+					<div class="form-row">
+						<div class="form-group col-md-6">
+							<label for="student-ngaysinh">Ngày sinh</label>
+							<input type="text" class="form-control" name="data[ngaysinh]" id="student-ngaysinh" placeholder="dd/mm/yyyy">
+						</div>
+						<div class="form-group col-md-6">
+							<label for="student-cccd">CCCD <span class="text-danger">*</span></label>
+							<input type="text" class="form-control" name="data[cccd]" id="student-cccd" maxlength="12" required>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="student-hang">Người nộp hồ sơ</label>
+						<input type="text" class="form-control" name="data[hang]" id="student-hang">
+					</div>
+					<div class="form-group mb-0">
+						<div class="custom-control custom-checkbox my-checkbox">
+							<input type="checkbox" class="custom-control-input" name="data[hienthi]" id="student-hienthi" checked>
+							<label for="student-hienthi" class="custom-control-label">Hiển thị</label>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+					<button type="submit" class="btn btn-primary submit-check">Lưu</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script type="text/javascript">
 $(document).ready(function(){
+	$('[data-target="#modal-student"]').on('click', function(){
+		$('#modal-student-label').text('Thêm học viên cabin');
+		$('#student-id').val(0);
+		$('#student-ten').val('');
+		$('#student-ngaysinh').val('');
+		$('#student-cccd').val('');
+		$('#student-hang').val('');
+		$('#student-hienthi').prop('checked', true);
+	});
+
+	$('body').on('click', '.btn-edit-student', function(e){
+		e.preventDefault();
+		$('#modal-student-label').text('Chỉnh sửa học viên cabin');
+		$('#student-id').val($(this).data('id'));
+		$('#student-ten').val($(this).data('ten'));
+		$('#student-ngaysinh').val($(this).data('ngaysinh'));
+		$('#student-cccd').val($(this).data('cccd'));
+		$('#student-hang').val($(this).data('hang'));
+		$('#student-hienthi').prop('checked', parseInt($(this).data('hienthi'), 10) === 1);
+		$('#modal-student').modal('show');
+	});
+
 	$('#btn-delete-all-data').click(function(e){
 		e.preventDefault();
 		if(confirm('Bạn có chắc chắn muốn xóa toàn bộ học viên cabin của khóa này?')){
