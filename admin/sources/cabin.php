@@ -111,6 +111,36 @@ function cabin_permission_denied($permissions = array())
 	return true;
 }
 
+function cabin_has_han_dangky_column()
+{
+	global $d;
+
+	static $hasColumn = null;
+	if($hasColumn !== null) return $hasColumn;
+
+	$row = $d->rawQueryOne(
+		"select count(*) as total from information_schema.columns where table_schema = database() and table_name = 'table_cabin_khoahoc' and column_name = 'han_dangky'"
+	);
+	$hasColumn = !empty($row) && isset($row['total']) && (int)$row['total'] > 0;
+
+	return $hasColumn;
+}
+
+function cabin_ensure_han_dangky_column()
+{
+	global $d;
+
+	if(cabin_has_han_dangky_column()) return true;
+
+	$ok = $d->rawQuery("ALTER TABLE #_cabin_khoahoc ADD COLUMN han_dangky DATETIME NULL DEFAULT NULL");
+	if($ok !== false)
+	{
+		return cabin_has_han_dangky_column();
+	}
+
+	return false;
+}
+
 function get_items_cabin()
 {
 	global $d, $func, $curPage, $items, $paging;
@@ -173,11 +203,47 @@ function save_item_cabin()
 	$suc_chua = isset($_POST['data']['suc_chua_ca']) ? (int)$_POST['data']['suc_chua_ca'] : 3;
 	$data['suc_chua_ca'] = ($suc_chua > 0) ? $suc_chua : 3;
 
+	$hanDangKyValue = null;
+	$han_dangky = isset($_POST['data']['han_dangky']) ? trim($_POST['data']['han_dangky']) : '';
+	if($han_dangky !== '')
+	{
+		$han_dangky = str_replace(array('T', ','), array(' ', ' '), $han_dangky);
+		$han_dangky = preg_replace('/\s+/', ' ', $han_dangky);
+		$han_dangky = trim($han_dangky);
+
+		$han_ts = strtotime($han_dangky);
+		if($han_ts === false && preg_match('/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/', $han_dangky, $m))
+		{
+			$han_ts = strtotime($m[3].'-'.$m[2].'-'.$m[1].' '.$m[4].':'.$m[5].':00');
+		}
+
+		if($han_ts !== false)
+		{
+			$hanDangKyValue = date('Y-m-d H:i:s', $han_ts);
+		}
+	}
+
+	if(!cabin_has_han_dangky_column())
+	{
+		if(!cabin_ensure_han_dangky_column())
+		{
+			$func->transfer("Không thể lưu hạn đăng ký vì CSDL chưa có cột han_dangky. Vui lòng chạy migration_cabin.sql hoặc cấp quyền ALTER TABLE.", "index.php?com=cabin&act=man&p=".$curPage, false);
+		}
+	}
+
+	if(cabin_has_han_dangky_column())
+	{
+		$data['han_dangky'] = $hanDangKyValue;
+	}
+
 	if(empty($data['ten']) || empty($data['ngay_batdau']) || empty($data['ngay_ketthuc']))
 		$func->transfer("Vui lòng nhập đầy đủ thông tin", "index.php?com=cabin&act=man&p=".$curPage, false);
 
 	if(strtotime($data['ngay_ketthuc']) < strtotime($data['ngay_batdau']))
 		$func->transfer("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu", "index.php?com=cabin&act=man&p=".$curPage, false);
+
+	if(!empty($hanDangKyValue) && strtotime($hanDangKyValue) > strtotime($data['ngay_ketthuc'].' 23:59:59'))
+		$func->transfer("Hạn đăng ký không được vượt quá ngày kết thúc khóa", "index.php?com=cabin&act=man&p=".$curPage, false);
 
 	$id = isset($_POST['id']) ? (int)htmlspecialchars($_POST['id']) : 0;
 
@@ -1018,18 +1084,33 @@ function exportExcel_cabin()
 
 	$id_kh = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 	if(!$id_kh) die("Không nhận được dữ liệu");
+	$mode = isset($_GET['mode']) ? trim($_GET['mode']) : '';
 
 	$kh = $d->rawQueryOne("select * from #_cabin_khoahoc where id = ? limit 0,1", array($id_kh));
 	if(!$kh || !$kh['id']) die("Khóa học cabin không tồn tại");
 
-	$rows = $d->rawQuery(
-		"select dk.*, p.tenvi, p.cccd as hv_cccd, p.hang "
-		. "from #_cabin_dangky dk "
-		. "left join #_product p on p.id = dk.id_hocvien "
-		. "where dk.id_khoahoc = ? "
-		. "order by dk.ngay_hoc asc, dk.ca asc, p.tenvi asc",
-		array($id_kh)
-	);
+	if($mode === 'fullall')
+	{
+		$rows = $d->rawQuery(
+			"select p.id as id_hocvien, p.tenvi, p.cccd as hv_cccd, p.hang, dk.id as id_dangky, dk.ngay_hoc, dk.ca, dk.gio_b_d, dk.gio_kt "
+			. "from #_product p "
+			. "left join #_cabin_dangky dk on dk.id_hocvien = p.id and dk.id_khoahoc = ? "
+			. "where p.id_cabin_khoahoc = ? and p.type = 'cabin' and p.hienthi >= 0 "
+			. "order by p.tenvi asc, dk.ngay_hoc asc, dk.ca asc",
+			array($id_kh, $id_kh)
+		);
+	}
+	else
+	{
+		$rows = $d->rawQuery(
+			"select dk.*, p.tenvi, p.cccd as hv_cccd, p.hang "
+			. "from #_cabin_dangky dk "
+			. "left join #_product p on p.id = dk.id_hocvien "
+			. "where dk.id_khoahoc = ? "
+			. "order by dk.ngay_hoc asc, dk.ca asc, p.tenvi asc",
+			array($id_kh)
+		);
+	}
 
 	require_once LIBRARIES.'PHPExcel.php';
 
@@ -1037,7 +1118,7 @@ function exportExcel_cabin()
 	$sheet = $objPHPExcel->getActiveSheet();
 	$sheet->setTitle('Đăng ký cabin');
 
-	$headers = array('STT', 'Họ tên', 'CCCD', 'Người nộp hồ sơ', 'Ngày học', 'Ca', 'Giờ');
+	$headers = array('STT', 'Họ tên', 'CCCD', 'Người nộp hồ sơ', 'Trạng thái đăng ký', 'Ngày học', 'Ca', 'Giờ');
 	$col = 'A';
 	foreach($headers as $h)
 	{
@@ -1052,22 +1133,31 @@ function exportExcel_cabin()
 	foreach($rows as $row)
 	{
 		$ca = (int)$row['ca'];
-		$caLabel = isset($slots[$ca]) ? $slots[$ca]['label'] : ('Ca '.$ca);
-		$gio = trim($row['gio_b_d']).' - '.trim($row['gio_kt']);
-		$ngay = $row['ngay_hoc'] ? date('d/m/Y', strtotime($row['ngay_hoc'])) : '';
+		$hasDangKy = !empty($row['ngay_hoc']) && $ca > 0;
+		$caLabel = '';
+		$gio = '';
+		$ngay = '';
+		if($hasDangKy)
+		{
+			$caLabel = isset($slots[$ca]) ? $slots[$ca]['label'] : ('Ca '.$ca);
+			$gio = trim($row['gio_b_d']).' - '.trim($row['gio_kt']);
+			$ngay = $row['ngay_hoc'] ? date('d/m/Y', strtotime($row['ngay_hoc'])) : '';
+		}
+		$trangThai = $hasDangKy ? 'Đã đăng ký' : 'Chưa đăng ký';
 
 		$sheet->setCellValueExplicit('A'.$r, $stt, PHPExcel_Cell_DataType::TYPE_NUMERIC);
 		$sheet->setCellValue('B'.$r, $row['tenvi']);
 		$sheet->setCellValueExplicit('C'.$r, $row['hv_cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
 		$sheet->setCellValue('D'.$r, $row['hang']);
-		$sheet->setCellValue('E'.$r, $ngay);
-		$sheet->setCellValue('F'.$r, $caLabel);
-		$sheet->setCellValue('G'.$r, $gio);
+		$sheet->setCellValue('E'.$r, $trangThai);
+		$sheet->setCellValue('F'.$r, $ngay);
+		$sheet->setCellValue('G'.$r, $caLabel);
+		$sheet->setCellValue('H'.$r, $gio);
 		$r++;
 		$stt++;
 	}
 
-	foreach(range('A', 'G') as $c)
+	foreach(range('A', 'H') as $c)
 		$sheet->getColumnDimension($c)->setAutoSize(true);
 
 	$filename = 'dangky-cabin-'.$id_kh.'-'.date('Ymd_His').'.xlsx';

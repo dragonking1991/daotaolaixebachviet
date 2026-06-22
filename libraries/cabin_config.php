@@ -95,3 +95,44 @@ if (!function_exists('cabin_dow_label')) {
         return isset($map[$dow]) ? $map[$dow] : '';
     }
 }
+
+if (!function_exists('cabin_course_deadline_ts')) {
+    /**
+     * Timestamp hạn đăng ký của khóa (cột han_dangky). 0 nếu không đặt hạn riêng.
+     * @param array $course
+     * @return int
+     */
+    function cabin_course_deadline_ts($course)
+    {
+        if (empty($course['han_dangky'])) {
+            return 0;
+        }
+        $value = trim((string) $course['han_dangky']);
+        if ($value === '' || strpos($value, '0000-00-00') === 0) {
+            return 0;
+        }
+        $ts = strtotime($value);
+        return ($ts === false) ? 0 : $ts;
+    }
+}
+
+if (!function_exists('cabin_registration_closed')) {
+    /**
+     * Khóa học đã đóng đăng ký chưa (quá ngày kết thúc HOẶC quá hạn đăng ký).
+     * @param array $course
+     * @return bool
+     */
+    function cabin_registration_closed($course)
+    {
+        $today = date('Y-m-d');
+        $end = isset($course['ngay_ketthuc']) ? $course['ngay_ketthuc'] : $today;
+        if ($today > $end) {
+            return true;
+        }
+        $deadline = cabin_course_deadline_ts($course);
+        if ($deadline > 0 && time() > $deadline) {
+            return true;
+        }
+        return false;
+    }
+}

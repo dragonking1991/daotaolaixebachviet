@@ -25,11 +25,19 @@
                 <option value="">--- Chọn khóa học cabin ---</option>
                 <?php if(!empty($cabin_courses)) { ?>
                     <?php foreach($cabin_courses as $kh) { ?>
-                        <option value="<?=$kh['id']?>"><?=htmlspecialchars($kh['ten'])?> (<?=date('d/m/Y', strtotime($kh['ngay_batdau']))?> - <?=date('d/m/Y', strtotime($kh['ngay_ketthuc']))?>)</option>
+                        <?php
+                            $hanDangKyText = '';
+                            if(!empty($kh['han_dangky']) && strpos($kh['han_dangky'], '0000-00-00') !== 0) {
+                                $hanDangKyText = date('H:i d/m/Y', strtotime($kh['han_dangky']));
+                            }
+                        ?>
+                        <option value="<?=$kh['id']?>" data-ten="<?=htmlspecialchars($kh['ten'], ENT_QUOTES)?>" data-han-dangky="<?=htmlspecialchars($hanDangKyText, ENT_QUOTES)?>"><?=htmlspecialchars($kh['ten'])?> (<?=date('d/m/Y', strtotime($kh['ngay_batdau']))?> - <?=date('d/m/Y', strtotime($kh['ngay_ketthuc']))?>)</option>
                     <?php } ?>
                 <?php } ?>
             </select>
         </div>
+
+        <div id="cabin_deadline_notice" style="display:none; text-align:center; margin:6px 0 12px; font-size:15px; font-weight:700; color:#1d4ed8;"></div>
 
         <div class="frm_tracuu2">
             <input type="text" placeholder="Nhập số CCCD" id="input_cccd_cabin" maxlength="12">
@@ -54,6 +62,30 @@
 
 <script type="text/javascript">
 $(document).ready(function(){
+    function updateCabinDeadlineNotice() {
+        var $selected = $('#cabin_khoahoc option:selected');
+        var idKhoahoc = $('#cabin_khoahoc').val();
+        var tenKhoa = $.trim($selected.data('ten') || '');
+        var hanDangKy = $.trim($selected.data('han-dangky') || '');
+
+        if(!idKhoahoc) {
+            $('#cabin_deadline_notice').hide().html('');
+            return;
+        }
+
+        if(hanDangKy !== '') {
+            $('#cabin_deadline_notice').html('Hạn đăng ký khóa <span style="color:#0f172a;">' + tenKhoa + '</span>: ' + hanDangKy).show();
+        } else {
+            $('#cabin_deadline_notice').html('Khóa <span style="color:#0f172a;">' + tenKhoa + '</span> chưa thiết lập hạn đăng ký riêng').show();
+        }
+    }
+
+    $('#cabin_khoahoc').on('change', function(){
+        updateCabinDeadlineNotice();
+    });
+
+    updateCabinDeadlineNotice();
+
     function cabinLookup(weekStart) {
         var cccd = $.trim($('#input_cccd_cabin').val());
         var idKhoahoc = $('#cabin_khoahoc').val();

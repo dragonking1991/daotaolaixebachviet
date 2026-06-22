@@ -8,7 +8,7 @@ $seo->setSeo('url', $func->getPageURL());
 
 /* Lấy danh sách khóa cabin đang hiển thị */
 $cabin_courses = $d->rawQuery(
-    "select id, ten, ngay_batdau, ngay_ketthuc, suc_chua_ca from #_cabin_khoahoc where hienthi = 1 order by ngay_batdau desc, id desc"
+    "select id, ten, ngay_batdau, ngay_ketthuc, suc_chua_ca, han_dangky from #_cabin_khoahoc where hienthi = 1 order by ngay_batdau desc, id desc"
 );
 
 /* breadCrumbs */

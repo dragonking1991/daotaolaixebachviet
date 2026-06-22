@@ -66,7 +66,10 @@ function cabin_render_panel($d, $student, $course, $weekStart)
 
     $weekEnd = date('Y-m-d', strtotime($weekStart.' +5 day'));
     $today = date('Y-m-d');
-    $closed = ($today > $course['ngay_ketthuc']);
+    $closedByEnd = ($today > $course['ngay_ketthuc']);
+    $deadlineTs = cabin_course_deadline_ts($course);
+    $closedByDeadline = ($deadlineTs > 0 && time() > $deadlineTs);
+    $closed = $closedByEnd || $closedByDeadline;
     $capacity = max(1, (int)$course['suc_chua_ca']);
 
     // Chỉ có 1 cabin dùng chung: số lượng phải tính gộp toàn bộ khóa theo ngày + ca.
@@ -119,10 +122,17 @@ function cabin_render_panel($d, $student, $course, $weekStart)
     $html .= '<div style="font-size:13px; color:#333;">CCCD: <strong>'.htmlspecialchars($student['cccd']).'</strong> | Người nộp hồ sơ: <strong>'.htmlspecialchars($student['hang']).'</strong></div>';
     $html .= '<div style="font-size:13px; color:#333;">Khóa: <strong>'.htmlspecialchars($course['ten']).'</strong> ('.date('d/m/Y', strtotime($course['ngay_batdau'])).' - '.date('d/m/Y', strtotime($course['ngay_ketthuc'])).')</div>';
     $html .= '<div style="font-size:13px; color:#333;">Đã đăng ký: <strong>'.$studentRegCount.'/'.$maxStudentSlots.' ca</strong></div>';
+    if($deadlineTs > 0) {
+        $html .= '<div style="font-size:13px; color:#333;">Hạn đăng ký: <strong>'.date('H:i d/m/Y', $deadlineTs).'</strong></div>';
+    }
     $html .= '</div>';
 
     if($closed) {
-        $html .= '<div style="margin-bottom:10px; padding:10px; border:1px solid #f5c6cb; background:#fff3f5; color:#9f1d35; border-radius:6px;">Khóa học đã kết thúc. Hệ thống chỉ cho xem lịch đã đăng ký, không cho đăng ký mới. Vui lòng liên hệ văn phòng để được hỗ trợ.</div>';
+        if($closedByDeadline && !$closedByEnd) {
+            $html .= '<div style="margin-bottom:10px; padding:10px; border:1px solid #f5c6cb; background:#fff3f5; color:#9f1d35; border-radius:6px;">Đã hết hạn đăng ký lịch học cabin cho khóa này. Hệ thống chỉ cho xem lịch đã đăng ký. Vui lòng liên hệ văn phòng để được hỗ trợ.</div>';
+        } else {
+            $html .= '<div style="margin-bottom:10px; padding:10px; border:1px solid #f5c6cb; background:#fff3f5; color:#9f1d35; border-radius:6px;">Khóa học đã kết thúc. Hệ thống chỉ cho xem lịch đã đăng ký, không cho đăng ký mới. Vui lòng liên hệ văn phòng để được hỗ trợ.</div>';
+        }
     }
 
     $html .= '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
@@ -270,6 +280,12 @@ if($action === 'register')
     if($today > $course['ngay_ketthuc']) {
         $html = cabin_render_panel($d, $student, $course, $weekStart);
         cabin_json(false, 'Khóa học đã kết thúc, không thể tự đăng ký.', $html);
+    }
+
+    $deadlineTs = cabin_course_deadline_ts($course);
+    if($deadlineTs > 0 && time() > $deadlineTs) {
+        $html = cabin_render_panel($d, $student, $course, $weekStart);
+        cabin_json(false, 'Đã hết hạn đăng ký lịch học cabin cho khóa này.', $html);
     }
 
     if(!preg_match('/^\d{4}-\d{2}-\d{2}$/', $ngay_hoc) || !cabin_is_valid_slot($ngay_hoc, $ca)) {

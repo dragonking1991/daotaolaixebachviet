@@ -48,6 +48,7 @@
 						<th class="align-middle">Tên khóa</th>
 						<th class="align-middle text-center" width="12%">Bắt đầu</th>
 						<th class="align-middle text-center" width="12%">Kết thúc</th>
+						<th class="align-middle text-center" width="12%">Hạn đăng ký</th>
 						<th class="align-middle text-center" width="9%">Sức chứa/ca</th>
 						<th class="align-middle text-center" width="10%">Học viên</th>
 						<th class="align-middle text-center" width="10%">Đăng ký</th>
@@ -72,6 +73,7 @@
 								<td class="align-middle font-weight-bold"><?=htmlspecialchars($items[$i]['ten'])?></td>
 								<td class="align-middle text-center"><?=date('d/m/Y', strtotime($items[$i]['ngay_batdau']))?></td>
 								<td class="align-middle text-center"><?=date('d/m/Y', strtotime($items[$i]['ngay_ketthuc']))?></td>
+								<td class="align-middle text-center"><?=(!empty($items[$i]['han_dangky']) && strpos($items[$i]['han_dangky'], '0000-00-00') !== 0) ? date('H:i d/m/Y', strtotime($items[$i]['han_dangky'])) : '<span class="text-muted">—</span>'?></td>
 								<td class="align-middle text-center"><?=(int)$items[$i]['suc_chua_ca']?></td>
 								<td class="align-middle text-center">
 									<?php if((int)$items[$i]['so_hoc_vien'] > 0) { ?>
@@ -96,6 +98,7 @@
 										data-ten="<?=htmlspecialchars($items[$i]['ten'], ENT_QUOTES)?>"
 										data-ngay-batdau="<?=$items[$i]['ngay_batdau']?>"
 										data-ngay-ketthuc="<?=$items[$i]['ngay_ketthuc']?>"
+										data-han-dangky="<?=(!empty($items[$i]['han_dangky']) && strpos($items[$i]['han_dangky'], '0000-00-00') !== 0) ? date('Y-m-d\TH:i', strtotime($items[$i]['han_dangky'])) : ''?>"
 										data-suc-chua="<?=(int)$items[$i]['suc_chua_ca']?>"
 										title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
 									<a class="text-info mr-2" href="index.php?com=cabin&act=full_dangky&id=<?=$items[$i]['id']?>" title="Full lịch đăng ký"><i class="far fa-calendar-alt"></i></a>
@@ -146,9 +149,16 @@
 							<input type="date" class="form-control" name="data[ngay_ketthuc]" id="ngay_ketthuc" required>
 						</div>
 					</div>
-					<div class="form-group">
-						<label for="suc_chua_ca">Sức chứa mỗi ca</label>
-						<input type="number" class="form-control" name="data[suc_chua_ca]" id="suc_chua_ca" min="1" value="3">
+					<div class="form-row">
+						<div class="form-group col-md-6">
+							<label for="han_dangky">Hạn đăng ký</label>
+							<input type="datetime-local" class="form-control" name="data[han_dangky]" id="han_dangky">
+							<small class="form-text text-muted">Để trống nếu không giới hạn riêng. Quá thời điểm này học viên không tự đăng ký được.</small>
+						</div>
+						<div class="form-group col-md-6">
+							<label for="suc_chua_ca">Sức chứa mỗi ca</label>
+							<input type="number" class="form-control" name="data[suc_chua_ca]" id="suc_chua_ca" min="1" value="3">
+						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -168,6 +178,7 @@ $(document).ready(function(){
 		$('#ten').val('');
 		$('#ngay_batdau').val('');
 		$('#ngay_ketthuc').val('');
+		$('#han_dangky').val('');
 		$('#suc_chua_ca').val(3);
 	});
 
@@ -178,6 +189,7 @@ $(document).ready(function(){
 		$('#ten').val($(this).data('ten'));
 		$('#ngay_batdau').val($(this).data('ngay-batdau'));
 		$('#ngay_ketthuc').val($(this).data('ngay-ketthuc'));
+		$('#han_dangky').val($(this).data('han-dangky'));
 		$('#suc_chua_ca').val($(this).data('suc-chua'));
 		$('#modal-add').modal('show');
 	});

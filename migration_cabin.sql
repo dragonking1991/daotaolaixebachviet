@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS table_cabin_khoahoc (
   ngay_batdau DATE NOT NULL,
   ngay_ketthuc DATE NOT NULL,
   suc_chua_ca INT DEFAULT 3,
+  han_dangky DATETIME NULL DEFAULT NULL,
   ngaytao INT DEFAULT 0,
   user_tao VARCHAR(255) DEFAULT '',
   stt INT DEFAULT 0,
@@ -43,5 +44,21 @@ SET @ddl := IF(@col_exists = 0,
   'SELECT 1'
 );
 PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Hạn đăng ký lịch học cabin cho mỗi khóa (sau thời điểm này không cho học viên tự đăng ký).
+-- NULL = không giới hạn riêng (chỉ chốt theo ngay_ketthuc).
+SET @col_han := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'table_cabin_khoahoc'
+    AND COLUMN_NAME = 'han_dangky'
+);
+SET @ddl_han := IF(@col_han = 0,
+  'ALTER TABLE table_cabin_khoahoc ADD COLUMN han_dangky DATETIME NULL DEFAULT NULL',
+  'SELECT 1'
+);
+PREPARE stmt FROM @ddl_han;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;

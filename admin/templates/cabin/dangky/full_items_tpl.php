@@ -5,6 +5,7 @@
 	$linkBack = "index.php?com=cabin&act=man";
 	$linkList = "index.php?com=cabin&act=dangky&id=".$id_kh;
 	$linkAutofill = "index.php?com=cabin&act=autofill_dangky&id=".$id_kh;
+	$linkExportAll = "index.php?com=cabin&act=exportExcel&id=".$id_kh."&mode=fullall";
 	$allSlots = cabin_time_slots();
 ?>
 <section class="content-header text-sm">
@@ -23,6 +24,7 @@
 	<div class="card-footer text-sm sticky-top">
 		<a class="btn btn-sm bg-gradient-secondary text-white" href="<?=$linkBack?>" title="Quay lại"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
 		<a class="btn btn-sm bg-gradient-primary text-white" href="<?=$linkList?>" title="Danh sách đăng ký"><i class="fas fa-list mr-2"></i>Danh sách đăng ký</a>
+		<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkExportAll?>" title="Xuất Excel toàn bộ"><i class="fas fa-file-excel mr-2"></i>Xuất Excel toàn bộ</a>
 		<a class="btn btn-sm bg-gradient-danger text-white" href="<?=$linkAutofill?>" id="btn-autofill-dangky" title="Tự động fill ca trống"><i class="fas fa-magic mr-2"></i>Auto fill học viên chưa đăng ký</a>
 	</div>
 
