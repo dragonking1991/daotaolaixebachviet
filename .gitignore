@@ -1,3 +1,5 @@
 caches/
 logs/
 node_modules/
+thumbs/
+upload/
