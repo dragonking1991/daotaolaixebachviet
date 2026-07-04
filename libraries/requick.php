@@ -102,6 +102,22 @@
 								$quyen_aliases[] = 'import_man_cabin';
 							}
 						}
+						if($com == 'hoadon')
+						{
+							if(in_array($act, array('man', 'delete')))
+							{
+								$quyen_aliases[] = 'hoadon_man';
+								$quyen_aliases[] = 'cabin_man';
+								$quyen_aliases[] = 'product_man_cabin';
+								$quyen_aliases[] = 'order_man';
+							}
+							if(in_array($act, array('upload', 'uploadExcel')))
+							{
+								$quyen_aliases[] = 'hoadon_upload';
+								$quyen_aliases[] = 'cabin_upload';
+								$quyen_aliases[] = 'import_man_cabin';
+							}
+						}
 
 						if($quyen_user == '_'){
 							$quyen_user=='';

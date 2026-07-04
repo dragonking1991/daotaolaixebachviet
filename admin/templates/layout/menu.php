@@ -573,6 +573,59 @@
                     </ul>
                 </li>
 
+                <?php
+                    $active_hoadon = "";
+                    $menuopen_hoadon = "";
+                    $none_hoadon = "";
+                    $can_hoadon_man = true;
+                    $can_hoadon_upload = true;
+                    if(isset($kiemtra) && $kiemtra == true)
+                    {
+                        $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
+                        $can_hoadon_man = in_array('hoadon_man', $list_quyen) || in_array('cabin_man', $list_quyen) || in_array('product_man_cabin', $list_quyen) || in_array('order_man', $list_quyen);
+                        $can_hoadon_upload = in_array('hoadon_upload', $list_quyen) || in_array('cabin_upload', $list_quyen) || in_array('import_man_cabin', $list_quyen);
+                        if(!$can_hoadon_man && !$can_hoadon_upload) $none_hoadon = "d-none";
+                    }
+                    if($com=='hoadon')
+                    {
+                        $active_hoadon = 'active';
+                        $menuopen_hoadon = 'menu-open';
+                    }
+                ?>
+                <li class="nav-item has-treeview <?=$menuopen_hoadon?> <?=$none_hoadon?>">
+                    <a class="nav-link <?=$active_hoadon?>" href="#" title="Quản lý hóa đơn">
+                        <i class="nav-icon text-sm fas fa-file-invoice"></i>
+                        <p>
+                            QL Hóa đơn
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <?php
+                            $active_hoadon_man = "";
+                            $none_hoadon_man = "";
+                            if(isset($kiemtra) && $kiemtra == true && !$can_hoadon_man) $none_hoadon_man = "d-none";
+                            if($com=='hoadon' && ($act=='man' || $act=='delete')) $active_hoadon_man = "active";
+                        ?>
+                        <li class="nav-item <?=$none_hoadon_man?>">
+                            <a class="nav-link <?=$active_hoadon_man?>" href="index.php?com=hoadon&act=man" title="Danh sách hóa đơn">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Danh sách hóa đơn</p>
+                            </a>
+                        </li>
+                        <?php
+                            $active_hoadon_upload = "";
+                            $none_hoadon_upload = "";
+                            if(isset($kiemtra) && $kiemtra == true && !$can_hoadon_upload) $none_hoadon_upload = "d-none";
+                            if($com=='hoadon' && ($act=='upload' || $act=='uploadExcel')) $active_hoadon_upload = "active";
+                        ?>
+                        <li class="nav-item <?=$none_hoadon_upload?>">
+                            <a class="nav-link <?=$active_hoadon_upload?>" href="index.php?com=hoadon&act=upload" title="Import hóa đơn">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Import hóa đơn</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
 
                 <!-- Cart -->
                 <?php if(isset($config['order']['active']) && $config['order']['active'] == true) { ?>
