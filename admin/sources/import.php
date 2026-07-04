@@ -284,8 +284,27 @@
 
 	function getImportCellStringValue($worksheet, $column, $row)
 	{
-		$value = $worksheet->getCellByColumnAndRow($column, $row)->getFormattedValue();
+		$cell = $worksheet->getCellByColumnAndRow($column, $row);
+		$value = '';
+
+		try
+		{
+			$value = $cell->getFormattedValue();
+		}
+		catch(Exception $e)
+		{
+			/*
+			 * Some payroll files contain formulas that PHPExcel cannot evaluate
+			 * in this runtime. Fall back to cached/raw cell value instead of
+			 * interrupting the entire import process.
+			 */
+			if(method_exists($cell, 'getOldCalculatedValue')) $value = $cell->getOldCalculatedValue();
+			if($value === null || $value === '') $value = $cell->getValue();
+		}
+
 		if(is_object($value) && method_exists($value, '__toString')) $value = (string)$value;
+		if(is_array($value)) $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+
 		return trim((string)$value);
 	}
 
@@ -459,6 +478,57 @@
 		return $lastHeaderColumn;
 	}
 
+	function detectEmployeeImportSheetTitle($objPHPExcel)
+	{
+		$sheetNames = array();
+		foreach($objPHPExcel->getWorksheetIterator() as $worksheet)
+		{
+			$title = trim((string)$worksheet->getTitle());
+			$sheetNames[] = $title;
+
+			if($title === 'L') return $title;
+		}
+
+		$keywords = array('nhanvien', 'luong', 'bangluong', 'payroll', 'employee');
+		foreach($objPHPExcel->getWorksheetIterator() as $worksheet)
+		{
+			$title = trim((string)$worksheet->getTitle());
+			$normalizedTitle = normalizeImportHeaderLabel($title);
+			foreach($keywords as $keyword)
+			{
+				if(strpos($normalizedTitle, $keyword) !== false) return $title;
+			}
+
+			$highestRow = $worksheet->getHighestRow();
+			$highestColumn = $worksheet->getHighestColumn();
+			$highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn);
+			$headerRow = detectEmployeeHeaderRow($worksheet, $highestRow, $highestColumnIndex);
+			$headerMap = array();
+			$scanColumns = getEmployeeImportColumnIndex($worksheet, $highestColumnIndex, $headerRow);
+
+			for($column = 0; $column < $scanColumns; $column++)
+			{
+				$headerKey = normalizeImportHeaderLabel(getImportCellStringValue($worksheet, $column, $headerRow));
+				if($headerKey === '') continue;
+				if(!isset($headerMap[$headerKey])) $headerMap[$headerKey] = $column;
+			}
+
+			$nameColumn = findImportHeaderMapColumnIndex($headerMap, array('hovaten', 'hoten', 'ten'));
+			$baseSalaryColumn = findImportHeaderMapColumnIndex($headerMap, array('luongchinh'));
+			$totalIncomeColumn = findImportHeaderMapColumnIndex($headerMap, array('tongthunhap'));
+			$netSalaryColumn = findImportHeaderMapColumnIndex($headerMap, array('luongthucnhan', 'luongthycnhan'));
+
+			if($nameColumn !== null && ($baseSalaryColumn !== null || $totalIncomeColumn !== null || $netSalaryColumn !== null))
+			{
+				return $title;
+			}
+		}
+
+		if(count($sheetNames) > 0) return $sheetNames[0];
+
+		return '';
+	}
+
 	/* Upload excel */
 	function uploadExcel()
 	{
@@ -466,6 +536,48 @@
 
 		if(isset($_POST['importExcel']))
 		{
+			if(!isset($_FILES['file-excel']) || !is_array($_FILES['file-excel']))
+			{
+				$func->transfer("Không nhận được tập tin upload. Vui lòng chọn lại file Excel.", "index.php?com=import&act=man&type=".$type, false);
+			}
+
+			$uploadError = (int)$_FILES['file-excel']['error'];
+			if($uploadError !== UPLOAD_ERR_OK)
+			{
+				$uploadErrors = array(
+					UPLOAD_ERR_INI_SIZE => "Tập tin vượt quá giới hạn upload của máy chủ.",
+					UPLOAD_ERR_FORM_SIZE => "Tập tin vượt quá giới hạn upload của biểu mẫu.",
+					UPLOAD_ERR_PARTIAL => "Tập tin chỉ được tải lên một phần.",
+					UPLOAD_ERR_NO_FILE => "Bạn chưa chọn tập tin Excel để import.",
+					UPLOAD_ERR_NO_TMP_DIR => "Máy chủ thiếu thư mục tạm để xử lý upload.",
+					UPLOAD_ERR_CANT_WRITE => "Máy chủ không thể ghi tập tin upload.",
+					UPLOAD_ERR_EXTENSION => "Upload bị chặn bởi extension PHP trên máy chủ."
+				);
+
+				$uploadMessage = (isset($uploadErrors[$uploadError])) ? $uploadErrors[$uploadError] : "Upload tập tin thất bại (mã lỗi: ".$uploadError.").";
+				$func->transfer($uploadMessage, "index.php?com=import&act=man&type=".$type, false);
+			}
+
+			@ini_set('max_execution_time', '300');
+			@set_time_limit(300);
+			@ini_set('memory_limit', '512M');
+
+			$importType = $type;
+			register_shutdown_function(function() use ($importType) {
+				$lastError = error_get_last();
+				if(!$lastError) return;
+
+				$fatalTypes = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR);
+				if(!in_array($lastError['type'], $fatalTypes, true)) return;
+
+				error_log('[uploadExcel]['.$importType.'] '.$lastError['message'].' in '.$lastError['file'].':'.$lastError['line']);
+
+				if(headers_sent()) return;
+
+				$url = 'index.php?com=import&act=man&type='.urlencode($importType);
+				echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="1;url='.$url.'"></head><body style="font-family:Arial,sans-serif;padding:20px;background:#f5f5f5;color:#b02a37;">Import thất bại do lỗi hệ thống hoặc file quá lớn. Vui lòng thử lại với file nhẹ hơn.</body></html>';
+			});
+
 			$file_type = $_FILES['file-excel']['type'];
 			$file_extension = strtolower(pathinfo($_FILES['file-excel']['name'], PATHINFO_EXTENSION));
 
@@ -476,31 +588,45 @@
 				$skippedQrRows = array();
 				$sourceFileName = $_FILES["file-excel"]["name"];
 				$filename = $func->changeTitle($_FILES["file-excel"]["name"]);
-				move_uploaded_file($_FILES["file-excel"]["tmp_name"],$filename);			
+				if(!move_uploaded_file($_FILES["file-excel"]["tmp_name"],$filename))
+				{
+					$func->transfer("Không thể tải file Excel lên máy chủ. Vui lòng thử lại.", "index.php?com=import&act=man&type=".$type, false);
+				}
 				
 				require LIBRARIES.'PHPExcel.php';
 				require_once LIBRARIES.'PHPExcel/IOFactory.php';
 
-				$objPHPExcel = PHPExcel_IOFactory::load($filename);
+				try
+				{
+					$objPHPExcel = PHPExcel_IOFactory::load($filename);
+				}
+				catch(Exception $e)
+				{
+					@unlink($filename);
+					$func->transfer("Không thể đọc file Excel. Vui lòng kiểm tra lại định dạng file (.xls/.xlsx/.xlsm).", "index.php?com=import&act=man&type=".$type, false);
+				}
 
-				// Task 16: Với nhan-vien, kiểm tra file có sheet "L" không trước khi xử lý
+				$employeeImportSheetTitle = '';
+
+				// Task 16: Với nhan-vien, kiểm tra và tự chọn sheet phù hợp trước khi xử lý
 				if($type == 'nhan-vien')
 				{
 					$sheetNames = array();
 					foreach($objPHPExcel->getWorksheetIterator() as $_ws) $sheetNames[] = $_ws->getTitle();
-					if(!in_array('L', $sheetNames, true))
+					$employeeImportSheetTitle = detectEmployeeImportSheetTitle($objPHPExcel);
+
+					if($employeeImportSheetTitle === '')
 					{
-						$mess = 'Không tìm thấy sheet có tên "L" trong file. Các sheet hiện có: '.htmlspecialchars(implode(', ', $sheetNames)).'. Vui lòng kiểm tra lại file lương (.xlsm/.xlsx).';
+						$mess = 'Không tìm thấy sheet nhân viên hợp lệ trong file. Các sheet hiện có: '.htmlspecialchars(implode(', ', $sheetNames)).'. Vui lòng kiểm tra lại file lương (.xlsm/.xlsx).';
 						@unlink($filename);
-						$template = "import/man/items";
-						return;
+						$func->transfer($mess, "index.php?com=import&act=man&type=".$type, false);
 					}
 				}
 				foreach ($objPHPExcel->getWorksheetIterator() as $worksheet) 
 				{
 					$worksheetTitle = $worksheet->getTitle();
-					// Task 16: Với nhan-vien chỉ xử lý sheet "L"; bỏ qua tất cả sheet khác
-					if($type == 'nhan-vien' && $worksheetTitle !== 'L') continue;
+					// Với nhan-vien chỉ xử lý sheet được tự động chọn
+					if($type == 'nhan-vien' && $worksheetTitle !== $employeeImportSheetTitle) continue;
 
 					$highestRow = $worksheet->getHighestRow();
 					$highestColumn = $worksheet->getHighestColumn();

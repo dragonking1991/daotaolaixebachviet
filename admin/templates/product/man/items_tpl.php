@@ -7,6 +7,8 @@
     $linkDelete = "index.php?com=product&act=delete&type=".$type."&p=".$curPage;
     $linkMulti = "index.php?com=product&act=man_photo&kind=man&type=".$type."&p=".$curPage;
     $copyImg = (isset($config['product'][$type]['copy_image']) && $config['product'][$type]['copy_image'] == true) ? TRUE : FALSE;
+    $selectedBoPhan = (isset($_GET['bo_phan'])) ? trim((string)$_GET['bo_phan']) : '';
+    $selectedChucVu = (isset($_GET['chuc_vu'])) ? trim((string)$_GET['chuc_vu']) : '';
 ?>
 <!-- Content Header -->
 <section class="content-header text-sm">
@@ -28,14 +30,40 @@
         <a class="btn btn-sm bg-gradient-dark text-white" href="#" id="btn-delete-all-data" title="Xóa toàn bộ dữ liệu"><i class="fas fa-trash mr-2"></i>Xóa toàn bộ</a>
         <div class="form-inline form-search d-inline-block align-middle ml-3">
             <div class="input-group input-group-sm">
-                <input class="form-control form-control-navbar text-sm" type="search" id="keyword" placeholder="Tìm kiếm" aria-label="Tìm kiếm" value="<?=(isset($_GET['keyword'])) ? $_GET['keyword'] : ''?>" onkeypress="doEnter(event,'keyword','<?=$linkMan?>')">
+                <input class="form-control form-control-navbar text-sm" type="search" id="keyword" placeholder="Tìm kiếm" aria-label="Tìm kiếm" value="<?=(isset($_GET['keyword'])) ? $_GET['keyword'] : ''?>" onkeypress="<?php if($_GET['type']=='nhan-vien') { ?>if(event.keyCode==13||event.which==13) onSearchNhanVien();<?php } else { ?>doEnter(event,'keyword','<?=$linkMan?>');<?php } ?>">
                 <div class="input-group-append bg-primary rounded-right">
-                    <button class="btn btn-navbar text-white" type="button" onclick="onSearch('keyword','<?=$linkMan?>')">
+                    <button class="btn btn-navbar text-white" type="button" onclick="<?php if($_GET['type']=='nhan-vien') { ?>onSearchNhanVien();<?php } else { ?>onSearch('keyword','<?=$linkMan?>');<?php } ?>">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
             </div>
         </div>
+
+        <?php if($_GET['type']=='nhan-vien') { ?>
+        <div class="form-inline d-inline-flex align-middle ml-2">
+            <select id="filter-bo-phan" class="form-control form-control-sm mr-2" onchange="applyNhanVienFilter(true)">
+                <option value="">Tất cả bộ phận</option>
+                <?php if(!empty($employeeDepartments)) { foreach($employeeDepartments as $departmentItem) {
+                    $departmentName = trim((string)$departmentItem['hang']);
+                    if($departmentName === '') continue;
+                ?>
+                    <option value="<?=htmlspecialchars($departmentName, ENT_QUOTES, 'UTF-8')?>" <?=($selectedBoPhan === $departmentName) ? 'selected' : ''?>><?=htmlspecialchars($departmentName)?></option>
+                <?php } } ?>
+            </select>
+
+            <select id="filter-chuc-vu" class="form-control form-control-sm mr-2" onchange="applyNhanVienFilter(true)">
+                <option value="">Tất cả chức vụ</option>
+                <?php if(!empty($employeePositions)) { foreach($employeePositions as $positionItem) {
+                    $positionName = trim((string)$positionItem['khoa']);
+                    if($positionName === '') continue;
+                ?>
+                    <option value="<?=htmlspecialchars($positionName, ENT_QUOTES, 'UTF-8')?>" <?=($selectedChucVu === $positionName) ? 'selected' : ''?>><?=htmlspecialchars($positionName)?></option>
+                <?php } } ?>
+            </select>
+
+            <button type="button" class="btn btn-sm btn-info" onclick="applyNhanVienFilter(true)">Lọc</button>
+        </div>
+        <?php } ?>
     </div>
     <?php if(
         (isset($config['product'][$type]['dropdown']) && $config['product'][$type]['dropdown'] == true) || 
@@ -300,6 +328,24 @@
 
 <script type="text/javascript">
 $(document).ready(function(){
+    window.applyNhanVienFilter = function(resetPage){
+        var url = '<?=$linkMan?>';
+        var keyword = ($('#keyword').val() || '').trim();
+        var boPhan = ($('#filter-bo-phan').val() || '').trim();
+        var chucVu = ($('#filter-chuc-vu').val() || '').trim();
+
+        if(keyword !== '') url += '&keyword=' + encodeURIComponent(keyword);
+        if(boPhan !== '') url += '&bo_phan=' + encodeURIComponent(boPhan);
+        if(chucVu !== '') url += '&chuc_vu=' + encodeURIComponent(chucVu);
+        if(resetPage) url += '&p=1';
+
+        window.location.href = url;
+    };
+
+    window.onSearchNhanVien = function(){
+        window.applyNhanVienFilter(true);
+    };
+
 	$('#btn-delete-all-data').click(function(e){
 		e.preventDefault();
 		if(confirm('Bạn có chắc chắn muốn XÓA TOÀN BỘ dữ liệu của phần này? Hành động này không thể hoàn tác!')){

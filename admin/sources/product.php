@@ -15,7 +15,7 @@
 
 	/* Cấu hình đường dẫn trả về */
 	$strUrl = "";
-	$arrUrl = array('id_list','id_cat','id_item','id_sub','id_brand');
+	$arrUrl = array('id_list','id_cat','id_item','id_sub','id_brand','bo_phan','chuc_vu');
 	if(isset($_POST['data']))
 	{
 		$dataUrl = isset($_POST['data']) ? $_POST['data'] : null;
@@ -216,7 +216,7 @@
 	/* Get man */
 	function get_items()
 	{
-		global $d, $func, $strUrl, $curPage, $items, $paging, $type;
+		global $d, $func, $strUrl, $curPage, $items, $paging, $type, $employeeDepartments, $employeePositions;
 
 		$where = "";
 		$idlist = (isset($_REQUEST['id_list'])) ? htmlspecialchars($_REQUEST['id_list']) : 0;
@@ -224,16 +224,40 @@
 		$iditem = (isset($_REQUEST['id_item'])) ? htmlspecialchars($_REQUEST['id_item']) : 0;
 		$idsub = (isset($_REQUEST['id_sub'])) ? htmlspecialchars($_REQUEST['id_sub']) : 0;
 		$idbrand = (isset($_REQUEST['id_brand'])) ? htmlspecialchars($_REQUEST['id_brand']) : 0;
+		$boPhan = (isset($_REQUEST['bo_phan'])) ? trim((string)$_REQUEST['bo_phan']) : '';
+		$chucVu = (isset($_REQUEST['chuc_vu'])) ? trim((string)$_REQUEST['chuc_vu']) : '';
 
 		if($idlist) $where .= " and id_list=$idlist";
 		if($idcat) $where .= " and id_cat=$idcat";
 		if($iditem) $where .= " and id_item=$iditem";
 		if($idsub) $where .= " and id_sub=$idsub";
 		if($idbrand) $where .= " and id_brand=$idbrand";
+		if($type == 'nhan-vien')
+		{
+			if($boPhan !== '')
+			{
+				$boPhanSql = str_replace("'", "''", $boPhan);
+				$where .= " and hang = '".$boPhanSql."'";
+			}
+
+			if($chucVu !== '')
+			{
+				$chucVuSql = str_replace("'", "''", $chucVu);
+				$where .= " and khoa = '".$chucVuSql."'";
+			}
+		}
 		if(isset($_REQUEST['keyword']))
 		{
 			$keyword = htmlspecialchars($_REQUEST['keyword']);
 			$where .= " and (tenvi LIKE '%$keyword%' or tenen LIKE '%$keyword%')";
+		}
+
+		$employeeDepartments = array();
+		$employeePositions = array();
+		if($type == 'nhan-vien')
+		{
+			$employeeDepartments = $d->rawQuery("select distinct hang from #_product where type = ? and hang <> '' order by hang asc", array($type));
+			$employeePositions = $d->rawQuery("select distinct khoa from #_product where type = ? and khoa <> '' order by khoa asc", array($type));
 		}
 
 		$per_page = 10;
