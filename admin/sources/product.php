@@ -301,9 +301,10 @@
 
 		if(empty($_POST)) $func->transfer("Không nhận được dữ liệu", "index.php?com=product&act=man&type=".$type."&p=".$curPage.$strUrl, false);
 
-		$id_opt = (isset($id)) ? htmlspecialchars($id) : 0;
-		$row_opt = $d->rawQueryOne("select id, options2 from #_product where id = ? and type = ? limit 0,1",array($id_opt, $type));
-		$option2 = json_decode($row_opt['options2'],true);
+		$id_opt = (isset($_POST['id']) && (int)$_POST['id'] > 0) ? (int)$_POST['id'] : 0;
+		$row_opt = ($id_opt > 0) ? $d->rawQueryOne("select id, options2 from #_product where id = ? and type = ? limit 0,1",array($id_opt, $type)) : array();
+		$option2 = (!empty($row_opt['options2'])) ? json_decode($row_opt['options2'],true) : array();
+		if(!is_array($option2)) $option2 = array();
 
 		/* Post dữ liệu */
 		$data = (isset($_POST['data'])) ? $_POST['data'] : null;
@@ -355,6 +356,15 @@
 			{
 				$employeeCccd = (isset($data['cccd'])) ? trim((string)$data['cccd']) : '';
 				if($employeeCccd !== '') $data['ma_tra_cuu'] = $employeeCccd;
+
+				$employeeGhiChu = (isset($data['employee_ghichu'])) ? trim((string)$data['employee_ghichu']) : '';
+				unset($data['employee_ghichu']);
+
+				if(!isset($option2['detail']) || !is_array($option2['detail'])) $option2['detail'] = array();
+				if($employeeGhiChu !== '') $option2['detail']['ghichu'] = htmlspecialchars($employeeGhiChu);
+				else unset($option2['detail']['ghichu']);
+
+				$data['options2'] = json_encode($option2, JSON_UNESCAPED_UNICODE);
 			}
 		}
 

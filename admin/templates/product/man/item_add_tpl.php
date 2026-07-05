@@ -105,6 +105,21 @@
     	$colRight = "d-none";	
     }
     $options2 = (isset($item['options2']) && $item['options2'] != '') ? json_decode($item['options2'],true) : null;
+    $employeeGhiChu = '';
+    if($_GET['type'] == 'nhan-vien' && is_array($options2) && isset($options2['detail']) && is_array($options2['detail']))
+    {
+    	$noteAliases = array('ghichu', 'ghichudiengiai', 'diengiai', 'note', 'notes', 'ghichunhanvien');
+    	foreach($noteAliases as $nk)
+    	{
+    		if(!isset($options2['detail'][$nk])) continue;
+    		$noteVal = trim((string)$options2['detail'][$nk]);
+    		if($noteVal !== '')
+    		{
+    			$employeeGhiChu = $noteVal;
+    			break;
+    		}
+    	}
+    }
 ?>
 <!-- Content Header -->
 <section class="content-header text-sm">
@@ -215,6 +230,13 @@
 					                                <label for="payroll_phong_ban">Phòng ban payroll:</label>
 					                                <input type="text" class="form-control for-seo" name="data[payroll_phong_ban]" id="payroll_phong_ban" placeholder="Phòng ban payroll" value="<?=@$item['payroll_phong_ban']?>">
 			                                	</div>
+
+			                                	<?php if($k=='vi') { ?>
+			                                	<div class="form-group">
+				                                <label for="employee_ghichu">Ghi chú nhân viên:</label>
+				                                <textarea class="form-control" name="data[employee_ghichu]" id="employee_ghichu" rows="3" placeholder="Nhập ghi chú nhân viên"><?=htmlspecialchars($employeeGhiChu)?></textarea>
+			                                	</div>
+			                                	<?php } ?>
 
 			                                	<div class="form-group">
 					                                <label for="payroll_tong_thu_nhap">Tổng thu nhập:</label>

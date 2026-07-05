@@ -31,6 +31,23 @@
 		);
 	}
 
+	function extractEmployeeGhiChu($employee)
+	{
+		$options2 = (!empty($employee['options2'])) ? json_decode($employee['options2'], true) : array();
+		if(!is_array($options2) || !isset($options2['detail']) || !is_array($options2['detail'])) return '';
+
+		$detail = $options2['detail'];
+		$aliases = array('ghichu', 'ghichudiengiai', 'diengiai', 'note', 'notes', 'ghichunhanvien');
+		foreach($aliases as $key)
+		{
+			if(!isset($detail[$key])) continue;
+			$value = trim((string)$detail[$key]);
+			if($value !== '') return $value;
+		}
+
+		return '';
+	}
+
 	function formatEmployeeDetailLabel($key)
 	{
 		$map = array(
@@ -64,6 +81,8 @@
 			'giamtrugiacanh' => 'Giảm trừ gia cảnh',
 			'sonpt' => 'Số NPT',
 			'nguoiphuthuoc' => 'Người phụ thuộc',
+			'ghichu' => 'Ghi chú',
+			'ghichudiengiai' => 'Ghi chú',
 			'thunhaptinhthue' => 'Thu nhập tính thuế',
 			'bac' => 'Bậc',
 			'thuetncn' => 'Thuế TNCN',
@@ -252,6 +271,7 @@
 			elseif($payrollDepartment === 'giao_vien') $boPhanHienThi = 'Bộ phận giáo viên';
 		}
 		if($boPhanHienThi === '') $boPhanHienThi = '-';
+		$ghiChu = extractEmployeeGhiChu($employee);
 
 		ob_start();
 		?>
@@ -265,6 +285,11 @@
 				<div><strong>Chức vụ:</strong><br><?=htmlspecialchars($employee['khoa'])?></div>
 				<?php if(!empty($employee['ngaysinh'])) { ?><div><strong>Ngày sinh:</strong><br><?=htmlspecialchars($employee['ngaysinh'])?></div><?php } ?>
 			</div>
+			<?php if($ghiChu !== '') { ?>
+				<div style="margin-bottom:14px; padding:10px 12px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0;">
+					<strong>Ghi chú:</strong><br><?=nl2br(htmlspecialchars($ghiChu))?>
+				</div>
+			<?php } ?>
 			<div style="margin-bottom:18px;">
 				<h3 style="margin:0 0 10px 0; font-size:18px;">Chi tiết nhân viên</h3>
 				<div style="display:grid; grid-template-columns:minmax(180px, 240px) 1fr; gap:8px 12px;">
@@ -300,6 +325,7 @@
 		$nguoiPhuThuoc = trim((string)($employee['payroll_so_npt'] ?? ''));
 		if($nguoiPhuThuoc === '') $nguoiPhuThuoc = trim((string)($employee['payroll_nguoi_phu_thuoc'] ?? ''));
 		if($nguoiPhuThuoc === '') $nguoiPhuThuoc = '-';
+		$ghiChu = extractEmployeeGhiChu($employee);
 		$lookupToken = issueEmployeeLookupToken($employee['id'], (string)$employee['ma_tra_cuu']);
 
 		$rowStyle = 'display:grid; grid-template-columns:minmax(200px,260px) 1fr; gap:6px 12px; padding:5px 0; border-bottom:1px solid #f3f4f6;';
@@ -316,6 +342,11 @@
 				<div><strong>Chức vụ:</strong><br><?=htmlspecialchars($employee['khoa'])?></div>
 				<?php if(!empty($employee['ngaysinh'])) { ?><div><strong>Ngày sinh:</strong><br><?=htmlspecialchars($employee['ngaysinh'])?></div><?php } ?>
 			</div>
+			<?php if($ghiChu !== '') { ?>
+				<div style="margin-bottom:14px; padding:10px 12px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0;">
+					<strong>Ghi chú:</strong><br><?=nl2br(htmlspecialchars($ghiChu))?>
+				</div>
+			<?php } ?>
 			<div style="margin-bottom:18px;">
 				<h3 style="margin:0 0 10px 0; font-size:17px; color:#0f766e;">Phiếu lương giáo viên</h3>
 				<div>
@@ -367,6 +398,7 @@
 		$lamThemGio = parsePayrollNumericValue($employee['payroll_lam_them_gio'] ?? '');
 		$dayLtSh = parsePayrollNumericValue($employee['payroll_day_lt_sat_hach'] ?? '');
 		$thuongLe = parsePayrollNumericValue($employee['payroll_thuong_le_tet'] ?? '');
+		$ghiChu = extractEmployeeGhiChu($employee);
 		$luongCanBan = $luongThucNhan - ($phuCapKpi + $thanhToanChieuSinh + $phuCapComXang + $phuCapDienThoai + $lamThemGio + $dayLtSh + $thuongLe) + $bhxh + $thueTncn;
 
 		$rowStyle = 'display:grid; grid-template-columns:minmax(200px,260px) 1fr; gap:6px 12px; padding:5px 0; border-bottom:1px solid #f3f4f6;';
@@ -385,6 +417,11 @@
 				<div><strong>Chức vụ:</strong><br><?=htmlspecialchars($employee['khoa'])?></div>
 				<?php if(!empty($employee['ngaysinh'])) { ?><div><strong>Ngày sinh:</strong><br><?=htmlspecialchars($employee['ngaysinh'])?></div><?php } ?>
 			</div>
+			<?php if($ghiChu !== '') { ?>
+				<div style="margin-bottom:14px; padding:10px 12px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0;">
+					<strong>Ghi chú:</strong><br><?=nl2br(htmlspecialchars($ghiChu))?>
+				</div>
+			<?php } ?>
 			<div style="margin-bottom:18px;">
 				<h3 style="margin:0 0 10px 0; font-size:17px; color:#1d4ed8;">Phiếu lương văn phòng</h3>
 				<div>

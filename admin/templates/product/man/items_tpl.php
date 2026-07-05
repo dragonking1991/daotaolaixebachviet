@@ -9,6 +9,27 @@
     $copyImg = (isset($config['product'][$type]['copy_image']) && $config['product'][$type]['copy_image'] == true) ? TRUE : FALSE;
     $selectedBoPhan = (isset($_GET['bo_phan'])) ? trim((string)$_GET['bo_phan']) : '';
     $selectedChucVu = (isset($_GET['chuc_vu'])) ? trim((string)$_GET['chuc_vu']) : '';
+
+    if(!function_exists('extractNhanVienGhiChu'))
+    {
+        function extractNhanVienGhiChu($row)
+        {
+            if(!isset($row['options2']) || trim((string)$row['options2']) === '') return '';
+            $options2 = json_decode($row['options2'], true);
+            if(!is_array($options2) || !isset($options2['detail']) || !is_array($options2['detail'])) return '';
+
+            $detail = $options2['detail'];
+            $aliases = array('ghichu', 'ghichudiengiai', 'diengiai', 'note', 'notes', 'ghichunhanvien');
+            foreach($aliases as $key)
+            {
+                if(!isset($detail[$key])) continue;
+                $value = trim((string)$detail[$key]);
+                if($value !== '') return $value;
+            }
+
+            return '';
+        }
+    }
 ?>
 <!-- Content Header -->
 <section class="content-header text-sm">
@@ -116,6 +137,7 @@
                         <th class="align-middle" style="width:15%"><?php if($_GET['type']=='gxn') echo 'Giấy xác nhận'; else if($_GET['type']=='qr') echo 'Hạng'; else if($_GET['type']=='nhan-vien') echo 'Bộ phận'; else echo 'GPLX' ?></th>
                         <?php if($_GET['type']=='nhan-vien') { ?>
                             <th class="align-middle" style="width:15%">Chức vụ</th>
+                            <th class="align-middle" style="width:20%">Ghi chú</th>
                             <th class="align-middle" style="width:15%">Lương thực nhận</th>
                         <?php } ?>
 
@@ -139,6 +161,7 @@
                     <tbody>
                         <?php for($i=0;$i<count($items);$i++) {
                             $departmentLabel = $items[$i]['hang'];
+                            $employeeGhiChu = '';
                             if($_GET['type']=='nhan-vien')
                             {
                                 $positionLabel = trim((string)$items[$i]['khoa']);
@@ -146,6 +169,7 @@
                                 {
                                     $departmentLabel = 'Bộ phận văn phòng';
                                 }
+								$employeeGhiChu = extractNhanVienGhiChu($items[$i]);
                             }
                             $payrollDetail = array(
                                 'Số ngày làm việc' => $items[$i]['payroll_so_ngay_lam_viec'],
@@ -175,6 +199,7 @@
                                 'C1' => $items[$i]['payroll_c1'],
                                 'CE' => $items[$i]['payroll_ce']
                             );
+							if($_GET['type']=='nhan-vien' && $employeeGhiChu !== '') $payrollDetail['Ghi chú'] = $employeeGhiChu;
                             $payrollDetailJson = htmlspecialchars(json_encode($payrollDetail, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
 
                         	$linkID = "";
@@ -228,6 +253,15 @@
                                     <td class="align-middle">
                                         <a class="text-dark" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>"><?=$items[$i]['khoa']?></a>
                                     </td>
+                                    <td class="align-middle" style="white-space:normal; max-width: 380px;">
+										<?php
+											if($employeeGhiChu !== '')
+											{
+												echo nl2br(htmlspecialchars($employeeGhiChu));
+											}
+											else echo '-';
+										?>
+									</td>
                                     <td class="align-middle">
                                         <a class="text-dark" href="<?=$linkEdit?><?=$linkID?>&id=<?=$items[$i]['id']?>" title="<?=$items[$i]['tenvi']?>"><?=$items[$i]['payroll_luong_thuc_nhan']?></a>
                                     </td>
