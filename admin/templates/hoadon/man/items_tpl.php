@@ -30,6 +30,24 @@
 	{
 		$excelColumns = array('Mã số hóa đơn', 'Họ tên người mua hàng', 'Chi tiết hóa đơn', 'Ngày hóa đơn', 'Tổng tiền');
 	}
+
+	if(!function_exists('hoadon_format_multiline_items'))
+	{
+		function hoadon_format_multiline_items($text)
+		{
+			$text = trim((string)$text);
+			if($text === '') return '';
+
+			// Normalize accidental spaces inside thousand separators (e.g. 380. 000 -> 380.000)
+			$text = preg_replace('/(\d)\.\s+(\d{3})(?!\d)/u', '$1.$2', $text);
+
+			// Split lines only before real item markers like "1. ", "2. ", not decimals like "3.3"
+			$text = preg_replace('/\s+(?=\d+\.\s)/u', "\n", $text);
+			$text = preg_replace('/\n{2,}/', "\n", $text);
+
+			return trim($text);
+		}
+	}
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -148,6 +166,8 @@
 								<?php for($c = 0; $c < count($excelColumns); $c++) {
 									$colName = $excelColumns[$c];
 									$val = isset($invoiceInfo[$colName]) ? (string)$invoiceInfo[$colName] : '';
+									$isDetailColumn = preg_match('/chi\s*ti[eế]t|di[eễ]n\s*gi[aả]i/iu', (string)$colName);
+									if($isDetailColumn) $val = hoadon_format_multiline_items($val);
 								?>
 									<td class="align-middle" style="white-space: normal; min-width: 180px; max-width: 380px;">
 										<?php
@@ -280,8 +300,14 @@ $(document).ready(function(){
 		Object.keys(info).forEach(function(key){
 			var val = info[key];
 			if(val === null || typeof val === 'undefined' || String(val).trim() === '') return;
+			var textVal = String(val);
+			if(/chi\s*ti[eế]t|di[eễ]n\s*gi[aả]i/i.test(String(key))) {
+				textVal = textVal.replace(/(\d)\.\s+(\d{3})(?!\d)/g, '$1.$2');
+				textVal = textVal.replace(/\s+(?=\d+\.\s)/g, '\n');
+				textVal = textVal.replace(/\n{2,}/g, '\n').trim();
+			}
 			hasData = true;
-			html += '<tr><th style="width: 32%;">' + $('<div>').text(key).html() + '</th><td>' + $('<div>').text(String(val)).html() + '</td></tr>';
+			html += '<tr><th style="width: 32%;">' + $('<div>').text(key).html() + '</th><td>' + $('<div>').text(textVal).html().replace(/\n/g, '<br>') + '</td></tr>';
 		});
 
 		if(!hasData) html = '<tr><td class="text-center" colspan="2">Không có dữ liệu chi tiết</td></tr>';

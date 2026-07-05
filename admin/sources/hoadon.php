@@ -673,6 +673,58 @@ function uploadExcel_hoadon()
 			if($encodedThongTin !== false) $thongTinHoaDonJson = $encodedThongTin;
 		}
 
+		if($buyer === '' && !empty($thongTinHoaDon))
+		{
+			foreach($thongTinHoaDon as $label => $value)
+			{
+				$labelNorm = normalize_hoadon_header_label($label);
+				if(!in_array($labelNorm, $buyerAliases, true)) continue;
+				$buyerValue = trim((string)$value);
+				if($buyerValue !== '')
+				{
+					$buyer = $buyerValue;
+					break;
+				}
+			}
+		}
+
+		if($detail === '' && !empty($thongTinHoaDon))
+		{
+			foreach($thongTinHoaDon as $label => $value)
+			{
+				$labelNorm = normalize_hoadon_header_label($label);
+				if(!in_array($labelNorm, $detailAliases, true)) continue;
+				$detailValue = trim((string)$value);
+				if($detailValue !== '')
+				{
+					$detail = $detailValue;
+					break;
+				}
+			}
+		}
+
+		if($detail === '' && !empty($thongTinHoaDon))
+		{
+			$detailPartsFromRow = array();
+			for($di = 0; $di < $highestColumnIndex; $di++)
+			{
+				$labelCol = isset($headerTitleMap[$di]) ? trim((string)$headerTitleMap[$di]) : '';
+				if($labelCol === '') continue;
+
+				$labelNorm = normalize_hoadon_header_label($labelCol);
+				if(in_array($labelNorm, $maSoAliases, true) || in_array($labelNorm, $buyerAliases, true) || in_array($labelNorm, $dateAliases, true) || in_array($labelNorm, $totalAliases, true)) continue;
+
+				if(!isset($thongTinHoaDon[$labelCol])) continue;
+				$value = trim((string)$thongTinHoaDon[$labelCol]);
+				if($value === '') continue;
+
+				$detailPartsFromRow[] = $value;
+				if(count($detailPartsFromRow) >= 8) break;
+			}
+
+			if(!empty($detailPartsFromRow)) $detail = implode(' | ', $detailPartsFromRow);
+		}
+
 		if($detail === '')
 		{
 			$detailParts = array();
@@ -697,11 +749,14 @@ function uploadExcel_hoadon()
 		}
 
 		if($maSo === '' && $buyer === '' && $detail === '') continue;
-		if($maSo === '' || $buyer === '' || $detail === '')
+		if($maSo === '')
 		{
 			$skipped++;
 			continue;
 		}
+
+		if($buyer === '') $buyer = '-';
+		if($detail === '') $detail = '(không có chi tiết)';
 
 		$ngayHoaDon = parse_hoadon_date($dateRaw);
 		$tongTien = parse_hoadon_money($totalRaw);
