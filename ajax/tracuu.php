@@ -67,7 +67,7 @@
 			</div>
 
 			<div style="text-align:center; padding:5px 0;">
-				<p style="margin:0 0 2px 0; font-size:14px; font-weight:700; color:#1a1a2e;">Thanh toán qua mã QR</p>
+				<p style="margin:0 0 2px 0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=($ky_info && !empty($ky_info['ten_viettat'])) ? htmlspecialchars($ky_info['ten_viettat']) : 'Thanh toán qua mã QR'?></p>
 				<p style="margin:0 0 6px 0; font-size:11px; color:#888;">Kiểm tra kỹ thông tin trước khi chuyển khoản</p>
 				<div style="">
 					<div style="max-width:140px; width:100%; margin:0 auto; display:block;">
