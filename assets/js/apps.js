@@ -41,7 +41,6 @@ NN_FRAMEWORK.BackToTop = function(){
         if(!type) {
             type = 'gplx';
         }
-        var id_kysathach = '';
         if(cccd=='') {
             alert('Vui lòng nhập số CCCD');
             return false; 
@@ -50,13 +49,6 @@ NN_FRAMEWORK.BackToTop = function(){
             alert("CCCD phải từ 11 đến 12 ký tự!");
             return false; 
         }
-        if(type == 'qr') {
-            id_kysathach = $('#id_kysathach').val();
-            if(!id_kysathach) {
-                alert('Vui lòng chọn kỳ sát hạch');
-                return false;
-            }
-        }
         if(cccd)
         {             
             $.ajax({
@@ -64,7 +56,7 @@ NN_FRAMEWORK.BackToTop = function(){
                 type: "POST",
                 dataType: 'html',
                 async: false,
-                data: {cccd:cccd,type:type,id_kysathach:id_kysathach},
+                data: {cccd:cccd,type:type,id_kysathach:''},
                 success: function(result){
                     $(".ketqua").html(result);
                     $.fancybox.open($('.ketqua'));
@@ -72,6 +64,24 @@ NN_FRAMEWORK.BackToTop = function(){
             });
         }
         return false; 
+    });
+
+    $('body').on('click', '.qr-ky-item-toggle', function() {
+        var targetId = $(this).data('target');
+        var $target = $('#' + targetId);
+
+        if(!$target.length) {
+            return false;
+        }
+
+        if($target.is(':visible')) {
+            $target.slideUp(150);
+            return false;
+        }
+
+        $('.qr-ky-detail').not($target).slideUp(150);
+        $target.slideDown(150);
+        return false;
     });
 
     $('body').on('submit', '#employee-lookup-form', function(e) {

@@ -5,6 +5,7 @@
 	$type = (isset($_POST['type']) && $_POST['type'] !='') ? htmlspecialchars($_POST['type']) : '';
 	$id_kysathach = (isset($_POST['id_kysathach']) && $_POST['id_kysathach'] !='') ? (int)$_POST['id_kysathach'] : 0;
 	$cccd = trim($cccd);
+	$cccd2 = $cccd;
 
 	if (strlen($cccd) == 11) {
 	    $cccd2 = '0' . $cccd;
@@ -18,24 +19,111 @@
 		$kysathach_filter = ' and id_kysathach = '.(int)$id_kysathach;
 	}
 
+	$qr_list = array();
+	if($type == 'qr' && $id_kysathach <= 0) {
+		$qr_raw = $d->rawQuery("select p.id, p.ten$lang as ten, p.ngaysinh, p.hang, p.cccd, p.id_kysathach, k.ngay_sathach, k.ten_viettat, k.loai_sathach from #_product p left join #_kysathach k on k.id = p.id_kysathach where p.type = ? and (p.cccd = '".$cccd."' or p.cccd='".$cccd2."' ) and p.hienthi=1 and p.id_kysathach > 0 order by k.ngay_sathach desc, p.id desc", array($type));
+		if(!empty($qr_raw)) {
+			$unique_ky = array();
+			foreach($qr_raw as $item) {
+				$ky_id = (int)$item['id_kysathach'];
+				if($ky_id <= 0 || isset($unique_ky[$ky_id])) {
+					continue;
+				}
+				$unique_ky[$ky_id] = true;
+				$qr_list[] = $item;
+			}
+		}
+	}
+
+	if($type == 'qr' && $id_kysathach <= 0 && count($qr_list) == 1) {
+		$id_kysathach = (int)$qr_list[0]['id_kysathach'];
+		$kysathach_filter = ' and id_kysathach = '.$id_kysathach;
+	}
+
 	$tracuu = $d->rawQueryOne("select p.id, p.type, p.ten$lang as ten, p.ngaysinh, p.gplx, p.hang, p.khoa, p.gxn, p.cccd, p.photo, p.id_kysathach from #_product p where p.type = ? and (p.cccd = '".$cccd."' or p.cccd='".$cccd2."' ) and p.hienthi=1 $kysathach_filter limit 0,1",array($type));
 
 	// Get kỳ sát hạch info and company name for QR display
 	$ky_info = null;
 	$company_name = '';
 	$company_logo = '';
-	if(!empty($tracuu) && $type == 'qr') {
-		if($tracuu['id_kysathach'] > 0) {
-			$ky_info = $d->rawQueryOne("select * from #_kysathach where id = ? limit 0,1", array($tracuu['id_kysathach']));
-		}
+	if($type == 'qr') {
 		$setting = $d->rawQueryOne("select tenvi from #_setting limit 0,1");
 		$company_name = isset($setting['tenvi']) ? $setting['tenvi'] : '';
 		$logo = $d->rawQueryOne("select photo from #_photo where type = ? and act = ? and hienthi > 0 limit 0,1", array('logo', 'photo_static'));
 		$company_logo = (!empty($logo['photo'])) ? 'upload/photo/'.$logo['photo'] : '';
 	}
+	if(!empty($tracuu) && $type == 'qr') {
+		if($tracuu['id_kysathach'] > 0) {
+			$ky_info = $d->rawQueryOne("select * from #_kysathach where id = ? limit 0,1", array($tracuu['id_kysathach']));
+		}
+	}
 ?>
 
-<?php if(!empty($tracuu)) { ?>
+
+<?php if($type == 'qr' && $id_kysathach <= 0 && count($qr_list) > 1) { ?>
+	<?php if(!empty($qr_list)) { ?>
+		<div style="max-width:520px; margin:0 auto; border:1px solid #d9d9d9; border-radius:12px; padding:14px; background:#fff; font-family:Arial,sans-serif;">
+			<h3 style="margin:0 0 10px 0; font-size:18px; color:#1a1a2e; text-align:center;">Danh sách kỳ sát hạch</h3>
+			<p style="margin:0 0 12px 0; font-size:13px; color:#666; text-align:center;">Chọn kỳ để xem hoặc ẩn mã QR thanh toán tương ứng</p>
+			<div>
+				<?php foreach($qr_list as $ky_item) { ?>
+					<?php $detail_id = 'qr-ky-detail-'.(int)$ky_item['id_kysathach']; ?>
+					<div style="margin-bottom:10px; border:1px solid #dfe3f0; border-radius:10px; background:#f8faff; overflow:hidden;">
+						<button type="button" class="qr-ky-item-toggle" data-target="<?=$detail_id?>" style="display:block; width:100%; border:0; background:transparent; text-align:left; padding:10px 12px; cursor:pointer; color:#1a1a2e;">
+							<div style="font-size:15px; font-weight:700;"><?=htmlspecialchars($ky_item['ten_viettat'])?></div>
+							<div style="font-size:13px; color:#666; margin-top:2px;"><?=date('d-m-Y', strtotime($ky_item['ngay_sathach']))?><?php if(!empty($ky_item['loai_sathach'])) { ?> - <?=htmlspecialchars($ky_item['loai_sathach'])?><?php } ?></div>
+						</button>
+						<div id="<?=$detail_id?>" class="qr-ky-detail" style="display:none; padding:10px; border-top:1px solid #dfe3f0; background:#fff;">
+							<div style="max-width:420px; margin:0 auto; font-family:Arial,sans-serif; border:1px solid #108824; border-radius:16px; padding:5px;">
+								<div style="background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%); border-radius:12px; padding:12px; margin-bottom:8px;">
+									<?php if($company_logo != '') { ?>
+										<div style="text-align:center; margin:0 auto; width:60px;">
+											<img src="<?=$company_logo?>" alt="<?=$company_name?>">
+										</div>
+									<?php } ?>
+									<h2 style="margin:0 0 3px 0; font-size:16px; color:#1a1a2e; text-align:center;">Kết quả tra cứu thí sinh</h2>
+
+									<div style="background:#fff; border-radius:12px; padding:10px; margin-top:8px; display:flex; flex-wrap:wrap; gap:2px;">
+										<div style="flex:1; min-width:40%;">
+											<p style="margin:0 0 2px 0; font-size:11px; color:#888;">Họ và tên</p>
+											<p style="margin:0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=strtoupper($ky_item['ten'])?></p>
+										</div>
+										<div style="flex:1; min-width:40%;">
+											<p style="margin:0 0 2px 0; font-size:11px; color:#888;">Ngày sinh</p>
+											<p style="margin:0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=$ky_item['ngaysinh']?></p>
+										</div>
+										<div style="flex:1; min-width:40%; margin-top:8px;">
+											<p style="margin:0 0 2px 0; font-size:11px; color:#888;">Kỳ sát hạch</p>
+											<p style="margin:0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=date('d-m-Y', strtotime($ky_item['ngay_sathach']))?></p>
+										</div>
+										<div style="flex:1; min-width:40%; margin-top:8px;">
+											<p style="margin:0 0 2px 0; font-size:11px; color:#888;">Hạng GPLX</p>
+											<p style="margin:0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=$ky_item['hang']?></p>
+										</div>
+									</div>
+								</div>
+
+								<div style="text-align:center; padding:5px 0;">
+									<p style="margin:0 0 2px 0; font-size:14px; font-weight:700; color:#1a1a2e;"><?=!empty($ky_item['ten_viettat']) ? htmlspecialchars($ky_item['ten_viettat']) : 'Thanh toán qua mã QR'?></p>
+									<p style="margin:0 0 6px 0; font-size:11px; color:#888;">Kiểm tra kỹ thông tin trước khi chuyển khoản</p>
+									<div style="max-width:140px; width:100%; margin:0 auto; display:block;">
+										<img src="ajax/qr_image.php?id=<?=$ky_item['id']?>&v=<?=time()?>" alt="<?=$ky_item['ten']?>" loading="lazy" style="border:1px solid #108824; border-radius:8px;">
+									</div>
+								</div>
+
+								<div style="background:#fff8e1; border:1px solid #ffe082; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:12px; color:#333; line-height:1.4;">
+									<span style="color:#e65100;">⚠</span> Học viên sử dụng <b><i>ứng dụng ngân hàng (Mobile Banking)</i></b> để thanh toán. <b>Không sử dụng</b> ví điện tử (Momo, Viettel Money, ZaloPay...) để tránh lỗi xử lý giao dịch.
+								</div>
+							</div>
+						</div>
+					</div>
+				<?php } ?>
+			</div>
+		</div>
+	<?php } else { ?>
+		<p class="ktt">Không tìm thấy kỳ sát hạch phù hợp với CCCD này!</p>
+	<?php } ?>
+<?php } else if(!empty($tracuu)) { ?>
 	<?php if($type=='qr') { ?>
 			<div style="max-width:420px; margin:0 auto; font-family:Arial,sans-serif; border:1px solid #108824; border-radius:16px; padding:5px;">
 			<div style="background:linear-gradient(135deg,#f0f4ff 0%,#e8eeff 100%); border-radius:12px; padding:12px; margin-bottom:8px;">
