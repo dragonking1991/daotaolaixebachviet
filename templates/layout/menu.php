@@ -17,8 +17,10 @@
             </li>
             
             <li><a class="<?php if($com=='tai-lieu') echo 'active'; ?>" href="tai-lieu" title="Tài liệu">Tài liệu</a></li>
+
+            <li><a class="<?php if($com=='tra-cuu-qr-thanh-toan') echo 'active'; ?>" href="tra-cuu-qr-thanh-toan" title="QR Thanh toán" style="color:#2954f2; font-weight:700;">QR Thanh toán</a></li>
             
-            <li><a class="<?php if($com=='lien-he') echo 'active'; ?>" href="lien-he" title="Đăng ký tận nơi - thủ tục đơn giản">Đăng ký tận nơi - thủ tục đơn giản</a></li> 
+            <li><a class="<?php if($com=='lien-he') echo 'active'; ?>" href="lien-he" title="Đăng ký tận nơi - thủ tục đơn giản">Đăng ký</a></li> 
 
             <li><a  href="admin/" title="Đăng nhập">Đăng nhập</a></li>       
         </ul>

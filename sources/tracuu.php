@@ -29,6 +29,12 @@
 		}
 	}
 
+	if($com == 'tra-cuu-qr-thanh-toan')
+	{
+		$seo->setSeo('h1','QR Thanh toán');
+		$seo->setSeo('title','QR Thanh toán');
+	}
+
 	/* Lấy danh sách kỳ sát hạch */
 	$items_kysathach = $d->rawQuery("select * from #_kysathach where hienthi = 1 order by ngay_sathach desc, id desc");
 

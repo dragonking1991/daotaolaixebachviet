@@ -34,7 +34,13 @@ NN_FRAMEWORK.BackToTop = function(){
 
     $('body').on("click",".c_tracuu",function() {
         var cccd = $('#input_cccd').val();
-        var type = $('.frm_tracuu ul li.active').data('type');
+        var type = $('#tracuu_type').val();
+        if(!type) {
+            type = $('.frm_tracuu ul li.active').data('type');
+        }
+        if(!type) {
+            type = 'gplx';
+        }
         var id_kysathach = '';
         if(cccd=='') {
             alert('Vui lòng nhập số CCCD');

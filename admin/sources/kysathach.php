@@ -263,8 +263,8 @@ function uploadExcel_kysathach()
 
 		$soTien = str_replace(array(",", "."), "", $soTien);
 
-		// Check if record exists
-		$existing = $d->rawQueryOne("select id from #_product where cccd = ? and type = ? limit 0,1", array($cccd, $type));
+		// Check if record exists within the same kỳ sát hạch
+		$existing = $d->rawQueryOne("select id from #_product where cccd = ? and type = ? and id_kysathach = ? limit 0,1", array($cccd, $type, $id_kysathach));
 
 		$qr_filename = '';
 		if($qrImageData !== null)
