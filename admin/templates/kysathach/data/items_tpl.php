@@ -1,6 +1,7 @@
 <?php
 	$id_ky = $ky_info['id'];
 	$linkMan = "index.php?com=kysathach&act=data&id=".$id_ky."&p=".$curPage;
+	$linkUploadMore = "index.php?com=kysathach&act=upload&id_kysathach=".$id_ky;
 	$linkEdit = "index.php?com=product&act=edit&type=qr&p=1";
 	$linkDelete = "index.php?com=kysathach&act=deleteData&id_ky=".$id_ky."&p=".$curPage;
 	$linkDeleteAll = "index.php?com=kysathach&act=deleteAllData&id_ky=".$id_ky;
@@ -22,6 +23,7 @@
 <section class="content">
 	<div class="card-footer text-sm sticky-top">
 		<a class="btn btn-sm bg-gradient-secondary text-white" href="index.php?com=kysathach&act=man" title="Quay lại"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
+		<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUploadMore?>" title="Import thêm"><i class="fas fa-file-import mr-2"></i>Import thêm</a>
 		<a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa tất cả"><i class="far fa-trash-alt mr-2"></i>Xóa đã chọn</a>
 		<a class="btn btn-sm bg-gradient-dark text-white" href="#" id="btn-delete-all-data" title="Xóa toàn bộ dữ liệu"><i class="fas fa-trash mr-2"></i>Xóa toàn bộ</a>
 		<div class="form-inline form-search d-inline-block align-middle ml-3">
@@ -112,6 +114,7 @@
 
 	<div class="card-footer text-sm">
 		<a class="btn btn-sm bg-gradient-secondary text-white" href="index.php?com=kysathach&act=man" title="Quay lại"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
+		<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUploadMore?>" title="Import thêm"><i class="fas fa-file-import mr-2"></i>Import thêm</a>
 		<a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa đã chọn"><i class="far fa-trash-alt mr-2"></i>Xóa đã chọn</a>
 		<a class="btn btn-sm bg-gradient-dark text-white" href="#" id="btn-delete-all-data" title="Xóa toàn bộ dữ liệu"><i class="fas fa-trash mr-2"></i>Xóa toàn bộ</a>
 	</div>

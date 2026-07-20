@@ -97,8 +97,12 @@ function get_items_kysathach()
 function get_items_kysathach_all()
 {
 	global $d, $items_ky;
+	$selected_id = isset($_GET['id_kysathach']) ? (int)$_GET['id_kysathach'] : 0;
 
-	$items_ky = $d->rawQuery("select * from #_kysathach where hienthi = 1 order by ngay_sathach desc, id desc");
+	if($selected_id > 0)
+		$items_ky = $d->rawQuery("select * from #_kysathach where hienthi = 1 or id = ? order by ngay_sathach desc, id desc", array($selected_id));
+	else
+		$items_ky = $d->rawQuery("select * from #_kysathach where hienthi = 1 order by ngay_sathach desc, id desc");
 }
 
 function get_item_kysathach()
@@ -308,7 +312,7 @@ function uploadExcel_kysathach()
 	if(count($skippedQrRows) > 0) {
 		$message .= "<br>Cảnh báo: Bỏ qua lưu QR tại các dòng không có ảnh QR: ".implode(', ', $skippedQrRows);
 	}
-	$func->transfer($message, "index.php?com=kysathach&act=upload");
+	$func->transfer($message, "index.php?com=kysathach&act=data&id=".$id_kysathach);
 }
 
 function get_data_kysathach()

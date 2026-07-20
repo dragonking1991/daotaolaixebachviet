@@ -1,5 +1,6 @@
 <?php
 	$linkUploadExcel = "index.php?com=kysathach&act=uploadExcel";
+	$selectedKy = isset($_GET['id_kysathach']) ? (int)$_GET['id_kysathach'] : 0;
 ?>
 <!-- Content Header -->
 <section class="content-header text-sm">
@@ -29,7 +30,7 @@
 							<option value="">--- Chọn ---</option>
 							<?php if(isset($items_ky) && count($items_ky)) { ?>
 								<?php foreach($items_ky as $ky) { ?>
-									<option value="<?=$ky['id']?>"><?=date('d-m-Y', strtotime($ky['ngay_sathach']))?> - <?=$ky['ten_viettat']?> - <?=$ky['loai_sathach']?></option>
+									<option value="<?=$ky['id']?>" <?=($selectedKy == (int)$ky['id']) ? 'selected' : ''?>><?=date('d-m-Y', strtotime($ky['ngay_sathach']))?> - <?=$ky['ten_viettat']?> - <?=$ky['loai_sathach']?></option>
 								<?php } ?>
 							<?php } ?>
 						</select>
