@@ -268,16 +268,17 @@ function uploadExcel_kysathach()
 		$soTien = str_replace(array(",", "."), "", $soTien);
 
 		// Check if record exists within the same kỳ sát hạch
-		$existing = $d->rawQueryOne("select id from #_product where cccd = ? and type = ? and id_kysathach = ? limit 0,1", array($cccd, $type, $id_kysathach));
+		$existing = $d->rawQueryOne("select id, photo from #_product where cccd = ? and type = ? and id_kysathach = ? limit 0,1", array($cccd, $type, $id_kysathach));
 
-		$qr_filename = '';
+		$qr_filename = (!empty($existing['photo'])) ? $existing['photo'] : '';
 		if($qrImageData !== null)
 		{
-			$qr_filename = 'qr-' . $cccd . '.png';
+			$cccdFile = preg_replace('/[^0-9A-Za-z_-]/', '', $cccd);
+			$qr_filename = 'qr-' . $id_kysathach . '-' . $cccdFile . '.png';
 			$qr_path = ROOT . '/../upload/product/' . $qr_filename;
 			file_put_contents($qr_path, $qrImageData);
 		}
-		else
+		elseif(empty($qr_filename))
 		{
 			$skippedQrRows[] = $row;
 		}
