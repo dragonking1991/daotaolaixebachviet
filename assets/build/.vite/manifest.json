@@ -1,0 +1,37 @@
+{
+  "assets/app/custom.css": {
+    "file": "css/custom-CKOxuStp.css",
+    "src": "assets/app/custom.css",
+    "isEntry": true,
+    "name": "custom",
+    "names": [
+      "custom.css"
+    ]
+  },
+  "assets/app/main.ts": {
+    "file": "js/app-BUAyvh6r.js",
+    "name": "app",
+    "src": "assets/app/main.ts",
+    "isEntry": true
+  },
+  "assets/fonts/Montserrat-Bold.ttf": {
+    "file": "assets/Montserrat-Bold-CPpXCxkU.ttf",
+    "src": "assets/fonts/Montserrat-Bold.ttf"
+  },
+  "assets/fonts/Montserrat-Regular.ttf": {
+    "file": "assets/Montserrat-Regular-ZgHWWV9l.ttf",
+    "src": "assets/fonts/Montserrat-Regular.ttf"
+  },
+  "assets/fonts/OpenSans-Semibold.ttf": {
+    "file": "assets/OpenSans-Semibold-gN-3ccKH.ttf",
+    "src": "assets/fonts/OpenSans-Semibold.ttf"
+  },
+  "assets/images/bg_ha.png": {
+    "file": "assets/bg_ha-B6WFIufm.png",
+    "src": "assets/images/bg_ha.png"
+  },
+  "assets/images/bg_nt.png": {
+    "file": "assets/bg_nt-BhKzYZIm.png",
+    "src": "assets/images/bg_nt.png"
+  }
+}
