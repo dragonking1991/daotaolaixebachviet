@@ -626,6 +626,54 @@
                     </ul>
                 </li>
 
+                <?php
+                    $active_xd = "";
+                    $menuopen_xd = "";
+                    $none_xd = "";
+                    if(isset($kiemtra) && $kiemtra == true)
+                    {
+                        $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
+                        $can_xd = in_array('xangdau_man', $list_quyen) || in_array('hoadon_man', $list_quyen) || in_array('order_man', $list_quyen) || in_array('product_man_cabin', $list_quyen);
+                        if(!$can_xd) $none_xd = "d-none";
+                    }
+                    if($com=='xangdau')
+                    {
+                        $active_xd = 'active';
+                        $menuopen_xd = 'menu-open';
+                    }
+                ?>
+                <li class="nav-item has-treeview <?=$menuopen_xd?> <?=$none_xd?>">
+                    <a class="nav-link <?=$active_xd?>" href="#" title="Chi phí xăng dầu">
+                        <i class="nav-icon text-sm fas fa-gas-pump"></i>
+                        <p>
+                            Chi phí xăng dầu
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a class="nav-link <?=($com=='xangdau' && ($act=='config' || $act=='saveConfig'))?'active':''?>" href="index.php?com=xangdau&act=config" title="Cấu hình định mức">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Cấu hình định mức</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?=($com=='xangdau' && (strpos($act,'Hoadon')!==false || $act=='hoadon'))?'active':''?>" href="index.php?com=xangdau&act=hoadon" title="Hóa đơn xăng dầu">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Hóa đơn XD</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?=($com=='xangdau' && (strpos($act,'Hocvien')!==false || $act=='hocvien'))?'active':''?>" href="index.php?com=xangdau&act=hocvien" title="Học viên xăng dầu">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Học viên XD</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?=($com=='xangdau' && ($act=='loc' || $act=='xuatBangKe'))?'active':''?>" href="index.php?com=xangdau&act=loc" title="Lọc thanh toán">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Lọc thanh toán</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
 
                 <!-- Cart -->
                 <?php if(isset($config['order']['active']) && $config['order']['active'] == true) { ?>

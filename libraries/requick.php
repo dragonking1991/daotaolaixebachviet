@@ -118,6 +118,13 @@
 								$quyen_aliases[] = 'import_man_cabin';
 							}
 						}
+						if($com == 'xangdau')
+						{
+							$quyen_aliases[] = 'xangdau_man';
+							$quyen_aliases[] = 'hoadon_man';
+							$quyen_aliases[] = 'order_man';
+							$quyen_aliases[] = 'product_man_cabin';
+						}
 
 						if($quyen_user == '_'){
 							$quyen_user=='';

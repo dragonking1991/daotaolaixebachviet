@@ -169,6 +169,14 @@
 			$title_crumb = 'Đăng ký ngày học cabin';
 			break;
 
+		case 'tra-cuu-xang-dau':
+			$source = "tracuu_xangdau";
+			$template = "xangdau/tracuu";
+			$type = 'tra-cuu-xang-dau';
+			$seo->setSeo('type','article');
+			$title_crumb = 'Tra cứu chi phí xăng dầu';
+			break;
+
 		case 'lien-he':
 			$source = "contact";
 			$template = "contact/contact";
