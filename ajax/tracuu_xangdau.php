@@ -1,5 +1,6 @@
 <?php
 	include "ajax_config.php";
+	require_once LIBRARIES.'xangdau_config.php';
 
 	function xd_norm_cccd($value)
 	{
@@ -30,25 +31,34 @@
 		return trim($name);
 	}
 
-	$cccd = isset($_POST['cccd']) ? xd_norm_cccd($_POST['cccd']) : '';
+	$rawInput = isset($_POST['cccd']) ? trim((string)$_POST['cccd']) : '';
+	$cccd = xd_norm_cccd($rawInput);
 	$fromDate = (isset($_POST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['from_date'])) ? $_POST['from_date'] : '';
 	$toDate = (isset($_POST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['to_date'])) ? $_POST['to_date'] : '';
 
-	if($cccd === '')
+	if($rawInput === '')
 	{
-		echo '<p style="color:#c00; text-align:center;">Vui lòng nhập số CCCD.</p>';
+		echo '<p style="color:#c00; text-align:center;">Vui lòng nhập số CCCD hoặc mã tra cứu.</p>';
 		exit;
 	}
 
-	$variants = xd_cccd_variants_public($cccd);
-	$cccdPlaceholders = implode(',', array_fill(0, count($variants), '?'));
+	// Cho phép tra bằng CCCD (biến thể 11/12 số) HOẶC mã tra cứu (ma_tra_cuu)
+	$variants = ($cccd !== '') ? xd_cccd_variants_public($cccd) : array();
+	$cccdWhere = '';
+	$params = array();
+	if(!empty($variants))
+	{
+		$cccdWhere = 'cccd IN ('.implode(',', array_fill(0, count($variants), '?')).') OR ';
+		$params = $variants;
+	}
+	$params[] = $rawInput; // khớp mã tra cứu theo đúng chuỗi nhập
 
-	// GV đăng nhập bằng CCCD: tra tên giáo viên từ hồ sơ nhân viên (table_product type='nhan-vien')
+	// GV đăng nhập bằng CCCD/Mã tra cứu: tra tên giáo viên từ hồ sơ nhân viên
 	$gvHoten = '';
 	$gvKey = '';
 	$emp = $d->rawQueryOne(
-		"select ten$lang as ten from #_product where type = 'nhan-vien' and cccd in ($cccdPlaceholders) and hienthi = 1 limit 0,1",
-		$variants
+		"select ten$lang as ten from #_product where type = 'nhan-vien' and hienthi = 1 and ($cccdWhere ma_tra_cuu = ?) limit 0,1",
+		$params
 	);
 	if(!empty($emp) && !empty($emp['ten']))
 	{
@@ -56,11 +66,9 @@
 		$gvKey = xd_gv_key_public($gvHoten);
 	}
 
-	// Nếu không tìm thấy trong hồ sơ nhân viên, thử khớp trực tiếp gv_key có trong dữ liệu XD
-	// (phòng trường hợp CCCD được lưu kèm hoặc khớp theo dữ liệu đã import)
 	if($gvKey === '')
 	{
-		echo '<div style="text-align:center; padding:20px; background:#fff3cd; border:1px solid #ffe082; border-radius:8px; color:#663c00;">Không tìm thấy giáo viên với số CCCD này trong hồ sơ nhân viên. Vui lòng liên hệ văn phòng để được hỗ trợ.</div>';
+		echo '<div style="text-align:center; padding:20px; background:#fff3cd; border:1px solid #ffe082; border-radius:8px; color:#663c00;">Không tìm thấy giáo viên với số CCCD/mã tra cứu này trong hồ sơ nhân viên. Vui lòng liên hệ văn phòng để được hỗ trợ.</div>';
 		exit;
 	}
 
@@ -80,7 +88,7 @@
 	if($fromDate !== '') { $hoadonWhere .= " and ngay_hoa_don >= ?"; $hoadonParams[] = $fromDate; }
 	if($toDate !== '') { $hoadonWhere .= " and ngay_hoa_don <= ?"; $hoadonParams[] = $toDate; }
 	$hoadons = $d->rawQuery(
-		"select ma_hoa_don, ngay_hoa_don, tong_tien, ky from #_xd_hoadon where gv_key = ? $hoadonWhere order by ngay_hoa_don desc, id desc",
+		"select ma_hoa_don, ngay_hoa_don, tong_tien, bien_so from #_xd_hoadon where gv_key = ? $hoadonWhere order by ngay_hoa_don desc, id desc",
 		$hoadonParams
 	);
 
@@ -93,6 +101,13 @@
 		"select ho_ten, cccd, nhom, dinh_muc, so_tien_thanh_toan, ngay_thanh_toan from #_xd_hocvien where gv_key = ? $hocvienWhere order by ngay_thanh_toan desc, id asc",
 		$hocvienParams
 	);
+	$xdConfig = getXdConfig($d);
+	if(!empty($hocviens)) foreach($hocviens as &$hocvien)
+	{
+		$hocvien['dinh_muc'] = (int)$xdConfig['dinh_muc'];
+		$hocvien['so_tien_thanh_toan'] = (int)xdMucTheoNhom($xdConfig, $hocvien['nhom']);
+	}
+	unset($hocvien);
 
 	$tongHoadon = 0.0;
 	if(!empty($hoadons)) foreach($hoadons as $h) $tongHoadon += (float)$h['tong_tien'];
@@ -117,7 +132,7 @@
 				<th style="padding:8px; border:1px solid #ddd;">STT</th>
 				<th style="padding:8px; border:1px solid #ddd;">Ngày hóa đơn</th>
 				<th style="padding:8px; border:1px solid #ddd;">Số hóa đơn</th>
-				<th style="padding:8px; border:1px solid #ddd;">Kỳ</th>
+				<th style="padding:8px; border:1px solid #ddd;">Biển số xe</th>
 				<th style="padding:8px; border:1px solid #ddd; text-align:right;">Tiền hóa đơn</th>
 			</tr>
 		</thead>
@@ -127,7 +142,7 @@
 				<td style="padding:8px; border:1px solid #ddd; text-align:center;"><?=$i?></td>
 				<td style="padding:8px; border:1px solid #ddd;"><?=($h['ngay_hoa_don'] ? date('d/m/Y', strtotime($h['ngay_hoa_don'])) : '-')?></td>
 				<td style="padding:8px; border:1px solid #ddd;"><?=htmlspecialchars($h['ma_hoa_don'])?></td>
-				<td style="padding:8px; border:1px solid #ddd;"><?=htmlspecialchars($h['ky'])?></td>
+				<td style="padding:8px; border:1px solid #ddd;"><?=htmlspecialchars($h['bien_so'])?></td>
 				<td style="padding:8px; border:1px solid #ddd; text-align:right;"><?=number_format((float)$h['tong_tien'], 0, ',', '.')?></td>
 			</tr>
 			<?php } ?>
@@ -136,7 +151,7 @@
 				<td style="padding:8px; border:1px solid #ddd; text-align:right;"><?=number_format($tongHoadon, 0, ',', '.')?></td>
 			</tr>
 			<?php } else { ?>
-			<tr><td colspan="5" style="padding:12px; border:1px solid #ddd; text-align:center; color:#888;">Không có hóa đơn trong khoảng thời gian đã chọn.</td></tr>
+				<tr><td colspan="5" style="padding:12px; border:1px solid #ddd; text-align:center; color:#888;">Không có hóa đơn trong khoảng thời gian đã chọn.</td></tr>
 			<?php } ?>
 		</tbody>
 	</table>

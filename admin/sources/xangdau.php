@@ -3,6 +3,40 @@ if(!defined('SOURCES')) die("Error");
 
 require_once LIBRARIES.'xangdau_config.php';
 
+/* ============================================================
+ * Bộ đọc XLSX dạng STREAM (bộ nhớ thấp) — dùng cho file .xlsb đã chuyển đổi.
+ * File chuyển đổi từ LibreOffice có thể khai báo sheet tới 1.048.576 dòng khiến
+ * PHPExcel (nạp cả DOM) cạn bộ nhớ. Đọc theo luồng bằng XMLReader để tránh OOM.
+ * ============================================================ */
+if(!class_exists('XdCell'))
+{
+	class XdCell
+	{
+		private $v;
+		public function __construct($v){ $this->v = $v; }
+		public function getValue(){ return $this->v; }
+		public function getCalculatedValue(){ return $this->v; }
+		public function getOldCalculatedValue(){ return $this->v; }
+		public function getFormattedValue(){ return ($this->v === null) ? '' : (string)$this->v; }
+	}
+}
+if(!class_exists('XdArraySheet'))
+{
+	class XdArraySheet
+	{
+		private $rows; private $maxRow; private $maxCol;
+		public function __construct($rows, $maxRow, $maxCol){ $this->rows = $rows; $this->maxRow = (int)$maxRow; $this->maxCol = (int)$maxCol; }
+		public function getCellByColumnAndRow($col, $row)
+		{
+			$v = isset($this->rows[$row][$col]) ? $this->rows[$row][$col] : '';
+			return new XdCell($v);
+		}
+		public function getHighestRow(){ return max(1, $this->maxRow); }
+		public function getHighestColumn(){ return PHPExcel_Cell::stringFromColumnIndex(max(0, $this->maxCol - 1)); }
+		public function getTitle(){ return 'sheet'; }
+	}
+}
+
 switch($act)
 {
 	// ---- Cấu hình định mức ----
@@ -68,6 +102,11 @@ switch($act)
 		xd_ensure_tables();
 		xd_delete_hocvien();
 		break;
+	case "updateHocvienStatus":
+		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_update_hocvien_status();
+		break;
 	case "deleteAllHocvien":
 		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
@@ -80,6 +119,11 @@ switch($act)
 		xd_ensure_tables();
 		xd_loc_preview();
 		$template = "xangdau/loc/items";
+		break;
+	case "xuatBangKeGiaoVien":
+		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_xuat_bangke_giao_vien();
 		break;
 	case "xuatBangKe":
 		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
@@ -152,7 +196,7 @@ function xd_ensure_tables()
 		. " ngaytao INT(11) UNSIGNED NOT NULL DEFAULT 0,\n"
 		. " user_tao VARCHAR(100) NOT NULL DEFAULT '',\n"
 		. " PRIMARY KEY (id),\n"
-		. " UNIQUE KEY uniq_xd_hoadon_ma_ngay (ma_hoa_don, ngay_hoa_don),\n"
+		. " UNIQUE KEY uniq_xd_hoadon_ma_ngay_gv (ma_hoa_don, ngay_hoa_don, gv_key),\n"
 		. " KEY idx_xd_hoadon_gv (gv_cccd),\n"
 		. " KEY idx_xd_hoadon_ky (ky),\n"
 		. " KEY idx_xd_hoadon_ngay (ngay_hoa_don),\n"
@@ -189,6 +233,7 @@ function xd_ensure_tables()
 	xd_ensure_column('xd_hoadon', 'thong_tin_ban_hang', "ADD COLUMN thong_tin_ban_hang VARCHAR(255) NOT NULL DEFAULT '' AFTER ma_hoa_don");
 	xd_ensure_column('xd_hoadon', 'chi_tiet', "ADD COLUMN chi_tiet VARCHAR(50) NOT NULL DEFAULT '' AFTER thong_tin_ban_hang");
 	xd_ensure_index('xd_hoadon', 'idx_xd_hoadon_gvkey', "ADD KEY idx_xd_hoadon_gvkey (gv_key)");
+	xd_ensure_invoice_unique_key();
 
 	xd_ensure_column('xd_hocvien', 'gv_key', "ADD COLUMN gv_key VARCHAR(191) NOT NULL DEFAULT '' AFTER gv_hoten");
 	xd_ensure_column('xd_hocvien', 'khoa', "ADD COLUMN khoa VARCHAR(100) NOT NULL DEFAULT '' AFTER ngaysinh");
@@ -219,6 +264,22 @@ function xd_ensure_index($table, $indexName, $alterAdd)
 	if(empty($has) || (int)$has['total'] <= 0)
 	{
 		$d->rawQuery("ALTER TABLE #_$table $alterAdd");
+	}
+}
+
+function xd_ensure_invoice_unique_key()
+{
+	global $d;
+	$index = $d->rawQueryOne(
+		"select index_name, group_concat(column_name order by seq_in_index separator ',') as columns_list
+		 from information_schema.statistics
+		 where table_schema = database() and table_name = 'table_xd_hoadon' and index_name in ('uniq_xd_hoadon_ma_ngay', 'uniq_xd_hoadon_ma_ngay_gv')
+		 group by index_name order by index_name = 'uniq_xd_hoadon_ma_ngay_gv' desc limit 0,1",
+		array()
+	);
+	if(!$index || $index['index_name'] !== 'uniq_xd_hoadon_ma_ngay_gv' || $index['columns_list'] !== 'ma_hoa_don,ngay_hoa_don,gv_key')
+	{
+		$d->rawQuery("alter table #_xd_hoadon drop index if exists uniq_xd_hoadon_ma_ngay, add unique key uniq_xd_hoadon_ma_ngay_gv (ma_hoa_don, ngay_hoa_don, gv_key)");
 	}
 }
 
@@ -317,6 +378,15 @@ function xd_parse_date($rawValue)
 	}
 
 	if(preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $rawValue)) return $rawValue;
+
+	// Chuỗi ngày kiểu Việt Nam D/M/Y (vd '13/05/1990') — chấp nhận '/', '-', '.'
+	if(preg_match('#^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$#', $rawValue, $m))
+	{
+		$day = (int)$m[1]; $mon = (int)$m[2];
+		if($day >= 1 && $day <= 31 && $mon >= 1 && $mon <= 12)
+			return $m[3].'-'.str_pad($mon, 2, '0', STR_PAD_LEFT).'-'.str_pad($day, 2, '0', STR_PAD_LEFT);
+	}
+
 	$tmp = str_replace('.', '/', $rawValue);
 	$tmp = preg_replace('/\s+/', ' ', $tmp);
 	$ts = strtotime($tmp);
@@ -630,7 +700,17 @@ function xd_convert_to_xlsx($inputFile)
 	}
 	if($soffice !== '')
 	{
-		@shell_exec(escapeshellarg($soffice).' --headless --convert-to xlsx --outdir '.escapeshellarg($outDir).' '.escapeshellarg($inputFile).' 2>&1');
+		// LibreOffice headless cần một thư mục profile GHI ĐƯỢC (quan trọng khi chạy dưới user www-data).
+		$profile = $outDir.'/loprofile';
+		@mkdir($profile, 0777, true);
+		$timeout = trim((string)@shell_exec('command -v timeout 2>/dev/null'));
+		// Gán HOME phải đứng TRƯỚC 'timeout' (nếu không timeout sẽ hiểu HOME=... là tên lệnh).
+		$prefix = 'HOME='.escapeshellarg($outDir).' ';
+		if($timeout !== '') $prefix .= escapeshellarg($timeout).' 180 ';
+		$cmd = $prefix.escapeshellarg($soffice)
+			.' -env:UserInstallation=file://'.$profile
+			.' --headless --calc --convert-to xlsx --outdir '.escapeshellarg($outDir).' '.escapeshellarg($inputFile).' 2>&1';
+		@shell_exec($cmd);
 		if(is_file($expected) && filesize($expected) > 0) return $expected;
 		// LibreOffice có thể đặt tên khác: quét file .xlsx đầu tiên trong outDir
 		$found = glob($outDir.'/*.xlsx');
@@ -661,6 +741,28 @@ function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 
 	@ini_set('memory_limit', '2048M');
 	require_once LIBRARIES.'PHPExcel.php';
+
+	// Bộ lọc giới hạn số dòng đọc: file chuyển đổi có thể khai báo tới 1.048.576 dòng
+	// khiến PHPExcel cấp phát khổng lồ. Chỉ đọc trong phạm vi dòng hợp lý.
+	if(!class_exists('XdRowLimitReadFilter'))
+	{
+		class XdRowLimitReadFilter implements PHPExcel_Reader_IReadFilter
+		{
+			public $maxRow;
+			public function __construct($maxRow = 20000) { $this->maxRow = (int)$maxRow; }
+			public function readCell($column, $row, $worksheetName = '') { return $row <= $this->maxRow; }
+		}
+	}
+
+	// Giảm bộ nhớ khi nạp sheet lớn: cache ô ra php://temp (tràn ra đĩa sau ngưỡng).
+	if(class_exists('PHPExcel_Settings') && class_exists('PHPExcel_CachedObjectStorageFactory'))
+	{
+		@PHPExcel_Settings::setCacheStorageMethod(
+			PHPExcel_CachedObjectStorageFactory::cache_to_phpTemp,
+			array('memoryCacheSize' => '256MB')
+		);
+	}
+
 	$inputFileName = $file['tmp_name'];
 	if(empty($inputFileName) || !is_readable($inputFileName)) $func->transfer("Không đọc được file tạm. Vui lòng thử lại.", $backUrl, false);
 
@@ -685,10 +787,25 @@ function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 		$readerType = 'Excel5';
 	}
 
+	// File .xlsb đã chuyển đổi: đọc theo LUỒNG để tránh OOM (LibreOffice có thể
+	// khai báo sheet tới ~1 triệu dòng khiến PHPExcel nạp cả DOM và cạn bộ nhớ).
+	if($ext === 'xlsb')
+	{
+		$streamRow = 0; $streamCol = 0;
+		$streamSheet = xd_stream_read_xlsx($loadFile, $sheetHints, $streamRow, $streamCol, 20000);
+		if($streamSheet !== false)
+		{
+			xd_cleanup_converted($convertedFile);
+			return array(null, $streamSheet, $streamRow, $streamCol);
+		}
+		// Nếu đọc luồng thất bại thì thử tiếp bằng PHPExcel (best-effort).
+	}
+
 	try
 	{
 		$reader = PHPExcel_IOFactory::createReader($readerType);
 		if(method_exists($reader, 'setReadDataOnly')) $reader->setReadDataOnly(true);
+		if(method_exists($reader, 'setReadFilter')) $reader->setReadFilter(new XdRowLimitReadFilter(20000));
 
 		// Chọn tên sheet cần nạp (chỉ nạp đúng sheet đó để tiết kiệm bộ nhớ)
 		$targetName = '';
@@ -709,7 +826,7 @@ function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 	}
 	catch(Throwable $e)
 	{
-		if($convertedFile !== '' && is_file($convertedFile)) @unlink($convertedFile);
+		xd_cleanup_converted($convertedFile);
 		$func->transfer("Không đọc được file Excel. Vui lòng lưu lại dưới định dạng .xlsx và thử lại.", $backUrl, false);
 		return array();
 	}
@@ -732,9 +849,153 @@ function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 	$highestRow = (int)$sheet->getHighestRow();
 	$highestColIndex = PHPExcel_Cell::columnIndexFromString($sheet->getHighestColumn());
 
-	if($convertedFile !== '' && is_file($convertedFile)) @unlink($convertedFile);
+	xd_cleanup_converted($convertedFile);
 
 	return array($objPHPExcel, $sheet, $highestRow, $highestColIndex);
+}
+
+/**
+ * Xóa file .xlsx tạm sinh ra từ chuyển đổi .xlsb cùng cả thư mục tạm (profile LibreOffice).
+ */
+function xd_cleanup_converted($convertedFile)
+{
+	if($convertedFile === '' || !is_file($convertedFile)) return;
+	$dir = dirname($convertedFile);
+	@unlink($convertedFile);
+	// Chỉ xóa đệ quy nếu là thư mục tạm của module (an toàn)
+	if(strpos(basename($dir), 'xd_conv_') === 0) xd_rmtree($dir);
+}
+
+function xd_rmtree($dir)
+{
+	if(!is_dir($dir)) { if(is_file($dir)) @unlink($dir); return; }
+	$items = @scandir($dir);
+	if(is_array($items))
+	{
+		foreach($items as $it)
+		{
+			if($it === '.' || $it === '..') continue;
+			$path = $dir.'/'.$it;
+			if(is_dir($path)) xd_rmtree($path);
+			else @unlink($path);
+		}
+	}
+	@rmdir($dir);
+}
+
+function xd_col_ref_to_index($ref)
+{
+	if(!preg_match('/^([A-Za-z]+)(\d+)$/', $ref, $m)) return array(-1, -1);
+	$letters = strtoupper($m[1]); $idx = 0;
+	$len = strlen($letters);
+	for($i = 0; $i < $len; $i++) $idx = $idx * 26 + (ord($letters[$i]) - 64);
+	return array($idx - 1, (int)$m[2]);
+}
+
+/**
+ * Đọc 1 sheet của file .xlsx theo LUỒNG (XMLReader) để tiết kiệm bộ nhớ.
+ * @return XdArraySheet|false  (trả $highestRow, $highestColIndex qua tham chiếu)
+ */
+function xd_stream_read_xlsx($path, $sheetHints, &$highestRow, &$highestColIndex, $maxRow = 20000)
+{
+	$highestRow = 0; $highestColIndex = 0;
+	if(!class_exists('ZipArchive') || !class_exists('XMLReader')) return false;
+
+	$zip = new ZipArchive();
+	if($zip->open($path) !== true) return false;
+	$wbXml = $zip->getFromName('xl/workbook.xml');
+	$relXml = $zip->getFromName('xl/_rels/workbook.xml.rels');
+	$zip->close();
+	if($wbXml === false || $relXml === false) return false;
+
+	// Tìm sheet mục tiêu theo tên -> r:id
+	$sheetRid = ''; $wb = @simplexml_load_string($wbXml);
+	if(!$wb || !isset($wb->sheets)) return false;
+	$ns = $wb->getDocNamespaces(true);
+	$rns = isset($ns['r']) ? $ns['r'] : 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+	foreach($wb->sheets->sheet as $sh)
+	{
+		$norm = xd_norm_header((string)$sh['name']);
+		foreach($sheetHints as $hint) { if($hint !== '' && strpos($norm, $hint) !== false) { $ra = $sh->attributes($rns); $sheetRid = (string)$ra['id']; break 2; } }
+	}
+	if($sheetRid === '' && isset($wb->sheets->sheet[0])) { $ra = $wb->sheets->sheet[0]->attributes($rns); $sheetRid = (string)$ra['id']; }
+	if($sheetRid === '') return false;
+
+	// r:id -> target path
+	$target = ''; $rels = @simplexml_load_string($relXml);
+	if($rels) foreach($rels->Relationship as $rel) { if((string)$rel['Id'] === $sheetRid) { $target = (string)$rel['Target']; break; } }
+	if($target === '') return false;
+	$target = str_replace('../', '', $target);
+	if(strpos($target, 'xl/') !== 0) $target = 'xl/'.ltrim($target, '/');
+
+	// Shared strings (stream)
+	$shared = array();
+	$sr = new XMLReader();
+	if(@$sr->open('zip://'.$path.'#xl/sharedStrings.xml'))
+	{
+		$sdom = new DOMDocument();
+		while(@$sr->read())
+		{
+			if($sr->nodeType === XMLReader::ELEMENT && $sr->localName === 'si')
+			{
+				$node = $sr->expand($sdom);
+				$txt = '';
+				if($node) foreach($node->getElementsByTagName('t') as $t) $txt .= $t->textContent;
+				$shared[] = $txt;
+			}
+		}
+		$sr->close();
+	}
+
+	// Sheet rows (stream, expand từng dòng — bộ nhớ hằng số)
+	$rows = array(); $maxColIdx = 0; $lastData = 0; $emptyStreak = 0;
+	$rd = new XMLReader();
+	if(!@$rd->open('zip://'.$path.'#'.$target)) return false;
+	$dom = new DOMDocument();
+	while(@$rd->read())
+	{
+		if($rd->nodeType !== XMLReader::ELEMENT || $rd->localName !== 'row') continue;
+		$rowNum = (int)$rd->getAttribute('r');
+		if($rowNum <= 0) continue;
+		if($rowNum > $maxRow) break;
+
+		$node = $rd->expand($dom);
+		if(!$node) continue;
+		$anyVal = false;
+		foreach($node->childNodes as $c)
+		{
+			if($c->nodeType !== XML_ELEMENT_NODE || $c->localName !== 'c') continue;
+			list($colIdx, ) = xd_col_ref_to_index($c->getAttribute('r'));
+			if($colIdx < 0) continue;
+			$t = $c->getAttribute('t');
+			$val = '';
+			foreach($c->childNodes as $ch)
+			{
+				if($ch->nodeType !== XML_ELEMENT_NODE) continue;
+				if($ch->localName === 'v')
+				{
+					$raw = $ch->textContent;
+					if($t === 's') { $ii = (int)$raw; $val = isset($shared[$ii]) ? $shared[$ii] : ''; }
+					else $val = $raw;
+				}
+				elseif($ch->localName === 'is') $val = $ch->textContent;
+			}
+			$val = trim((string)$val);
+			if($val !== '')
+			{
+				$rows[$rowNum][$colIdx] = $val;
+				if($colIdx + 1 > $maxColIdx) $maxColIdx = $colIdx + 1;
+				$anyVal = true;
+			}
+		}
+		if($anyVal) { $lastData = $rowNum; $emptyStreak = 0; }
+		elseif($lastData > 0 && ++$emptyStreak > 200) break;
+	}
+	$rd->close();
+
+	$highestRow = max(1, $lastData);
+	$highestColIndex = max(1, $maxColIdx);
+	return new XdArraySheet($rows, $highestRow, $highestColIndex);
 }
 
 function xd_upload_hoadon_excel()
@@ -844,15 +1105,15 @@ function xd_upload_hoadon_excel()
 	$d->startTransaction();
 	foreach($rows as $r)
 	{
-		// Bỏ qua trùng trong chính file (Mã HĐ + Ngày HĐ)
-		$key = $r['ma'].'|'.($r['ngay'] === null ? '' : $r['ngay']);
+		// Số HĐ có thể trùng giữa các giáo viên khác nhau -> khóa trùng gồm cả GV (Mã HĐ + Ngày HĐ + GV)
+		$key = $r['ma'].'|'.($r['ngay'] === null ? '' : $r['ngay']).'|'.$r['gvkey'];
 		if(isset($seenKeys[$key])) { $skippedDup++; continue; }
 		$seenKeys[$key] = 1;
 
-		// Kiểm tra trùng (ma_hoa_don + ngay_hoa_don)
+		// Kiểm tra trùng (ma_hoa_don + ngay_hoa_don + gv_key)
 		$exists = $d->rawQueryOne(
-			"select id, da_quyettoan from #_xd_hoadon where ma_hoa_don = ? and (ngay_hoa_don <=> ?) limit 0,1",
-			array($r['ma'], $r['ngay'])
+			"select id, da_quyettoan from #_xd_hoadon where ma_hoa_don = ? and (ngay_hoa_don <=> ?) and gv_key = ? limit 0,1",
+			array($r['ma'], $r['ngay'], $r['gvkey'])
 		);
 		if($exists && isset($exists['id']))
 		{
@@ -961,13 +1222,51 @@ function xd_delete_hocvien()
 	else $func->transfer("Không nhận được dữ liệu", $redirect, false);
 }
 
+function xd_update_hocvien_status()
+{
+	global $d, $func, $curPage;
+
+	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+	$status = isset($_GET['status']) ? trim((string)$_GET['status']) : '';
+	$redirect = "index.php?com=xangdau&act=hocvien&p=".(int)$curPage;
+	if($id <= 0 || !in_array($status, array('da', 'chua'), true))
+		$func->transfer("Trạng thái học viên không hợp lệ", $redirect, false);
+
+	$row = $d->rawQueryOne("select id, nhom from #_xd_hocvien where id = ? limit 0,1", array($id));
+	if(empty($row)) $func->transfer("Không tìm thấy học viên", $redirect, false);
+
+	if($status === 'da')
+	{
+		$config = getXdConfig($d);
+		$dinhMuc = (int)$config['dinh_muc'];
+		$soTien = (int)xdMucTheoNhom($config, $row['nhom']);
+		$ok = $d->rawQuery(
+			"update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = 0 where id = ?",
+			array(date('Y-m-d'), $dinhMuc, $soTien, $id)
+		);
+		$message = "Đã cập nhật học viên thành đã thanh toán";
+	}
+	else
+	{
+		$ok = $d->rawQuery(
+			"update #_xd_hocvien set ngay_thanh_toan = NULL, dinh_muc = 0, so_tien_thanh_toan = 0, id_bangke = 0 where id = ?",
+			array($id)
+		);
+		$message = "Đã cập nhật học viên thành chưa thanh toán";
+	}
+
+	if($ok === false) $func->transfer("Không thể cập nhật trạng thái học viên", $redirect, false);
+	$func->transfer($message, $redirect);
+}
+
 function xd_delete_all_hocvien()
 {
 	global $d, $func;
-	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien where ngay_thanh_toan is null");
-	$d->rawQuery("delete from #_xd_hocvien where ngay_thanh_toan is null");
+	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien");
+	$ok = $d->rawQuery("delete from #_xd_hocvien");
 	$n = isset($count['num']) ? (int)$count['num'] : 0;
-	$func->transfer("Đã xóa $n học viên chưa thanh toán (giữ lại học viên đã thanh toán).", "index.php?com=xangdau&act=hocvien");
+	if($ok === false) $func->transfer("Không thể xóa toàn bộ học viên", "index.php?com=xangdau&act=hocvien", false);
+	$func->transfer("Đã xóa toàn bộ $n học viên.", "index.php?com=xangdau&act=hocvien");
 }
 
 /* ============================ Import học viên (chống trùng CCCD) ============================ */
@@ -982,11 +1281,11 @@ function xd_upload_hocvien_excel()
 	$backUrl = "index.php?com=xangdau&act=uploadHocvien";
 
 	if(!isset($_FILES['file-excel']) || (int)$_FILES['file-excel']['error'] !== UPLOAD_ERR_OK)
-		$func->transfer("Vui lòng chọn file Excel hợp lệ", $backUrl, false);
+		xd_hocvien_import_error("Vui lòng chọn file Excel hợp lệ", $backUrl);
 
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-	if(!in_array($ext, array('xls', 'xlsx', 'xlsb'))) $func->transfer("Chỉ hỗ trợ file .xls, .xlsx hoặc .xlsb", $backUrl, false);
+	if(!in_array($ext, array('xls', 'xlsx', 'xlsb'))) xd_hocvien_import_error("Chỉ hỗ trợ file .xls, .xlsx hoặc .xlsb", $backUrl);
 
 	list($objPHPExcel, $sheet, $highestRow, $highestColIndex) = xd_open_upload_sheet($file, $ext, $backUrl, array('hocvien'));
 
@@ -999,6 +1298,7 @@ function xd_upload_hocvien_excel()
 		'nguoinop' => array('nguoinop', 'nguoinophoso'),
 		'gv'       => array('phanxe', 'giaovien', 'gv', 'tengiaovien', 'gvphutrach'),
 		'nhom'     => array('nhom', 'loai', 'phanloai', 'nhomdaotao', 'ghichu'),
+		'datt'     => array('datt', 'dathanhtoan', 'trangthaithanhtoan', 'tinhtrangthanhtoan'),
 	);
 	$containsRules = array(
 		'ten'      => array('has' => array('hovaten')),
@@ -1007,6 +1307,7 @@ function xd_upload_hocvien_excel()
 		'nhom'     => array('has' => array('nhom')),
 		'ngaysinh' => array('has' => array('sinh')),
 		'nguoinop' => array('has' => array('nguoinop')),
+		'datt'     => array('has' => array('datt')),
 	);
 
 	list($headerRow, $map, $headerScore) = xd_detect_header($sheet, $highestRow, $highestColIndex, $aliasGroups, $containsRules);
@@ -1014,7 +1315,7 @@ function xd_upload_hocvien_excel()
 	// Chỉ giả định thứ tự cột mẫu khi hoàn toàn không nhận diện được tiêu đề nào.
 	if($headerScore <= 0)
 	{
-		$map = array('ten' => 1, 'khoa' => 2, 'ngaysinh' => 3, 'cccd' => 4, 'nguoinop' => 5, 'gv' => 6, 'nhom' => 7);
+		$map = array('ten' => 1, 'khoa' => 2, 'ngaysinh' => 3, 'cccd' => 4, 'nguoinop' => 5, 'gv' => 6, 'nhom' => 7, 'datt' => 8);
 		$headerRow = 1;
 	}
 
@@ -1039,6 +1340,29 @@ function xd_upload_hocvien_excel()
 		if($bestCol >= 0 && $bestHits > 0) $map['nhom'] = $bestCol;
 	}
 
+	// Có thể tồn tại nhiều cột cùng tiêu đề "Ngày ... sinh" (một cột hiển thị, một cột dữ liệu).
+	// Chọn cột ngày sinh có NHIỀU giá trị nhất trong vùng dữ liệu để tránh chọn nhầm cột rỗng.
+	{
+		$sinhCols = array();
+		for($col = 0; $col < $highestColIndex; $col++)
+		{
+			if(strpos(xd_norm_header($sheet->getCellByColumnAndRow($col, $headerRow)->getValue()), 'sinh') !== false) $sinhCols[] = $col;
+		}
+		if(count($sinhCols) > 1)
+		{
+			$bestCol = isset($map['ngaysinh']) ? $map['ngaysinh'] : $sinhCols[0]; $bestHits = -1;
+			$scanTo = min($highestRow, $headerRow + 60);
+			foreach($sinhCols as $col)
+			{
+				$hits = 0;
+				// Dùng giá trị THÔ (serial) vì readDataOnly khiến getFormattedValue rỗng với ô ngày.
+				for($row = $headerRow + 1; $row <= $scanTo; $row++) { $rv = xd_cell_raw($sheet, $col, $row); if($rv !== null && $rv !== '') $hits++; }
+				if($hits > $bestHits) { $bestHits = $hits; $bestCol = $col; }
+			}
+			$map['ngaysinh'] = $bestCol;
+		}
+	}
+
 	$username = xd_username();
 	$rows = array();
 	$errors = array();
@@ -1047,15 +1371,15 @@ function xd_upload_hocvien_excel()
 	// Bắt buộc xác định được các cột cốt lõi, tránh đọc nhầm hoặc lưu thiếu dữ liệu
 	if(!isset($map['cccd']))
 	{
-		$func->transfer("Không xác định được cột CCCD học viên trong file. Vui lòng đặt tên cột chứa chuỗi 'CCCD' (ví dụ: Số CCCD/CC) và thử lại.", $backUrl, false);
+		xd_hocvien_import_error("Không xác định được cột CCCD học viên trong file. Vui lòng đặt tên cột chứa chuỗi 'CCCD' (ví dụ: Số CCCD/CC) và thử lại.", $backUrl);
 	}
 	if(!isset($map['ten']))
 	{
-		$func->transfer("Không xác định được cột Họ tên học viên trong file. Vui lòng đặt tên cột chứa 'Họ và tên' và thử lại.", $backUrl, false);
+		xd_hocvien_import_error("Không xác định được cột Họ tên học viên trong file. Vui lòng đặt tên cột chứa 'Họ và tên' và thử lại.", $backUrl);
 	}
 	if(!isset($map['gv']))
 	{
-		$func->transfer("Không xác định được cột Giáo viên trong file. Vui lòng đặt tên cột chứa 'Giáo viên' và thử lại.", $backUrl, false);
+		xd_hocvien_import_error("Không xác định được cột Giáo viên trong file. Vui lòng đặt tên cột chứa 'Giáo viên' và thử lại.", $backUrl);
 	}
 
 	$emptyStreak = 0;
@@ -1071,6 +1395,9 @@ function xd_upload_hocvien_excel()
 		$gvten = xd_val($sheet, $map, 'gv', $row);
 		$gvkey = xd_gv_key($gvten);
 		$nhom = strtoupper(trim(xd_val($sheet, $map, 'nhom', $row)));
+		// Cột "đã tt": có chữ "r" nghĩa là đã thanh toán, ngược lại là chưa
+		$dattRaw = isset($map['datt']) ? strtolower(trim(xd_val($sheet, $map, 'datt', $row))) : '';
+		$daTT = ($dattRaw !== '' && strpos($dattRaw, 'r') !== false);
 
 		if($ten === '' && $cccd === '')
 		{
@@ -1111,51 +1438,86 @@ function xd_upload_hocvien_excel()
 
 		$rows[] = array(
 			'row' => $row, 'ten' => $ten, 'khoa' => $khoa, 'ngaysinh' => $ngaysinh, 'cccd' => $cccd,
-			'nguoinop' => $nguoinop, 'nhom' => $nhom, 'gvten' => $gvten, 'gvkey' => $gvkey
+			'nguoinop' => $nguoinop, 'nhom' => $nhom, 'gvten' => $gvten, 'gvkey' => $gvkey, 'datt' => $daTT, 'existing_id' => 0
 		);
 	}
 
-	// Trùng với DB (kiểm tra cả biến thể 11/12 số)
-	foreach($rows as $r)
+	// Học viên đã có nhưng chưa thanh toán được phép import lại để cập nhật trạng thái.
+	foreach($rows as &$r)
 	{
 		$variants = xd_cccd_variants($r['cccd']);
 		$placeholders = implode(',', array_fill(0, count($variants), '?'));
-		$dup = $d->rawQueryOne("select cccd from #_xd_hocvien where cccd in ($placeholders) limit 0,1", $variants);
-		if($dup && isset($dup['cccd']))
+		$existing = $d->rawQueryOne("select id, ngay_thanh_toan from #_xd_hocvien where cccd in ($placeholders) limit 0,1", $variants);
+		if($existing && isset($existing['id']))
 		{
-			$errors[] = "Dòng ".$r['row'].": CCCD ".$r['cccd']." đã tồn tại trên hệ thống.";
+			if($existing['ngay_thanh_toan'] !== null)
+				$errors[] = "Dòng ".$r['row'].": CCCD ".$r['cccd']." đã thanh toán, không thể import ghi đè.";
+			else
+				$r['existing_id'] = (int)$existing['id'];
 		}
 	}
+	unset($r);
 
 	if(!empty($errors))
 	{
-		$func->transfer("Không lưu file do có lỗi trùng lặp/không hợp lệ (đã chặn toàn bộ):<br>".implode("<br>", array_slice($errors, 0, 20)), $backUrl, false);
+		xd_hocvien_import_error("Không lưu file do có lỗi trùng lặp/không hợp lệ (đã chặn toàn bộ):<br>".implode("<br>", array_slice($errors, 0, 20)), $backUrl);
 	}
 
-	if(empty($rows)) $func->transfer("File không có dòng học viên hợp lệ nào.", $backUrl, false);
+	if(empty($rows)) xd_hocvien_import_error("File không có dòng học viên hợp lệ nào.", $backUrl);
 
 	// Ghi all-or-nothing
 	$inserted = 0;
+	$updated = 0;
+	$paidCount = 0;
 	$failRows = array();
+	$today = date('Y-m-d');
+	$config = getXdConfig($d);
 	$d->startTransaction();
 	foreach($rows as $r)
 	{
-		$ok = $d->rawQuery(
-			"insert into #_xd_hocvien (ho_ten, cccd, ngaysinh, khoa, nhom, nguoi_nop, gv_cccd, gv_hoten, gv_key, dinh_muc, so_tien_thanh_toan, ngay_thanh_toan, id_bangke, ngaytao, user_tao) values (?, ?, ?, ?, ?, ?, '', ?, ?, 0, 0, NULL, 0, ?, ?)",
-			array($r['ten'], $r['cccd'], $r['ngaysinh'], $r['khoa'], $r['nhom'], $r['nguoinop'], $r['gvten'], $r['gvkey'], time(), $username)
-		);
+		// Học viên đã thanh toán trước đó (cột "đã tt" có chữ "r") -> đánh dấu ngày TT + phí theo nhóm để loại khỏi thuật toán lọc
+		$daTT = !empty($r['datt']);
+		$ngayTT  = $daTT ? $today : null;
+		$dinhMuc = $daTT ? (int)$config['dinh_muc'] : 0;
+		$soTien  = $daTT ? (int)xdMucTheoNhom($config, $r['nhom']) : 0;
+		if($r['existing_id'] > 0)
+		{
+			$ok = $d->rawQuery(
+				"update #_xd_hocvien set ho_ten = ?, cccd = ?, ngaysinh = ?, khoa = ?, nhom = ?, nguoi_nop = ?, gv_hoten = ?, gv_key = ?, dinh_muc = ?, so_tien_thanh_toan = ?, ngay_thanh_toan = ?, id_bangke = 0 where id = ? and ngay_thanh_toan is null",
+				array($r['ten'], $r['cccd'], $r['ngaysinh'], $r['khoa'], $r['nhom'], $r['nguoinop'], $r['gvten'], $r['gvkey'], $dinhMuc, $soTien, $ngayTT, $r['existing_id'])
+			);
+		}
+		else
+		{
+			$ok = $d->rawQuery(
+				"insert into #_xd_hocvien (ho_ten, cccd, ngaysinh, khoa, nhom, nguoi_nop, gv_cccd, gv_hoten, gv_key, dinh_muc, so_tien_thanh_toan, ngay_thanh_toan, id_bangke, ngaytao, user_tao) values (?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, 0, ?, ?)",
+				array($r['ten'], $r['cccd'], $r['ngaysinh'], $r['khoa'], $r['nhom'], $r['nguoinop'], $r['gvten'], $r['gvkey'], $dinhMuc, $soTien, $ngayTT, time(), $username)
+			);
+		}
 		if($ok === false) $failRows[] = $r['row'];
-		else $inserted++;
+		else { if($r['existing_id'] > 0) $updated++; else $inserted++; if($ngayTT !== null) $paidCount++; }
 	}
 
 	if(!empty($failRows))
 	{
 		$d->rollback();
-		$func->transfer("Import thất bại khi lưu dữ liệu (không lưu dòng nào). Ví dụ dòng: ".implode(', ', array_slice($failRows, 0, 10)), $backUrl, false);
+		xd_hocvien_import_error("Import thất bại khi lưu dữ liệu (không lưu dòng nào). Ví dụ dòng: ".implode(', ', array_slice($failRows, 0, 10)), $backUrl);
 	}
 
 	$d->commit();
-	$func->transfer("Import thành công $inserted học viên.", "index.php?com=xangdau&act=hocvien");
+	$msg = "Import thành công $inserted học viên mới";
+	if($updated > 0) $msg .= "; cập nhật $updated học viên đã có";
+	$msg .= ".";
+	if($paidCount > 0) $msg .= " Trong đó $paidCount học viên đã thanh toán (cột \"đã tt\" = r).";
+	$func->transfer($msg, "index.php?com=xangdau&act=hocvien");
+}
+
+function xd_hocvien_import_error($message, $backUrl)
+{
+	if(session_status() !== PHP_SESSION_ACTIVE) @session_start();
+	$_SESSION['xd_hocvien_import_error'] = $message;
+	header('Location: '.$backUrl);
+	exit();
 }
 
 /* ============================ Thuật toán lọc thanh toán ============================ */
@@ -1246,6 +1608,20 @@ function xd_loc_preview()
 	$xd_loc_config = $config;
 }
 
+function xd_xuat_bangke_giao_vien()
+{
+	global $d, $func;
+	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
+	$ky = isset($_REQUEST['ky']) ? trim((string)$_REQUEST['ky']) : '';
+	$fromDate = (isset($_REQUEST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['from_date'])) ? $_REQUEST['from_date'] : '';
+	$toDate = (isset($_REQUEST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['to_date'])) ? $_REQUEST['to_date'] : '';
+	if($gvKey === '') $func->transfer("Không xác định được giáo viên cần xuất.", "index.php?com=xangdau&act=loc", false);
+	list($selected, $summary) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
+	$teacherSelected = array();
+	foreach($selected as $student) if($student['gv_key'] === $gvKey) $teacherSelected[] = $student;
+	xd_export_bangke_excel($d, 0, date('Y-m-d'), $ky, $gvKey, $teacherSelected, $fromDate, $toDate);
+}
+
 /* ============================ Xuất bảng kê & quyết toán ============================ */
 
 function xd_xuat_bangke()
@@ -1312,7 +1688,7 @@ function xd_xuat_bangke()
 	// xd_export_bangke_excel sẽ exit sau khi stream file
 }
 
-function xd_export_bangke_excel($d, $idBangke, $today, $ky)
+function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $previewSelected = array(), $fromDate = '', $toDate = '')
 {
 	require_once LIBRARIES.'PHPExcel.php';
 
@@ -1320,8 +1696,20 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky)
 	$companyName = (!empty($setting['tenvi'])) ? (function_exists('mb_strtoupper') ? mb_strtoupper($setting['tenvi'], 'UTF-8') : strtoupper($setting['tenvi'])) : 'TRUNG TÂM GIÁO DỤC NGHỀ NGHIỆP';
 
 	// Lấy hóa đơn và học viên của đợt, gom theo giáo viên (gv_key)
-	$hoadons = $d->rawQuery("select * from #_xd_hoadon where id_bangke = ? order by gv_hoten asc, ngay_hoa_don asc, id asc", array($idBangke));
-	$hocviens = $d->rawQuery("select * from #_xd_hocvien where id_bangke = ? order by gv_hoten asc, id asc", array($idBangke));
+	if($idBangke > 0)
+	{
+		$hoadons = $d->rawQuery("select * from #_xd_hoadon where id_bangke = ? order by gv_hoten asc, ngay_hoa_don asc, id asc", array($idBangke));
+		$hocviens = $d->rawQuery("select * from #_xd_hocvien where id_bangke = ? order by gv_hoten asc, id asc", array($idBangke));
+	}
+	else
+	{
+		$invoiceWhere = ' where gv_key = ?'; $invoiceParams = array($onlyGvKey);
+		if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $invoiceParams[] = $ky; }
+		if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $invoiceParams[] = $fromDate; }
+		if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $invoiceParams[] = $toDate; }
+		$hoadons = $d->rawQuery("select * from #_xd_hoadon $invoiceWhere order by gv_hoten asc, ngay_hoa_don asc, id asc", $invoiceParams);
+		$hocviens = $previewSelected;
+	}
 
 	$hdByGv = array();
 	$gvTen = array();
@@ -1355,18 +1743,31 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky)
 
 		$ws = new PHPExcel_Worksheet($objPHPExcel, $title);
 		$objPHPExcel->addSheet($ws, $sheetIndex++);
+		$ws->getDefaultStyle()->getFont()->setName('Times New Roman')->setSize(11);
+		$ws->getDefaultRowDimension()->setRowHeight(20);
+		$ws->setShowGridlines(false);
+		$tableBorder = array('borders' => array('allborders' => array('style' => PHPExcel_Style_Border::BORDER_THIN, 'color' => array('rgb' => '000000'))));
+		foreach(array('A'=>7, 'B'=>16, 'C'=>16, 'D'=>24, 'E'=>12, 'F'=>16, 'G'=>16, 'H'=>14) as $column => $width)
+			$ws->getColumnDimension($column)->setWidth($width);
+		$ws->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
+		$ws->getPageSetup()->setPaperSize(PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
 
 		// ---- Tiêu đề ----
 		$ws->setCellValue('A1', $companyName);
-		$ws->mergeCells('A1:G1');
-		$ws->setCellValue('A2', 'BẢNG KÊ TRÍCH CHI PHÍ NHIÊN LIỆU - Số: '.$idBangke);
-		$ws->mergeCells('A2:G2');
+		$ws->mergeCells('A1:H1');
+		$ws->setCellValue('A2', 'BẢNG KÊ TRÍCH CHI PHÍ NHIÊN LIỆU - Số: '.($idBangke > 0 ? $idBangke : '..........'));
+		$ws->mergeCells('A2:H2');
 		$ws->setCellValue('A3', 'Giáo viên: '.$ten);
-		$ws->mergeCells('A3:G3');
+		$ws->mergeCells('A3:H3');
 		$ws->setCellValue('A4', 'Ngày quyết toán: '.date('d/m/Y', strtotime($today)).($ky !== '' ? '    -    Kỳ: '.$ky : ''));
-		$ws->mergeCells('A4:G4');
-		$ws->getStyle('A1:A2')->getFont()->setBold(true);
-		$ws->getStyle('A1:G4')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->mergeCells('A4:H4');
+		$ws->getStyle('A1:H4')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('A1:H4')->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+		$ws->getStyle('A1:H2')->getFont()->setBold(true);
+		$ws->getStyle('A1')->getFont()->setSize(13);
+		$ws->getStyle('A2')->getFont()->setSize(12);
+		$ws->getRowDimension(1)->setRowHeight(24);
+		$ws->getRowDimension(2)->setRowHeight(24);
 
 		// ---- Bảng Nội dung (hóa đơn) ----
 		$r = 6;
@@ -1379,6 +1780,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky)
 		$col = 'A';
 		foreach($hdHeaders as $h) { $ws->setCellValue($col.$r, $h); $col++; }
 		$ws->getStyle('A'.$r.':G'.$r)->getFont()->setBold(true);
+		$ws->getStyle('A'.$r.':G'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 		$r++;
 
 		$stt = 1; $tongHd = 0.0;
@@ -1399,7 +1801,11 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky)
 		$ws->getStyle('E'.$r)->getFont()->setBold(true);
 		$ws->setCellValueExplicit('F'.$r, (int)round($tongHd), PHPExcel_Cell_DataType::TYPE_NUMERIC);
 		$ws->getStyle('F'.$r)->getFont()->setBold(true);
-		$ws->getStyle('A'.$hdHeadRow.':G'.$r)->getBorders()->getAllBorders()->setBorderStyle($thin);
+		$ws->getStyle('A'.$hdHeadRow.':G'.$r)->applyFromArray($tableBorder);
+		$ws->getStyle('F'.($hdHeadRow + 1).':F'.$r)->getNumberFormat()->setFormatCode('#,##0');
+		$ws->getStyle('A'.$hdHeadRow.':G'.$r)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+		$ws->getStyle('A'.$hdHeadRow.':C'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('E'.$hdHeadRow.':G'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 
 		// ---- Bảng Danh sách học viên ----
 		$r += 2;
@@ -1436,16 +1842,24 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky)
 		$ws->setCellValueExplicit('F'.$r, (int)round($tongDinhMuc), PHPExcel_Cell_DataType::TYPE_NUMERIC);
 		$ws->setCellValueExplicit('G'.$r, (int)round($tongTt), PHPExcel_Cell_DataType::TYPE_NUMERIC);
 		$ws->getStyle('F'.$r.':G'.$r)->getFont()->setBold(true);
-		$ws->getStyle('A'.$hvHeadRow.':H'.$r)->getBorders()->getAllBorders()->setBorderStyle($thin);
+		$ws->getStyle('A'.$hvHeadRow.':H'.$r)->applyFromArray($tableBorder);
+		$ws->getStyle('F'.($hvHeadRow + 1).':G'.$r)->getNumberFormat()->setFormatCode('#,##0');
+		$ws->getStyle('A'.$hvHeadRow.':H'.$r)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+		$ws->getStyle('A'.$hvHeadRow.':B'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('D'.$hvHeadRow.':H'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 
-		// ---- Chữ ký ----
+		// ---- Cam kết và chữ ký ----
+		$r += 2;
+		$ws->setCellValue('A'.$r, '-Tôi xin cam kết và chịu trách nhiệm về tính chính xác, hợp lệ của các thông tin, dữ liệu đào tạo và chứng từ liên quan trên.');
+		$ws->mergeCells('A'.$r.':H'.$r);
+		$ws->getStyle('A'.$r)->getAlignment()->setWrapText(true);
 		$r += 2;
 		$ws->setCellValue('A'.$r, 'Phòng Đào tạo');
 		$ws->setCellValue('C'.$r, 'Kế Toán');
 		$ws->setCellValue('F'.$r, 'Giáo viên quyết toán');
-		$ws->getStyle('A'.$r.':F'.$r)->getFont()->setBold(true);
-
-		foreach(range('A', 'H') as $c) $ws->getColumnDimension($c)->setAutoSize(true);
+		$ws->getStyle('A'.$r.':H'.$r)->getFont()->setBold(true);
+		$ws->getStyle('A'.$r.':H'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		for($visibleRow = 1; $visibleRow <= $r; $visibleRow++) $ws->getRowDimension($visibleRow)->setVisible(true);
 	}
 
 	if($objPHPExcel->getSheetCount() === 0)

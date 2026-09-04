@@ -62,6 +62,7 @@
 						<th class="text-center">N tối đa</th>
 						<th class="text-center">HV được chọn</th>
 						<th class="text-right">Tổng chi</th>
+						<th></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -74,9 +75,13 @@
 						<td class="text-center"><?=(int)$g['n_max']?></td>
 						<td class="text-center"><strong><?=(int)$g['so_hv_chon']?></strong></td>
 						<td class="text-right"><?=number_format((float)$g['tong_chi'], 0, ',', '.')?></td>
+						<td class="text-right">
+							<?php $teacherExport = 'index.php?com=xangdau&act=xuatBangKeGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+							<a class="btn btn-xs btn-success" href="<?=$teacherExport?>" title="Xuất Excel cho giáo viên này"><i class="fas fa-file-excel"></i></a>
+						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="7" class="text-center text-muted">Chưa có dữ liệu. Chọn kỳ/khoảng ngày rồi bấm "Chạy lọc".</td></tr>
+					<tr><td colspan="8" class="text-center text-muted">Chưa có dữ liệu. Chọn kỳ/khoảng ngày rồi bấm "Chạy lọc".</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

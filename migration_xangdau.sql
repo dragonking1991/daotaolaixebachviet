@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `table_xd_hoadon` (
   `ngaytao` INT(11) UNSIGNED NOT NULL DEFAULT 0,
   `user_tao` VARCHAR(100) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_xd_hoadon_ma_ngay` (`ma_hoa_don`, `ngay_hoa_don`),
+  UNIQUE KEY `uniq_xd_hoadon_ma_ngay_gv` (`ma_hoa_don`, `ngay_hoa_don`, `gv_key`),
   KEY `idx_xd_hoadon_gvkey` (`gv_key`),
   KEY `idx_xd_hoadon_ky` (`ky`),
   KEY `idx_xd_hoadon_ngay` (`ngay_hoa_don`),

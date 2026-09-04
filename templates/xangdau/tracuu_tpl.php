@@ -4,8 +4,8 @@
 	<div class="frm_tracuu" style="max-width:640px; margin:0 auto;">
 		<form id="xd-lookup-form" method="post" style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
 			<div style="flex:1; min-width:220px;">
-				<label style="display:block; font-size:13px; color:#555; margin-bottom:4px;">Số CCCD giáo viên</label>
-				<input type="text" id="xd_cccd" name="cccd" placeholder="Nhập số CCCD" required
+				<label style="display:block; font-size:13px; color:#555; margin-bottom:4px;">Số CCCD hoặc Mã tra cứu</label>
+				<input type="text" id="xd_cccd" name="cccd" placeholder="Nhập CCCD hoặc mã tra cứu (VD: NV-4-...)" required
 					style="width:100%; height:40px; padding:0 12px; border:1px solid #ccc; border-radius:6px;">
 			</div>
 			<div style="min-width:150px;">
@@ -22,7 +22,7 @@
 				<button type="submit" style="height:40px; padding:0 20px; border:none; border-radius:6px; background:#2954f2; color:#fff; font-weight:700; cursor:pointer;">Tra cứu</button>
 			</div>
 		</form>
-		<p style="margin-top:10px; color:#666; font-size:13px;">Giáo viên đăng nhập bằng số CCCD để xem hóa đơn xăng dầu và danh sách học viên đã thanh toán của mình.</p>
+		<p style="margin-top:10px; color:#666; font-size:13px;">Giáo viên đăng nhập bằng số CCCD hoặc mã tra cứu để xem hóa đơn xăng dầu và danh sách học viên đã thanh toán của mình.</p>
 	</div>
 
 	<div id="xd-lookup-result" style="margin-top:24px;"></div>
@@ -39,7 +39,7 @@
 		var toDate = document.getElementById('xd_to').value;
 		var box = document.getElementById('xd-lookup-result');
 
-		if(cccd === ''){ alert('Vui lòng nhập số CCCD'); return; }
+		if(cccd === ''){ alert('Vui lòng nhập số CCCD hoặc mã tra cứu'); return; }
 
 		box.innerHTML = '<p style="text-align:center; color:#888;">Đang tra cứu...</p>';
 

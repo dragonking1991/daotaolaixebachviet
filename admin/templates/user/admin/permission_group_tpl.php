@@ -300,6 +300,25 @@
 		        </div>
 			<?php } ?>
 		<?php } ?>
+		<div class="card card-permission card-primary card-outline text-sm">
+			<div class="card-header">
+				<h3 class="card-title">Chi phí xăng dầu</h3>
+				<div class="card-tools">
+					<button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+				</div>
+			</div>
+			<div class="card-body">
+				<div class="form-group row">
+					<label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3" for="quyen-xangdau-view">Chi phí xăng dầu:</label>
+					<div class="col-md-7">
+						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-view" value="xangdau_man" <?=(isset($ds_quyen) && in_array('xangdau_man', $ds_quyen))?'checked':'';?> >
+							<label for="quyen-xangdau-view" class="custom-control-label font-weight-normal">Xem và quản lý</label>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
         <?php if(isset($config['news'])) { ?>
         	<?php foreach($config['news'] as $key => $value) { if(isset($value['dropdown']) && $value['dropdown'] == true) { ?>
 				<div class="card card-permission card-primary card-outline text-sm">

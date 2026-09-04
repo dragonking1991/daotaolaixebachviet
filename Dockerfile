@@ -30,6 +30,14 @@ RUN apt-get update && apt-get install -y \
 # Configure Apache to allow .htaccess overrides
 RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
+# LibreOffice (headless Calc) để đọc/chuyển đổi file .xlsb khi import xăng dầu.
+# Cài tối thiểu (không kèm gói khuyến nghị) để giảm dung lượng image.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libreoffice-calc \
+    libreoffice-core \
+    fonts-dejavu \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Set PHP config
 RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "post_max_size = 64M" >> /usr/local/etc/php/conf.d/uploads.ini \

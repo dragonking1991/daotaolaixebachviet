@@ -40,6 +40,11 @@
 			<button type="submit" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-2"></i>Import</button>
 			<a class="btn btn-sm bg-gradient-secondary text-white" href="index.php?com=xangdau&act=hocvien"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
 		</div>
+		<?php if(!empty($_SESSION['xd_hocvien_import_error'])) { $xdImportError = $_SESSION['xd_hocvien_import_error']; unset($_SESSION['xd_hocvien_import_error']); ?>
+		<div class="alert alert-danger mx-3 mb-3" role="alert">
+			<strong>Import không thành công:</strong><br><?=$xdImportError?>
+		</div>
+		<?php } ?>
 	</form>
 </section>
 
