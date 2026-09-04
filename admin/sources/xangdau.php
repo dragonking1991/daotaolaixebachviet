@@ -668,10 +668,11 @@ function xd_delete_hoadon()
 function xd_delete_all_hoadon()
 {
 	global $d, $func;
-	$count = $d->rawQueryOne("select count(*) as num from #_xd_hoadon where da_quyettoan = 0");
-	$d->rawQuery("delete from #_xd_hoadon where da_quyettoan = 0");
+	$count = $d->rawQueryOne("select count(*) as num from #_xd_hoadon");
+	$ok = $d->rawQuery("delete from #_xd_hoadon");
 	$n = isset($count['num']) ? (int)$count['num'] : 0;
-	$func->transfer("Đã xóa $n hóa đơn chưa quyết toán (giữ lại hóa đơn đã quyết toán).", "index.php?com=xangdau&act=hoadon");
+	if($ok === false) $func->transfer("Không thể xóa toàn bộ hóa đơn", "index.php?com=xangdau&act=hoadon", false);
+	$func->transfer("Đã xóa toàn bộ $n hóa đơn.", "index.php?com=xangdau&act=hoadon");
 }
 
 /* ============================ Import hóa đơn ============================ */
@@ -787,9 +788,9 @@ function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 		$readerType = 'Excel5';
 	}
 
-	// File .xlsb đã chuyển đổi: đọc theo LUỒNG để tránh OOM (LibreOffice có thể
-	// khai báo sheet tới ~1 triệu dòng khiến PHPExcel nạp cả DOM và cạn bộ nhớ).
-	if($ext === 'xlsb')
+	// Đọc XLSX theo luồng để tránh PHPExcel nạp cả workbook vào RAM trên production.
+	// File XLSB sau khi chuyển đổi cũng đi qua cùng reader này.
+	if($ext === 'xlsx' || $ext === 'xlsb')
 	{
 		$streamRow = 0; $streamCol = 0;
 		$streamSheet = xd_stream_read_xlsx($loadFile, $sheetHints, $streamRow, $streamCol, 20000);
@@ -1285,7 +1286,7 @@ function xd_upload_hocvien_excel()
 
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-	if(!in_array($ext, array('xls', 'xlsx', 'xlsb'))) xd_hocvien_import_error("Chỉ hỗ trợ file .xls, .xlsx hoặc .xlsb", $backUrl);
+	if($ext !== 'xlsx') xd_hocvien_import_error("Import học viên chỉ hỗ trợ file .xlsx. Vui lòng mở file XLSB/XLS bằng Excel và lưu lại dưới dạng .xlsx rồi thử lại.", $backUrl);
 
 	list($objPHPExcel, $sheet, $highestRow, $highestColIndex) = xd_open_upload_sheet($file, $ext, $backUrl, array('hocvien'));
 

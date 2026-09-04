@@ -3,7 +3,6 @@
 	if($xd_loc_ky !== '') $q .= '&ky='.urlencode($xd_loc_ky);
 	if($xd_loc_from !== '') $q .= '&from_date='.urlencode($xd_loc_from);
 	if($xd_loc_to !== '') $q .= '&to_date='.urlencode($xd_loc_to);
-	$linkXuat = "index.php?com=xangdau&act=xuatBangKe".$q;
 	$nhomBadge = array('BT' => 'badge-primary', 'CK' => 'badge-info', 'DAT' => 'badge-warning');
 	$tongChon = 0;
 	$tongTien = 0.0;
@@ -43,9 +42,6 @@
 				<input class="form-control form-control-sm text-sm" type="date" name="to_date" value="<?=htmlspecialchars($xd_loc_to)?>">
 			</div>
 			<button type="submit" class="btn btn-sm bg-gradient-primary text-white mr-2"><i class="fas fa-filter mr-1"></i>Chạy lọc</button>
-			<?php if($tongChon > 0) { ?>
-				<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkXuat?>" onclick="return confirm('Xuất bảng kê và ghi nhận thanh toán cho <?=$tongChon?> học viên? Thao tác này sẽ khóa dữ liệu.');"><i class="fas fa-file-excel mr-1"></i>Xuất bảng kê trích chi phí</a>
-			<?php } ?>
 		</form>
 	</div>
 

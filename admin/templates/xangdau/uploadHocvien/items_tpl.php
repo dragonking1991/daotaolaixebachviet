@@ -21,7 +21,7 @@
 				<div class="alert alert-warning mb-3">
 					<strong>Cột theo mẫu:</strong> STT | HỌ VÀ TÊN | KHÓA | Ngày tháng năm sinh | Số CCCD | NGƯỌI NỘP | <strong>PHÂN XE / GIÁO VIÊN</strong> | <strong>GHI CHÚ / Nhóm</strong> (BT/CK/DAT).<br>
 					Giáo viên được liên kết theo <strong>tên</strong> ở cột PHÂN XE/GIÁO VIÊN. Nhóm nhận diện theo tiêu đề hoặc theo giá trị BT/CK/DAT.<br>
-					<strong>Hỗ trợ định dạng:</strong> .xlsx, .xls, .xlsb (file .xlsb cần máy chủ có công cụ chuyển đổi; nếu không, vui lòng lưu lại .xlsx).
+					<strong>Hỗ trợ định dạng:</strong> chỉ nhận file .xlsx. Nếu đang có file .xls hoặc .xlsb, vui lòng mở bằng Excel và lưu lại dưới dạng .xlsx.
 				</div>
 				<div class="alert alert-danger mb-3">
 					<strong>Kiểm tra trùng CCCD:</strong> Nếu có bất kỳ CCCD nào trùng (trong file hoặc đã tồn tại trên hệ thống),
@@ -30,7 +30,7 @@
 
 				<div class="form-group mb-0">
 					<div class="custom-file my-custom-file">
-						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xls,.xlsx,.xlsb" required>
+						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx" required>
 						<label class="custom-file-label" for="file-excel" id="file-label">Chọn file...</label>
 					</div>
 				</div>

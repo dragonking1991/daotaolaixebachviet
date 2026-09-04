@@ -20,7 +20,7 @@
 			<input type="hidden" name="act" value="hoadon">
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import hóa đơn</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
-			<a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHoadon" onclick="return confirm('Xóa toàn bộ hóa đơn chưa quyết toán?');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a>
+			<a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHoadon" onclick="return confirm('Xóa TOÀN BỘ hóa đơn, bao gồm cả hóa đơn đã quyết toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a>
 			<div class="form-group mb-0 mr-2">
 				<input class="form-control form-control-sm text-sm" style="min-width:200px;" type="search" name="keyword" placeholder="Mã HĐ / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">
 			</div>
