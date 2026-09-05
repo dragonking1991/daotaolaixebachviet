@@ -42,6 +42,8 @@
 				<input class="form-control form-control-sm text-sm" type="date" name="to_date" value="<?=htmlspecialchars($xd_loc_to)?>">
 			</div>
 			<button type="submit" class="btn btn-sm bg-gradient-primary text-white mr-2"><i class="fas fa-filter mr-1"></i>Chạy lọc</button>
+			<?php if(!empty($xd_loc_summary)) { $exportAll = 'index.php?com=xangdau&act=xuatTatCaBangKe&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?><a class="btn btn-sm btn-success" href="<?=$exportAll?>" title="Xuất toàn bộ danh sách hóa đơn và học viên"><i class="fas fa-file-excel mr-1"></i>Xuất toàn bộ Excel</a><?php } ?>
+			<?php if(!empty($xd_loc_summary)) { $approveAll = 'index.php?com=xangdau&act=duyetTatCaGiaoVien&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?><a class="btn btn-sm btn-primary" href="<?=$approveAll?>" onclick="return confirm('Duyệt toàn bộ giáo viên đã được kế toán kiểm tra?');"><i class="fas fa-stamp mr-1"></i>Duyệt tổng danh sách</a><?php } ?>
 		</form>
 	</div>
 
@@ -57,7 +59,10 @@
 						<th class="text-right">Tổng HĐ (S_HĐ)</th>
 						<th class="text-center">N tối đa</th>
 						<th class="text-center">HV được chọn</th>
+						<th class="text-right">Định mức tối đa</th>
+						<th class="text-right">Chênh lệch</th>
 						<th class="text-right">Tổng chi</th>
+						<th>Kiểm tra</th>
 						<th></th>
 					</tr>
 				</thead>
@@ -70,14 +75,22 @@
 						<td class="text-right"><?=number_format((float)$g['s_hd'], 0, ',', '.')?></td>
 						<td class="text-center"><?=(int)$g['n_max']?></td>
 						<td class="text-center"><strong><?=(int)$g['so_hv_chon']?></strong></td>
+						<td class="text-right"><?=number_format((float)$g['dinh_muc_toi_da'], 0, ',', '.')?></td>
+						<td class="text-right"><span class="badge <?=abs((float)$g['chenh_lech']) <= 500000 ? 'badge-success' : 'badge-danger'?>"><?=number_format((float)$g['chenh_lech'], 0, ',', '.')?></span></td>
 						<td class="text-right"><?=number_format((float)$g['tong_chi'], 0, ',', '.')?></td>
+						<td>
+							<?php if((int)$g['ke_toan_kiem_tra'] === 1) { ?><span class="badge badge-success">Đã kiểm tra</span><?php } else { ?><span class="badge badge-warning">Chưa kiểm tra</span><?php } ?>
+						</td>
 						<td class="text-right">
+							<?php $teacherView = 'index.php?com=xangdau&act=xemGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherCheck = 'index.php?com=xangdau&act=kiemTraGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherApprove = 'index.php?com=xangdau&act=duyetGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+							<a class="btn btn-xs btn-info" href="<?=$teacherView?>" title="Xem chi tiết"><i class="fas fa-eye"></i></a>
+							<?php if((int)$g['ke_toan_kiem_tra'] === 0) { ?><a class="btn btn-xs btn-warning" href="<?=$teacherCheck?>" title="Kế toán xác nhận đã kiểm tra" onclick="return confirm('Xác nhận đã kiểm tra giáo viên này?');"><i class="fas fa-check"></i></a><?php } ?>
+							<a class="btn btn-xs btn-primary" href="<?=$teacherApprove?>" title="Quản lý duyệt giáo viên" onclick="return confirm('Duyệt thanh toán cho giáo viên này?');"><i class="fas fa-stamp"></i></a>
 							<?php $teacherExport = 'index.php?com=xangdau&act=xuatBangKeGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
-							<a class="btn btn-xs btn-success" href="<?=$teacherExport?>" title="Xuất Excel cho giáo viên này"><i class="fas fa-file-excel"></i></a>
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="8" class="text-center text-muted">Chưa có dữ liệu. Chọn kỳ/khoảng ngày rồi bấm "Chạy lọc".</td></tr>
+					<tr><td colspan="11" class="text-center text-muted">Chưa có dữ liệu. Chọn kỳ/khoảng ngày rồi bấm "Chạy lọc".</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

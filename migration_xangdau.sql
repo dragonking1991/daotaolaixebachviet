@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS `table_xd_hoadon` (
   `bien_so` VARCHAR(50) NOT NULL DEFAULT '',
   `ky` VARCHAR(100) NOT NULL DEFAULT '',
   `da_quyettoan` TINYINT(1) NOT NULL DEFAULT 0,
+  `ke_toan_kiem_tra` TINYINT(1) NOT NULL DEFAULT 0,
+  `quan_ly_duyet` TINYINT(1) NOT NULL DEFAULT 0,
   `id_bangke` INT(10) UNSIGNED NOT NULL DEFAULT 0,
   `ngaytao` INT(11) UNSIGNED NOT NULL DEFAULT 0,
   `user_tao` VARCHAR(100) NOT NULL DEFAULT '',
@@ -64,6 +66,8 @@ CREATE TABLE IF NOT EXISTS `table_xd_hocvien` (
   `dinh_muc` DECIMAL(18,2) NOT NULL DEFAULT 0,
   `so_tien_thanh_toan` DECIMAL(18,2) NOT NULL DEFAULT 0,
   `ngay_thanh_toan` DATE NULL DEFAULT NULL,
+  `ke_toan_kiem_tra` TINYINT(1) NOT NULL DEFAULT 0,
+  `quan_ly_duyet` TINYINT(1) NOT NULL DEFAULT 0,
   `id_bangke` INT(10) UNSIGNED NOT NULL DEFAULT 0,
   `ngaytao` INT(11) UNSIGNED NOT NULL DEFAULT 0,
   `user_tao` VARCHAR(100) NOT NULL DEFAULT '',
@@ -84,9 +88,22 @@ SELECT * FROM (SELECT 'xd_muc_bt' AS k, '1200000' AS v) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM `table_xd_config` WHERE `config_key` = 'xd_muc_bt') LIMIT 1;
 
 INSERT INTO `table_xd_config` (`config_key`, `config_value`)
-SELECT * FROM (SELECT 'xd_muc_ck' AS k, '0' AS v) AS tmp
+SELECT * FROM (SELECT 'xd_muc_ck' AS k, '3500000' AS v) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM `table_xd_config` WHERE `config_key` = 'xd_muc_ck') LIMIT 1;
 
 INSERT INTO `table_xd_config` (`config_key`, `config_value`)
-SELECT * FROM (SELECT 'xd_muc_dat' AS k, '0' AS v) AS tmp
+SELECT * FROM (SELECT 'xd_muc_dat' AS k, '3500000' AS v) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM `table_xd_config` WHERE `config_key` = 'xd_muc_dat') LIMIT 1;
+
+-- Bổ sung trạng thái cho database đã tồn tại
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `table_xd_hoadon` ADD COLUMN `ke_toan_kiem_tra` TINYINT(1) NOT NULL DEFAULT 0 AFTER `da_quyettoan`', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'table_xd_hoadon' AND column_name = 'ke_toan_kiem_tra');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `table_xd_hoadon` ADD COLUMN `quan_ly_duyet` TINYINT(1) NOT NULL DEFAULT 0 AFTER `ke_toan_kiem_tra`', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'table_xd_hoadon' AND column_name = 'quan_ly_duyet');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `table_xd_hocvien` ADD COLUMN `ke_toan_kiem_tra` TINYINT(1) NOT NULL DEFAULT 0 AFTER `ngay_thanh_toan`', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'table_xd_hocvien' AND column_name = 'ke_toan_kiem_tra');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `table_xd_hocvien` ADD COLUMN `quan_ly_duyet` TINYINT(1) NOT NULL DEFAULT 0 AFTER `ke_toan_kiem_tra`', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'table_xd_hocvien' AND column_name = 'quan_ly_duyet');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

@@ -15,8 +15,8 @@ if (!function_exists('getXdConfig')) {
 		$defaults = array(
 			'xd_dinh_muc' => 3500000,
 			'xd_muc_bt'   => 1200000,
-			'xd_muc_ck'   => 0,
-			'xd_muc_dat'  => 0,
+			'xd_muc_ck'   => 3500000,
+			'xd_muc_dat'  => 3500000,
 		);
 
 		try {
@@ -33,8 +33,9 @@ if (!function_exists('getXdConfig')) {
 			// Bảng chưa tồn tại (migration chưa chạy) -> dùng mặc định
 		}
 
+		$dinhMuc = max(0, (int)$defaults['xd_dinh_muc']);
 		return array(
-			'dinh_muc' => max(0, (int)$defaults['xd_dinh_muc']),
+			'dinh_muc' => $dinhMuc,
 			'muc_bt'   => max(0, (int)$defaults['xd_muc_bt']),
 			'muc_ck'   => max(0, (int)$defaults['xd_muc_ck']),
 			'muc_dat'  => max(0, (int)$defaults['xd_muc_dat']),

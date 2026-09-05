@@ -42,7 +42,7 @@
 				</div>
 				<div class="alert alert-info text-sm mt-2 mb-0">
 					<strong>Công thức:</strong> Số học viên tối đa <code>N = floor(Tổng hóa đơn / Định mức XD)</code>.<br>
-					Học viên nhóm <strong>BT</strong> nhận mức BT; nhóm <strong>CK</strong>/<strong>DAT</strong> nhận mức tương ứng (mặc định 0).
+					Học viên nhóm <strong>BT</strong> nhận mức BT; nhóm <strong>CK</strong>/<strong>DAT</strong> mặc định nhận định mức XD / 1 học viên, có thể điều chỉnh riêng.
 				</div>
 			</div>
 		</div>

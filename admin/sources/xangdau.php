@@ -120,6 +120,32 @@ switch($act)
 		xd_loc_preview();
 		$template = "xangdau/loc/items";
 		break;
+	case "xemGiaoVien":
+		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_get_giao_vien_detail();
+		$template = "xangdau/loc/detail";
+		break;
+	case "kiemTraGiaoVien":
+		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_kiem_tra_giao_vien();
+		break;
+	case "duyetGiaoVien":
+		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_duyet_giao_vien();
+		break;
+	case "duyetTatCaGiaoVien":
+		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_duyet_tat_ca_giao_vien();
+		break;
+	case "xuatTatCaBangKe":
+		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_xuat_tat_ca_bang_ke();
+		break;
 	case "xuatBangKeGiaoVien":
 		if(xd_permission_denied()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
@@ -232,12 +258,16 @@ function xd_ensure_tables()
 	xd_ensure_column('xd_hoadon', 'bien_so', "ADD COLUMN bien_so VARCHAR(50) NOT NULL DEFAULT '' AFTER tong_tien");
 	xd_ensure_column('xd_hoadon', 'thong_tin_ban_hang', "ADD COLUMN thong_tin_ban_hang VARCHAR(255) NOT NULL DEFAULT '' AFTER ma_hoa_don");
 	xd_ensure_column('xd_hoadon', 'chi_tiet', "ADD COLUMN chi_tiet VARCHAR(50) NOT NULL DEFAULT '' AFTER thong_tin_ban_hang");
+	xd_ensure_column('xd_hoadon', 'ke_toan_kiem_tra', "ADD COLUMN ke_toan_kiem_tra TINYINT(1) NOT NULL DEFAULT 0 AFTER da_quyettoan");
+	xd_ensure_column('xd_hoadon', 'quan_ly_duyet', "ADD COLUMN quan_ly_duyet TINYINT(1) NOT NULL DEFAULT 0 AFTER ke_toan_kiem_tra");
 	xd_ensure_index('xd_hoadon', 'idx_xd_hoadon_gvkey', "ADD KEY idx_xd_hoadon_gvkey (gv_key)");
 	xd_ensure_invoice_unique_key();
 
 	xd_ensure_column('xd_hocvien', 'gv_key', "ADD COLUMN gv_key VARCHAR(191) NOT NULL DEFAULT '' AFTER gv_hoten");
 	xd_ensure_column('xd_hocvien', 'khoa', "ADD COLUMN khoa VARCHAR(100) NOT NULL DEFAULT '' AFTER ngaysinh");
 	xd_ensure_column('xd_hocvien', 'nguoi_nop', "ADD COLUMN nguoi_nop VARCHAR(255) NOT NULL DEFAULT '' AFTER nhom");
+	xd_ensure_column('xd_hocvien', 'ke_toan_kiem_tra', "ADD COLUMN ke_toan_kiem_tra TINYINT(1) NOT NULL DEFAULT 0 AFTER ngay_thanh_toan");
+	xd_ensure_column('xd_hocvien', 'quan_ly_duyet', "ADD COLUMN quan_ly_duyet TINYINT(1) NOT NULL DEFAULT 0 AFTER ke_toan_kiem_tra");
 	xd_ensure_index('xd_hocvien', 'idx_xd_hocvien_gvkey', "ADD KEY idx_xd_hocvien_gvkey (gv_key)");
 }
 
@@ -1564,7 +1594,13 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 			'n_max' => $n,
 			'so_hv_chon' => 0,
 			'tong_chi' => 0.0,
+			'dinh_muc_toi_da' => $n * $dinhMuc,
+			'chenh_lech' => $sHd - ($n * $dinhMuc),
+			'ke_toan_kiem_tra' => 0,
+			'quan_ly_duyet' => 0,
 		);
+		$status = $d->rawQueryOne("select min(ke_toan_kiem_tra) as ke_toan_kiem_tra, min(quan_ly_duyet) as quan_ly_duyet from #_xd_hoadon where gv_key = ? and da_quyettoan = 0", array($gvKey));
+		if($status) { $row['ke_toan_kiem_tra'] = (int)$status['ke_toan_kiem_tra']; $row['quan_ly_duyet'] = (int)$status['quan_ly_duyet']; }
 
 		if($n > 0)
 		{
@@ -1591,6 +1627,99 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 	}
 
 	return array($selected, $summary, $config);
+}
+
+function xd_loc_params_url($gvKey = '')
+{
+	$url = "index.php?com=xangdau&act=loc";
+	foreach(array('ky', 'from_date', 'to_date') as $key) if(isset($_REQUEST[$key]) && $_REQUEST[$key] !== '') $url .= '&'.$key.'='.urlencode($_REQUEST[$key]);
+	if($gvKey !== '') $url .= '&gv_key='.urlencode($gvKey);
+	return $url;
+}
+
+function xd_get_giao_vien_detail()
+{
+	global $d, $xd_detail_gv, $xd_detail_hoadons, $xd_detail_hocviens, $xd_detail_config;
+	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
+	$xd_detail_gv = array('gv_key' => $gvKey, 'gv_hoten' => $gvKey);
+	$xd_detail_hoadons = array(); $xd_detail_hocviens = array(); $xd_detail_config = getXdConfig($d);
+	if($gvKey === '') return;
+	$row = $d->rawQueryOne("select max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key = ?", array($gvKey));
+	if($row && $row['gv_hoten'] !== '') $xd_detail_gv['gv_hoten'] = $row['gv_hoten'];
+	$xd_detail_hoadons = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 order by ngay_hoa_don desc, id desc", array($gvKey));
+	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by id asc", array($gvKey));
+}
+
+function xd_kiem_tra_giao_vien()
+{
+	global $d, $func;
+	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
+	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", xd_loc_params_url(), false);
+	$d->rawQuery("update #_xd_hoadon set ke_toan_kiem_tra = 1 where gv_key = ? and da_quyettoan = 0", array($gvKey));
+	$d->rawQuery("update #_xd_hocvien set ke_toan_kiem_tra = 1 where gv_key = ? and ngay_thanh_toan is null", array($gvKey));
+	$func->transfer("Đã ghi nhận kế toán kiểm tra giáo viên.", xd_loc_params_url(), true);
+}
+
+function xd_duyet_giao_vien()
+{
+	global $d, $func;
+	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
+	$ky = isset($_REQUEST['ky']) ? trim((string)$_REQUEST['ky']) : '';
+	$fromDate = (isset($_REQUEST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['from_date'])) ? $_REQUEST['from_date'] : '';
+	$toDate = (isset($_REQUEST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['to_date'])) ? $_REQUEST['to_date'] : '';
+	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", xd_loc_params_url(), false);
+	$notChecked = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and ke_toan_kiem_tra = 0", array($gvKey));
+	if($notChecked && (int)$notChecked['total'] > 0) $func->transfer("Kế toán chưa kiểm tra hết hóa đơn của giáo viên.", xd_loc_params_url(), false);
+	$notCheckedStudents = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
+	if($notCheckedStudents && (int)$notCheckedStudents['total'] > 0) $func->transfer("Kế toán chưa kiểm tra hết học viên của giáo viên.", xd_loc_params_url(), false);
+	list($selected, $summary, $config) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
+	$selectedTeacher = array(); foreach($selected as $student) if($student['gv_key'] === $gvKey) $selectedTeacher[] = $student;
+	if(empty($selectedTeacher)) $func->transfer("Không có học viên đủ điều kiện để duyệt cho giáo viên này.", xd_loc_params_url(), false);
+	$today = date('Y-m-d'); $username = xd_username(); $total = 0; foreach($selectedTeacher as $student) $total += (float)$student['so_tien_thanh_toan'];
+	$d->startTransaction();
+	$ok = $d->rawQuery("insert into #_xd_bangke (ngay_lap, ky, tong_hocvien, tong_tien, user_tao, ngaytao) values (?, ?, ?, ?, ?, ?)", array($today, $ky, count($selectedTeacher), $total, $username, time()));
+	if($ok === false) { $d->rollback(); $func->transfer("Không tạo được đợt duyệt.", xd_loc_params_url(), false); }
+	$idBangke = (int)$d->getLastInsertId();
+	foreach($selectedTeacher as $student) $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = ?, quan_ly_duyet = 1 where id = ? and ngay_thanh_toan is null", array($today, $student['dinh_muc'], $student['so_tien_thanh_toan'], $idBangke, (int)$student['id']));
+	$invoiceWhere = 'gv_key = ? and da_quyettoan = 0'; $params = array($idBangke, $gvKey);
+	if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $params[] = $ky; }
+	if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $params[] = $fromDate; }
+	if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $params[] = $toDate; }
+	$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", $params);
+	$d->commit();
+	$func->transfer("Đã duyệt và ghi nhận thanh toán cho giáo viên.", xd_loc_params_url(), true);
+}
+
+function xd_duyet_tat_ca_giao_vien()
+{
+	global $d, $func;
+	$ky = isset($_REQUEST['ky']) ? trim((string)$_REQUEST['ky']) : '';
+	$fromDate = (isset($_REQUEST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['from_date'])) ? $_REQUEST['from_date'] : '';
+	$toDate = (isset($_REQUEST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['to_date'])) ? $_REQUEST['to_date'] : '';
+	$rows = $d->rawQuery("select distinct gv_key from #_xd_hoadon where gv_key <> '' and da_quyettoan = 0 and ke_toan_kiem_tra = 1", array());
+	$approved = 0;
+	foreach($rows as $row)
+	{
+		$gvKey = $row['gv_key'];
+		$notCheckedStudents = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
+		if($notCheckedStudents && (int)$notCheckedStudents['total'] > 0) continue;
+		list($selected, $summary, $config) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
+		$students = array(); foreach($selected as $student) if($student['gv_key'] === $gvKey) $students[] = $student;
+		if(empty($students)) continue;
+		$today = date('Y-m-d'); $username = xd_username(); $total = 0; foreach($students as $student) $total += (float)$student['so_tien_thanh_toan'];
+		$d->startTransaction();
+		$ok = $d->rawQuery("insert into #_xd_bangke (ngay_lap, ky, tong_hocvien, tong_tien, user_tao, ngaytao) values (?, ?, ?, ?, ?, ?)", array($today, $ky, count($students), $total, $username, time()));
+		if($ok === false) { $d->rollback(); continue; }
+		$idBangke = (int)$d->getLastInsertId();
+		foreach($students as $student) $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = ?, quan_ly_duyet = 1 where id = ? and ngay_thanh_toan is null", array($today, $student['dinh_muc'], $student['so_tien_thanh_toan'], $idBangke, (int)$student['id']));
+		$invoiceWhere = 'gv_key = ? and da_quyettoan = 0'; $invoiceParams = array($idBangke, $gvKey);
+		if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $invoiceParams[] = $ky; }
+		if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $invoiceParams[] = $fromDate; }
+		if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $invoiceParams[] = $toDate; }
+		$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", $invoiceParams);
+		$d->commit(); $approved++;
+	}
+	$func->transfer("Đã duyệt $approved giáo viên.", xd_loc_params_url(), true);
 }
 
 function xd_loc_preview()
@@ -1621,6 +1750,16 @@ function xd_xuat_bangke_giao_vien()
 	$teacherSelected = array();
 	foreach($selected as $student) if($student['gv_key'] === $gvKey) $teacherSelected[] = $student;
 	xd_export_bangke_excel($d, 0, date('Y-m-d'), $ky, $gvKey, $teacherSelected, $fromDate, $toDate);
+}
+
+function xd_xuat_tat_ca_bang_ke()
+{
+	global $d;
+	$ky = isset($_REQUEST['ky']) ? trim((string)$_REQUEST['ky']) : '';
+	$fromDate = (isset($_REQUEST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['from_date'])) ? $_REQUEST['from_date'] : '';
+	$toDate = (isset($_REQUEST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['to_date'])) ? $_REQUEST['to_date'] : '';
+	list($selected, $summary) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
+	xd_export_bangke_excel($d, 0, date('Y-m-d'), $ky, '', $selected, $fromDate, $toDate, true);
 }
 
 /* ============================ Xuất bảng kê & quyết toán ============================ */
@@ -1689,7 +1828,7 @@ function xd_xuat_bangke()
 	// xd_export_bangke_excel sẽ exit sau khi stream file
 }
 
-function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $previewSelected = array(), $fromDate = '', $toDate = '')
+function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $previewSelected = array(), $fromDate = '', $toDate = '', $allPreview = false)
 {
 	require_once LIBRARIES.'PHPExcel.php';
 
@@ -1704,7 +1843,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 	}
 	else
 	{
-		$invoiceWhere = ' where gv_key = ?'; $invoiceParams = array($onlyGvKey);
+		$invoiceWhere = $allPreview ? ' where da_quyettoan = 0' : ' where gv_key = ?'; $invoiceParams = $allPreview ? array() : array($onlyGvKey);
 		if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $invoiceParams[] = $ky; }
 		if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $invoiceParams[] = $fromDate; }
 		if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $invoiceParams[] = $toDate; }
@@ -1748,7 +1887,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		$ws->getDefaultRowDimension()->setRowHeight(20);
 		$ws->setShowGridlines(false);
 		$tableBorder = array('borders' => array('allborders' => array('style' => PHPExcel_Style_Border::BORDER_THIN, 'color' => array('rgb' => '000000'))));
-		foreach(array('A'=>7, 'B'=>16, 'C'=>16, 'D'=>24, 'E'=>12, 'F'=>16, 'G'=>16, 'H'=>14) as $column => $width)
+		foreach(array('A'=>8, 'B'=>16, 'C'=>28, 'D'=>22, 'E'=>16, 'F'=>18, 'G'=>18, 'H'=>16) as $column => $width)
 			$ws->getColumnDimension($column)->setWidth($width);
 		$ws->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
 		$ws->getPageSetup()->setPaperSize(PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
@@ -1858,6 +1997,9 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		$ws->setCellValue('A'.$r, 'Phòng Đào tạo');
 		$ws->setCellValue('C'.$r, 'Kế Toán');
 		$ws->setCellValue('F'.$r, 'Giáo viên quyết toán');
+		$ws->mergeCells('A'.$r.':B'.$r);
+		$ws->mergeCells('C'.$r.':E'.$r);
+		$ws->mergeCells('F'.$r.':H'.$r);
 		$ws->getStyle('A'.$r.':H'.$r)->getFont()->setBold(true);
 		$ws->getStyle('A'.$r.':H'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 		for($visibleRow = 1; $visibleRow <= $r; $visibleRow++) $ws->getRowDimension($visibleRow)->setVisible(true);
