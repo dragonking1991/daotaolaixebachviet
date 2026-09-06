@@ -36,6 +36,9 @@
 							<?php } else { ?>
 							<span class="text-muted">Chờ quản lý duyệt</span>
 							<?php } ?>
+							<?php if(xd_can_kiem_tra()) { $uncheck_url = 'index.php?com=xangdau&act=huyKiemTraGiaoVien&gv_key='.urlencode($gv['gv_key']); ?>
+							<a class="btn btn-sm btn-secondary" href="<?=$uncheck_url?>" title="Chuyển về chưa kiểm tra" onclick="return confirm('Chuyển giáo viên này về trạng thái chưa kiểm tra?');"><i class="fas fa-undo mr-1"></i>Hủy kiểm tra</a>
+							<?php } ?>
 						</td>
 					</tr>
 					<?php } } else { ?>

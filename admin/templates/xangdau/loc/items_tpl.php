@@ -102,9 +102,10 @@
 							<?php if((int)$g['ke_toan_kiem_tra'] === 1) { ?><span class="badge badge-success">Đã kiểm tra</span><?php } else { ?><span class="badge badge-warning">Chưa kiểm tra</span><?php } ?>
 						</td>
 						<td class="text-right">
-							<?php $teacherView = 'index.php?com=xangdau&act=xemGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherCheck = 'index.php?com=xangdau&act=kiemTraGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherApprove = 'index.php?com=xangdau&act=duyetGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+							<?php $teacherView = 'index.php?com=xangdau&act=xemGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherCheck = 'index.php?com=xangdau&act=kiemTraGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherUncheck = 'index.php?com=xangdau&act=huyKiemTraGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherApprove = 'index.php?com=xangdau&act=duyetGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
 							<a class="btn btn-xs btn-info" href="<?=$teacherView?>" title="Xem chi tiết"><i class="fas fa-eye"></i></a>
 							<?php if(xd_can_kiem_tra() && (int)$g['ke_toan_kiem_tra'] === 0) { ?><a class="btn btn-xs btn-warning" href="<?=$teacherCheck?>" title="Kế toán xác nhận đã kiểm tra" onclick="return confirm('Xác nhận đã kiểm tra giáo viên này?');"><i class="fas fa-check"></i></a><?php } ?>
+							<?php if(xd_can_kiem_tra() && (int)$g['ke_toan_kiem_tra'] === 1) { ?><a class="btn btn-xs btn-secondary" href="<?=$teacherUncheck?>" title="Chuyển về chưa kiểm tra" onclick="return confirm('Chuyển giáo viên này về trạng thái chưa kiểm tra?');"><i class="fas fa-undo"></i></a><?php } ?>
 							<?php if(xd_can_duyet()) { ?><a class="btn btn-xs btn-primary" href="<?=$teacherApprove?>" title="Quản lý duyệt giáo viên" onclick="return confirm('Duyệt thanh toán cho giáo viên này?');"><i class="fas fa-stamp"></i></a><?php } ?>
 							<?php $teacherExport = 'index.php?com=xangdau&act=xuatBangKeGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
 						</td>
