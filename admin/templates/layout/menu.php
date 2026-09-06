@@ -630,11 +630,14 @@
                     $active_xd = "";
                     $menuopen_xd = "";
                     $none_xd = "";
+                    $none_xd_config = "";
                     if(isset($kiemtra) && $kiemtra == true)
                     {
                         $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
-                        $can_xd = in_array('xangdau_man', $list_quyen) || in_array('hoadon_man', $list_quyen) || in_array('order_man', $list_quyen) || in_array('product_man_cabin', $list_quyen);
+                        $can_xd_man = in_array('xangdau_man', $list_quyen) || in_array('hoadon_man', $list_quyen) || in_array('order_man', $list_quyen) || in_array('product_man_cabin', $list_quyen);
+                        $can_xd = $can_xd_man || in_array('xangdau_ketoan_check', $list_quyen);
                         if(!$can_xd) $none_xd = "d-none";
+                        if(!$can_xd_man) $none_xd_config = "d-none"; // Kế toán không có quyền cấu hình định mức
                     }
                     if($com=='xangdau')
                     {
@@ -651,7 +654,7 @@
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
-                        <li class="nav-item">
+                        <li class="nav-item <?=$none_xd_config?>">
                             <a class="nav-link <?=($com=='xangdau' && ($act=='config' || $act=='saveConfig'))?'active':''?>" href="index.php?com=xangdau&act=config" title="Cấu hình định mức">
                                 <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Cấu hình định mức</p>
                             </a>

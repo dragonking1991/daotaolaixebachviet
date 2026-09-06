@@ -124,6 +124,7 @@
 							$quyen_aliases[] = 'hoadon_man';
 							$quyen_aliases[] = 'order_man';
 							$quyen_aliases[] = 'product_man_cabin';
+							$quyen_aliases[] = 'xangdau_ketoan_check';
 						}
 
 						if($quyen_user == '_'){

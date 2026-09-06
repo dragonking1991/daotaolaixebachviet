@@ -21,7 +21,7 @@
 
 <section class="content">
 	<div class="card-footer text-sm sticky-top">
-		<form method="get" action="index.php" class="form-inline">
+		<form method="get" action="index.php" class="form-inline mb-2">
 			<input type="hidden" name="com" value="xangdau">
 			<input type="hidden" name="act" value="loc">
 			<div class="form-group mb-0 mr-2">
@@ -41,10 +41,30 @@
 				<label class="mr-1">Đến ngày HĐ</label>
 				<input class="form-control form-control-sm text-sm" type="date" name="to_date" value="<?=htmlspecialchars($xd_loc_to)?>">
 			</div>
-			<button type="submit" class="btn btn-sm bg-gradient-primary text-white mr-2"><i class="fas fa-filter mr-1"></i>Chạy lọc</button>
-			<?php if(!empty($xd_loc_summary)) { $exportAll = 'index.php?com=xangdau&act=xuatTatCaBangKe&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?><a class="btn btn-sm btn-success" href="<?=$exportAll?>" title="Xuất toàn bộ danh sách hóa đơn và học viên"><i class="fas fa-file-excel mr-1"></i>Xuất toàn bộ Excel</a><?php } ?>
-			<?php if(!empty($xd_loc_summary)) { $approveAll = 'index.php?com=xangdau&act=duyetTatCaGiaoVien&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?><a class="btn btn-sm btn-primary" href="<?=$approveAll?>" onclick="return confirm('Duyệt toàn bộ giáo viên đã được kế toán kiểm tra?');"><i class="fas fa-stamp mr-1"></i>Duyệt tổng danh sách</a><?php } ?>
+			<button type="submit" class="btn btn-sm bg-gradient-primary text-white"><i class="fas fa-filter mr-1"></i>Chạy lọc</button>
 		</form>
+		<div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+			<?php if(!empty($xd_loc_summary)) { ?>
+			<div class="btn-group btn-group-sm" role="group" aria-label="Xuất báo cáo">
+				<?php $exportAll = 'index.php?com=xangdau&act=xuatTatCaBangKe&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+				<a class="btn btn-success" href="<?=$exportAll?>" title="Xuất toàn bộ danh sách hóa đơn và học viên"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a>
+				<?php $exportHv = 'index.php?com=xangdau&act=xuatToanBoDanhSachHocVien&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+				<a class="btn btn-info" href="<?=$exportHv?>" title="Xuất danh sách học viên"><i class="fas fa-list mr-1"></i>Xuất HV</a>
+				<?php if(xd_can_duyet()) { $exportTongHop = 'index.php?com=xangdau&act=xuatTongHopGiaoVien&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+				<a class="btn btn-secondary" href="<?=$exportTongHop?>" title="Xuất file tổng hợp thanh toán theo giáo viên"><i class="fas fa-file-invoice-dollar mr-1"></i>Xuất tổng hợp GV</a>
+				<?php } ?>
+			</div>
+			<?php } ?>
+			<?php if(xd_can_kiem_tra() || xd_can_duyet()) { ?>
+			<div class="btn-group btn-group-sm" role="group" aria-label="Danh sách theo trạng thái">
+				<?php if(xd_can_kiem_tra()) { $checkList = 'index.php?com=xangdau&act=locKiemTra'; ?><a class="btn btn-outline-warning" href="<?=$checkList?>" title="Danh sách chưa kiểm tra"><i class="fas fa-search mr-1"></i>Chưa kiểm tra</a><?php } ?>
+				<?php if(xd_can_duyet()) { $approveList = 'index.php?com=xangdau&act=locDuyet'; ?><a class="btn btn-outline-primary" href="<?=$approveList?>" title="Danh sách chờ duyệt"><i class="fas fa-check-circle mr-1"></i>Chờ duyệt</a><?php } ?>
+			</div>
+			<?php } ?>
+			<?php if(xd_can_duyet() && !empty($xd_loc_summary)) { $approveAll = 'index.php?com=xangdau&act=duyetTatCaGiaoVien&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+			<a class="btn btn-sm btn-success" href="<?=$approveAll?>" onclick="return confirm('Duyệt toàn bộ giáo viên đã được kế toán kiểm tra?');"><i class="fas fa-stamp mr-1"></i>Duyệt tất cả</a>
+			<?php } ?>
+		</div>
 	</div>
 
 	<div class="card card-info card-outline text-sm mb-3">
@@ -84,8 +104,8 @@
 						<td class="text-right">
 							<?php $teacherView = 'index.php?com=xangdau&act=xemGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherCheck = 'index.php?com=xangdau&act=kiemTraGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherApprove = 'index.php?com=xangdau&act=duyetGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
 							<a class="btn btn-xs btn-info" href="<?=$teacherView?>" title="Xem chi tiết"><i class="fas fa-eye"></i></a>
-							<?php if((int)$g['ke_toan_kiem_tra'] === 0) { ?><a class="btn btn-xs btn-warning" href="<?=$teacherCheck?>" title="Kế toán xác nhận đã kiểm tra" onclick="return confirm('Xác nhận đã kiểm tra giáo viên này?');"><i class="fas fa-check"></i></a><?php } ?>
-							<a class="btn btn-xs btn-primary" href="<?=$teacherApprove?>" title="Quản lý duyệt giáo viên" onclick="return confirm('Duyệt thanh toán cho giáo viên này?');"><i class="fas fa-stamp"></i></a>
+							<?php if(xd_can_kiem_tra() && (int)$g['ke_toan_kiem_tra'] === 0) { ?><a class="btn btn-xs btn-warning" href="<?=$teacherCheck?>" title="Kế toán xác nhận đã kiểm tra" onclick="return confirm('Xác nhận đã kiểm tra giáo viên này?');"><i class="fas fa-check"></i></a><?php } ?>
+							<?php if(xd_can_duyet()) { ?><a class="btn btn-xs btn-primary" href="<?=$teacherApprove?>" title="Quản lý duyệt giáo viên" onclick="return confirm('Duyệt thanh toán cho giáo viên này?');"><i class="fas fa-stamp"></i></a><?php } ?>
 							<?php $teacherExport = 'index.php?com=xangdau&act=xuatBangKeGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
 						</td>
 					</tr>

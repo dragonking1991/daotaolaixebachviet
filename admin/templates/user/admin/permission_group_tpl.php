@@ -315,6 +315,10 @@
 							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-view" value="xangdau_man" <?=(isset($ds_quyen) && in_array('xangdau_man', $ds_quyen))?'checked':'';?> >
 							<label for="quyen-xangdau-view" class="custom-control-label font-weight-normal">Xem và quản lý</label>
 						</div>
+						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-ketoan" value="xangdau_ketoan_check" <?=(isset($ds_quyen) && in_array('xangdau_ketoan_check', $ds_quyen))?'checked':'';?> >
+							<label for="quyen-xangdau-ketoan" class="custom-control-label font-weight-normal">Kế toán (chỉ import file và kiểm tra)</label>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -972,7 +976,9 @@
 <script type="text/javascript">
 	function setPermissionGroupState($card, checked)
 	{
-		$card.find('input[type=checkbox]').not('#selectall-checkbox').prop('checked', checked);
+		// Quyền kế toán xăng dầu không nằm trong "Chọn tất cả" — phải tick riêng để tránh
+		// gán nhầm chung với quyền quản lý (khiến kế toán bị coi là quản lý hoặc ngược lại).
+		$card.find('input[type=checkbox]').not('#selectall-checkbox').not('#quyen-xangdau-ketoan').prop('checked', checked);
 	}
 
 	function LoadCheck()
