@@ -13,7 +13,9 @@ if (!function_exists('getXdConfig')) {
 	function getXdConfig($d)
 	{
 		$defaults = array(
-			'xd_dinh_muc' => 3500000,
+			'xd_dinh_muc'    => 3500000,
+			'xd_dinh_muc_ck'  => 3500000,
+			'xd_dinh_muc_dat' => 3500000,
 			'xd_muc_bt'   => 1200000,
 			'xd_muc_ck'   => 3500000,
 			'xd_muc_dat'  => 3500000,
@@ -21,7 +23,7 @@ if (!function_exists('getXdConfig')) {
 
 		try {
 			$rows = $d->rawQuery(
-				"SELECT config_key, config_value FROM #_xd_config WHERE config_key IN ('xd_dinh_muc','xd_muc_bt','xd_muc_ck','xd_muc_dat')",
+				"SELECT config_key, config_value FROM #_xd_config WHERE config_key IN ('xd_dinh_muc','xd_dinh_muc_ck','xd_dinh_muc_dat','xd_muc_bt','xd_muc_ck','xd_muc_dat')",
 				array()
 			);
 			if (!empty($rows)) {
@@ -34,8 +36,13 @@ if (!function_exists('getXdConfig')) {
 		}
 
 		$dinhMuc = max(0, (int)$defaults['xd_dinh_muc']);
+		// Định mức XD (chia hóa đơn) riêng cho CK/DAT; nếu chưa cấu hình (=0) thì dùng chung định mức mặc định.
+		$dinhMucCk  = max(0, (int)$defaults['xd_dinh_muc_ck']);
+		$dinhMucDat = max(0, (int)$defaults['xd_dinh_muc_dat']);
 		return array(
-			'dinh_muc' => $dinhMuc,
+			'dinh_muc'     => $dinhMuc,
+			'dinh_muc_ck'  => $dinhMucCk > 0 ? $dinhMucCk : $dinhMuc,
+			'dinh_muc_dat' => $dinhMucDat > 0 ? $dinhMucDat : $dinhMuc,
 			'muc_bt'   => max(0, (int)$defaults['xd_muc_bt']),
 			'muc_ck'   => max(0, (int)$defaults['xd_muc_ck']),
 			'muc_dat'  => max(0, (int)$defaults['xd_muc_dat']),
@@ -53,7 +60,7 @@ if (!function_exists('saveXdConfig')) {
 	 */
 	function saveXdConfig($d, $key, $value)
 	{
-		$allowed = array('xd_dinh_muc', 'xd_muc_bt', 'xd_muc_ck', 'xd_muc_dat');
+		$allowed = array('xd_dinh_muc', 'xd_dinh_muc_ck', 'xd_dinh_muc_dat', 'xd_muc_bt', 'xd_muc_ck', 'xd_muc_dat');
 		if (!in_array($key, $allowed, true)) return false;
 		$value = max(0, (int)$value);
 
@@ -90,5 +97,22 @@ if (!function_exists('xdMucTheoNhom')) {
 		if ($nhom === 'CK')  return (int)$config['muc_ck'];
 		if ($nhom === 'DAT') return (int)$config['muc_dat'];
 		return 0;
+	}
+}
+
+if (!function_exists('xdDinhMucTheoNhom')) {
+	/**
+	 * Trả về định mức XD (dùng để chia số hóa đơn ra số học viên) theo nhóm.
+	 * BT dùng định mức chung; CK/DAT có thể cấu hình riêng.
+	 * @param array  $config kết quả getXdConfig()
+	 * @param string $nhom   'BT' | 'CK' | 'DAT'
+	 * @return int
+	 */
+	function xdDinhMucTheoNhom($config, $nhom)
+	{
+		$nhom = strtoupper(trim((string)$nhom));
+		if ($nhom === 'CK')  return max(1, (int)$config['dinh_muc_ck']);
+		if ($nhom === 'DAT') return max(1, (int)$config['dinh_muc_dat']);
+		return max(1, (int)$config['dinh_muc']);
 	}
 }

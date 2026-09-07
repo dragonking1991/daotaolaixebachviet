@@ -146,6 +146,12 @@ switch($act)
 		xd_loc_duyet();
 		$template = "xangdau/loc/items_duyet";
 		break;
+	case "locDaThanhToan":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_loc_da_thanh_toan();
+		$template = "xangdau/loc/items_dathanhtoan";
+		break;
 	case "xuatToanBoDanhSachHocVien":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();

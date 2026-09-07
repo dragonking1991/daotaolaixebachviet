@@ -11,6 +11,10 @@ function xd_xuat_bangke_giao_vien()
 	$fromDate = (isset($_REQUEST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['from_date'])) ? $_REQUEST['from_date'] : '';
 	$toDate = (isset($_REQUEST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['to_date'])) ? $_REQUEST['to_date'] : '';
 	if($gvKey === '') $func->transfer("Không xác định được giáo viên cần xuất.", "index.php?com=xangdau&act=loc", false);
+	// Chỉ cho xuất Excel của giáo viên sau khi kế toán đã bấm "kiểm tra" giáo viên đó.
+	$status = $d->rawQueryOne("select min(ke_toan_kiem_tra) as ke_toan_kiem_tra from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and hop_le = 1", array($gvKey));
+	if($status && $status['ke_toan_kiem_tra'] !== null && (int)$status['ke_toan_kiem_tra'] === 0)
+		$func->transfer("Kế toán chưa kiểm tra giáo viên này. Vui lòng kiểm tra trước khi xuất Excel.", xd_loc_params_url($gvKey), false);
 	list($selected, $summary) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
 	$teacherSelected = array();
 	foreach($selected as $student) if($student['gv_key'] === $gvKey) $teacherSelected[] = $student;

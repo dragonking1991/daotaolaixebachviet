@@ -635,9 +635,9 @@
                     {
                         $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
                         $can_xd_man = in_array('xangdau_man', $list_quyen) || in_array('hoadon_man', $list_quyen) || in_array('order_man', $list_quyen) || in_array('product_man_cabin', $list_quyen);
-                        $can_xd = $can_xd_man || in_array('xangdau_ketoan_check', $list_quyen);
+                        $can_xd = $can_xd_man || in_array('xangdau_ketoan_check', $list_quyen) || in_array('xangdau_view', $list_quyen) || in_array('xangdau_import', $list_quyen) || in_array('xangdau_duyet', $list_quyen) || in_array('xangdau_xoa', $list_quyen) || in_array('xangdau_config', $list_quyen);
                         if(!$can_xd) $none_xd = "d-none";
-                        if(!$can_xd_man) $none_xd_config = "d-none"; // Kế toán không có quyền cấu hình định mức
+                        if(!$can_xd_man && !in_array('xangdau_config', $list_quyen)) $none_xd_config = "d-none"; // Chỉ hiện cho tài khoản có quyền quản lý toàn phần hoặc mục "Cấu hình định mức"
                     }
                     if($com=='xangdau')
                     {

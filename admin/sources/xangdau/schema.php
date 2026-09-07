@@ -83,6 +83,7 @@ function xd_ensure_tables()
 	xd_ensure_column('xd_hoadon', 'chi_tiet', "ADD COLUMN chi_tiet VARCHAR(50) NOT NULL DEFAULT '' AFTER thong_tin_ban_hang");
 	xd_ensure_column('xd_hoadon', 'ke_toan_kiem_tra', "ADD COLUMN ke_toan_kiem_tra TINYINT(1) NOT NULL DEFAULT 0 AFTER da_quyettoan");
 	xd_ensure_column('xd_hoadon', 'quan_ly_duyet', "ADD COLUMN quan_ly_duyet TINYINT(1) NOT NULL DEFAULT 0 AFTER ke_toan_kiem_tra");
+	xd_ensure_column('xd_hoadon', 'hop_le', "ADD COLUMN hop_le TINYINT(1) NOT NULL DEFAULT 1 AFTER chi_tiet");
 	xd_ensure_index('xd_hoadon', 'idx_xd_hoadon_gvkey', "ADD KEY idx_xd_hoadon_gvkey (gv_key)");
 	xd_ensure_invoice_unique_key();
 

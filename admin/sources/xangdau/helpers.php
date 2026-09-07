@@ -17,7 +17,7 @@ function xd_norm_header($label)
 {
 	$label = xd_mb_lower(trim((string)$label));
 	$search  = array('à','á','ả','ã','ạ','ă','ằ','ắ','ẳ','ẵ','ặ','â','ầ','ấ','ẩ','ẫ','ậ','đ','è','é','ẻ','ẽ','ẹ','ê','ề','ế','ể','ễ','ệ','ì','í','ỉ','ĩ','ị','ò','ó','ỏ','õ','ọ','ô','ồ','ố','ổ','ỗ','ộ','ơ','ờ','ớ','ở','ỡ','ợ','ù','ú','ủ','ũ','ụ','ư','ừ','ứ','ử','ữ','ự','ỳ','ý','ỷ','ỹ','ỵ');
-	$replace = array('a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','d','e','e','e','e','e','e','e','e','e','e','e','i','i','i','i','i','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','u','u','u','u','u','u','u','u','u','u','u','y','y','y','y','y');
+	$replace = array('a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','d','e','e','e','e','e','e','e','e','e','e','e','i','i','i','i','i','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','u','u','u','u','u','u','u','u','u','u','u','y','y','y','y','y');
 	$label = str_replace($search, $replace, $label);
 	return preg_replace('/[^a-z0-9]+/', '', $label);
 }
@@ -36,7 +36,7 @@ function xd_gv_key($name)
 	$name = xd_mb_lower(trim((string)$name));
 	if($name === '') return '';
 	$search  = array('à','á','ả','ã','ạ','ă','ằ','ắ','ẳ','ẵ','ặ','â','ầ','ấ','ẩ','ẫ','ậ','đ','è','é','ẻ','ẽ','ẹ','ê','ề','ế','ể','ễ','ệ','ì','í','ỉ','ĩ','ị','ò','ó','ỏ','õ','ọ','ô','ồ','ố','ổ','ỗ','ộ','ơ','ờ','ớ','ở','ỡ','ợ','ù','ú','ủ','ũ','ụ','ư','ừ','ứ','ử','ữ','ự','ỳ','ý','ỷ','ỹ','ỵ');
-	$replace = array('a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','d','e','e','e','e','e','e','e','e','e','e','e','i','i','i','i','i','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','u','u','u','u','u','u','u','u','u','u','u','y','y','y','y','y');
+	$replace = array('a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','d','e','e','e','e','e','e','e','e','e','e','e','i','i','i','i','i','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','o','u','u','u','u','u','u','u','u','u','u','u','y','y','y','y','y');
 	$name = str_replace($search, $replace, $name);
 	$name = preg_replace('/[^a-z0-9\s]+/', ' ', $name);
 	$name = preg_replace('/\s+/', ' ', trim($name));
@@ -58,4 +58,24 @@ function xd_username()
 {
 	global $login_admin;
 	return isset($_SESSION[$login_admin]['username']) ? $_SESSION[$login_admin]['username'] : '';
+}
+
+/**
+ * Đọc cột "hợp lệ" (note1) của file hóa đơn XD -> 0/1.
+ * Cột này dùng dấu "x" để đánh dấu RÕ RÀNG là hợp lệ; để trống nghĩa là KHÔNG hợp lệ.
+ * Ngoại lệ: nếu file hoàn toàn không có cột này (map thiếu 'hople') -> mặc định hợp lệ (1)
+ * để không phá vỡ các file import cũ chưa từng có cột này.
+ * Lưu ý: loại bỏ mọi khoảng trắng kể cả non-breaking space (\xC2\xA0 hay xuất hiện khi copy từ Excel/Web)
+ * trước khi so sánh, và chỉ cần ô chứa chữ "x" (không phân biệt hoa/thường) là coi như đã đánh dấu.
+ */
+function xd_hople_from_cell($sheet, $map, $row)
+{
+	if(!isset($map['hople'])) return 1;
+	$raw = (string)xd_val($sheet, $map, 'hople', $row);
+	$clean = preg_replace('/[\s\x{00A0}]+/u', '', $raw);
+	if($clean === '') return 0;
+	$clean = xd_mb_lower($clean);
+	if(strpos($clean, 'x') !== false) return 1;
+	$validValues = array('co', 'có', '1', 'yes', 'true', 'dat', 'đạt', 'ok');
+	return in_array($clean, $validValues, true) ? 1 : 0;
 }

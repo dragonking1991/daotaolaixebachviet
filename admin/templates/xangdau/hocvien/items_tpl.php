@@ -21,7 +21,7 @@
 			<input type="hidden" name="act" value="hocvien">
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
-			<a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHocvien" onclick="return confirm('Xóa TOÀN BỘ học viên, bao gồm cả học viên đã thanh toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a>
+			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHocvien" onclick="return confirm('Xóa TOÀN BỘ học viên, bao gồm cả học viên đã thanh toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
 			<div class="form-group mb-0 mr-2">
 				<input class="form-control form-control-sm text-sm" style="min-width:200px;" type="search" name="keyword" placeholder="Tên / CCCD HV / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">
 			</div>

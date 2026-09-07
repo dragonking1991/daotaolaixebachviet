@@ -125,6 +125,11 @@
 							$quyen_aliases[] = 'order_man';
 							$quyen_aliases[] = 'product_man_cabin';
 							$quyen_aliases[] = 'xangdau_ketoan_check';
+							$quyen_aliases[] = 'xangdau_view';
+							$quyen_aliases[] = 'xangdau_import';
+							$quyen_aliases[] = 'xangdau_duyet';
+							$quyen_aliases[] = 'xangdau_xoa';
+							$quyen_aliases[] = 'xangdau_config';
 						}
 
 						if($quyen_user == '_'){

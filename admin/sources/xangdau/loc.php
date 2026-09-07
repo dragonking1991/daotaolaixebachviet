@@ -69,7 +69,7 @@ function xd_duyet_giao_vien()
 	if($ok === false) { $d->rollback(); $func->transfer("Không tạo được đợt duyệt.", xd_loc_params_url(), false); }
 	$idBangke = (int)$d->getLastInsertId();
 	foreach($selectedTeacher as $student) $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = ?, quan_ly_duyet = 1 where id = ? and ngay_thanh_toan is null", array($today, $student['dinh_muc'], $student['so_tien_thanh_toan'], $idBangke, (int)$student['id']));
-	$invoiceWhere = 'gv_key = ? and da_quyettoan = 0'; $params = array($idBangke, $gvKey);
+	$invoiceWhere = 'gv_key = ? and da_quyettoan = 0 and hop_le = 1'; $params = array($idBangke, $gvKey);
 	if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $params[] = $ky; }
 	if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $params[] = $fromDate; }
 	if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $params[] = $toDate; }
@@ -100,7 +100,7 @@ function xd_duyet_tat_ca_giao_vien()
 		if($ok === false) { $d->rollback(); continue; }
 		$idBangke = (int)$d->getLastInsertId();
 		foreach($students as $student) $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = ?, quan_ly_duyet = 1 where id = ? and ngay_thanh_toan is null", array($today, $student['dinh_muc'], $student['so_tien_thanh_toan'], $idBangke, (int)$student['id']));
-		$invoiceWhere = 'gv_key = ? and da_quyettoan = 0'; $invoiceParams = array($idBangke, $gvKey);
+		$invoiceWhere = 'gv_key = ? and da_quyettoan = 0 and hop_le = 1'; $invoiceParams = array($idBangke, $gvKey);
 		if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $invoiceParams[] = $ky; }
 		if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $invoiceParams[] = $fromDate; }
 		if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $invoiceParams[] = $toDate; }
@@ -182,4 +182,19 @@ function xd_loc_duyet()
 	}
 	
 	$xd_loc_duyet_data = $data;
+}
+
+function xd_loc_da_thanh_toan()
+{
+	global $d, $xd_loc_dathanhtoan_data, $xd_loc_ky_options;
+
+	$xd_loc_ky_options = $d->rawQuery("select distinct ky from #_xd_hoadon where ky <> '' order by ky asc");
+
+	// Giáo viên có ít nhất 1 hóa đơn hoặc học viên đã quyết toán/thanh toán
+	$rows = $d->rawQuery(
+		"select b.gv_key, max(b.gv_hoten) as gv_hoten, sum(b.tong_tien) as tong_tien, count(*) as so_hd
+		 from #_xd_hoadon b where b.gv_key <> '' and b.da_quyettoan = 1 group by b.gv_key order by gv_hoten asc"
+	);
+
+	$xd_loc_dathanhtoan_data = $rows;
 }

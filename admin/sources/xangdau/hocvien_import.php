@@ -31,6 +31,7 @@ function xd_upload_hocvien_excel()
 		'gv'       => array('phanxe', 'giaovien', 'gv', 'tengiaovien', 'gvphutrach'),
 		'nhom'     => array('nhom', 'loai', 'phanloai', 'nhomdaotao', 'ghichu'),
 		'datt'     => array('datt', 'dathanhtoan', 'trangthaithanhtoan', 'tinhtrangthanhtoan'),
+		'ngaytt'   => array('ngaythanhtoan', 'ngaytt', 'menu'),
 	);
 	$containsRules = array(
 		'ten'      => array('has' => array('hovaten')),
@@ -40,6 +41,7 @@ function xd_upload_hocvien_excel()
 		'ngaysinh' => array('has' => array('sinh')),
 		'nguoinop' => array('has' => array('nguoinop')),
 		'datt'     => array('has' => array('datt')),
+		'ngaytt'   => array('has' => array('menu')),
 	);
 
 	list($headerRow, $map, $headerScore) = xd_detect_header($sheet, $highestRow, $highestColIndex, $aliasGroups, $containsRules);
@@ -130,6 +132,8 @@ function xd_upload_hocvien_excel()
 		// Cột "đã tt": chỉ khi giá trị đúng là "r" mới coi là đã thanh toán
 		$dattRaw = isset($map['datt']) ? strtolower(trim(xd_val($sheet, $map, 'datt', $row))) : '';
 		$daTT = ($dattRaw === 'r');
+		// Ngày thanh toán cũ trong file (cột Menu/ngày thanh toán) -> giữ lại ngày gốc thay vì luôn dùng ngày import
+		$ngayTTFile = isset($map['ngaytt']) ? xd_date_from_cell($sheet, $map['ngaytt'], $row) : null;
 
 		if($ten === '' && $cccd === '')
 		{
@@ -170,7 +174,7 @@ function xd_upload_hocvien_excel()
 
 		$rows[] = array(
 			'row' => $row, 'ten' => $ten, 'khoa' => $khoa, 'ngaysinh' => $ngaysinh, 'cccd' => $cccd,
-			'nguoinop' => $nguoinop, 'nhom' => $nhom, 'gvten' => $gvten, 'gvkey' => $gvkey, 'datt' => $daTT, 'existing_id' => 0
+			'nguoinop' => $nguoinop, 'nhom' => $nhom, 'gvten' => $gvten, 'gvkey' => $gvkey, 'datt' => $daTT, 'ngaytt_file' => $ngayTTFile, 'existing_id' => 0
 		);
 	}
 
@@ -207,9 +211,9 @@ function xd_upload_hocvien_excel()
 	$d->startTransaction();
 	foreach($rows as $r)
 	{
-		// Học viên đã thanh toán trước đó (cột "đã tt" có chữ "r") -> đánh dấu ngày TT + phí theo nhóm để loại khỏi thuật toán lọc
+		// Học viên đã thanh toán trước đó (cột "đã tt" có chữ "r") -> đánh dấu ngày TT (giữ ngày gốc trong file nếu có) + phí theo nhóm để loại khỏi thuật toán lọc
 		$daTT = !empty($r['datt']);
-		$ngayTT  = $daTT ? $today : null;
+		$ngayTT  = $daTT ? (!empty($r['ngaytt_file']) ? $r['ngaytt_file'] : $today) : null;
 		$dinhMuc = $daTT ? (int)$config['dinh_muc'] : 0;
 		$soTien  = $daTT ? (int)xdMucTheoNhom($config, $r['nhom']) : 0;
 		if($r['existing_id'] > 0)

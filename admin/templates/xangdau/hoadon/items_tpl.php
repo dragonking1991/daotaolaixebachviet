@@ -20,7 +20,7 @@
 			<input type="hidden" name="act" value="hoadon">
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import hóa đơn</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
-			<a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHoadon" onclick="return confirm('Xóa TOÀN BỘ hóa đơn, bao gồm cả hóa đơn đã quyết toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a>
+			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHoadon" onclick="return confirm('Xóa TOÀN BỘ hóa đơn, bao gồm cả hóa đơn đã quyết toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
 			<div class="form-group mb-0 mr-2">
 				<input class="form-control form-control-sm text-sm" style="min-width:200px;" type="search" name="keyword" placeholder="Mã HĐ / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">
 			</div>
@@ -53,6 +53,7 @@
 						<th>Biển số</th>
 						<th>Giáo viên</th>
 						<th>Kỳ</th>
+						<th>Hợp lệ</th>
 						<th>Trạng thái</th>
 						<th></th>
 					</tr>
@@ -70,6 +71,13 @@
 						<td><?=htmlspecialchars($it['gv_hoten'])?></td>
 						<td><?=htmlspecialchars($it['ky'])?></td>
 						<td>
+							<?php if((int)($it['hop_le'] ?? 1) === 1) { ?>
+								<span class="badge badge-success">Hợp lệ</span>
+							<?php } else { ?>
+								<span class="badge badge-danger">Không hợp lệ</span>
+							<?php } ?>
+						</td>
+						<td>
 							<?php if((int)$it['da_quyettoan'] === 1) { ?>
 								<span class="badge badge-secondary">Đã quyết toán</span>
 							<?php } else { ?>
@@ -83,7 +91,7 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="11" class="text-center text-muted">Chưa có hóa đơn nào</td></tr>
+					<tr><td colspan="12" class="text-center text-muted">Chưa có hóa đơn nào</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

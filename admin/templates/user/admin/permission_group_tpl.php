@@ -313,12 +313,38 @@
 					<div class="col-md-7">
 						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
 							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-view" value="xangdau_man" <?=(isset($ds_quyen) && in_array('xangdau_man', $ds_quyen))?'checked':'';?> >
-							<label for="quyen-xangdau-view" class="custom-control-label font-weight-normal">Xem và quản lý</label>
+							<label for="quyen-xangdau-view" class="custom-control-label font-weight-normal">Xem và quản lý (toàn quyền)</label>
 						</div>
 						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
 							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-ketoan" value="xangdau_ketoan_check" <?=(isset($ds_quyen) && in_array('xangdau_ketoan_check', $ds_quyen))?'checked':'';?> >
 							<label for="quyen-xangdau-ketoan" class="custom-control-label font-weight-normal">Kế toán (chỉ import file và kiểm tra)</label>
 						</div>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3">Mục chi tiết (tùy chỉnh riêng cho từng tài khoản):</label>
+					<div class="col-md-7">
+						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-detail-view" value="xangdau_view" <?=(isset($ds_quyen) && in_array('xangdau_view', $ds_quyen))?'checked':'';?> >
+							<label for="quyen-xangdau-detail-view" class="custom-control-label font-weight-normal">Xem danh sách (hóa đơn/học viên/lọc thanh toán)</label>
+						</div>
+						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-detail-import" value="xangdau_import" <?=(isset($ds_quyen) && in_array('xangdau_import', $ds_quyen))?'checked':'';?> >
+							<label for="quyen-xangdau-detail-import" class="custom-control-label font-weight-normal">Import file (hóa đơn/học viên)</label>
+						</div>
+						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-detail-duyet" value="xangdau_duyet" <?=(isset($ds_quyen) && in_array('xangdau_duyet', $ds_quyen))?'checked':'';?> >
+							<label for="quyen-xangdau-detail-duyet" class="custom-control-label font-weight-normal">Duyệt thanh toán</label>
+						</div>
+						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-detail-xoa" value="xangdau_xoa" <?=(isset($ds_quyen) && in_array('xangdau_xoa', $ds_quyen))?'checked':'';?> >
+							<label for="quyen-xangdau-detail-xoa" class="custom-control-label font-weight-normal">Xóa toàn bộ hóa đơn/học viên</label>
+						</div>
+						<div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+							<input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-xangdau-detail-config" value="xangdau_config" <?=(isset($ds_quyen) && in_array('xangdau_config', $ds_quyen))?'checked':'';?> >
+							<label for="quyen-xangdau-detail-config" class="custom-control-label font-weight-normal">Cấu hình định mức</label>
+						</div>
+						<small class="text-muted d-block mt-1">Chỉ cần khi KHÔNG tick "Xem và quản lý" — dùng để cấp riêng lẻ từng quyền cho một tài khoản (vd chỉ import, hoặc chỉ duyệt).</small>
 					</div>
 				</div>
 			</div>

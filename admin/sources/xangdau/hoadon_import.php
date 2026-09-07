@@ -25,7 +25,7 @@ function xd_upload_hoadon_excel()
 	// File tổng hợp có thể có sheet tóm tắt (TH) và sheet chi tiết (HĐơn) -> ưu tiên sheet hóa đơn
 	list($objPHPExcel, $sheet, $highestRow, $highestColIndex) = xd_open_upload_sheet($file, $ext, $backUrl, array('hdon', 'hoadon'));
 
-	// Cột theo mẫu thực tế: STT | Số hóa đơn | Ngày | Thông tin bán hàng | Chi tiết | Số tiền HĐ | Biển số xe | HĐ từ trang thuế | GV | Note1 | Note2
+	// Cột theo mẫu thực tế: STT | Số hóa đơn | Ngày | Thông tin bán hàng | Chi tiết | Số tiền HĐ | Biển số xe | HĐ từ trang thuế | GV | Note1 (hợp lệ) | Note2
 	$aliasGroups = array(
 		'ma'      => array('sohoadon', 'mahoadon', 'masohoadon', 'sohd', 'mahd'),
 		'ngay'    => array('ngay', 'ngayhoadon', 'ngayhd', 'ngaylap', 'date'),
@@ -34,6 +34,7 @@ function xd_upload_hoadon_excel()
 		'tien'    => array('sotienhd', 'sotienhoadon', 'tongtien', 'tienhoadon', 'thanhtien', 'sotien'),
 		'bienso'  => array('bienso', 'biensoxe'),
 		'gv'      => array('gv', 'giaovien', 'tengiaovien', 'tengv', 'phanxe'),
+		'hople'   => array('hople', 'note1', 'ghichu1'),
 	);
 	$containsRules = array(
 		'ma'        => array('has' => array('hoadon')),
@@ -41,6 +42,7 @@ function xd_upload_hoadon_excel()
 		'tien'      => array('has' => array('tien')),
 		'gv'        => array('has' => array('gv')),
 		'bienso'    => array('has' => array('bienso')),
+		'hople'     => array('has' => array('hople')),
 	);
 
 	list($headerRow, $map, $headerScore) = xd_detect_header($sheet, $highestRow, $highestColIndex, $aliasGroups, $containsRules);
@@ -55,6 +57,33 @@ function xd_upload_hoadon_excel()
 	if(!isset($map['ma']))  $func->transfer("Không xác định được cột 'Số hóa đơn' trong file. Vui lòng kiểm tra tiêu đề cột.", $backUrl, false);
 	if(!isset($map['tien'])) $func->transfer("Không xác định được cột 'Số tiền HĐ' trong file. Vui lòng kiểm tra tiêu đề cột.", $backUrl, false);
 	if(!isset($map['gv']))  $func->transfer("Không xác định được cột 'GV' (tên giáo viên) trong file. Vui lòng kiểm tra tiêu đề cột.", $backUrl, false);
+
+	// Nếu không nhận diện được cột "hợp lệ" theo tiêu đề (header đặt tên khác lạ), tìm cột chứa
+	// chủ yếu là "x"/để trống trong vùng dữ liệu — quy ước cột đánh dấu hợp lệ thường nằm ở cuối bảng.
+	if(!isset($map['hople']))
+	{
+		$usedCols = array_flip($map);
+		$scanTo = min($highestRow, $headerRow + 200);
+		$bestCol = -1;
+		for($col = $highestColIndex - 1; $col >= 0; $col--)
+		{
+			if(isset($usedCols[$col])) continue;
+			$xHits = 0; $filled = 0;
+			for($row = $headerRow + 1; $row <= $scanTo; $row++)
+			{
+				$v = xd_mb_lower(trim(xd_cell($sheet, $col, $row)));
+				if($v === '') continue;
+				$filled++;
+				if($v === 'x') $xHits++;
+			}
+			// Cột hợp lệ: phần lớn giá trị đã điền là "x" (không lẫn số tiền/tên/ngày...)
+			if($filled > 0 && $xHits > 0 && $xHits === $filled) { $bestCol = $col; break; }
+		}
+		if($bestCol >= 0) $map['hople'] = $bestCol;
+	}
+
+	// Ghi nhận tiêu đề cột "hợp lệ" đã nhận diện được (nếu có) để hiển thị ra thông báo, giúp phát hiện ngay nếu bắt nhầm cột.
+	$hopLeHeaderText = isset($map['hople']) ? xd_cell($sheet, $map['hople'], $headerRow) : null;
 
 	// Thu thập các dòng hợp lệ
 	$rows = array();
@@ -82,11 +111,12 @@ function xd_upload_hoadon_excel()
 		$ngay = xd_date_from_cell($sheet, $map['ngay'], $row);
 		$tien = xd_money_from_cell($sheet, $map['tien'], $row);
 		$gvkey = xd_gv_key($gvten);
+		$hopLe = xd_hople_from_cell($sheet, $map, $row);
 
 		$rows[] = array(
 			'row' => $row, 'ma' => $ma, 'ngay' => $ngay, 'tien' => $tien,
 			'gvten' => $gvten, 'gvkey' => $gvkey, 'bienso' => $bienso,
-			'ttbanhang' => $ttbanhang, 'chitiet' => $chitiet
+			'ttbanhang' => $ttbanhang, 'chitiet' => $chitiet, 'hople' => $hopLe
 		);
 	}
 
@@ -106,6 +136,8 @@ function xd_upload_hoadon_excel()
 	$skippedLocked = 0;
 	$errors = array();
 	$seenKeys = array();
+	$hopLeCount = 0;
+	$khongHopLeCount = 0;
 
 	$d->startTransaction();
 	foreach($rows as $r)
@@ -128,15 +160,15 @@ function xd_upload_hoadon_excel()
 		}
 
 		$ok = $d->rawQuery(
-			"insert into #_xd_hoadon (gv_cccd, gv_hoten, gv_key, ma_hoa_don, thong_tin_ban_hang, chi_tiet, ngay_hoa_don, tong_tien, bien_so, ky, da_quyettoan, id_bangke, ngaytao, user_tao) values ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)",
-			array($r['gvten'], $r['gvkey'], $r['ma'], $r['ttbanhang'], $r['chitiet'], $r['ngay'], $r['tien'], $r['bienso'], $kyForm, time(), $username)
+			"insert into #_xd_hoadon (gv_cccd, gv_hoten, gv_key, ma_hoa_don, thong_tin_ban_hang, chi_tiet, ngay_hoa_don, tong_tien, bien_so, ky, da_quyettoan, hop_le, id_bangke, ngaytao, user_tao) values ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?)",
+			array($r['gvten'], $r['gvkey'], $r['ma'], $r['ttbanhang'], $r['chitiet'], $r['ngay'], $r['tien'], $r['bienso'], $kyForm, $r['hople'], time(), $username)
 		);
 		if($ok === false)
 		{
 			$err = $d->getLastError();
 			$errors[] = "Dòng ".$r['row'].": lỗi lưu dữ liệu".(is_array($err) && isset($err[2]) ? ' ('.$err[2].')' : '');
 		}
-		else $inserted++;
+		else { $inserted++; if((int)$r['hople'] === 1) $hopLeCount++; else $khongHopLeCount++; }
 	}
 
 	if(!empty($errors))
@@ -150,5 +182,7 @@ function xd_upload_hoadon_excel()
 	$msg = "Import thành công $inserted hóa đơn.";
 	if($skippedDup > 0) $msg .= "<br>Bỏ qua $skippedDup hóa đơn trùng (Mã HĐ + Ngày HĐ).";
 	if($skippedLocked > 0) $msg .= "<br>Bỏ qua $skippedLocked hóa đơn đã quyết toán (bị khóa).";
+	if($hopLeHeaderText !== null) $msg .= "<br><em>Cột \"Hợp lệ\" nhận diện từ tiêu đề: \"".htmlspecialchars($hopLeHeaderText)."\" — $hopLeCount hợp lệ, $khongHopLeCount không hợp lệ.</em>";
+	else $msg .= "<br><em>Không tìm thấy cột \"Hợp lệ\"/Note1 trong file — tất cả được coi là hợp lệ mặc định.</em>";
 	$func->transfer($msg, "index.php?com=xangdau&act=hoadon");
 }

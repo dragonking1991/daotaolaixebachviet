@@ -15,7 +15,7 @@ function xd_save_config()
 
 	if(empty($_POST)) $func->transfer("Không nhận được dữ liệu", "index.php?com=xangdau&act=config", false);
 
-	$keys = array('xd_dinh_muc', 'xd_muc_bt', 'xd_muc_ck', 'xd_muc_dat');
+	$keys = array('xd_dinh_muc', 'xd_dinh_muc_ck', 'xd_dinh_muc_dat', 'xd_muc_bt', 'xd_muc_ck', 'xd_muc_dat');
 	$data = isset($_POST['data']) ? $_POST['data'] : array();
 
 	foreach($keys as $key)

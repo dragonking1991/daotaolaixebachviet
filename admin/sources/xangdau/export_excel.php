@@ -18,7 +18,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 	}
 	else
 	{
-		$invoiceWhere = $allPreview ? ' where da_quyettoan = 0' : ' where gv_key = ?'; $invoiceParams = $allPreview ? array() : array($onlyGvKey);
+		$invoiceWhere = $allPreview ? ' where da_quyettoan = 0 and hop_le = 1' : ' where gv_key = ? and hop_le = 1'; $invoiceParams = $allPreview ? array() : array($onlyGvKey);
 		if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $invoiceParams[] = $ky; }
 		if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $invoiceParams[] = $fromDate; }
 		if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $invoiceParams[] = $toDate; }
@@ -62,7 +62,8 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		$ws->getDefaultRowDimension()->setRowHeight(20);
 		$ws->setShowGridlines(false);
 		$tableBorder = array('borders' => array('allborders' => array('style' => PHPExcel_Style_Border::BORDER_THIN, 'color' => array('rgb' => '000000'))));
-		foreach(array('A'=>5, 'B'=>10, 'C'=>14, 'D'=>11, 'E'=>9, 'F'=>9, 'G'=>11, 'H'=>9) as $column => $width)
+		// Cột C dùng chung cho "Ngày" (bảng hóa đơn) và "Họ tên học viên" (bảng danh sách học viên bên dưới) -> nới rộng để tên đầy đủ (kể cả tên dài, viết HOA) không bị cắt. Cột G dùng chung cho "Biển số xe" và "Số tiền thanh toán" -> cũng nới rộng.
+		foreach(array('A'=>5, 'B'=>10, 'C'=>36, 'D'=>13, 'E'=>10, 'F'=>11, 'G'=>17, 'H'=>9) as $column => $width)
 			$ws->getColumnDimension($column)->setWidth($width);
 		$ws->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
 		$ws->getPageSetup()->setPaperSize(PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
@@ -96,6 +97,8 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		foreach($hdHeaders as $h) { $ws->setCellValue($col.$r, $h); $col++; }
 		$ws->getStyle('A'.$r.':G'.$r)->getFont()->setBold(true);
 		$ws->getStyle('A'.$r.':G'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('A'.$r.':G'.$r)->getAlignment()->setWrapText(true);
+		$ws->getRowDimension($r)->setRowHeight(28);
 		$r++;
 
 		$stt = 1; $tongHd = 0.0;
@@ -133,6 +136,9 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		$col = 'A';
 		foreach($hvHeaders as $h) { $ws->setCellValue($col.$r, $h); $col++; }
 		$ws->getStyle('A'.$r.':H'.$r)->getFont()->setBold(true);
+		$ws->getStyle('A'.$r.':H'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('A'.$r.':H'.$r)->getAlignment()->setWrapText(true);
+		$ws->getRowDimension($r)->setRowHeight(28);
 		$r++;
 
 		$stt = 1; $tongDinhMuc = 0.0; $tongTt = 0.0;
