@@ -92,3 +92,21 @@ function xd_delete_all_hoadon()
 	if($ok === false) $func->transfer("Không thể xóa toàn bộ hóa đơn", "index.php?com=xangdau&act=hoadon", false);
 	$func->transfer("Đã xóa toàn bộ $n hóa đơn.", "index.php?com=xangdau&act=hoadon");
 }
+
+function xd_toggle_kiem_tra_hoadon()
+{
+	global $d, $func, $curPage;
+	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+	if($id <= 0) $func->transfer("Không xác định được hóa đơn.", "index.php?com=xangdau&act=hoadon", false);
+	$row = $d->rawQueryOne("select ke_toan_kiem_tra, ngay_kiem_tra from #_xd_hoadon where id = ? limit 0,1", array($id));
+	if(empty($row)) $func->transfer("Không tìm thấy hóa đơn cần cập nhật.", "index.php?com=xangdau&act=hoadon", false);
+	$checked = (int)$row['ke_toan_kiem_tra'] === 1;
+	$today = date('Y-m-d');
+	$d->rawQuery(
+		$checked
+			? "update #_xd_hoadon set ke_toan_kiem_tra = 0, ngay_kiem_tra = null where id = ? and ke_toan_kiem_tra = 1"
+			: "update #_xd_hoadon set ke_toan_kiem_tra = 1, ngay_kiem_tra = ? where id = ?",
+		$checked ? array($id) : array($today, $id)
+	);
+	$func->transfer($checked ? "Đã bỏ xác nhận kiểm tra hóa đơn." : "Đã xác nhận kiểm tra hóa đơn.", "index.php?com=xangdau&act=hoadon&p=".(int)$curPage, true);
+}

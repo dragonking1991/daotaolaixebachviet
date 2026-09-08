@@ -76,7 +76,7 @@ function xd_act_denied($act)
 	$configActs = array('config', 'saveConfig');
 	$deleteActs = array('deleteHoadon', 'deleteAllHoadon', 'deleteHocvien', 'deleteAllHocvien');
 	$importActs = array('uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel');
-	$kiemtraActs = array('kiemTraGiaoVien', 'huyKiemTraGiaoVien');
+	$kiemtraActs = array('kiemTraGiaoVien', 'huyKiemTraGiaoVien', 'toggleKiemTraHoadon');
 	$duyetActs = array('duyetGiaoVien', 'duyetTatCaGiaoVien');
 	$exportActs = array('xuatBangKeGiaoVien', 'xuatTongHopGiaoVien', 'xuatTatCaBangKe', 'xuatToanBoDanhSachHocVien', 'xuatBangKe');
 	$viewActs = array('loc', 'xemGiaoVien', 'locKiemTra', 'locDuyet', 'locDaThanhToan', 'hoadon', 'hocvien');

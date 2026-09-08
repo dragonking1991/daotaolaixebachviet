@@ -54,6 +54,7 @@
 						<th>Giáo viên</th>
 						<th>Kỳ</th>
 						<th>Hợp lệ</th>
+						<th>KT kế toán</th>
 						<th>Trạng thái</th>
 						<th></th>
 					</tr>
@@ -78,6 +79,14 @@
 							<?php } ?>
 						</td>
 						<td>
+							<?php if((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) { ?>
+								<span class="badge badge-success">Đã kiểm tra</span>
+								<?php if(!empty($it['ngay_kiem_tra'])) { ?><div class="small text-muted"><?=date('d/m/Y', strtotime($it['ngay_kiem_tra']))?></div><?php } ?>
+							<?php } else { ?>
+								<span class="badge badge-warning text-dark">Chưa kiểm tra</span>
+							<?php } ?>
+						</td>
+						<td>
 							<?php if((int)$it['da_quyettoan'] === 1) { ?>
 								<span class="badge badge-secondary">Đã quyết toán</span>
 							<?php } else { ?>
@@ -85,6 +94,11 @@
 							<?php } ?>
 						</td>
 						<td class="text-right">
+							<?php if(xd_can_kiem_tra()) { $toggleUrl = 'index.php?com=xangdau&act=toggleKiemTraHoadon&id='.(int)$it['id'].'&p='.$curPage; ?>
+								<a class="btn btn-xs <?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'btn-secondary' : 'btn-warning'?>" href="<?=$toggleUrl?>" onclick="return confirm('<?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'Bỏ xác nhận kiểm tra cho hóa đơn này?' : 'Xác nhận kiểm tra hóa đơn này?';?>');">
+									<i class="fas fa-<?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'undo' : 'check'?>"></i>
+								</a>
+							<?php } ?>
 							<?php if((int)$it['da_quyettoan'] === 0) { ?>
 								<a class="btn btn-xs btn-danger" href="index.php?com=xangdau&act=deleteHoadon&id=<?=(int)$it['id']?>&p=<?=$curPage?>" onclick="return confirm('Xóa hóa đơn này?');"><i class="far fa-trash-alt"></i></a>
 							<?php } ?>

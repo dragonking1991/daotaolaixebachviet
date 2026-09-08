@@ -67,6 +67,11 @@ switch($act)
 		xd_ensure_tables();
 		xd_delete_all_hoadon();
 		break;
+	case "toggleKiemTraHoadon":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_toggle_kiem_tra_hoadon();
+		break;
 
 	// ---- Học viên XD ----
 	case "hocvien":
