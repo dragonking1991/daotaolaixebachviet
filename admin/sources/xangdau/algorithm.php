@@ -42,6 +42,8 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 			'so_hd' => (int)$g['so_hd'],
 			'n_max' => 0,
 			'so_hv_chon' => 0,
+			'so_hv_da_thanh_toan' => 0,
+			'so_hv_chua_thanh_toan' => 0,
 			'tong_chi' => 0.0,
 			'dinh_muc_toi_da' => 0.0,
 			'chenh_lech' => 0.0,
@@ -50,6 +52,10 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 		);
 		$status = $d->rawQueryOne("select min(ke_toan_kiem_tra) as ke_toan_kiem_tra, min(quan_ly_duyet) as quan_ly_duyet from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and hop_le = 1", array($gvKey));
 		if($status) { $row['ke_toan_kiem_tra'] = (int)$status['ke_toan_kiem_tra']; $row['quan_ly_duyet'] = (int)$status['quan_ly_duyet']; }
+		$paid = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null", array($gvKey));
+		$unpaid = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null", array($gvKey));
+		if($paid) $row['so_hv_da_thanh_toan'] = (int)$paid['total'];
+		if($unpaid) $row['so_hv_chua_thanh_toan'] = (int)$unpaid['total'];
 
 		// Duyệt lần lượt học viên (theo thứ tự nhập) và trừ dần ngân sách bằng định mức XD của NHÓM học viên đó.
 		// Định mức XD có thể khác nhau giữa BT/CK/DAT (cấu hình riêng cho CK, DAT).

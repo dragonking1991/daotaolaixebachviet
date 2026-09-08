@@ -78,8 +78,8 @@
 						<th>Giáo viên</th>
 						<th class="text-center">Số HĐ</th>
 						<th class="text-right">Tổng HĐ (S_HĐ)</th>
-						<th class="text-center">N tối đa</th>
-						<th class="text-center">HV được chọn</th>
+						<th class="text-center">Đã thanh toán</th>
+						<th class="text-center">Chưa thanh toán</th>
 						<th class="text-right">Định mức tối đa</th>
 						<th class="text-right">Chênh lệch</th>
 						<th class="text-right">Tổng chi</th>
@@ -94,8 +94,8 @@
 						<td><?=htmlspecialchars($g['gv_hoten'] !== '' ? $g['gv_hoten'] : $g['gv_key'])?></td>
 						<td class="text-center"><?=(int)$g['so_hd']?></td>
 						<td class="text-right"><?=number_format((float)$g['s_hd'], 0, ',', '.')?></td>
-						<td class="text-center"><?=(int)$g['n_max']?></td>
-						<td class="text-center"><strong><?=(int)$g['so_hv_chon']?></strong></td>
+						<td class="text-center"><strong><?=(int)$g['so_hv_da_thanh_toan']?></strong></td>
+						<td class="text-center"><?=(int)$g['so_hv_chua_thanh_toan']?></td>
 						<td class="text-right"><?=number_format((float)$g['dinh_muc_toi_da'], 0, ',', '.')?></td>
 						<td class="text-right"><span class="badge <?=abs((float)$g['chenh_lech']) <= 500000 ? 'badge-success' : 'badge-danger'?>"><?=number_format((float)$g['chenh_lech'], 0, ',', '.')?></span></td>
 						<td class="text-right"><?=number_format((float)$g['tong_chi'], 0, ',', '.')?></td>
