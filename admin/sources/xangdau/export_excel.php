@@ -62,16 +62,23 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		$ws->getDefaultRowDimension()->setRowHeight(20);
 		$ws->setShowGridlines(false);
 		$tableBorder = array('borders' => array('allborders' => array('style' => PHPExcel_Style_Border::BORDER_THIN, 'color' => array('rgb' => '000000'))));
-		// Cột C dùng chung cho "Ngày" (bảng hóa đơn) và "Họ tên học viên" (bảng danh sách học viên bên dưới) -> nới rộng để tên đầy đủ (kể cả tên dài, viết HOA) không bị cắt. Cột G dùng chung cho "Biển số xe" và "Số tiền thanh toán" -> cũng nới rộng.
-		foreach(array('A'=>5, 'B'=>10, 'C'=>36, 'D'=>13, 'E'=>10, 'F'=>11, 'G'=>17, 'H'=>9) as $column => $width)
+		// Dùng chung một khung A:H cho cả hai bảng để khi in hai bảng có cùng bề rộng.
+		foreach(array('A'=>5, 'B'=>11, 'C'=>18, 'D'=>28, 'E'=>12, 'F'=>14, 'G'=>17, 'H'=>13) as $column => $width)
 			$ws->getColumnDimension($column)->setWidth($width);
 		$ws->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
 		$ws->getPageSetup()->setPaperSize(PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
+		$ws->getPageSetup()->setFitToWidth(1);
+		$ws->getPageSetup()->setFitToHeight(0);
+		$ws->getPageSetup()->setFitToPage(true);
+		$ws->getPageSetup()->setHorizontalCentered(true);
+		$ws->getPageSetup()->setPrintArea('A1:H1');
+		$ws->getPageMargins()->setTop(0.35)->setRight(0.35)->setBottom(0.35)->setLeft(0.35);
+		$ws->getPageMargins()->setHeader(0.15)->setFooter(0.15);
 
 		// ---- Tiêu đề ----
 		$ws->setCellValue('A1', $companyName);
 		$ws->mergeCells('A1:H1');
-		$ws->setCellValue('A2', 'BẢNG KÊ TRÍCH CHI PHÍ NHIÊN LIỆU - Số: '.($idBangke > 0 ? $idBangke : '..........'));
+		$ws->setCellValue('A2', 'BẢNG KÊ TRÍCH CHI PHÍ NHIÊN LIỆU - Số : '.($idBangke > 0 ? $idBangke : '..........'));
 		$ws->mergeCells('A2:H2');
 		$ws->setCellValue('A3', 'Giáo viên: '.$ten);
 		$ws->mergeCells('A3:H3');
@@ -88,11 +95,13 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		// ---- Bảng Nội dung (hóa đơn) ----
 		$r = 6;
 		$ws->setCellValue('A'.$r, 'Nội dung'); $ws->mergeCells('A'.$r.':G'.$r);
+		$ws->setCellValue('H'.$r, 'Ghi chú'); $ws->mergeCells('H'.$r.':H'.($r + 1));
 		$ws->getStyle('A'.$r)->getFont()->setBold(true);
-		$ws->getStyle('A'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('A'.$r.':H'.$r)->getFont()->setBold(true);
+		$ws->getStyle('A'.$r.':H'.($r + 1))->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 		$r++;
 		$hdHeadRow = $r;
-		$hdHeaders = array('STT', 'Số hóa đơn', 'Ngày', 'Thông tin bán hàng', 'Chi tiết', 'Số tiền HĐ', 'Biển số xe');
+		$hdHeaders = array('STT', 'Số HĐ', 'Ngày', 'Thông tin bán hàng', 'Chi tiết', 'Số tiền HĐ', 'Biển số xe');
 		$col = 'A';
 		foreach($hdHeaders as $h) { $ws->setCellValue($col.$r, $h); $col++; }
 		$ws->getStyle('A'.$r.':G'.$r)->getFont()->setBold(true);
@@ -112,18 +121,22 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 			$ws->setCellValue('E'.$r, isset($h['chi_tiet']) ? $h['chi_tiet'] : '');
 			$ws->setCellValueExplicit('F'.$r, (int)round((float)$h['tong_tien']), PHPExcel_Cell_DataType::TYPE_NUMERIC);
 			$ws->setCellValue('G'.$r, isset($h['bien_so']) ? $h['bien_so'] : '');
+			$ws->setCellValue('H'.$r, isset($h['note_1']) ? $h['note_1'] : '');
 			$tongHd += (float)$h['tong_tien'];
 			$stt++; $r++;
 		}
-		$ws->setCellValue('E'.$r, 'Tổng cộng');
-		$ws->getStyle('E'.$r)->getFont()->setBold(true);
+		$ws->setCellValue('A'.$r, 'Tổng cộng');
+		$ws->mergeCells('A'.$r.':E'.$r);
+		$ws->getStyle('A'.$r)->getFont()->setBold(true);
+		$ws->getStyle('A'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 		$ws->setCellValueExplicit('F'.$r, (int)round($tongHd), PHPExcel_Cell_DataType::TYPE_NUMERIC);
 		$ws->getStyle('F'.$r)->getFont()->setBold(true);
-		$ws->getStyle('A'.$hdHeadRow.':G'.$r)->applyFromArray($tableBorder);
+		$ws->getStyle('A'.($hdHeadRow - 1).':H'.$r)->applyFromArray($tableBorder);
 		$ws->getStyle('F'.($hdHeadRow + 1).':F'.$r)->getNumberFormat()->setFormatCode('#,##0');
-		$ws->getStyle('A'.$hdHeadRow.':G'.$r)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+		$ws->getStyle('A'.$hdHeadRow.':H'.$r)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
 		$ws->getStyle('A'.$hdHeadRow.':C'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
-		$ws->getStyle('E'.$hdHeadRow.':G'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('E'.$hdHeadRow.':H'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('H'.$hdHeadRow.':H'.$r)->getAlignment()->setWrapText(true);
 
 		// ---- Bảng Danh sách học viên ----
 		$r += 2;
@@ -132,7 +145,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		$ws->getStyle('A'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 		$r++;
 		$hvHeadRow = $r;
-		$hvHeaders = array('STT', 'Khóa', 'Họ tên học viên', 'CCCD/CC', 'Năm sinh', 'Định mức', 'Số tiền thanh toán', 'Nhóm');
+		$hvHeaders = array('STT', 'Khóa', 'CCCD/CC', 'Họ tên học viên', 'Năm sinh', 'Định mức', 'Số tiền thanh toán', 'Nhóm');
 		$col = 'A';
 		foreach($hvHeaders as $h) { $ws->setCellValue($col.$r, $h); $col++; }
 		$ws->getStyle('A'.$r.':H'.$r)->getFont()->setBold(true);
@@ -148,8 +161,8 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 			$namSinh = (!empty($hv['ngaysinh']) && strtotime($hv['ngaysinh']) !== false) ? date('d/m/Y', strtotime($hv['ngaysinh'])) : (string)$hv['ngaysinh'];
 			$ws->setCellValueExplicit('A'.$r, $stt, PHPExcel_Cell_DataType::TYPE_NUMERIC);
 			$ws->setCellValue('B'.$r, isset($hv['khoa']) ? $hv['khoa'] : '');
-			$ws->setCellValue('C'.$r, $hv['ho_ten']);
-			$ws->setCellValueExplicit('D'.$r, $hv['cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
+			$ws->setCellValueExplicit('C'.$r, $hv['cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
+			$ws->setCellValue('D'.$r, $hv['ho_ten']);
 			$ws->setCellValue('E'.$r, $namSinh);
 			$ws->setCellValueExplicit('F'.$r, (int)round((float)$hv['dinh_muc']), PHPExcel_Cell_DataType::TYPE_NUMERIC);
 			$ws->setCellValueExplicit('G'.$r, (int)round((float)$hv['so_tien_thanh_toan']), PHPExcel_Cell_DataType::TYPE_NUMERIC);
@@ -158,8 +171,10 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 			$tongTt += (float)$hv['so_tien_thanh_toan'];
 			$stt++; $r++;
 		}
-		$ws->setCellValue('C'.$r, 'Tổng cộng');
-		$ws->getStyle('C'.$r)->getFont()->setBold(true);
+		$ws->setCellValue('A'.$r, 'Tổng cộng');
+		$ws->mergeCells('A'.$r.':E'.$r);
+		$ws->getStyle('A'.$r)->getFont()->setBold(true);
+		$ws->getStyle('A'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 		$ws->setCellValueExplicit('F'.$r, (int)round($tongDinhMuc), PHPExcel_Cell_DataType::TYPE_NUMERIC);
 		$ws->setCellValueExplicit('G'.$r, (int)round($tongTt), PHPExcel_Cell_DataType::TYPE_NUMERIC);
 		$ws->getStyle('F'.$r.':G'.$r)->getFont()->setBold(true);
@@ -167,7 +182,16 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		$ws->getStyle('F'.($hvHeadRow + 1).':G'.$r)->getNumberFormat()->setFormatCode('#,##0');
 		$ws->getStyle('A'.$hvHeadRow.':H'.$r)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
 		$ws->getStyle('A'.$hvHeadRow.':B'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
-		$ws->getStyle('D'.$hvHeadRow.':H'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getStyle('C'.$hvHeadRow.':H'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+
+		$r++;
+		$ws->setCellValue('A'.$r, 'Số tiền thanh toán:');
+		$ws->getStyle('A'.$r)->getFont()->setBold(true);
+		$ws->setCellValue('C'.$r, xd_so_thanh_chu($tongTt).'.');
+		$ws->mergeCells('C'.$r.':H'.$r);
+		$ws->getStyle('C'.$r)->getFont()->setBold(true);
+		$ws->getStyle('A'.$r.':H'.$r)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+		$ws->getStyle('C'.$r)->getAlignment()->setWrapText(true);
 
 		// ---- Cam kết và chữ ký ----
 		$r += 2;
@@ -183,6 +207,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		$ws->mergeCells('F'.$r.':H'.$r);
 		$ws->getStyle('A'.$r.':H'.$r)->getFont()->setBold(true);
 		$ws->getStyle('A'.$r.':H'.$r)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		$ws->getPageSetup()->setPrintArea('A1:H'.$r);
 		for($visibleRow = 1; $visibleRow <= $r; $visibleRow++) $ws->getRowDimension($visibleRow)->setVisible(true);
 	}
 

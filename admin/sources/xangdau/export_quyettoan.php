@@ -57,7 +57,7 @@ function xd_xuat_bangke()
 		if($ky !== '') { $hoadonWhere .= " and ky = ?"; $params[] = $ky; }
 		if($fromDate !== '') { $hoadonWhere .= " and ngay_hoa_don >= ?"; $params[] = $fromDate; }
 		if($toDate !== '') { $hoadonWhere .= " and ngay_hoa_don <= ?"; $params[] = $toDate; }
-		$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, id_bangke = ? where gv_key = ? $hoadonWhere", $params);
+		$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, ngay_thanh_toan = ?, id_bangke = ? where gv_key = ? $hoadonWhere", array_merge(array($today), $params));
 	}
 
 	$d->commit();

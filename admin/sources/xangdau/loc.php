@@ -29,7 +29,7 @@ function xd_kiem_tra_giao_vien()
 	global $d, $func;
 	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
 	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", xd_loc_params_url(), false);
-	$d->rawQuery("update #_xd_hoadon set ke_toan_kiem_tra = 1 where gv_key = ? and da_quyettoan = 0", array($gvKey));
+	$d->rawQuery("update #_xd_hoadon set ke_toan_kiem_tra = 1, ngay_kiem_tra = ? where gv_key = ? and da_quyettoan = 0", array(date('Y-m-d'), $gvKey));
 	$d->rawQuery("update #_xd_hocvien set ke_toan_kiem_tra = 1 where gv_key = ? and ngay_thanh_toan is null", array($gvKey));
 	$func->transfer("Đã ghi nhận kế toán kiểm tra giáo viên.", xd_loc_params_url(), true);
 }
@@ -43,7 +43,7 @@ function xd_huy_kiem_tra_giao_vien()
 	global $d, $func;
 	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
 	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", xd_loc_params_url(), false);
-	$d->rawQuery("update #_xd_hoadon set ke_toan_kiem_tra = 0 where gv_key = ? and da_quyettoan = 0", array($gvKey));
+	$d->rawQuery("update #_xd_hoadon set ke_toan_kiem_tra = 0, ngay_kiem_tra = null where gv_key = ? and da_quyettoan = 0", array($gvKey));
 	$d->rawQuery("update #_xd_hocvien set ke_toan_kiem_tra = 0 where gv_key = ? and ngay_thanh_toan is null", array($gvKey));
 	$func->transfer("Đã chuyển giáo viên về trạng thái chưa kiểm tra.", xd_loc_params_url(), true);
 }
@@ -73,7 +73,7 @@ function xd_duyet_giao_vien()
 	if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $params[] = $ky; }
 	if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $params[] = $fromDate; }
 	if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $params[] = $toDate; }
-	$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", $params);
+	$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, ngay_thanh_toan = ?, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", array_merge(array($today), $params));
 	$d->commit();
 	$func->transfer("Đã duyệt và ghi nhận thanh toán cho giáo viên.", xd_loc_params_url(), true);
 }
@@ -104,7 +104,7 @@ function xd_duyet_tat_ca_giao_vien()
 		if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $invoiceParams[] = $ky; }
 		if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $invoiceParams[] = $fromDate; }
 		if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $invoiceParams[] = $toDate; }
-		$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", $invoiceParams);
+		$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, ngay_thanh_toan = ?, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", array_merge(array($today), $invoiceParams));
 		$d->commit(); $approved++;
 	}
 	$func->transfer("Đã duyệt $approved giáo viên.", xd_loc_params_url(), true);
@@ -134,15 +134,15 @@ function xd_loc_kiem_tra()
 	
 	// Lấy tất cả giáo viên có hóa đơn/học viên chưa kiểm tra
 	$hoadons = $d->rawQuery(
-		"select distinct gv_key, max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key <> '' and da_quyettoan = 0 and ke_toan_kiem_tra = 0 order by gv_hoten asc"
+		"select gv_key, max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key <> '' and da_quyettoan = 0 and ke_toan_kiem_tra = 0 group by gv_key order by max(gv_hoten) asc"
 	);
 	$hocviens = $d->rawQuery(
-		"select distinct gv_key, max(gv_hoten) as gv_hoten from #_xd_hocvien where gv_key <> '' and ngay_thanh_toan is null and ke_toan_kiem_tra = 0 order by gv_hoten asc"
+		"select gv_key, max(gv_hoten) as gv_hoten from #_xd_hocvien where gv_key <> '' and ngay_thanh_toan is null and ke_toan_kiem_tra = 0 group by gv_key order by max(gv_hoten) asc"
 	);
 	
 	$data = array();
 	$seen = array();
-	foreach(array_merge($hoadons, $hocviens) as $row)
+	foreach(array_merge(is_array($hoadons) ? $hoadons : array(), is_array($hocviens) ? $hocviens : array()) as $row)
 	{
 		$key = $row['gv_key'];
 		if(!isset($seen[$key]))
@@ -163,20 +163,26 @@ function xd_loc_duyet()
 	
 	// Lấy tất cả giáo viên đã kiểm tra nhưng chưa duyệt
 	$hoadons = $d->rawQuery(
-		"select distinct gv_key, max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key <> '' and da_quyettoan = 0 and ke_toan_kiem_tra = 1 order by gv_hoten asc"
+		"select h.gv_key, max(h.gv_hoten) as gv_hoten, max(h.ngay_kiem_tra) as ngay_kiem_tra from #_xd_hoadon h
+			where h.gv_key <> '' and h.da_quyettoan = 0 and h.ke_toan_kiem_tra = 1
+			and not exists (select 1 from #_xd_hoadon paid where paid.gv_key = h.gv_key and paid.da_quyettoan = 1)
+			group by h.gv_key order by max(h.gv_hoten) asc"
 	);
 	$hocviens = $d->rawQuery(
-		"select distinct gv_key, max(gv_hoten) as gv_hoten from #_xd_hocvien where gv_key <> '' and ngay_thanh_toan is null and ke_toan_kiem_tra = 1 order by gv_hoten asc"
+		"select h.gv_key, max(h.gv_hoten) as gv_hoten, (select max(ngay_kiem_tra) from #_xd_hoadon checked where checked.gv_key = h.gv_key and checked.da_quyettoan = 0 and checked.ke_toan_kiem_tra = 1) as ngay_kiem_tra from #_xd_hocvien h
+			where h.gv_key <> '' and h.ngay_thanh_toan is null and h.ke_toan_kiem_tra = 1
+			and not exists (select 1 from #_xd_hoadon paid where paid.gv_key = h.gv_key and paid.da_quyettoan = 1)
+			group by h.gv_key order by max(h.gv_hoten) asc"
 	);
 	
 	$data = array();
 	$seen = array();
-	foreach(array_merge($hoadons, $hocviens) as $row)
+	foreach(array_merge(is_array($hoadons) ? $hoadons : array(), is_array($hocviens) ? $hocviens : array()) as $row)
 	{
 		$key = $row['gv_key'];
 		if(!isset($seen[$key]))
 		{
-			$data[] = array('gv_key' => $row['gv_key'], 'gv_hoten' => $row['gv_hoten']);
+			$data[] = array('gv_key' => $row['gv_key'], 'gv_hoten' => $row['gv_hoten'], 'ngay_kiem_tra' => $row['ngay_kiem_tra'] ?? '');
 			$seen[$key] = 1;
 		}
 	}
@@ -186,14 +192,22 @@ function xd_loc_duyet()
 
 function xd_loc_da_thanh_toan()
 {
-	global $d, $xd_loc_dathanhtoan_data, $xd_loc_ky_options;
+	global $d, $xd_loc_dathanhtoan_data, $xd_loc_ky_options, $xd_loc_paid_from, $xd_loc_paid_to;
 
 	$xd_loc_ky_options = $d->rawQuery("select distinct ky from #_xd_hoadon where ky <> '' order by ky asc");
+	$xd_loc_paid_from = (isset($_REQUEST['paid_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['paid_from'])) ? $_REQUEST['paid_from'] : '';
+	$xd_loc_paid_to = (isset($_REQUEST['paid_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['paid_to'])) ? $_REQUEST['paid_to'] : '';
+	$where = 'b.gv_key <> "" and b.da_quyettoan = 1';
+	$params = array();
+	if($xd_loc_paid_from !== '') { $where .= ' and b.ngay_thanh_toan >= ?'; $params[] = $xd_loc_paid_from; }
+	if($xd_loc_paid_to !== '') { $where .= ' and b.ngay_thanh_toan <= ?'; $params[] = $xd_loc_paid_to; }
 
 	// Giáo viên có ít nhất 1 hóa đơn hoặc học viên đã quyết toán/thanh toán
 	$rows = $d->rawQuery(
 		"select b.gv_key, max(b.gv_hoten) as gv_hoten, sum(b.tong_tien) as tong_tien, count(*) as so_hd
-		 from #_xd_hoadon b where b.gv_key <> '' and b.da_quyettoan = 1 group by b.gv_key order by gv_hoten asc"
+			, min(b.ngay_thanh_toan) as ngay_thanh_toan, max(b.ngay_thanh_toan) as ngay_thanh_toan_den
+		 from #_xd_hoadon b where $where group by b.gv_key order by gv_hoten asc",
+		$params
 	);
 
 	$xd_loc_dathanhtoan_data = $rows;

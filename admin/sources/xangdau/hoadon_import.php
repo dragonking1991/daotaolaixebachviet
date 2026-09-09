@@ -25,7 +25,7 @@ function xd_upload_hoadon_excel()
 	// File tổng hợp có thể có sheet tóm tắt (TH) và sheet chi tiết (HĐơn) -> ưu tiên sheet hóa đơn
 	list($objPHPExcel, $sheet, $highestRow, $highestColIndex) = xd_open_upload_sheet($file, $ext, $backUrl, array('hdon', 'hoadon'));
 
-	// Cột theo mẫu thực tế: STT | Số hóa đơn | Ngày | Thông tin bán hàng | Chi tiết | Số tiền HĐ | Biển số xe | HĐ từ trang thuế | GV | Note1 (hợp lệ) | Note2
+	// Cột theo mẫu thực tế: STT | Số hóa đơn | Ngày | Thông tin bán hàng | Chi tiết | Số tiền HĐ | Biển số xe | HĐ từ trang thuế | GV | Hợp lệ | Note1
 	$aliasGroups = array(
 		'ma'      => array('sohoadon', 'mahoadon', 'masohoadon', 'sohd', 'mahd'),
 		'ngay'    => array('ngay', 'ngayhoadon', 'ngayhd', 'ngaylap', 'date'),
@@ -34,7 +34,8 @@ function xd_upload_hoadon_excel()
 		'tien'    => array('sotienhd', 'sotienhoadon', 'tongtien', 'tienhoadon', 'thanhtien', 'sotien'),
 		'bienso'  => array('bienso', 'biensoxe'),
 		'gv'      => array('gv', 'giaovien', 'tengiaovien', 'tengv', 'phanxe'),
-		'hople'   => array('hople', 'note1', 'ghichu1'),
+		'hople'   => array('hople'),
+		'note1'   => array('note1', 'ghichu1'),
 	);
 	$containsRules = array(
 		'ma'        => array('has' => array('hoadon')),
@@ -50,7 +51,7 @@ function xd_upload_hoadon_excel()
 	// Nếu không nhận diện được tiêu đề nào -> giả định đúng thứ tự cột mẫu (có cột STT ở [0])
 	if($headerScore <= 0)
 	{
-		$map = array('ma' => 1, 'ngay' => 2, 'ttbanhang' => 3, 'chitiet' => 4, 'tien' => 5, 'bienso' => 6, 'gv' => 8);
+		$map = array('ma' => 1, 'ngay' => 2, 'ttbanhang' => 3, 'chitiet' => 4, 'tien' => 5, 'bienso' => 6, 'gv' => 8, 'hople' => 9, 'note1' => 10);
 		$headerRow = 1;
 	}
 
@@ -95,6 +96,7 @@ function xd_upload_hoadon_excel()
 		$bienso = isset($map['bienso']) ? xd_cell($sheet, $map['bienso'], $row) : '';
 		$ttbanhang = isset($map['ttbanhang']) ? xd_cell($sheet, $map['ttbanhang'], $row) : '';
 		$chitiet = isset($map['chitiet']) ? xd_cell($sheet, $map['chitiet'], $row) : '';
+		$note1 = isset($map['note1']) ? xd_cell($sheet, $map['note1'], $row) : '';
 
 		if($ma === '' && $gvten === '')
 		{
@@ -116,7 +118,7 @@ function xd_upload_hoadon_excel()
 		$rows[] = array(
 			'row' => $row, 'ma' => $ma, 'ngay' => $ngay, 'tien' => $tien,
 			'gvten' => $gvten, 'gvkey' => $gvkey, 'bienso' => $bienso,
-			'ttbanhang' => $ttbanhang, 'chitiet' => $chitiet, 'hople' => $hopLe
+			'ttbanhang' => $ttbanhang, 'chitiet' => $chitiet, 'note1' => $note1, 'hople' => $hopLe
 		);
 	}
 
@@ -160,8 +162,8 @@ function xd_upload_hoadon_excel()
 		}
 
 		$ok = $d->rawQuery(
-			"insert into #_xd_hoadon (gv_cccd, gv_hoten, gv_key, ma_hoa_don, thong_tin_ban_hang, chi_tiet, ngay_hoa_don, tong_tien, bien_so, ky, da_quyettoan, hop_le, id_bangke, ngaytao, user_tao) values ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?)",
-			array($r['gvten'], $r['gvkey'], $r['ma'], $r['ttbanhang'], $r['chitiet'], $r['ngay'], $r['tien'], $r['bienso'], $kyForm, $r['hople'], time(), $username)
+			"insert into #_xd_hoadon (gv_cccd, gv_hoten, gv_key, note_1, ma_hoa_don, thong_tin_ban_hang, chi_tiet, ngay_hoa_don, tong_tien, bien_so, ky, da_quyettoan, hop_le, id_bangke, ngaytao, user_tao) values ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?)",
+			array($r['gvten'], $r['gvkey'], $r['note1'], $r['ma'], $r['ttbanhang'], $r['chitiet'], $r['ngay'], $r['tien'], $r['bienso'], $kyForm, $r['hople'], time(), $username)
 		);
 		if($ok === false)
 		{

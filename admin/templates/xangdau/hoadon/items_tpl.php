@@ -14,25 +14,31 @@
 </section>
 
 <section class="content">
-	<div class="card-footer text-sm sticky-top">
-		<form method="get" action="index.php" class="form-inline">
+	<div class="card-footer text-sm sticky-top bg-light border-bottom py-3">
+		<form method="get" action="index.php" class="d-flex flex-wrap align-items-end" style="gap:.75rem;">
 			<input type="hidden" name="com" value="xangdau">
 			<input type="hidden" name="act" value="hoadon">
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import hóa đơn</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
 			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHoadon" onclick="return confirm('Xóa TOÀN BỘ hóa đơn, bao gồm cả hóa đơn đã quyết toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
-			<div class="form-group mb-0 mr-2">
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Tìm kiếm</label>
 				<input class="form-control form-control-sm text-sm" style="min-width:200px;" type="search" name="keyword" placeholder="Mã HĐ / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">
 			</div>
-			<div class="form-group mb-0 mr-2">
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Ngày HĐ từ</label>
 				<input class="form-control form-control-sm text-sm" type="date" name="from_date" value="<?=htmlspecialchars($xd_filter_from)?>">
 			</div>
-			<div class="form-group mb-0 mr-2">
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Ngày HĐ đến</label>
 				<input class="form-control form-control-sm text-sm" type="date" name="to_date" value="<?=htmlspecialchars($xd_filter_to)?>">
 			</div>
-			<div class="form-group mb-0 mr-2">
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Kỳ</label>
 				<input class="form-control form-control-sm text-sm" type="text" name="ky" placeholder="Kỳ (VD: T5)" value="<?=htmlspecialchars($xd_filter_ky)?>" style="max-width:120px;">
 			</div>
+			<div class="form-group mb-0 d-flex flex-column align-items-start"><label class="mb-1 small text-muted">KT kế toán từ</label><input class="form-control form-control-sm text-sm" type="date" name="kt_from" value="<?=htmlspecialchars($xd_filter_kt_from)?>"></div>
+			<div class="form-group mb-0 d-flex flex-column align-items-start"><label class="mb-1 small text-muted">KT kế toán đến</label><input class="form-control form-control-sm text-sm" type="date" name="kt_to" value="<?=htmlspecialchars($xd_filter_kt_to)?>"></div>
 			<button type="submit" class="btn btn-sm bg-gradient-success text-white mr-1"><i class="fas fa-search mr-1"></i>Lọc</button>
 			<a class="btn btn-sm bg-gradient-secondary text-white" href="<?=$linkMan?>">Bỏ lọc</a>
 		</form>
@@ -54,6 +60,8 @@
 						<th>Giáo viên</th>
 						<th>Kỳ</th>
 						<th>Hợp lệ</th>
+						<th>Note 1</th>
+						<th>Ngày thanh toán</th>
 						<th>KT kế toán</th>
 						<th>Trạng thái</th>
 						<th></th>
@@ -78,6 +86,8 @@
 								<span class="badge badge-danger">Không hợp lệ</span>
 							<?php } ?>
 						</td>
+						<td><?=htmlspecialchars($it['note_1'] ?? '')?></td>
+						<td><?=((int)$it['da_quyettoan'] === 1 && !empty($it['ngay_thanh_toan'])) ? date('d/m/Y', strtotime($it['ngay_thanh_toan'])) : '-'?></td>
 						<td>
 							<?php if((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) { ?>
 								<span class="badge badge-success">Đã kiểm tra</span>
@@ -105,7 +115,7 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="12" class="text-center text-muted">Chưa có hóa đơn nào</td></tr>
+					<tr><td colspan="15" class="text-center text-muted">Chưa có hóa đơn nào</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

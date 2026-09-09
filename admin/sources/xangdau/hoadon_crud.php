@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_hoadon()
 {
-	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_from, $xd_filter_to, $xd_filter_ky;
+	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_from, $xd_filter_to, $xd_filter_ky, $xd_filter_kt_from, $xd_filter_kt_to;
 
 	$where = "";
 	$params = array();
@@ -13,6 +13,8 @@ function xd_get_hoadon()
 	$xd_filter_from = '';
 	$xd_filter_to = '';
 	$xd_filter_ky = '';
+	$xd_filter_kt_from = '';
+	$xd_filter_kt_to = '';
 
 	if(isset($_REQUEST['keyword']) && trim($_REQUEST['keyword']) !== '')
 	{
@@ -39,6 +41,18 @@ function xd_get_hoadon()
 		$where .= " and ky = ?";
 		$params[] = $xd_filter_ky;
 	}
+	if(isset($_REQUEST['kt_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['kt_from']))
+	{
+		$xd_filter_kt_from = $_REQUEST['kt_from'];
+		$where .= " and ngay_kiem_tra >= ?";
+		$params[] = $xd_filter_kt_from;
+	}
+	if(isset($_REQUEST['kt_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['kt_to']))
+	{
+		$xd_filter_kt_to = $_REQUEST['kt_to'];
+		$where .= " and ngay_kiem_tra <= ?";
+		$params[] = $xd_filter_kt_to;
+	}
 
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
@@ -53,6 +67,8 @@ function xd_get_hoadon()
 	if($xd_filter_from !== '') $url .= '&from_date='.urlencode($xd_filter_from);
 	if($xd_filter_to !== '') $url .= '&to_date='.urlencode($xd_filter_to);
 	if($xd_filter_ky !== '') $url .= '&ky='.urlencode($xd_filter_ky);
+	if($xd_filter_kt_from !== '') $url .= '&kt_from='.urlencode($xd_filter_kt_from);
+	if($xd_filter_kt_to !== '') $url .= '&kt_to='.urlencode($xd_filter_kt_to);
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
 }
 

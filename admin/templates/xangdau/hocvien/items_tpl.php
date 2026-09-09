@@ -15,17 +15,19 @@
 </section>
 
 <section class="content">
-	<div class="card-footer text-sm sticky-top">
-		<form method="get" action="index.php" class="form-inline">
+	<div class="card-footer text-sm sticky-top bg-light border-bottom py-3">
+		<form method="get" action="index.php" class="d-flex flex-wrap align-items-end" style="gap:.75rem;">
 			<input type="hidden" name="com" value="xangdau">
 			<input type="hidden" name="act" value="hocvien">
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
 			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHocvien" onclick="return confirm('Xóa TOÀN BỘ học viên, bao gồm cả học viên đã thanh toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
-			<div class="form-group mb-0 mr-2">
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Tìm kiếm</label>
 				<input class="form-control form-control-sm text-sm" style="min-width:200px;" type="search" name="keyword" placeholder="Tên / CCCD HV / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">
 			</div>
-			<div class="form-group mb-0 mr-2">
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Nhóm</label>
 				<select class="form-control form-control-sm text-sm" name="nhom">
 					<option value="">Tất cả nhóm</option>
 					<option value="BT" <?=($xd_filter_nhom=='BT')?'selected':''?>>BT</option>
@@ -33,13 +35,16 @@
 					<option value="DAT" <?=($xd_filter_nhom=='DAT')?'selected':''?>>DAT</option>
 				</select>
 			</div>
-			<div class="form-group mb-0 mr-2">
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Trạng thái</label>
 				<select class="form-control form-control-sm text-sm" name="trangthai">
 					<option value="">Tất cả trạng thái</option>
 					<option value="da" <?=($xd_filter_trangthai=='da')?'selected':''?>>Đã thanh toán</option>
 					<option value="chua" <?=($xd_filter_trangthai=='chua')?'selected':''?>>Chưa thanh toán</option>
 				</select>
 			</div>
+			<div class="form-group mb-0 d-flex flex-column align-items-start"><label class="mb-1 small text-muted">Ngày TT từ</label><input class="form-control form-control-sm text-sm" type="date" name="tt_from" value="<?=htmlspecialchars($xd_filter_tt_from)?>"></div>
+			<div class="form-group mb-0 d-flex flex-column align-items-start"><label class="mb-1 small text-muted">Ngày TT đến</label><input class="form-control form-control-sm text-sm" type="date" name="tt_to" value="<?=htmlspecialchars($xd_filter_tt_to)?>"></div>
 			<button type="submit" class="btn btn-sm bg-gradient-success text-white mr-1"><i class="fas fa-search mr-1"></i>Lọc</button>
 			<a class="btn btn-sm bg-gradient-secondary text-white" href="<?=$linkMan?>">Bỏ lọc</a>
 		</form>

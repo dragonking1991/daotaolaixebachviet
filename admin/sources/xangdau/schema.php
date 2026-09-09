@@ -36,11 +36,13 @@ function xd_ensure_tables()
 		. " id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,\n"
 		. " gv_cccd VARCHAR(20) NOT NULL DEFAULT '',\n"
 		. " gv_hoten VARCHAR(255) NOT NULL DEFAULT '',\n"
+		. " note_1 VARCHAR(255) NOT NULL DEFAULT '',\n"
 		. " ma_hoa_don VARCHAR(191) NOT NULL,\n"
 		. " ngay_hoa_don DATE NULL,\n"
 		. " tong_tien DECIMAL(18,2) NOT NULL DEFAULT 0,\n"
 		. " ky VARCHAR(100) NOT NULL DEFAULT '',\n"
 		. " da_quyettoan TINYINT(1) NOT NULL DEFAULT 0,\n"
+		. " ngay_thanh_toan DATE NULL DEFAULT NULL,\n"
 		. " id_bangke INT(10) UNSIGNED NOT NULL DEFAULT 0,\n"
 		. " ngaytao INT(11) UNSIGNED NOT NULL DEFAULT 0,\n"
 		. " user_tao VARCHAR(100) NOT NULL DEFAULT '',\n"
@@ -78,14 +80,17 @@ function xd_ensure_tables()
 
 	// Bổ sung cột cho mô hình dữ liệu thực tế (idempotent) — GV liên kết theo TÊN (gv_key)
 	xd_ensure_column('xd_hoadon', 'gv_key', "ADD COLUMN gv_key VARCHAR(191) NOT NULL DEFAULT '' AFTER gv_hoten");
+	xd_ensure_column('xd_hoadon', 'note_1', "ADD COLUMN note_1 VARCHAR(255) NOT NULL DEFAULT '' AFTER gv_hoten");
 	xd_ensure_column('xd_hoadon', 'bien_so', "ADD COLUMN bien_so VARCHAR(50) NOT NULL DEFAULT '' AFTER tong_tien");
 	xd_ensure_column('xd_hoadon', 'thong_tin_ban_hang', "ADD COLUMN thong_tin_ban_hang VARCHAR(255) NOT NULL DEFAULT '' AFTER ma_hoa_don");
 	xd_ensure_column('xd_hoadon', 'chi_tiet', "ADD COLUMN chi_tiet VARCHAR(50) NOT NULL DEFAULT '' AFTER thong_tin_ban_hang");
 	xd_ensure_column('xd_hoadon', 'ke_toan_kiem_tra', "ADD COLUMN ke_toan_kiem_tra TINYINT(1) NOT NULL DEFAULT 0 AFTER da_quyettoan");
+	xd_ensure_column('xd_hoadon', 'ngay_thanh_toan', "ADD COLUMN ngay_thanh_toan DATE NULL DEFAULT NULL AFTER da_quyettoan");
 	xd_ensure_column('xd_hoadon', 'ngay_kiem_tra', "ADD COLUMN ngay_kiem_tra DATE NULL AFTER ke_toan_kiem_tra");
 	xd_ensure_column('xd_hoadon', 'quan_ly_duyet', "ADD COLUMN quan_ly_duyet TINYINT(1) NOT NULL DEFAULT 0 AFTER ngay_kiem_tra");
 	xd_ensure_column('xd_hoadon', 'hop_le', "ADD COLUMN hop_le TINYINT(1) NOT NULL DEFAULT 1 AFTER chi_tiet");
 	xd_ensure_index('xd_hoadon', 'idx_xd_hoadon_gvkey', "ADD KEY idx_xd_hoadon_gvkey (gv_key)");
+	$d->rawQuery("update #_xd_hoadon h inner join #_xd_bangke b on b.id = h.id_bangke set h.ngay_thanh_toan = b.ngay_lap where h.da_quyettoan = 1 and h.ngay_thanh_toan is null and b.ngay_lap is not null");
 	xd_ensure_invoice_unique_key();
 
 	xd_ensure_column('xd_hocvien', 'gv_key', "ADD COLUMN gv_key VARCHAR(191) NOT NULL DEFAULT '' AFTER gv_hoten");

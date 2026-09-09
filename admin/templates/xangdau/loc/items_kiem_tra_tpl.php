@@ -31,6 +31,8 @@
 						<td><?=$i?></td>
 						<td><?=htmlspecialchars($gv['gv_hoten'] !== '' ? $gv['gv_hoten'] : $gv['gv_key'])?></td>
 						<td>
+							<?php $detail_url = 'index.php?com=xangdau&act=xemGiaoVien&gv_key='.urlencode($gv['gv_key']); ?>
+							<a class="btn btn-sm btn-info" href="<?=$detail_url?>" title="Xem danh sách học viên / hóa đơn"><i class="fas fa-eye mr-1"></i>Xem danh sách</a>
 							<?php if(xd_can_kiem_tra()) { $check_url = 'index.php?com=xangdau&act=kiemTraGiaoVien&gv_key='.urlencode($gv['gv_key']); ?>
 							<a class="btn btn-sm btn-warning" href="<?=$check_url?>" onclick="return confirm('Xác nhận đã kiểm tra giáo viên này?');"><i class="fas fa-check mr-1"></i>Kiểm tra</a>
 							<?php } else { ?>

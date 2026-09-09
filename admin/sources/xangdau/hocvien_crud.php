@@ -5,13 +5,15 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_hocvien()
 {
-	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai;
+	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to;
 
 	$where = "";
 	$params = array();
 	$xd_filter_keyword = '';
 	$xd_filter_nhom = '';
 	$xd_filter_trangthai = '';
+	$xd_filter_tt_from = '';
+	$xd_filter_tt_to = '';
 
 	if(isset($_REQUEST['keyword']) && trim($_REQUEST['keyword']) !== '')
 	{
@@ -32,6 +34,18 @@ function xd_get_hocvien()
 		$xd_filter_trangthai = $_REQUEST['trangthai'];
 		$where .= ($xd_filter_trangthai === 'da') ? " and ngay_thanh_toan is not null" : " and ngay_thanh_toan is null";
 	}
+	if(isset($_REQUEST['tt_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['tt_from']))
+	{
+		$xd_filter_tt_from = $_REQUEST['tt_from'];
+		$where .= " and ngay_thanh_toan >= ?";
+		$params[] = $xd_filter_tt_from;
+	}
+	if(isset($_REQUEST['tt_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['tt_to']))
+	{
+		$xd_filter_tt_to = $_REQUEST['tt_to'];
+		$where .= " and ngay_thanh_toan <= ?";
+		$params[] = $xd_filter_tt_to;
+	}
 
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
@@ -45,6 +59,8 @@ function xd_get_hocvien()
 	if($xd_filter_keyword !== '') $url .= '&keyword='.urlencode($xd_filter_keyword);
 	if($xd_filter_nhom !== '') $url .= '&nhom='.urlencode($xd_filter_nhom);
 	if($xd_filter_trangthai !== '') $url .= '&trangthai='.urlencode($xd_filter_trangthai);
+	if($xd_filter_tt_from !== '') $url .= '&tt_from='.urlencode($xd_filter_tt_from);
+	if($xd_filter_tt_to !== '') $url .= '&tt_to='.urlencode($xd_filter_tt_to);
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
 }
 
