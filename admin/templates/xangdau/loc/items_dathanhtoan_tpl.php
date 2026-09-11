@@ -30,7 +30,7 @@
 		</div>
 		<div class="card-body border-top border-bottom bg-light text-sm">
 			<?php if(xd_can_duyet() || xd_can_kiem_tra()) {
-				$exportUrl = 'index.php?com=xangdau&act=xuatTongHopDaDuyet&paid_from='.urlencode($xd_loc_paid_from ?? '').'&paid_to='.urlencode($xd_loc_paid_to ?? '');
+				$exportUrl = 'index.php?com=xangdau&act=xuatTongHopDaDuyet&keyword='.urlencode($xd_loc_paid_keyword ?? '').'&paid_from='.urlencode($xd_loc_paid_from ?? '').'&paid_to='.urlencode($xd_loc_paid_to ?? '');
 			?>
 			<a class="btn btn-sm btn-success" href="<?=$exportUrl?>" title="Xuất tổng hợp giáo viên đã quyết toán"><i class="fas fa-file-excel mr-1"></i>Xuất tổng hợp</a>
 			<?php } ?>
