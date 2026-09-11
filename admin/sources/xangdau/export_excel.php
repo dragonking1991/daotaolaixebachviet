@@ -7,8 +7,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 {
 	require_once LIBRARIES.'PHPExcel.php';
 
-	$setting = $d->rawQueryOne("select tenvi from #_setting limit 0,1");
-	$companyName = (!empty($setting['tenvi'])) ? (function_exists('mb_strtoupper') ? mb_strtoupper($setting['tenvi'], 'UTF-8') : strtoupper($setting['tenvi'])) : 'TRUNG TÂM GIÁO DỤC NGHỀ NGHIỆP';
+	$companyName = 'TRUNG TÂM GIÁO DỤC NGHỀ NGHIỆP BÁCH VIỆT';
 
 	// Lấy hóa đơn và học viên của đợt, gom theo giáo viên (gv_key)
 	if($idBangke > 0)
@@ -229,5 +228,79 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 
 	$writer = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 	$writer->save('php://output');
+	exit;
+}
+
+function xd_xuat_hoadon_excel()
+{
+	global $d, $func;
+	$scope = isset($_REQUEST['scope']) && in_array($_REQUEST['scope'], array('all', 'paid', 'unpaid'), true) ? $_REQUEST['scope'] : 'all';
+	$keyword = isset($_REQUEST['keyword']) ? trim((string)$_REQUEST['keyword']) : '';
+	$fromDate = (isset($_REQUEST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['from_date'])) ? $_REQUEST['from_date'] : '';
+	$toDate = (isset($_REQUEST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['to_date'])) ? $_REQUEST['to_date'] : '';
+	$ky = isset($_REQUEST['ky']) ? trim((string)$_REQUEST['ky']) : '';
+	$ktFrom = (isset($_REQUEST['kt_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['kt_from'])) ? $_REQUEST['kt_from'] : '';
+	$ktTo = (isset($_REQUEST['kt_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['kt_to'])) ? $_REQUEST['kt_to'] : '';
+	list($where, $params) = xd_hoadon_where_and_params($scope, $keyword, $fromDate, $toDate, $ky, $ktFrom, $ktTo);
+	$rows = $d->rawQuery("select * from #_xd_hoadon where $where order by ngay_hoa_don desc, id desc", $params);
+	$labels = array('all' => 'TẤT CẢ', 'paid' => 'ĐÃ QUYẾT TOÁN', 'unpaid' => 'CHƯA QUYẾT TOÁN');
+	xd_xuat_danh_sach_excel('DANH SÁCH HÓA ĐƠN XĂNG DẦU - '.$labels[$scope], array('STT', 'Số HĐ', 'Ngày HĐ', 'Giáo viên', 'Biển số', 'Kỳ', 'Tổng tiền', 'Trạng thái'), array('A'=>6, 'B'=>18, 'C'=>14, 'D'=>28, 'E'=>15, 'F'=>14, 'G'=>18, 'H'=>20), $rows, function($row, $stt) {
+		return array($stt, $row['ma_hoa_don'], !empty($row['ngay_hoa_don']) ? date('d/m/Y', strtotime($row['ngay_hoa_don'])) : '', $row['gv_hoten'], $row['bien_so'], $row['ky'], (float)$row['tong_tien'], (int)$row['da_quyettoan'] === 1 ? 'Đã quyết toán' : 'Chưa quyết toán');
+	}, 7, 'hoa_don_xd_'.strtolower($scope));
+}
+
+function xd_xuat_hocvien_excel()
+{
+	global $d;
+	$scope = isset($_REQUEST['scope']) && in_array($_REQUEST['scope'], array('all', 'paid', 'unpaid'), true) ? $_REQUEST['scope'] : 'all';
+	$keyword = isset($_REQUEST['keyword']) ? trim((string)$_REQUEST['keyword']) : '';
+	$nhom = isset($_REQUEST['nhom']) && in_array($_REQUEST['nhom'], array('BT', 'CK', 'DAT'), true) ? $_REQUEST['nhom'] : '';
+	$ttFrom = (isset($_REQUEST['tt_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['tt_from'])) ? $_REQUEST['tt_from'] : '';
+	$ttTo = (isset($_REQUEST['tt_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['tt_to'])) ? $_REQUEST['tt_to'] : '';
+	list($where, $params) = xd_hocvien_where_and_params($scope, $keyword, $nhom, $ttFrom, $ttTo);
+	$rows = $d->rawQuery("select * from #_xd_hocvien where $where order by id asc", $params);
+	$labels = array('all' => 'TẤT CẢ', 'paid' => 'ĐÃ THANH TOÁN', 'unpaid' => 'CHƯA THANH TOÁN');
+	xd_xuat_danh_sach_excel('DANH SÁCH HỌC VIÊN XĂNG DẦU - '.$labels[$scope], array('STT', 'Họ tên', 'CCCD', 'Khóa', 'Ngày sinh', 'Nhóm', 'GV phụ trách', 'Số tiền TT', 'Ngày TT', 'Trạng thái'), array('A'=>6, 'B'=>28, 'C'=>18, 'D'=>14, 'E'=>14, 'F'=>10, 'G'=>26, 'H'=>18, 'I'=>14, 'J'=>20), $rows, function($row, $stt) {
+		return array($stt, $row['ho_ten'], $row['cccd'], $row['khoa'], $row['ngaysinh'], $row['nhom'], $row['gv_hoten'], (float)$row['so_tien_thanh_toan'], !empty($row['ngay_thanh_toan']) ? date('d/m/Y', strtotime($row['ngay_thanh_toan'])) : '', !empty($row['ngay_thanh_toan']) ? 'Đã thanh toán' : 'Chưa thanh toán');
+	}, 8, 'hoc_vien_xd_'.strtolower($scope));
+}
+
+function xd_xuat_danh_sach_excel($title, $headers, $widths, $rows, $rowValues, $moneyColumn, $filenamePrefix)
+{
+	require_once LIBRARIES.'PHPExcel.php';
+	$objPHPExcel = new PHPExcel();
+	$ws = $objPHPExcel->getActiveSheet();
+	$lastColumn = array_keys($widths); $lastColumn = end($lastColumn);
+	$ws->getDefaultStyle()->getFont()->setName('Times New Roman')->setSize(11);
+	$ws->setShowGridlines(false);
+	foreach($widths as $column => $width) $ws->getColumnDimension($column)->setWidth($width);
+	$ws->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
+	$ws->getPageSetup()->setPaperSize(PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
+	$ws->getPageSetup()->setFitToWidth(1)->setFitToHeight(0)->setFitToPage(true);
+	$ws->getPageMargins()->setTop(0.5)->setRight(0.35)->setBottom(0.5)->setLeft(0.35);
+	$ws->setCellValue('A1', 'TRUNG TÂM GIÁO DỤC NGHỀ NGHIỆP BÁCH VIỆT'); $ws->mergeCells('A1:'.$lastColumn.'1');
+	$ws->setCellValue('A2', $title); $ws->mergeCells('A2:'.$lastColumn.'2');
+	$ws->getStyle('A1:'.$lastColumn.'2')->getFont()->setBold(true);
+	$ws->getStyle('A1:'.$lastColumn.'2')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+	$ws->getStyle('A1')->getFont()->setSize(13); $ws->getStyle('A2')->getFont()->setSize(12);
+	$rowNumber = 4; $column = 'A'; foreach($headers as $header) { $ws->setCellValue($column.$rowNumber, $header); $column++; }
+	$ws->getStyle('A'.$rowNumber.':'.$lastColumn.$rowNumber)->getFont()->setBold(true);
+	$ws->getStyle('A'.$rowNumber.':'.$lastColumn.$rowNumber)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+	$ws->getStyle('A'.$rowNumber.':'.$lastColumn.$rowNumber)->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+	$rowNumber++; $stt = 1;
+	foreach($rows as $row) { $column = 'A'; foreach(call_user_func($rowValues, $row, $stt) as $value) { $ws->setCellValue($column.$rowNumber, $value); $column++; } $stt++; $rowNumber++; }
+	$lastRow = $rowNumber - 1;
+	$border = array('borders' => array('allborders' => array('style' => PHPExcel_Style_Border::BORDER_THIN, 'color' => array('rgb' => '000000'))));
+	$ws->getStyle('A4:'.$lastColumn.$lastRow)->applyFromArray($border);
+	$moneyColumnLetter = PHPExcel_Cell::stringFromColumnIndex($moneyColumn - 1);
+	$ws->getStyle($moneyColumnLetter.'5:'.$moneyColumnLetter.$lastRow)->getNumberFormat()->setFormatCode('#,##0');
+	$ws->getStyle('A5:A'.$lastRow)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+	$ws->getPageSetup()->setPrintArea('A1:'.$lastColumn.$lastRow);
+	$objPHPExcel->setActiveSheetIndex(0);
+	while(ob_get_level() > 0) ob_end_clean();
+	header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+	header('Content-Disposition: attachment; filename="'.$filenamePrefix.'_'.date('Ymd_His').'.xlsx"');
+	header('Cache-Control: max-age=0');
+	PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007')->save('php://output');
 	exit;
 }

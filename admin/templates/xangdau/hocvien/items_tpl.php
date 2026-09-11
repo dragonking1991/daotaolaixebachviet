@@ -21,7 +21,18 @@
 			<input type="hidden" name="act" value="hocvien">
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
+			<?php if(xd_can_duyet() || xd_can_kiem_tra()) { $exportBase = 'index.php?com=xangdau&act=xuatHocvienExcel'; $exportUrlAll = $exportBase.'&scope=all'; $exportUrlPaid = $exportBase.'&scope=paid'; $exportUrlUnpaid = $exportBase.'&scope=unpaid'; if($xd_filter_keyword !== '') { $exportUrlAll .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlPaid .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlUnpaid .= '&keyword='.urlencode($xd_filter_keyword); } if($xd_filter_nhom !== '') { $exportUrlAll .= '&nhom='.urlencode($xd_filter_nhom); $exportUrlPaid .= '&nhom='.urlencode($xd_filter_nhom); $exportUrlUnpaid .= '&nhom='.urlencode($xd_filter_nhom); } if($xd_filter_tt_from !== '') { $exportUrlAll .= '&tt_from='.urlencode($xd_filter_tt_from); $exportUrlPaid .= '&tt_from='.urlencode($xd_filter_tt_from); $exportUrlUnpaid .= '&tt_from='.urlencode($xd_filter_tt_from); } if($xd_filter_tt_to !== '') { $exportUrlAll .= '&tt_to='.urlencode($xd_filter_tt_to); $exportUrlPaid .= '&tt_to='.urlencode($xd_filter_tt_to); $exportUrlUnpaid .= '&tt_to='.urlencode($xd_filter_tt_to); } if($xd_filter_trangthai !== '') { $exportUrlAll .= '&trangthai='.urlencode($xd_filter_trangthai); $exportUrlPaid .= '&trangthai='.urlencode($xd_filter_trangthai); $exportUrlUnpaid .= '&trangthai='.urlencode($xd_filter_trangthai); } ?>
+			<div class="btn-group mr-3">
+				<button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</button>
+				<div class="dropdown-menu">
+					<a class="dropdown-item" href="<?=$exportUrlAll?>">Tổng</a>
+					<a class="dropdown-item" href="<?=$exportUrlPaid?>">Đã thanh toán</a>
+					<a class="dropdown-item" href="<?=$exportUrlUnpaid?>">Chưa thanh toán</a>
+				</div>
+			</div>
+			<?php } ?>
 			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHocvien" onclick="return confirm('Xóa TOÀN BỘ học viên, bao gồm cả học viên đã thanh toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
+			<div class="w-100"></div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start">
 				<label class="mb-1 small text-muted">Tìm kiếm</label>
 				<input class="form-control form-control-sm text-sm" style="min-width:200px;" type="search" name="keyword" placeholder="Tên / CCCD HV / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">
@@ -95,7 +106,7 @@
 							<?php } ?>
 						</td>
 						<td class="text-right">
-							<?php if($it['ngay_thanh_toan'] === null) { ?>
+								<?php if(xd_can_xoa()) { ?>
 								<a class="btn btn-xs btn-danger" href="index.php?com=xangdau&act=deleteHocvien&id=<?=(int)$it['id']?>&p=<?=$curPage?>" onclick="return confirm('Xóa học viên này?');"><i class="far fa-trash-alt"></i></a>
 							<?php } ?>
 						</td>

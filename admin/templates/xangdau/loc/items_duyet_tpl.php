@@ -15,7 +15,7 @@
 
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
-		<div class="card-header py-3"><h3 class="card-title mb-0"><i class="fas fa-clipboard-check text-primary mr-2"></i>Danh sách giáo viên đã kiểm tra, chờ duyệt thanh toán</h3></div>
+		<div class="card-header py-3 d-flex align-items-center justify-content-between"><h3 class="card-title mb-0"><i class="fas fa-clipboard-check text-primary mr-2"></i>Danh sách giáo viên đã kiểm tra, chờ duyệt thanh toán</h3><?php if(xd_can_duyet() || xd_can_kiem_tra()) { ?><a class="btn btn-sm btn-success" href="index.php?com=xangdau&act=xuatDaKiemTraGiaoVien&cho_duyet=1" title="Xuất Excel danh sách giáo viên chờ duyệt"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php } ?></div>
 		<div class="card-body table-responsive p-0">
 			<table class="table table-hover table-striped mb-0">
 				<thead>

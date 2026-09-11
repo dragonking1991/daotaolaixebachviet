@@ -72,6 +72,11 @@ switch($act)
 		xd_ensure_tables();
 		xd_toggle_kiem_tra_hoadon();
 		break;
+	case "toggleHopLeHoadon":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_toggle_hop_le_hoadon();
+		break;
 
 	// ---- Học viên XD ----
 	case "hocvien":
@@ -139,6 +144,11 @@ switch($act)
 		xd_ensure_tables();
 		xd_duyet_tat_ca_giao_vien();
 		break;
+	case "huyDuyetGiaoVien":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_huy_duyet_giao_vien();
+		break;
 	case "locKiemTra":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
@@ -162,6 +172,21 @@ switch($act)
 		xd_ensure_tables();
 		xd_xuat_toan_bo_danh_sach_hoc_vien();
 		break;
+	case "xuatTongHopDaDuyet":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_xuat_tong_hop_da_duyet();
+		break;
+	case "xuatHoadonExcel":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_xuat_hoadon_excel();
+		break;
+	case "xuatHocvienExcel":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_xuat_hocvien_excel();
+		break;
 	case "xuatTatCaBangKe":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
@@ -171,6 +196,11 @@ switch($act)
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
 		xd_xuat_tong_hop_giao_vien();
+		break;
+	case "xuatDaKiemTraGiaoVien":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_xuat_da_kiem_tra_giao_vien();
 		break;
 	case "xuatBangKeGiaoVien":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);

@@ -20,7 +20,18 @@
 			<input type="hidden" name="act" value="hoadon">
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import hóa đơn</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
+			<?php if(xd_can_duyet() || xd_can_kiem_tra()) { $exportBase = 'index.php?com=xangdau&act=xuatHoadonExcel'; $exportUrlAll = $exportBase.'&scope=all'; $exportUrlPaid = $exportBase.'&scope=paid'; $exportUrlUnpaid = $exportBase.'&scope=unpaid'; if($xd_filter_keyword !== '') { $exportUrlAll .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlPaid .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlUnpaid .= '&keyword='.urlencode($xd_filter_keyword); } if($xd_filter_from !== '') { $exportUrlAll .= '&from_date='.urlencode($xd_filter_from); $exportUrlPaid .= '&from_date='.urlencode($xd_filter_from); $exportUrlUnpaid .= '&from_date='.urlencode($xd_filter_from); } if($xd_filter_to !== '') { $exportUrlAll .= '&to_date='.urlencode($xd_filter_to); $exportUrlPaid .= '&to_date='.urlencode($xd_filter_to); $exportUrlUnpaid .= '&to_date='.urlencode($xd_filter_to); } if($xd_filter_ky !== '') { $exportUrlAll .= '&ky='.urlencode($xd_filter_ky); $exportUrlPaid .= '&ky='.urlencode($xd_filter_ky); $exportUrlUnpaid .= '&ky='.urlencode($xd_filter_ky); } if($xd_filter_kt_from !== '') { $exportUrlAll .= '&kt_from='.urlencode($xd_filter_kt_from); $exportUrlPaid .= '&kt_from='.urlencode($xd_filter_kt_from); $exportUrlUnpaid .= '&kt_from='.urlencode($xd_filter_kt_from); } if($xd_filter_kt_to !== '') { $exportUrlAll .= '&kt_to='.urlencode($xd_filter_kt_to); $exportUrlPaid .= '&kt_to='.urlencode($xd_filter_kt_to); $exportUrlUnpaid .= '&kt_to='.urlencode($xd_filter_kt_to); } ?>
+			<div class="btn-group mr-3">
+				<button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</button>
+				<div class="dropdown-menu">
+					<a class="dropdown-item" href="<?=$exportUrlAll?>">Tổng</a>
+					<a class="dropdown-item" href="<?=$exportUrlPaid?>">Đã thanh toán</a>
+					<a class="dropdown-item" href="<?=$exportUrlUnpaid?>">Chưa thanh toán</a>
+				</div>
+			</div>
+			<?php } ?>
 			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHoadon" onclick="return confirm('Xóa TOÀN BỘ hóa đơn, bao gồm cả hóa đơn đã quyết toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
+			<div class="w-100"></div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start">
 				<label class="mb-1 small text-muted">Tìm kiếm</label>
 				<input class="form-control form-control-sm text-sm" style="min-width:200px;" type="search" name="keyword" placeholder="Mã HĐ / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">
@@ -109,7 +120,12 @@
 									<i class="fas fa-<?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'undo' : 'check'?>"></i>
 								</a>
 							<?php } ?>
-							<?php if((int)$it['da_quyettoan'] === 0) { ?>
+								<?php if(xd_can_kiem_tra() && (int)$it['da_quyettoan'] === 0) { $toggleValidUrl = 'index.php?com=xangdau&act=toggleHopLeHoadon&id='.(int)$it['id'].'&p='.$curPage; ?>
+									<a class="btn btn-xs <?=((int)($it['hop_le'] ?? 1) === 1) ? 'btn-success' : 'btn-outline-danger'?>" href="<?=$toggleValidUrl?>" onclick="return confirm('<?=((int)($it['hop_le'] ?? 1) === 1) ? 'Đánh dấu hóa đơn này là không hợp lệ?' : 'Đánh dấu hóa đơn này là hợp lệ?';?>');">
+										<i class="fas fa-<?=((int)($it['hop_le'] ?? 1) === 1) ? 'thumbs-up' : 'exclamation-triangle'?>"></i>
+									</a>
+								<?php } ?>
+								<?php if(xd_can_xoa() && (int)$it['da_quyettoan'] === 0) { ?>
 								<a class="btn btn-xs btn-danger" href="index.php?com=xangdau&act=deleteHoadon&id=<?=(int)$it['id']?>&p=<?=$curPage?>" onclick="return confirm('Xóa hóa đơn này?');"><i class="far fa-trash-alt"></i></a>
 							<?php } ?>
 						</td>

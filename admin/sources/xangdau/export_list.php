@@ -45,8 +45,7 @@ function xd_xuat_toan_bo_danh_sach_hoc_vien()
 	
 	if(empty($selected)) $func->transfer("Không có học viên nào để xuất.", "index.php?com=xangdau&act=loc", false);
 	
-	$setting = $d->rawQueryOne("select tenvi from #_setting limit 0,1");
-	$companyName = (!empty($setting['tenvi'])) ? (function_exists('mb_strtoupper') ? mb_strtoupper($setting['tenvi'], 'UTF-8') : strtoupper($setting['tenvi'])) : 'TRUNG TÂM GIÁO DỤC NGHỀ NGHIỆP';
+	$companyName = 'TRUNG TÂM GIÁO DỤC NGHỀ NGHIỆP BÁCH VIỆT';
 	
 	$objPHPExcel = new PHPExcel();
 	$ws = $objPHPExcel->getActiveSheet();

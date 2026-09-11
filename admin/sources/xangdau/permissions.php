@@ -76,9 +76,9 @@ function xd_act_denied($act)
 	$configActs = array('config', 'saveConfig');
 	$deleteActs = array('deleteHoadon', 'deleteAllHoadon', 'deleteHocvien', 'deleteAllHocvien');
 	$importActs = array('uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel');
-	$kiemtraActs = array('kiemTraGiaoVien', 'huyKiemTraGiaoVien', 'toggleKiemTraHoadon');
-	$duyetActs = array('duyetGiaoVien', 'duyetTatCaGiaoVien');
-	$exportActs = array('xuatBangKeGiaoVien', 'xuatTongHopGiaoVien', 'xuatTatCaBangKe', 'xuatToanBoDanhSachHocVien', 'xuatBangKe');
+	$kiemtraActs = array('kiemTraGiaoVien', 'huyKiemTraGiaoVien', 'toggleKiemTraHoadon', 'toggleHopLeHoadon');
+	$duyetActs = array('duyetGiaoVien', 'duyetTatCaGiaoVien', 'huyDuyetGiaoVien');
+	$exportActs = array('xuatBangKeGiaoVien', 'xuatTongHopGiaoVien', 'xuatTongHopDaDuyet', 'xuatDaKiemTraGiaoVien', 'xuatTatCaBangKe', 'xuatToanBoDanhSachHocVien', 'xuatBangKe', 'xuatHoadonExcel', 'xuatHocvienExcel');
 	$viewActs = array('loc', 'xemGiaoVien', 'locKiemTra', 'locDuyet', 'locDaThanhToan', 'hoadon', 'hocvien');
 
 	if(in_array($act, $configActs, true)) return !xd_can_config();

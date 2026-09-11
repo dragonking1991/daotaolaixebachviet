@@ -13,15 +13,18 @@ function xd_loc_params_url($gvKey = '')
 
 function xd_get_giao_vien_detail()
 {
-	global $d, $xd_detail_gv, $xd_detail_hoadons, $xd_detail_hocviens, $xd_detail_config;
+	global $d, $xd_detail_gv, $xd_detail_hoadons, $xd_detail_hocviens, $xd_detail_config, $xd_detail_da_kiem_tra;
 	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
 	$xd_detail_gv = array('gv_key' => $gvKey, 'gv_hoten' => $gvKey);
-	$xd_detail_hoadons = array(); $xd_detail_hocviens = array(); $xd_detail_config = getXdConfig($d);
+	$xd_detail_hoadons = array(); $xd_detail_hocviens = array(); $xd_detail_config = getXdConfig($d); $xd_detail_da_kiem_tra = false;
 	if($gvKey === '') return;
 	$row = $d->rawQueryOne("select max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key = ?", array($gvKey));
 	if($row && $row['gv_hoten'] !== '') $xd_detail_gv['gv_hoten'] = $row['gv_hoten'];
 	$xd_detail_hoadons = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 order by ngay_hoa_don desc, id desc", array($gvKey));
 	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by id asc", array($gvKey));
+	$chuaKiemTraHoaDon = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and ke_toan_kiem_tra = 0", array($gvKey));
+	$chuaKiemTraHocVien = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
+	$xd_detail_da_kiem_tra = (int)($chuaKiemTraHoaDon['total'] ?? 0) === 0 && (int)($chuaKiemTraHocVien['total'] ?? 0) === 0;
 }
 
 function xd_kiem_tra_giao_vien()
@@ -110,6 +113,36 @@ function xd_duyet_tat_ca_giao_vien()
 	$func->transfer("Đã duyệt $approved giáo viên.", xd_loc_params_url(), true);
 }
 
+/**
+ * Hủy duyệt (hoàn tác quyết toán) cho một giáo viên: đưa hóa đơn & học viên đã duyệt của giáo viên
+ * về trạng thái chưa quyết toán/chưa thanh toán và xóa các đợt bảng kê tương ứng.
+ * Chỉ hoàn tác các bản ghi đã duyệt qua đợt (id_bangke > 0); không đụng tới thanh toán thủ công (id_bangke = 0).
+ */
+function xd_huy_duyet_giao_vien()
+{
+	global $d, $func;
+	$redirect = "index.php?com=xangdau&act=locDaThanhToan";
+	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
+	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", $redirect, false);
+
+	$rows = $d->rawQuery("select distinct id_bangke from #_xd_hoadon where gv_key = ? and da_quyettoan = 1 and id_bangke > 0", array($gvKey));
+	$bangkeIds = array();
+	if(!empty($rows)) foreach($rows as $row) { $id = (int)$row['id_bangke']; if($id > 0) $bangkeIds[$id] = $id; }
+	if(empty($bangkeIds)) $func->transfer("Giáo viên chưa có đợt duyệt nào để hủy.", $redirect, false);
+
+	$placeholders = implode(',', array_fill(0, count($bangkeIds), '?'));
+	$ids = array_values($bangkeIds);
+
+	$d->startTransaction();
+	$hv = $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = null, id_bangke = 0, quan_ly_duyet = 0, so_tien_thanh_toan = 0, dinh_muc = 0 where id_bangke in ($placeholders)", $ids);
+	$hd = $d->rawQuery("update #_xd_hoadon set da_quyettoan = 0, ngay_thanh_toan = null, quan_ly_duyet = 0, id_bangke = 0 where id_bangke in ($placeholders)", $ids);
+	$bk = $d->rawQuery("delete from #_xd_bangke where id in ($placeholders)", $ids);
+	if($hv === false || $hd === false || $bk === false) { $d->rollback(); $func->transfer("Không hủy duyệt được. Vui lòng thử lại.", $redirect, false); }
+	$d->commit();
+
+	$func->transfer("Đã hủy duyệt giáo viên và hoàn tác ".count($bangkeIds)." đợt. Hóa đơn/học viên đã trở về trạng thái chờ duyệt.", $redirect, true);
+}
+
 function xd_loc_preview()
 {
 	global $d, $xd_loc_selected, $xd_loc_summary, $xd_loc_config, $xd_loc_ky, $xd_loc_from, $xd_loc_to, $xd_loc_ky_options;
@@ -192,13 +225,15 @@ function xd_loc_duyet()
 
 function xd_loc_da_thanh_toan()
 {
-	global $d, $xd_loc_dathanhtoan_data, $xd_loc_ky_options, $xd_loc_paid_from, $xd_loc_paid_to;
+	global $d, $xd_loc_dathanhtoan_data, $xd_loc_ky_options, $xd_loc_paid_from, $xd_loc_paid_to, $xd_loc_paid_keyword;
 
 	$xd_loc_ky_options = $d->rawQuery("select distinct ky from #_xd_hoadon where ky <> '' order by ky asc");
 	$xd_loc_paid_from = (isset($_REQUEST['paid_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['paid_from'])) ? $_REQUEST['paid_from'] : '';
 	$xd_loc_paid_to = (isset($_REQUEST['paid_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['paid_to'])) ? $_REQUEST['paid_to'] : '';
+	$xd_loc_paid_keyword = isset($_REQUEST['keyword']) ? trim((string)$_REQUEST['keyword']) : '';
 	$where = 'b.gv_key <> "" and b.da_quyettoan = 1';
 	$params = array();
+	if($xd_loc_paid_keyword !== '') { $where .= ' and (b.gv_hoten like ? or b.gv_key like ?)'; $params[] = '%'.$xd_loc_paid_keyword.'%'; $params[] = '%'.$xd_loc_paid_keyword.'%'; }
 	if($xd_loc_paid_from !== '') { $where .= ' and b.ngay_thanh_toan >= ?'; $params[] = $xd_loc_paid_from; }
 	if($xd_loc_paid_to !== '') { $where .= ' and b.ngay_thanh_toan <= ?'; $params[] = $xd_loc_paid_to; }
 

@@ -15,6 +15,10 @@
 		'ck'  => array('key' => 'xd_muc_ck', 'val' => (int)($item['muc_ck'] ?? 0)),
 		'dat' => array('key' => 'xd_muc_dat', 'val' => (int)($item['muc_dat'] ?? 0)),
 	);
+	$hangKhoaFields = array(
+		'ck'  => array('bss' => 'xd_dinh_muc_ck_bss', 'btd' => 'xd_dinh_muc_ck_btd', 'c1' => 'xd_dinh_muc_ck_c1', 'c' => 'xd_dinh_muc_ck_c', 'ce' => 'xd_dinh_muc_ck_ce'),
+		'dat' => array('bss' => 'xd_dinh_muc_dat_bss', 'btd' => 'xd_dinh_muc_dat_btd', 'c1' => 'xd_dinh_muc_dat_c1', 'c' => 'xd_dinh_muc_dat_c', 'ce' => 'xd_dinh_muc_dat_ce'),
+	);
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -76,6 +80,36 @@
 										value="<?=number_format((int)$f['val'], 0, ',', '.')?>"
 										placeholder="Nhập số tiền">
 									<div class="input-group-append"><span class="input-group-text">đ</span></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<?php } ?>
+				</div>
+
+				<h6 class="text-uppercase text-muted font-weight-bold mb-3"><i class="fas fa-layer-group mr-1"></i>Định mức XD theo hạng khóa (CK/DAT) <small class="font-weight-normal">(ưu tiên theo khóa nếu cấu hình > 0, ngược lại dùng định mức nhóm)</small></h6>
+				<div class="row mb-4">
+					<?php foreach($hangKhoaFields as $nhom => $fields) { $info = $nhomInfo[$nhom]; ?>
+					<div class="col-lg-6 col-md-12 mb-3">
+						<div class="card card-outline <?=$info['border']?> mb-0 h-100">
+							<div class="card-body py-2 px-3">
+								<div class="d-flex align-items-center mb-3">
+									<span class="badge <?=$info['badge']?> mr-2"><?=$info['label']?></span>
+									<strong>Định mức nhóm <?=$info['label']?></strong>
+								</div>
+								<div class="row">
+									<?php foreach($fields as $hang => $key) { $val = (int)($item[$key] ?? 0); ?>
+									<div class="col-md-6 col-sm-12 mb-2">
+										<label class="mb-1" for="cfg_<?=$key?>">Khóa <?=$hang?></label>
+										<div class="input-group input-group-sm">
+											<input type="text" inputmode="numeric" class="form-control text-right money-input" id="cfg_<?=$key?>"
+												name="data[<?=$key?>]"
+												value="<?=number_format($val, 0, ',', '.')?>"
+												placeholder="0">
+											<div class="input-group-append"><span class="input-group-text">đ</span></div>
+										</div>
+									</div>
+									<?php } ?>
 								</div>
 							</div>
 						</div>

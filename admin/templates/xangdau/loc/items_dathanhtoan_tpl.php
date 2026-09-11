@@ -15,9 +15,11 @@
 	<div class="card card-secondary card-outline text-sm">
 		<div class="card-header"><h3 class="card-title">Giáo viên đã quyết toán / đã thanh toán</h3></div>
 		<div class="card-body border-bottom">
-			<form method="get" action="index.php" class="form-inline">
+			<form method="get" action="index.php" class="form-inline flex-wrap" style="gap:.5rem;">
 				<input type="hidden" name="com" value="xangdau">
 				<input type="hidden" name="act" value="locDaThanhToan">
+				<label class="mb-0">Tên GV</label>
+				<input class="form-control form-control-sm" type="text" name="keyword" placeholder="Nhập tên giáo viên" value="<?=htmlspecialchars($xd_loc_paid_keyword ?? '')?>" style="min-width:220px;">
 				<label class="mr-2 mb-0">Ngày thanh toán từ</label>
 				<input class="form-control form-control-sm mr-2" type="date" name="paid_from" value="<?=htmlspecialchars($xd_loc_paid_from ?? '')?>">
 				<label class="mr-2 mb-0">đến</label>
@@ -25,6 +27,13 @@
 				<button class="btn btn-sm btn-primary mr-2" type="submit"><i class="fas fa-search mr-1"></i>Lọc</button>
 				<a class="btn btn-sm btn-secondary" href="index.php?com=xangdau&act=locDaThanhToan">Bỏ lọc</a>
 			</form>
+		</div>
+		<div class="card-body border-top border-bottom bg-light text-sm">
+			<?php if(xd_can_duyet() || xd_can_kiem_tra()) {
+				$exportUrl = 'index.php?com=xangdau&act=xuatTongHopDaDuyet&paid_from='.urlencode($xd_loc_paid_from ?? '').'&paid_to='.urlencode($xd_loc_paid_to ?? '');
+			?>
+			<a class="btn btn-sm btn-success" href="<?=$exportUrl?>" title="Xuất tổng hợp giáo viên đã quyết toán"><i class="fas fa-file-excel mr-1"></i>Xuất tổng hợp</a>
+			<?php } ?>
 		</div>
 		<div class="card-body table-responsive p-0">
 			<table class="table table-hover">
@@ -48,6 +57,9 @@
 						<td><?=(!empty($gv['ngay_thanh_toan']) ? date('d/m/Y', strtotime($gv['ngay_thanh_toan'])) : '-')?><?=(!empty($gv['ngay_thanh_toan_den']) && $gv['ngay_thanh_toan_den'] !== $gv['ngay_thanh_toan']) ? ' - '.date('d/m/Y', strtotime($gv['ngay_thanh_toan_den'])) : ''?></td>
 						<td>
 							<a class="btn btn-sm btn-info" href="index.php?com=xangdau&act=hoadon&keyword=<?=urlencode($gv['gv_hoten'])?>"><i class="fas fa-eye mr-1"></i>Xem hóa đơn</a>
+							<?php if(xd_can_duyet()) { ?>
+							<a class="btn btn-sm btn-danger ml-1" href="index.php?com=xangdau&act=huyDuyetGiaoVien&gv_key=<?=urlencode($gv['gv_key'])?>" onclick="return confirm('Hủy duyệt giáo viên này? Toàn bộ hóa đơn và học viên đã duyệt sẽ trở về trạng thái chờ duyệt và các đợt bảng kê tương ứng sẽ bị xóa.');"><i class="fas fa-undo mr-1"></i>Hủy duyệt</a>
+							<?php } ?>
 						</td>
 					</tr>
 					<?php } } else { ?>

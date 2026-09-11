@@ -22,6 +22,7 @@
 					<strong>Cột theo mẫu:</strong> STT | Số hóa đơn | Ngày | Thông tin bán hàng | Chi tiết | Số tiền HĐ | Biển số xe | HĐ từ trang thuế | <strong>GV</strong> (tên giáo viên) | Note.<br>
 					Giáo viên được liên kết theo <strong>tên</strong> ở cột GV. Số tiền dạng số (ví dụ 608.75) được hiểu là đơn vị nghìn (608.750đ).<br>
 					<strong>Chống trùng:</strong> theo (Mã HĐ + Ngày HĐ); không cho import đè kỳ đã tồn tại hoặc hóa đơn đã quyết toán.<br>
+					<strong>Import bổ sung/cập nhật:</strong> file được thêm vào hệ thống mà không xóa dữ liệu cũ; chỉ cập nhật các bản ghi trùng theo khóa nhận diện, tránh xóa toàn bộ dữ liệu hiện có.<br>
 					<strong>Hỗ trợ định dạng:</strong> .xlsx, .xls, .xlsb.
 				</div>
 

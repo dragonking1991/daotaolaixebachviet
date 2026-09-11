@@ -19,47 +19,35 @@ function xd_get_hoadon()
 	if(isset($_REQUEST['keyword']) && trim($_REQUEST['keyword']) !== '')
 	{
 		$xd_filter_keyword = trim($_REQUEST['keyword']);
-		$where .= " and (ma_hoa_don like ? or gv_hoten like ?)";
-		$params[] = '%'.$xd_filter_keyword.'%';
-		$params[] = '%'.$xd_filter_keyword.'%';
 	}
 	if(isset($_REQUEST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['from_date']))
 	{
 		$xd_filter_from = $_REQUEST['from_date'];
-		$where .= " and ngay_hoa_don >= ?";
-		$params[] = $xd_filter_from;
 	}
 	if(isset($_REQUEST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['to_date']))
 	{
 		$xd_filter_to = $_REQUEST['to_date'];
-		$where .= " and ngay_hoa_don <= ?";
-		$params[] = $xd_filter_to;
 	}
 	if(isset($_REQUEST['ky']) && trim($_REQUEST['ky']) !== '')
 	{
 		$xd_filter_ky = trim($_REQUEST['ky']);
-		$where .= " and ky = ?";
-		$params[] = $xd_filter_ky;
 	}
 	if(isset($_REQUEST['kt_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['kt_from']))
 	{
 		$xd_filter_kt_from = $_REQUEST['kt_from'];
-		$where .= " and ngay_kiem_tra >= ?";
-		$params[] = $xd_filter_kt_from;
 	}
 	if(isset($_REQUEST['kt_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['kt_to']))
 	{
 		$xd_filter_kt_to = $_REQUEST['kt_to'];
-		$where .= " and ngay_kiem_tra <= ?";
-		$params[] = $xd_filter_kt_to;
 	}
 
+	list($where, $params) = xd_hoadon_where_and_params('all', $xd_filter_keyword, $xd_filter_from, $xd_filter_to, $xd_filter_ky, $xd_filter_kt_from, $xd_filter_kt_to);
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select * from #_xd_hoadon where id > 0 $where order by ngay_hoa_don desc, id desc limit ".$startpoint.",".$per_page;
+	$sql = "select * from #_xd_hoadon where $where order by ngay_hoa_don desc, id desc limit ".$startpoint.",".$per_page;
 	$items = $d->rawQuery($sql, $params);
 
-	$count = $d->rawQueryOne("select count(*) as num from #_xd_hoadon where id > 0 $where", $params);
+	$count = $d->rawQueryOne("select count(*) as num from #_xd_hoadon where $where", $params);
 	$total = isset($count['num']) ? (int)$count['num'] : 0;
 
 	$url = "index.php?com=xangdau&act=hoadon";
@@ -70,6 +58,40 @@ function xd_get_hoadon()
 	if($xd_filter_kt_from !== '') $url .= '&kt_from='.urlencode($xd_filter_kt_from);
 	if($xd_filter_kt_to !== '') $url .= '&kt_to='.urlencode($xd_filter_kt_to);
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
+}
+
+function xd_hoadon_where_and_params($scope = 'all', $keyword = '', $fromDate = '', $toDate = '', $ky = '', $ktFrom = '', $ktTo = '')
+{
+	$where = 'id > 0';
+	$params = array();
+
+	if($scope === 'paid') { $where .= ' and da_quyettoan = 1'; }
+	elseif($scope === 'unpaid') { $where .= ' and da_quyettoan = 0'; }
+	if($keyword !== '') { $where .= ' and (ma_hoa_don like ? or gv_hoten like ?)'; $params[] = '%'.$keyword.'%'; $params[] = '%'.$keyword.'%'; }
+	if($fromDate !== '') { $where .= ' and ngay_hoa_don >= ?'; $params[] = $fromDate; }
+	if($toDate !== '') { $where .= ' and ngay_hoa_don <= ?'; $params[] = $toDate; }
+	if($ky !== '') { $where .= ' and ky = ?'; $params[] = $ky; }
+	if($ktFrom !== '') { $where .= ' and ngay_kiem_tra >= ?'; $params[] = $ktFrom; }
+	if($ktTo !== '') { $where .= ' and ngay_kiem_tra <= ?'; $params[] = $ktTo; }
+
+	return array($where, $params);
+}
+
+function xd_toggle_hop_le_hoadon()
+{
+	global $d, $func, $curPage;
+	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+	$redirect = "index.php?com=xangdau&act=hoadon&p=".(int)$curPage;
+	if($id <= 0) $func->transfer("Không xác định được hóa đơn.", $redirect, false);
+
+	$row = $d->rawQueryOne("select da_quyettoan, hop_le from #_xd_hoadon where id = ? limit 0,1", array($id));
+	if(empty($row)) $func->transfer("Không tìm thấy hóa đơn cần cập nhật.", $redirect, false);
+	if((int)$row['da_quyettoan'] === 1) $func->transfer("Hóa đơn đã quyết toán, không được thay đổi trạng thái hợp lệ.", $redirect, false);
+
+	$newState = ((int)$row['hop_le'] === 1) ? 0 : 1;
+	$ok = $d->rawQuery("update #_xd_hoadon set hop_le = ? where id = ? and da_quyettoan = 0", array($newState, $id));
+	if($ok === false) $func->transfer("Không thể cập nhật trạng thái hợp lệ của hóa đơn.", $redirect, false);
+	$func->transfer($newState === 1 ? "Hóa đơn đã được đánh dấu hợp lệ." : "Hóa đơn đã được đánh dấu không hợp lệ.", $redirect, true);
 }
 
 function xd_delete_hoadon()
