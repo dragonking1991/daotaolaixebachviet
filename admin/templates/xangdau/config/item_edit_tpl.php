@@ -1,5 +1,5 @@
 <?php
-	$linkSave = "index.php?com=xangdau&act=saveConfig";
+	$linkSave = "index.php";
 	$nhomInfo = array(
 		'bt'  => array('label' => 'BT', 'badge' => 'badge-primary', 'border' => 'border-left-primary'),
 		'ck'  => array('label' => 'CK', 'badge' => 'badge-info', 'border' => 'border-left-info'),
@@ -33,6 +33,8 @@
 
 <section class="content">
 	<form class="validation-form" novalidate method="post" action="<?=$linkSave?>">
+		<input type="hidden" name="com" value="xangdau">
+		<input type="hidden" name="act" value="saveConfig">
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header">
 				<h3 class="card-title"><i class="fas fa-gas-pump mr-2 text-primary"></i>Tham số thanh toán chi phí xăng dầu</h3>
@@ -85,6 +87,26 @@
 						</div>
 					</div>
 					<?php } ?>
+				</div>
+
+				<h6 class="text-uppercase text-muted font-weight-bold mb-3"><i class="fas fa-user-cog mr-1"></i>Điều chỉnh định mức thanh toán theo học viên <small class="font-weight-normal">(ảnh hưởng trực tiếp Định mức tối đa và Tổng chi khi lọc thanh toán)</small></h6>
+				<div class="card card-outline border-left-secondary mb-4">
+					<div class="card-body py-3">
+						<div class="form-row align-items-end">
+							<div class="col-md-4 mb-2"><label class="mb-1" for="cccd_lookup">CCCD học viên</label><input type="text" class="form-control form-control-sm" id="cccd_lookup" name="cccd" value="<?=htmlspecialchars($xd_config_hocvien_cccd ?? '')?>" placeholder="Nhập CCCD để tìm"></div>
+							<div class="col-md-2 mb-2"><button class="btn btn-sm btn-secondary" type="button" onclick="window.location.href='index.php?com=xangdau&amp;act=config&amp;cccd='+encodeURIComponent(document.getElementById('cccd_lookup').value);"><i class="fas fa-search mr-1"></i>Tìm học viên</button></div>
+							<div class="col-md-3 mb-2"><a class="btn btn-sm btn-outline-primary" href="index.php?com=xangdau&amp;act=config&amp;danh_sach_dieu_chinh=1"><i class="fas fa-list mr-1"></i>DS đã điều chỉnh</a></div>
+							<?php if(!empty($xd_config_hocvien)) { ?>
+							<div class="col-md-4 mb-2"><label class="mb-1">Học viên</label><div class="form-control form-control-sm bg-light"><?=htmlspecialchars($xd_config_hocvien['ho_ten'])?> - <?=htmlspecialchars($xd_config_hocvien['nhom'])?> - <?=htmlspecialchars($xd_config_hocvien['khoa'])?></div></div>
+							<div class="col-md-2 mb-2"><label class="mb-1">Số tiền TT hiện tại</label><div class="form-control form-control-sm bg-light text-right font-weight-bold"><?=number_format((float)$xd_config_hocvien['so_tien_thanh_toan'], 0, ',', '.')?> đ</div></div>
+							<div class="col-md-2 mb-2"><label class="mb-1" for="so_tien_thanh_toan_ca_nhan">Định mức TT mới</label><div class="input-group input-group-sm"><input type="text" inputmode="numeric" class="form-control text-right money-input" id="so_tien_thanh_toan_ca_nhan" name="so_tien_thanh_toan_ca_nhan" value="<?=number_format((int)$xd_config_hocvien['so_tien_thanh_toan'], 0, ',', '.')?>"><div class="input-group-append"><span class="input-group-text">đ</span></div></div><input type="hidden" name="cccd_hocvien" value="<?=htmlspecialchars($xd_config_hocvien['cccd'])?>"></div>
+							<div class="col-md-2 mb-2"><label class="mb-1 d-block">&nbsp;</label><button type="submit" class="btn btn-sm btn-primary"><i class="far fa-save mr-1"></i>Lưu định mức</button></div>
+							<?php } elseif(($xd_config_hocvien_cccd ?? '') !== '') { ?><div class="col-md-6 mb-2 text-danger small">Không tìm thấy học viên có CCCD này.</div><?php } ?>
+						</div>
+						<?php if(isset($_GET['danh_sach_dieu_chinh']) && $_GET['danh_sach_dieu_chinh'] === '1') { ?>
+						<div class="table-responsive border-top pt-3 mt-2"><table class="table table-sm table-bordered mb-0"><thead class="bg-light"><tr><th>STT</th><th>Học viên</th><th>CCCD</th><th>Khóa</th><th>Nhóm</th><th>GV phụ trách</th><th class="text-right">Số tiền TT</th><th></th></tr></thead><tbody><?php if(!empty($xd_config_hocvien_dieu_chinh)) { $stt = 0; foreach($xd_config_hocvien_dieu_chinh as $hocvien) { $stt++; ?><tr><td><?=$stt?></td><td><?=htmlspecialchars($hocvien['ho_ten'])?></td><td><?=htmlspecialchars($hocvien['cccd'])?></td><td><?=htmlspecialchars($hocvien['khoa'])?></td><td><?=htmlspecialchars($hocvien['nhom'])?></td><td><?=htmlspecialchars($hocvien['gv_hoten'])?></td><td class="text-right"><?=number_format((float)$hocvien['so_tien_thanh_toan'], 0, ',', '.')?></td><td class="text-center"><a class="btn btn-sm btn-outline-danger" href="index.php?com=xangdau&amp;act=xoaDieuChinhHocVien&amp;cccd=<?=urlencode($hocvien['cccd'])?>" title="Xóa điều chỉnh" onclick="return confirm('Xóa điều chỉnh số tiền của học viên này và trả về mức thanh toán theo nhóm?');"><i class="far fa-trash-alt"></i></a></td></tr><?php } } else { ?><tr><td colspan="8" class="text-center text-muted">Chưa có học viên nào được điều chỉnh số tiền thanh toán.</td></tr><?php } ?></tbody></table></div>
+						<?php } ?>
+					</div>
 				</div>
 
 				<h6 class="text-uppercase text-muted font-weight-bold mb-3"><i class="fas fa-layer-group mr-1"></i>Định mức XD theo hạng khóa (CK/DAT) <small class="font-weight-normal">(ưu tiên theo khóa nếu cấu hình > 0, ngược lại dùng định mức nhóm)</small></h6>

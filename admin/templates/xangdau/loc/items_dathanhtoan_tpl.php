@@ -56,7 +56,8 @@
 						<td class="text-right"><?=number_format((float)$gv['tong_tien'], 0, ',', '.')?></td>
 						<td><?=(!empty($gv['ngay_thanh_toan']) ? date('d/m/Y', strtotime($gv['ngay_thanh_toan'])) : '-')?><?=(!empty($gv['ngay_thanh_toan_den']) && $gv['ngay_thanh_toan_den'] !== $gv['ngay_thanh_toan']) ? ' - '.date('d/m/Y', strtotime($gv['ngay_thanh_toan_den'])) : ''?></td>
 						<td>
-							<a class="btn btn-sm btn-info" href="index.php?com=xangdau&act=hoadon&keyword=<?=urlencode($gv['gv_hoten'])?>"><i class="fas fa-eye mr-1"></i>Xem hóa đơn</a>
+							<a class="btn btn-sm btn-info" href="index.php?com=xangdau&act=xemGiaoVien&paid=1&gv_key=<?=urlencode($gv['gv_key'])?>"><i class="fas fa-eye mr-1"></i>Xem bảng kê</a>
+							<?php if(xd_can_duyet() || xd_can_kiem_tra()) { ?><a class="btn btn-sm btn-success ml-1" href="index.php?com=xangdau&act=xuatBangKeDaDuyetGiaoVien&gv_key=<?=urlencode($gv['gv_key'])?>"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php } ?>
 							<?php if(xd_can_duyet()) { ?>
 							<a class="btn btn-sm btn-danger ml-1" href="index.php?com=xangdau&act=huyDuyetGiaoVien&gv_key=<?=urlencode($gv['gv_key'])?>" onclick="return confirm('Hủy duyệt giáo viên này? Toàn bộ hóa đơn và học viên đã duyệt sẽ trở về trạng thái chờ duyệt và các đợt bảng kê tương ứng sẽ bị xóa.');"><i class="fas fa-undo mr-1"></i>Hủy duyệt</a>
 							<?php } ?>

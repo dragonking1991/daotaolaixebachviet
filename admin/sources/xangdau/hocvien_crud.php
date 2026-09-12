@@ -103,7 +103,7 @@ function xd_update_hocvien_status()
 	if($id <= 0 || !in_array($status, array('da', 'chua'), true))
 		$func->transfer("Trạng thái học viên không hợp lệ", $redirect, false);
 
-	$row = $d->rawQueryOne("select id, nhom, khoa, ngay_thanh_toan from #_xd_hocvien where id = ? limit 0,1", array($id));
+	$row = $d->rawQueryOne("select id, nhom, khoa, dinh_muc_ca_nhan, da_dieu_chinh_tt, ngay_thanh_toan from #_xd_hocvien where id = ? limit 0,1", array($id));
 	if(empty($row)) $func->transfer("Không tìm thấy học viên", $redirect, false);
 
 	if($status === 'da')
@@ -111,8 +111,8 @@ function xd_update_hocvien_status()
 		if($row['ngay_thanh_toan'] !== null)
 			$func->transfer("Học viên này đã được cập nhật thanh toán trước đó, không thể cập nhật trùng.", $redirect, false);
 		$config = getXdConfig($d);
-		$dinhMuc = (int)xdDinhMucTheoNhom($config, $row['nhom'], isset($row['khoa']) ? $row['khoa'] : '');
-		$soTien = (int)xdMucTheoNhom($config, $row['nhom']);
+		$dinhMuc = (int)xdDinhMucHocVien($config, $row);
+		$soTien = (int)($row['da_dieu_chinh_tt'] ?? 0) === 1 || (float)($row['dinh_muc_ca_nhan'] ?? 0) != 0 ? (int)$row['dinh_muc_ca_nhan'] : (int)xdMucTheoNhom($config, $row['nhom']);
 		$ok = $d->rawQuery(
 			"update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = 0 where id = ? and ngay_thanh_toan is null",
 			array(date('Y-m-d'), $dinhMuc, $soTien, $id)

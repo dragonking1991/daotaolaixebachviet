@@ -60,7 +60,7 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 		// Duyệt lần lượt học viên (theo thứ tự nhập) và trừ dần ngân sách bằng định mức XD của NHÓM học viên đó.
 		// Định mức XD có thể khác nhau giữa BT/CK/DAT (cấu hình riêng cho CK, DAT).
 		$hocviens = $d->rawQuery(
-			"select id, ho_ten, cccd, nhom, khoa, gv_key, gv_hoten from #_xd_hocvien
+			"select id, ho_ten, cccd, nhom, khoa, gv_key, gv_hoten, dinh_muc_ca_nhan, da_dieu_chinh_tt from #_xd_hocvien
 			 where gv_key = ? and ngay_thanh_toan is null order by id asc",
 			array($gvKey)
 		);
@@ -70,9 +70,9 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 		{
 			foreach($hocviens as $hv)
 			{
-				$dinhMucNhom = xdDinhMucTheoNhom($config, $hv['nhom'], isset($hv['khoa']) ? $hv['khoa'] : '');
+				$dinhMucNhom = xdDinhMucHocVien($config, $hv);
 				if($remaining < $dinhMucNhom) continue; // không đủ ngân sách cho học viên này, bỏ qua nhưng vẫn xét học viên tiếp theo
-				$soTien = xdMucTheoNhom($config, $hv['nhom']);
+				$soTien = (int)($hv['da_dieu_chinh_tt'] ?? 0) === 1 || (float)($hv['dinh_muc_ca_nhan'] ?? 0) != 0 ? (float)$hv['dinh_muc_ca_nhan'] : xdMucTheoNhom($config, $hv['nhom']);
 				$hv['dinh_muc'] = $dinhMucNhom;
 				$hv['so_tien_thanh_toan'] = $soTien;
 				$selected[] = $hv;

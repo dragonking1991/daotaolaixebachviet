@@ -96,6 +96,10 @@ function xd_ensure_tables()
 	xd_ensure_column('xd_hocvien', 'gv_key', "ADD COLUMN gv_key VARCHAR(191) NOT NULL DEFAULT '' AFTER gv_hoten");
 	xd_ensure_column('xd_hocvien', 'khoa', "ADD COLUMN khoa VARCHAR(100) NOT NULL DEFAULT '' AFTER ngaysinh");
 	xd_ensure_column('xd_hocvien', 'nguoi_nop', "ADD COLUMN nguoi_nop VARCHAR(255) NOT NULL DEFAULT '' AFTER nhom");
+	xd_ensure_column('xd_hocvien', 'dinh_muc_ca_nhan', "ADD COLUMN dinh_muc_ca_nhan DECIMAL(18,2) NOT NULL DEFAULT 0 AFTER dinh_muc");
+	xd_ensure_column('xd_hocvien', 'da_dieu_chinh_tt', "ADD COLUMN da_dieu_chinh_tt TINYINT(1) NOT NULL DEFAULT 0 AFTER dinh_muc_ca_nhan");
+	$d->rawQuery("update #_xd_hocvien set da_dieu_chinh_tt = 1 where dinh_muc_ca_nhan <> 0 and da_dieu_chinh_tt = 0");
+	$d->rawQuery("update #_xd_hocvien set so_tien_thanh_toan = 0 where ngay_thanh_toan is null and so_tien_thanh_toan <> 0");
 	xd_ensure_column('xd_hocvien', 'ke_toan_kiem_tra', "ADD COLUMN ke_toan_kiem_tra TINYINT(1) NOT NULL DEFAULT 0 AFTER ngay_thanh_toan");
 	xd_ensure_column('xd_hocvien', 'quan_ly_duyet', "ADD COLUMN quan_ly_duyet TINYINT(1) NOT NULL DEFAULT 0 AFTER ke_toan_kiem_tra");
 	xd_ensure_index('xd_hocvien', 'idx_xd_hocvien_gvkey', "ADD KEY idx_xd_hocvien_gvkey (gv_key)");

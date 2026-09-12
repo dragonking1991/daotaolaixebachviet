@@ -39,6 +39,11 @@ switch($act)
 		xd_ensure_tables();
 		xd_save_config();
 		break;
+	case "xoaDieuChinhHocVien":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_xoa_dieu_chinh_hoc_vien();
+		break;
 
 	// ---- Hóa đơn XD ----
 	case "hoadon":
@@ -206,6 +211,11 @@ switch($act)
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
 		xd_xuat_bangke_giao_vien();
+		break;
+	case "xuatBangKeDaDuyetGiaoVien":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_xuat_bangke_da_duyet_giao_vien();
 		break;
 	case "xuatBangKe":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);

@@ -21,6 +21,16 @@ function xd_xuat_bangke_giao_vien()
 	xd_export_bangke_excel($d, 0, date('Y-m-d'), $ky, $gvKey, $teacherSelected, $fromDate, $toDate);
 }
 
+function xd_xuat_bangke_da_duyet_giao_vien()
+{
+	global $d, $func;
+	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
+	if($gvKey === '') $func->transfer("Không xác định được giáo viên cần xuất.", "index.php?com=xangdau&act=locDaThanhToan", false);
+	$bangke = $d->rawQueryOne("select id, ngay_lap, ky from #_xd_bangke where id in (select id_bangke from #_xd_hoadon where gv_key = ? and da_quyettoan = 1 and id_bangke > 0) order by ngay_lap desc, id desc limit 1", array($gvKey));
+	if(empty($bangke)) $func->transfer("Không tìm thấy bảng kê đã duyệt của giáo viên này.", "index.php?com=xangdau&act=locDaThanhToan", false);
+	xd_export_bangke_excel($d, (int)$bangke['id'], $bangke['ngay_lap'], $bangke['ky']);
+}
+
 function xd_xuat_tat_ca_bang_ke()
 {
 	global $d;

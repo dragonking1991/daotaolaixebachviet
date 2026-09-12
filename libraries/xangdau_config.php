@@ -169,3 +169,12 @@ if (!function_exists('xdDinhMucTheoNhom')) {
 		return max(1, (int)$config['dinh_muc']);
 	}
 }
+
+if (!function_exists('xdDinhMucHocVien')) {
+	function xdDinhMucHocVien($config, $hocvien)
+	{
+		if ((int)($hocvien['da_dieu_chinh_tt'] ?? 0) === 1 || (float)($hocvien['dinh_muc_ca_nhan'] ?? 0) != 0)
+			return max(0, (float)($hocvien['dinh_muc_ca_nhan'] ?? 0));
+		return (float)xdDinhMucTheoNhom($config, $hocvien['nhom'] ?? '', $hocvien['khoa'] ?? '');
+	}
+}

@@ -13,15 +13,18 @@ function xd_loc_params_url($gvKey = '')
 
 function xd_get_giao_vien_detail()
 {
-	global $d, $xd_detail_gv, $xd_detail_hoadons, $xd_detail_hocviens, $xd_detail_config, $xd_detail_da_kiem_tra;
+	global $d, $xd_detail_gv, $xd_detail_hoadons, $xd_detail_hocviens, $xd_detail_hoadons_da_thanh_toan, $xd_detail_hocviens_da_thanh_toan, $xd_detail_config, $xd_detail_da_kiem_tra, $xd_detail_da_thanh_toan;
 	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
 	$xd_detail_gv = array('gv_key' => $gvKey, 'gv_hoten' => $gvKey);
-	$xd_detail_hoadons = array(); $xd_detail_hocviens = array(); $xd_detail_config = getXdConfig($d); $xd_detail_da_kiem_tra = false;
+	$xd_detail_hoadons = array(); $xd_detail_hocviens = array(); $xd_detail_hoadons_da_thanh_toan = array(); $xd_detail_hocviens_da_thanh_toan = array(); $xd_detail_config = getXdConfig($d); $xd_detail_da_kiem_tra = false; $xd_detail_da_thanh_toan = isset($_REQUEST['paid']) && $_REQUEST['paid'] === '1';
 	if($gvKey === '') return;
 	$row = $d->rawQueryOne("select max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key = ?", array($gvKey));
 	if($row && $row['gv_hoten'] !== '') $xd_detail_gv['gv_hoten'] = $row['gv_hoten'];
+	$xd_detail_hoadons_da_thanh_toan = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 1 order by ngay_hoa_don desc, id desc", array($gvKey));
+	$xd_detail_hocviens_da_thanh_toan = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null order by id asc", array($gvKey));
 	$xd_detail_hoadons = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 order by ngay_hoa_don desc, id desc", array($gvKey));
 	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by id asc", array($gvKey));
+	if($xd_detail_da_thanh_toan) return;
 	$chuaKiemTraHoaDon = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and ke_toan_kiem_tra = 0", array($gvKey));
 	$chuaKiemTraHocVien = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
 	$xd_detail_da_kiem_tra = (int)($chuaKiemTraHoaDon['total'] ?? 0) === 0 && (int)($chuaKiemTraHocVien['total'] ?? 0) === 0;

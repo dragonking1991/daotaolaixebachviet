@@ -150,13 +150,14 @@ function xd_xuat_da_kiem_tra_giao_vien()
 		$config = getXdConfig($d);
 		foreach($rows as &$row)
 		{
-			$students = $d->rawQuery("select nhom from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 1", array($row['gv_key']));
+			$students = $d->rawQuery("select nhom, dinh_muc_ca_nhan, da_dieu_chinh_tt from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 1", array($row['gv_key']));
 			$row['so_hv'] = 0;
 			$row['tong_chi'] = 0.0;
 			foreach($students as $student)
 			{
 				$row['so_hv']++;
-				$row['tong_chi'] += (float)xdMucTheoNhom($config, $student['nhom']);
+				$hasIndividualAmount = (int)($student['da_dieu_chinh_tt'] ?? 0) === 1 || (float)($student['dinh_muc_ca_nhan'] ?? 0) != 0;
+				$row['tong_chi'] += $hasIndividualAmount ? (float)$student['dinh_muc_ca_nhan'] : xdMucTheoNhom($config, $student['nhom']);
 			}
 		}
 		unset($row);
