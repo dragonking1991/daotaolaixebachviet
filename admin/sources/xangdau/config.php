@@ -16,7 +16,7 @@ function xd_get_config()
 	}
 	if(isset($_GET['danh_sach_dieu_chinh']) && $_GET['danh_sach_dieu_chinh'] === '1')
 	{
-		$xd_config_hocvien_dieu_chinh = $d->rawQuery("select ho_ten, cccd, khoa, nhom, gv_hoten, so_tien_thanh_toan from #_xd_hocvien where da_dieu_chinh_tt = 1 or dinh_muc_ca_nhan <> 0 order by ho_ten asc", array());
+		$xd_config_hocvien_dieu_chinh = $d->rawQuery("select ho_ten, cccd, khoa, nhom, gv_hoten, so_tien_thanh_toan from #_xd_hocvien where (da_dieu_chinh_tt = 1 or dinh_muc_ca_nhan <> 0) and nhom in ('CK', 'DAT') order by ho_ten asc", array());
 	}
 }
 
@@ -46,6 +46,9 @@ function xd_save_config()
 	$cccd = isset($_POST['cccd_hocvien']) ? trim((string)$_POST['cccd_hocvien']) : '';
 	if($cccd !== '')
 	{
+		$student = $d->rawQueryOne("select nhom from #_xd_hocvien where cccd = ? limit 1", array($cccd));
+		if(empty($student) || !in_array(strtoupper(trim((string)$student['nhom'])), array('CK', 'DAT'), true))
+			$func->transfer("Chỉ có thể điều chỉnh học viên nhóm CK hoặc DAT.", "index.php?com=xangdau&act=config&cccd=".urlencode($cccd), false);
 		$rawDinhMuc = isset($_POST['so_tien_thanh_toan_ca_nhan']) ? $_POST['so_tien_thanh_toan_ca_nhan'] : '';
 		$rawDinhMuc = str_replace(array('.', ',', ' '), '', trim($rawDinhMuc));
 		$dinhMucCaNhan = (is_numeric($rawDinhMuc) && (int)$rawDinhMuc >= 0) ? (int)$rawDinhMuc : 0;
