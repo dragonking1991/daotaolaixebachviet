@@ -156,8 +156,7 @@ function xd_xuat_da_kiem_tra_giao_vien()
 			foreach($students as $student)
 			{
 				$row['so_hv']++;
-				$hasIndividualAmount = (int)($student['da_dieu_chinh_tt'] ?? 0) === 1 || (float)($student['dinh_muc_ca_nhan'] ?? 0) != 0;
-				$row['tong_chi'] += $hasIndividualAmount ? (float)$student['dinh_muc_ca_nhan'] : xdMucTheoNhom($config, $student['nhom']);
+				$row['tong_chi'] += xdMucTheoNhom($config, $student['nhom']);
 			}
 		}
 		unset($row);

@@ -112,7 +112,7 @@ function xd_update_hocvien_status()
 			$func->transfer("Học viên này đã được cập nhật thanh toán trước đó, không thể cập nhật trùng.", $redirect, false);
 		$config = getXdConfig($d);
 		$dinhMuc = (int)xdDinhMucHocVien($config, $row);
-		$soTien = (int)($row['da_dieu_chinh_tt'] ?? 0) === 1 || (float)($row['dinh_muc_ca_nhan'] ?? 0) != 0 ? (int)$row['dinh_muc_ca_nhan'] : (int)xdMucTheoNhom($config, $row['nhom']);
+		$soTien = (int)xdMucTheoNhom($config, $row['nhom']);
 		$ok = $d->rawQuery(
 			"update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = 0 where id = ? and ngay_thanh_toan is null",
 			array(date('Y-m-d'), $dinhMuc, $soTien, $id)

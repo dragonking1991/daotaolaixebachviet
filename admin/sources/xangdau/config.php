@@ -52,12 +52,12 @@ function xd_save_config()
 		$rawDinhMuc = isset($_POST['so_tien_thanh_toan_ca_nhan']) ? $_POST['so_tien_thanh_toan_ca_nhan'] : '';
 		$rawDinhMuc = str_replace(array('.', ',', ' '), '', trim($rawDinhMuc));
 		$dinhMucCaNhan = (is_numeric($rawDinhMuc) && (int)$rawDinhMuc >= 0) ? (int)$rawDinhMuc : 0;
-		$d->rawQuery("update #_xd_hocvien set dinh_muc_ca_nhan = ?, da_dieu_chinh_tt = 1, so_tien_thanh_toan = 0, ngay_thanh_toan = null, id_bangke = 0, quan_ly_duyet = 0 where cccd = ?", array($dinhMucCaNhan, $cccd));
+		$d->rawQuery("update #_xd_hocvien set dinh_muc_ca_nhan = ?, da_dieu_chinh_tt = 1, ngay_thanh_toan = null, id_bangke = 0, quan_ly_duyet = 0 where cccd = ?", array($dinhMucCaNhan, $cccd));
 	}
 
 	$redirect = "index.php?com=xangdau&act=config";
 	if($cccd !== '') $redirect .= '&cccd='.urlencode($cccd);
-	$func->transfer("Cập nhật định mức thanh toán thành công", $redirect);
+	$func->transfer("Cập nhật định mức XD thành công", $redirect);
 }
 
 function xd_xoa_dieu_chinh_hoc_vien()

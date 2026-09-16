@@ -61,8 +61,8 @@ if (!function_exists('getXdConfig')) {
 		}
 		return array(
 			'dinh_muc'     => $dinhMuc,
-			'dinh_muc_ck'  => $dinhMucCk > 0 ? $dinhMucCk : $dinhMuc,
-			'dinh_muc_dat' => $dinhMucDat > 0 ? $dinhMucDat : $dinhMuc,
+			'dinh_muc_ck'  => $dinhMucCk,
+			'dinh_muc_dat' => $dinhMucDat,
 			'dinh_muc_khoa' => $dinhMucKhoa,
 			'muc_bt'   => max(0, (int)$defaults['xd_muc_bt']),
 			'muc_ck'   => max(0, (int)$defaults['xd_muc_ck']),
@@ -161,10 +161,11 @@ if (!function_exists('xdDinhMucTheoNhom')) {
 			$hang = xdHangKhoa($khoa);
 			$nhomKey = strtolower($nhom);
 			if ($hang !== '' && isset($config['dinh_muc_khoa'][$nhomKey][$hang]) && (int)$config['dinh_muc_khoa'][$nhomKey][$hang] > 0) {
-				return max(1, (int)$config['dinh_muc_khoa'][$nhomKey][$hang]);
+				return (int)$config['dinh_muc_khoa'][$nhomKey][$hang];
 			}
-			if ($nhom === 'CK')  return max(1, (int)$config['dinh_muc_ck']);
-			if ($nhom === 'DAT') return max(1, (int)$config['dinh_muc_dat']);
+			if ($nhom === 'CK')  $dinhMucNhom = (int)$config['dinh_muc_ck'];
+			if ($nhom === 'DAT') $dinhMucNhom = (int)$config['dinh_muc_dat'];
+			return max(0, $dinhMucNhom);
 		}
 		return max(1, (int)$config['dinh_muc']);
 	}

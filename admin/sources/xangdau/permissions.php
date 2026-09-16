@@ -141,6 +141,6 @@ function xd_can_config()
 {
 	global $func;
 	if(!$func->check_permission()) return true; // super admin
-	return xd_has_full_manage() || xd_has_perm('xangdau_config');
+	return xd_has_full_manage() || xd_has_ketoan_permission() || xd_has_perm('xangdau_config');
 }
 

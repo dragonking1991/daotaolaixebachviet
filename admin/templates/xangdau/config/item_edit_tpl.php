@@ -89,7 +89,7 @@
 					<?php } ?>
 				</div>
 
-				<h6 class="text-uppercase text-muted font-weight-bold mb-3"><i class="fas fa-user-cog mr-1"></i>Điều chỉnh định mức thanh toán theo học viên <small class="font-weight-normal">(ảnh hưởng trực tiếp Định mức tối đa và Tổng chi khi lọc thanh toán)</small></h6>
+				<h6 class="text-uppercase text-muted font-weight-bold mb-3"><i class="fas fa-user-cog mr-1"></i>Điều chỉnh định mức XD theo học viên <small class="font-weight-normal">(ảnh hưởng trực tiếp Định mức tối đa và Tổng chi khi lọc thanh toán)</small></h6>
 				<div class="card card-outline border-left-secondary mb-4">
 					<div class="card-body py-3">
 						<div class="form-row align-items-end">
@@ -98,9 +98,9 @@
 							<div class="col-md-3 mb-2"><a class="btn btn-sm btn-outline-primary" href="index.php?com=xangdau&amp;act=config&amp;danh_sach_dieu_chinh=1"><i class="fas fa-list mr-1"></i>DS đã điều chỉnh</a></div>
 							<?php if(!empty($xd_config_hocvien)) { ?>
 							<div class="col-md-4 mb-2"><label class="mb-1">Học viên</label><div class="form-control form-control-sm bg-light"><?=htmlspecialchars($xd_config_hocvien['ho_ten'])?> - <?=htmlspecialchars($xd_config_hocvien['nhom'])?> - <?=htmlspecialchars($xd_config_hocvien['khoa'])?></div></div>
-							<div class="col-md-2 mb-2"><label class="mb-1">Số tiền TT hiện tại</label><div class="form-control form-control-sm bg-light text-right font-weight-bold"><?=number_format((float)$xd_config_hocvien['so_tien_thanh_toan'], 0, ',', '.')?> đ</div></div>
+							<div class="d-none"><div class="col-md-2 mb-2"><label class="mb-1">Số tiền TT hiện tại</label><div class="form-control form-control-sm bg-light text-right font-weight-bold"><?=number_format((float)$xd_config_hocvien['so_tien_thanh_toan'], 0, ',', '.')?> đ</div></div></div>
 							<?php if(in_array(strtoupper(trim((string)$xd_config_hocvien['nhom'])), array('CK', 'DAT'), true)) { ?>
-							<div class="col-md-2 mb-2"><label class="mb-1" for="so_tien_thanh_toan_ca_nhan">Định mức TT mới</label><div class="input-group input-group-sm"><input type="text" inputmode="numeric" class="form-control text-right money-input" id="so_tien_thanh_toan_ca_nhan" name="so_tien_thanh_toan_ca_nhan" value="<?=number_format((int)$xd_config_hocvien['so_tien_thanh_toan'], 0, ',', '.')?>"><div class="input-group-append"><span class="input-group-text">đ</span></div></div><input type="hidden" name="cccd_hocvien" value="<?=htmlspecialchars($xd_config_hocvien['cccd'])?>"></div>
+							<div class="col-md-2 mb-2"><label class="mb-1" for="so_tien_thanh_toan_ca_nhan">Định mức XD mới</label><div class="input-group input-group-sm"><input type="text" inputmode="numeric" class="form-control text-right money-input" id="so_tien_thanh_toan_ca_nhan" name="so_tien_thanh_toan_ca_nhan" value="<?=number_format((int)$xd_config_hocvien['dinh_muc_ca_nhan'], 0, ',', '.')?>"><div class="input-group-append"><span class="input-group-text">đ</span></div></div><input type="hidden" name="cccd_hocvien" value="<?=htmlspecialchars($xd_config_hocvien['cccd'])?>"></div>
 							<div class="col-md-2 mb-2"><label class="mb-1 d-block">&nbsp;</label><button type="submit" class="btn btn-sm btn-primary"><i class="far fa-save mr-1"></i>Lưu định mức</button></div>
 							<?php } else { ?><div class="col-md-5 mb-2 text-warning font-weight-bold">Chỉ hỗ trợ điều chỉnh nhóm CK hoặc DAT.</div><?php } ?>
 							<?php } elseif(($xd_config_hocvien_cccd ?? '') !== '') { ?><div class="col-md-6 mb-2 text-danger small">Không tìm thấy học viên có CCCD này.</div><?php } ?>
@@ -111,6 +111,7 @@
 					</div>
 				</div>
 
+				<div class="d-none">
 				<h6 class="text-uppercase text-muted font-weight-bold mb-3"><i class="fas fa-layer-group mr-1"></i>Định mức XD theo hạng khóa (CK/DAT) <small class="font-weight-normal">(ưu tiên theo khóa nếu cấu hình > 0, ngược lại dùng định mức nhóm)</small></h6>
 				<div class="row mb-4">
 					<?php foreach($hangKhoaFields as $nhom => $fields) { $info = $nhomInfo[$nhom]; ?>
@@ -139,6 +140,7 @@
 						</div>
 					</div>
 					<?php } ?>
+				</div>
 				</div>
 
 				<div class="callout callout-info mb-0">

@@ -71,8 +71,9 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 			foreach($hocviens as $hv)
 			{
 				$dinhMucNhom = xdDinhMucHocVien($config, $hv);
+				if($dinhMucNhom <= 0) continue; // Nhóm không có định mức thì không được chọn thanh toán.
 				if($remaining < $dinhMucNhom) continue; // không đủ ngân sách cho học viên này, bỏ qua nhưng vẫn xét học viên tiếp theo
-				$soTien = (int)($hv['da_dieu_chinh_tt'] ?? 0) === 1 || (float)($hv['dinh_muc_ca_nhan'] ?? 0) != 0 ? (float)$hv['dinh_muc_ca_nhan'] : xdMucTheoNhom($config, $hv['nhom']);
+				$soTien = xdMucTheoNhom($config, $hv['nhom']);
 				$hv['dinh_muc'] = $dinhMucNhom;
 				$hv['so_tien_thanh_toan'] = $soTien;
 				$selected[] = $hv;
