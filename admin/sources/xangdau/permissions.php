@@ -74,7 +74,7 @@ function xd_is_ketoan_only()
 function xd_act_denied($act)
 {
 	$configActs = array('config', 'saveConfig', 'xoaDieuChinhHocVien');
-	$deleteActs = array('deleteHoadon', 'deleteAllHoadon', 'deleteHocvien', 'deleteAllHocvien');
+	$deleteActs = array('deleteHoadon', 'deleteAllHoadon', 'deleteHocvien', 'deleteHocvienByGv', 'deleteAllHocvien');
 	$importActs = array('uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel');
 	$kiemtraActs = array('kiemTraGiaoVien', 'huyKiemTraGiaoVien', 'toggleKiemTraHoadon', 'toggleHopLeHoadon');
 	$duyetActs = array('duyetGiaoVien', 'duyetTatCaGiaoVien', 'huyDuyetGiaoVien');

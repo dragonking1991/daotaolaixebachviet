@@ -179,6 +179,8 @@ function xd_upload_hocvien_excel()
 	}
 
 	// Học viên đã có nhưng chưa thanh toán được phép import lại để cập nhật trạng thái.
+	// Học viên đã thanh toán được bỏ qua, không chặn các dòng hợp lệ còn lại.
+	$skippedPaidRows = array();
 	foreach($rows as &$r)
 	{
 		$variants = xd_cccd_variants($r['cccd']);
@@ -187,19 +189,32 @@ function xd_upload_hocvien_excel()
 		if($existing && isset($existing['id']))
 		{
 			if($existing['ngay_thanh_toan'] !== null)
-				$errors[] = "Dòng ".$r['row'].": CCCD ".$r['cccd']." đã thanh toán, không thể import ghi đè.";
+			{
+				$skippedPaidRows[$r['row']] = "Dòng ".$r['row'].": CCCD ".$r['cccd']." đã thanh toán, bỏ qua không ghi đè.";
+			}
 			else
 				$r['existing_id'] = (int)$existing['id'];
 		}
 	}
 	unset($r);
+	if(!empty($skippedPaidRows))
+	{
+		$rows = array_values(array_filter($rows, function($row) use ($skippedPaidRows) {
+			return !isset($skippedPaidRows[$row['row']]);
+		}));
+	}
 
 	if(!empty($errors))
 	{
 		xd_hocvien_import_error("Không lưu file do có lỗi trùng lặp/không hợp lệ (đã chặn toàn bộ):<br>".implode("<br>", array_slice($errors, 0, 20)), $backUrl);
 	}
 
-	if(empty($rows)) xd_hocvien_import_error("File không có dòng học viên hợp lệ nào.", $backUrl);
+	if(empty($rows))
+	{
+		if(!empty($skippedPaidRows))
+			xd_hocvien_import_error("Không có dòng mới để lưu. Đã bỏ qua ".count($skippedPaidRows)." dòng đã thanh toán:<br>".implode("<br>", array_slice($skippedPaidRows, 0, 20)), $backUrl);
+		xd_hocvien_import_error("File không có dòng học viên hợp lệ nào.", $backUrl);
+	}
 
 	// Ghi all-or-nothing
 	$inserted = 0;
@@ -244,6 +259,7 @@ function xd_upload_hocvien_excel()
 	$d->commit();
 	$msg = "Import thành công $inserted học viên mới";
 	if($updated > 0) $msg .= "; cập nhật $updated học viên đã có";
+	if(!empty($skippedPaidRows)) $msg .= "; bỏ qua ".count($skippedPaidRows)." học viên đã thanh toán";
 	$msg .= ".";
 	if($paidCount > 0) $msg .= " Trong đó $paidCount học viên đã thanh toán (cột \"đã tt\" = r).";
 	$func->transfer($msg, "index.php?com=xangdau&act=hocvien");

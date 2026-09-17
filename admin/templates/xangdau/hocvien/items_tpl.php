@@ -32,6 +32,22 @@
 			</div>
 			<?php } ?>
 			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHocvien" onclick="return confirm('Xóa TOÀN BỘ học viên, bao gồm cả học viên đã thanh toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
+			<?php if(xd_can_xoa()) { ?>
+			<div class="form-group mb-0 d-flex align-items-end mr-3">
+				<div class="mr-2">
+					<label class="mb-1 small text-muted" for="delete_hocvien_gv">Xóa theo giáo viên</label>
+					<select class="form-control form-control-sm" id="delete_hocvien_gv" style="min-width:260px;">
+						<option value="">Chọn giáo viên</option>
+						<?php foreach(($xd_hocvien_teachers ?? array()) as $teacher) { $canDelete = (int)($teacher['can_delete'] ?? 0); $protected = (int)($teacher['protected_count'] ?? 0); ?>
+						<option value="<?=htmlspecialchars($teacher['gv_key'], ENT_QUOTES, 'UTF-8')?>" data-name="<?=htmlspecialchars($teacher['gv_hoten'], ENT_QUOTES, 'UTF-8')?>" data-can-delete="<?=$canDelete?>" data-protected="<?=$protected?>">
+							<?=htmlspecialchars($teacher['gv_hoten'] !== '' ? $teacher['gv_hoten'] : $teacher['gv_key'])?> (<?=$canDelete?> xóa<?=$protected > 0 ? ', '.$protected.' giữ lại' : ''?>)
+						</option>
+						<?php } ?>
+					</select>
+				</div>
+				<a class="btn btn-sm btn-outline-danger disabled" id="delete_hocvien_gv_btn" href="#"><i class="fas fa-user-times mr-1"></i>Xóa học viên GV</a>
+			</div>
+			<?php } ?>
 			<div class="w-100"></div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start">
 				<label class="mb-1 small text-muted">Tìm kiếm</label>
@@ -120,3 +136,28 @@
 		<div class="card-footer text-sm"><?=isset($paging) ? $paging : ''?></div>
 	</div>
 </section>
+<?php if(xd_can_xoa()) { ?>
+<script>
+	(function() {
+		var select = document.getElementById('delete_hocvien_gv');
+		var button = document.getElementById('delete_hocvien_gv_btn');
+		if (!select || !button) return;
+		select.addEventListener('change', function() {
+			var option = select.options[select.selectedIndex];
+			var gvKey = select.value;
+			var name = option ? option.getAttribute('data-name') : '';
+			var canDelete = option ? option.getAttribute('data-can-delete') : '0';
+			var protectedCount = option ? option.getAttribute('data-protected') : '0';
+			button.classList.toggle('disabled', gvKey === '' || canDelete === '0');
+			button.href = gvKey === '' ? '#' : 'index.php?com=xangdau&act=deleteHocvienByGv&gv_key=' + encodeURIComponent(gvKey);
+			button.onclick = function() {
+				if (gvKey === '' || canDelete === '0') return false;
+				var message = 'Xóa ' + canDelete + ' học viên chưa thanh toán của giáo viên ' + name + '?';
+				if (protectedCount !== '0') message += '\n\n' + protectedCount + ' học viên đã thanh toán hoặc thuộc bảng kê sẽ được giữ lại.';
+				message += '\n\nDữ liệu đã xóa không thể khôi phục.';
+				return confirm(message);
+			};
+		});
+	})();
+</script>
+<?php } ?>

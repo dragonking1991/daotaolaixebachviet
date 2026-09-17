@@ -105,6 +105,11 @@ switch($act)
 		xd_ensure_tables();
 		xd_delete_hocvien();
 		break;
+	case "deleteHocvienByGv":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_delete_hocvien_by_gv();
+		break;
 	case "updateHocvienStatus":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();

@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_hocvien()
 {
-	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to;
+	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers;
 
 	$where = "";
 	$params = array();
@@ -45,6 +45,13 @@ function xd_get_hocvien()
 
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien where $where", $params);
 	$total = isset($count['num']) ? (int)$count['num'] : 0;
+	$xd_hocvien_teachers = $d->rawQuery(
+		"select gv_key, max(gv_hoten) as gv_hoten,
+			 sum(case when ngay_thanh_toan is null and id_bangke = 0 then 1 else 0 end) as can_delete,
+			 sum(case when ngay_thanh_toan is not null or id_bangke > 0 then 1 else 0 end) as protected_count
+		 from #_xd_hocvien where gv_key <> '' group by gv_key order by max(gv_hoten) asc",
+		array()
+	);
 
 	$url = "index.php?com=xangdau&act=hocvien";
 	if($xd_filter_keyword !== '') $url .= '&keyword='.urlencode($xd_filter_keyword);
@@ -91,6 +98,41 @@ function xd_delete_hocvien()
 		$func->transfer("Xóa học viên thành công", $redirect);
 	}
 	else $func->transfer("Không nhận được dữ liệu", $redirect, false);
+}
+
+function xd_delete_hocvien_by_gv()
+{
+	global $d, $func;
+
+	$gvKey = isset($_GET['gv_key']) ? trim((string)$_GET['gv_key']) : '';
+	$redirect = "index.php?com=xangdau&act=hocvien";
+	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", $redirect, false);
+
+	$summary = $d->rawQueryOne(
+		"select max(gv_hoten) as gv_hoten,
+			sum(case when ngay_thanh_toan is null and id_bangke = 0 then 1 else 0 end) as can_delete,
+			sum(case when ngay_thanh_toan is not null or id_bangke > 0 then 1 else 0 end) as protected_count
+		 from #_xd_hocvien where gv_key = ?",
+		array($gvKey)
+	);
+	if(empty($summary) || (int)($summary['can_delete'] ?? 0) === 0)
+		$func->transfer("Không có học viên chưa thanh toán để xóa cho giáo viên này.", $redirect, false);
+
+	$d->startTransaction();
+	$ok = $d->rawQuery("delete from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and id_bangke = 0", array($gvKey));
+	if($ok === false)
+	{
+		$d->rollback();
+		$func->transfer("Không thể xóa học viên theo giáo viên.", $redirect, false);
+	}
+	$d->commit();
+
+	$deleted = (int)($summary['can_delete'] ?? 0);
+	$protected = (int)($summary['protected_count'] ?? 0);
+	$name = trim((string)($summary['gv_hoten'] ?? $gvKey));
+	$message = "Đã xóa $deleted học viên chưa thanh toán của giáo viên $name.";
+	if($protected > 0) $message .= " Giữ lại $protected học viên đã thanh toán hoặc thuộc bảng kê.";
+	$func->transfer($message, $redirect);
 }
 
 function xd_update_hocvien_status()
