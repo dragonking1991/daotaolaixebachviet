@@ -13,7 +13,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 	if($idBangke > 0)
 	{
 		$hoadons = $d->rawQuery("select * from #_xd_hoadon where id_bangke = ? order by gv_hoten asc, ngay_hoa_don asc, id asc", array($idBangke));
-		$hocviens = $d->rawQuery("select * from #_xd_hocvien where id_bangke = ? order by gv_hoten asc, id asc", array($idBangke));
+		$hocviens = $d->rawQuery("select * from #_xd_hocvien where id_bangke = ? order by gv_hoten asc, lan_import desc, thu_tu_file asc, id asc", array($idBangke));
 	}
 	else
 	{

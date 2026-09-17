@@ -61,7 +61,7 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 		// Định mức XD có thể khác nhau giữa BT/CK/DAT (cấu hình riêng cho CK, DAT).
 		$hocviens = $d->rawQuery(
 			"select id, ho_ten, cccd, nhom, khoa, gv_key, gv_hoten, dinh_muc_ca_nhan, da_dieu_chinh_tt from #_xd_hocvien
-			 where gv_key = ? and ngay_thanh_toan is null order by id asc",
+			 where gv_key = ? and ngay_thanh_toan is null order by lan_import desc, thu_tu_file asc, id asc",
 			array($gvKey)
 		);
 		$remaining = $sHd;

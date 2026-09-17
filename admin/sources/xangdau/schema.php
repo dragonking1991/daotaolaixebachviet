@@ -58,6 +58,8 @@ function xd_ensure_tables()
 	$d->rawQuery(
 		"CREATE TABLE IF NOT EXISTS #_xd_hocvien (\n"
 		. " id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,\n"
+		. " lan_import INT(11) UNSIGNED NOT NULL DEFAULT 0,\n"
+		. " thu_tu_file INT(10) UNSIGNED NOT NULL DEFAULT 0,\n"
 		. " ho_ten VARCHAR(255) NOT NULL DEFAULT '',\n"
 		. " cccd VARCHAR(20) NOT NULL,\n"
 		. " ngaysinh VARCHAR(20) NOT NULL DEFAULT '',\n"
@@ -94,6 +96,8 @@ function xd_ensure_tables()
 	xd_ensure_invoice_unique_key();
 
 	xd_ensure_column('xd_hocvien', 'gv_key', "ADD COLUMN gv_key VARCHAR(191) NOT NULL DEFAULT '' AFTER gv_hoten");
+	xd_ensure_column('xd_hocvien', 'lan_import', "ADD COLUMN lan_import INT(11) UNSIGNED NOT NULL DEFAULT 0 AFTER id");
+	xd_ensure_column('xd_hocvien', 'thu_tu_file', "ADD COLUMN thu_tu_file INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER lan_import");
 	xd_ensure_column('xd_hocvien', 'khoa', "ADD COLUMN khoa VARCHAR(100) NOT NULL DEFAULT '' AFTER ngaysinh");
 	xd_ensure_column('xd_hocvien', 'nguoi_nop', "ADD COLUMN nguoi_nop VARCHAR(255) NOT NULL DEFAULT '' AFTER nhom");
 	xd_ensure_column('xd_hocvien', 'dinh_muc_ca_nhan', "ADD COLUMN dinh_muc_ca_nhan DECIMAL(18,2) NOT NULL DEFAULT 0 AFTER dinh_muc");

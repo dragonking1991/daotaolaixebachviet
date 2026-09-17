@@ -21,9 +21,9 @@ function xd_get_giao_vien_detail()
 	$row = $d->rawQueryOne("select max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key = ?", array($gvKey));
 	if($row && $row['gv_hoten'] !== '') $xd_detail_gv['gv_hoten'] = $row['gv_hoten'];
 	$xd_detail_hoadons_da_thanh_toan = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 1 order by ngay_hoa_don desc, id desc", array($gvKey));
-	$xd_detail_hocviens_da_thanh_toan = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null order by id asc", array($gvKey));
+	$xd_detail_hocviens_da_thanh_toan = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null order by lan_import desc, thu_tu_file asc, id asc", array($gvKey));
 	$xd_detail_hoadons = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 order by ngay_hoa_don desc, id desc", array($gvKey));
-	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by id asc", array($gvKey));
+	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by lan_import desc, thu_tu_file asc, id asc", array($gvKey));
 	if($xd_detail_da_thanh_toan) return;
 	$chuaKiemTraHoaDon = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and ke_toan_kiem_tra = 0", array($gvKey));
 	$chuaKiemTraHocVien = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));

@@ -207,6 +207,7 @@ function xd_upload_hocvien_excel()
 	$paidCount = 0;
 	$failRows = array();
 	$today = date('Y-m-d');
+	$lanImport = time();
 	$config = getXdConfig($d);
 	$d->startTransaction();
 	foreach($rows as $r)
@@ -219,15 +220,15 @@ function xd_upload_hocvien_excel()
 		if($r['existing_id'] > 0)
 		{
 			$ok = $d->rawQuery(
-				"update #_xd_hocvien set ho_ten = ?, cccd = ?, ngaysinh = ?, khoa = ?, nhom = ?, nguoi_nop = ?, gv_hoten = ?, gv_key = ?, dinh_muc = ?, so_tien_thanh_toan = ?, ngay_thanh_toan = ?, id_bangke = 0 where id = ? and ngay_thanh_toan is null",
-				array($r['ten'], $r['cccd'], $r['ngaysinh'], $r['khoa'], $r['nhom'], $r['nguoinop'], $r['gvten'], $r['gvkey'], $dinhMuc, $soTien, $ngayTT, $r['existing_id'])
+				"update #_xd_hocvien set lan_import = ?, thu_tu_file = ?, ho_ten = ?, cccd = ?, ngaysinh = ?, khoa = ?, nhom = ?, nguoi_nop = ?, gv_hoten = ?, gv_key = ?, dinh_muc = ?, so_tien_thanh_toan = ?, ngay_thanh_toan = ?, id_bangke = 0 where id = ? and ngay_thanh_toan is null",
+				array($lanImport, (int)$r['row'], $r['ten'], $r['cccd'], $r['ngaysinh'], $r['khoa'], $r['nhom'], $r['nguoinop'], $r['gvten'], $r['gvkey'], $dinhMuc, $soTien, $ngayTT, $r['existing_id'])
 			);
 		}
 		else
 		{
 			$ok = $d->rawQuery(
-				"insert into #_xd_hocvien (ho_ten, cccd, ngaysinh, khoa, nhom, nguoi_nop, gv_cccd, gv_hoten, gv_key, dinh_muc, so_tien_thanh_toan, ngay_thanh_toan, id_bangke, ngaytao, user_tao) values (?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, 0, ?, ?)",
-				array($r['ten'], $r['cccd'], $r['ngaysinh'], $r['khoa'], $r['nhom'], $r['nguoinop'], $r['gvten'], $r['gvkey'], $dinhMuc, $soTien, $ngayTT, time(), $username)
+				"insert into #_xd_hocvien (lan_import, thu_tu_file, ho_ten, cccd, ngaysinh, khoa, nhom, nguoi_nop, gv_cccd, gv_hoten, gv_key, dinh_muc, so_tien_thanh_toan, ngay_thanh_toan, id_bangke, ngaytao, user_tao) values (?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, 0, ?, ?)",
+				array($lanImport, (int)$r['row'], $r['ten'], $r['cccd'], $r['ngaysinh'], $r['khoa'], $r['nhom'], $r['nguoinop'], $r['gvten'], $r['gvkey'], $dinhMuc, $soTien, $ngayTT, time(), $username)
 			);
 		}
 		if($ok === false) $failRows[] = $r['row'];
