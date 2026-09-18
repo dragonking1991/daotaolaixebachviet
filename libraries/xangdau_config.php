@@ -29,6 +29,7 @@ if (!function_exists('getXdConfig')) {
 			'xd_dinh_muc_dat_c1'  => 0,
 			'xd_dinh_muc_dat_c'   => 0,
 			'xd_dinh_muc_dat_ce'  => 0,
+			'xd_bu_tru'   => 500000,
 		);
 
 		$keys = array_keys($defaults);
@@ -67,6 +68,7 @@ if (!function_exists('getXdConfig')) {
 			'muc_bt'   => max(0, (int)$defaults['xd_muc_bt']),
 			'muc_ck'   => max(0, (int)$defaults['xd_muc_ck']),
 			'muc_dat'  => max(0, (int)$defaults['xd_muc_dat']),
+			'bu_tru'   => max(0, (int)$defaults['xd_bu_tru']),
 		);
 	}
 }
@@ -86,7 +88,8 @@ if (!function_exists('saveXdConfig')) {
 			'xd_dinh_muc_ck', 'xd_dinh_muc_dat',
 			'xd_dinh_muc_ck_bss', 'xd_dinh_muc_ck_btd', 'xd_dinh_muc_ck_c1', 'xd_dinh_muc_ck_c', 'xd_dinh_muc_ck_ce',
 			'xd_dinh_muc_dat_bss', 'xd_dinh_muc_dat_btd', 'xd_dinh_muc_dat_c1', 'xd_dinh_muc_dat_c', 'xd_dinh_muc_dat_ce',
-			'xd_muc_bt', 'xd_muc_ck', 'xd_muc_dat'
+			'xd_muc_bt', 'xd_muc_ck', 'xd_muc_dat',
+			'xd_bu_tru'
 		);
 		if (!in_array($key, $allowed, true)) return false;
 		$value = max(0, (int)$value);

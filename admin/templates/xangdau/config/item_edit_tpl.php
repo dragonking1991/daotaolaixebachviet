@@ -89,6 +89,24 @@
 					<?php } ?>
 				</div>
 
+				<h6 class="text-uppercase text-muted font-weight-bold mb-3"><i class="fas fa-balance-scale-right mr-1"></i>Mức bù trừ <small class="font-weight-normal">(cho phép chọn học viên khi ngân sách hụt không quá mức này, giữ đúng thứ tự file)</small></h6>
+				<div class="row mb-4">
+					<div class="col-md-4 col-sm-12 mb-2">
+						<div class="card card-outline border-left-secondary mb-0 h-100">
+							<div class="card-body py-2 px-3">
+								<label class="mb-1" for="cfg_xd_bu_tru">Mức bù trừ tối đa</label>
+								<div class="input-group input-group-sm">
+									<input type="text" inputmode="numeric" class="form-control text-right money-input" id="cfg_xd_bu_tru"
+										name="data[xd_bu_tru]"
+										value="<?=number_format((int)($item['bu_tru'] ?? 0), 0, ',', '.')?>"
+										placeholder="Nhập số tiền">
+									<div class="input-group-append"><span class="input-group-text">đ</span></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
 				<h6 class="text-uppercase text-muted font-weight-bold mb-3"><i class="fas fa-user-cog mr-1"></i>Điều chỉnh định mức XD theo học viên <small class="font-weight-normal">(ảnh hưởng trực tiếp Định mức tối đa và Tổng chi khi lọc thanh toán)</small></h6>
 				<div class="card card-outline border-left-secondary mb-4">
 					<div class="card-body py-3">

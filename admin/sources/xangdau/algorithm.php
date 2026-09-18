@@ -66,13 +66,16 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 		);
 		$remaining = $sHd;
 		$dinhMucDaDung = 0.0;
+		$buTruToiDa = max(0, (int)($config['bu_tru'] ?? 0)); // Mức bù trừ cấu hình được để giữ đúng thứ tự file.
 		if(!empty($hocviens))
 		{
 			foreach($hocviens as $hv)
 			{
 				$dinhMucNhom = xdDinhMucHocVien($config, $hv);
 				if($dinhMucNhom <= 0) continue; // Nhóm không có định mức thì không được chọn thanh toán.
-				if($remaining < $dinhMucNhom) continue; // không đủ ngân sách cho học viên này, bỏ qua nhưng vẫn xét học viên tiếp theo
+				// Ưu tiên thứ tự file: nếu học viên này không đủ ngân sách và phần thiếu vượt mức bù trừ thì dừng,
+				// không nhảy sang học viên rẻ hơn ở phía sau.
+				if($remaining < $dinhMucNhom && ($dinhMucNhom - $remaining) > $buTruToiDa) break;
 				$soTien = xdMucTheoNhom($config, $hv['nhom']);
 				$hv['dinh_muc'] = $dinhMucNhom;
 				$hv['so_tien_thanh_toan'] = $soTien;
