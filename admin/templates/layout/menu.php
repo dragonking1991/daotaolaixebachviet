@@ -574,9 +574,48 @@
                 </li>
 
                 <?php
+                    $active_daotao = "";
+                    $menuopen_daotao = "";
+                    $none_daotao = "";
+                    $can_daotao = true;
+                    if(isset($kiemtra) && $kiemtra == true)
+                    {
+                        $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
+                        $can_daotao = in_array('daotao_man', $list_quyen) || in_array('daotao_upload', $list_quyen) || in_array('product_man_cabin', $list_quyen);
+                        if(!$can_daotao) $none_daotao = "d-none";
+                    }
+                    if($com=='daotao') { $active_daotao = 'active'; $menuopen_daotao = 'menu-open'; }
+                    $dt_menu = array(
+                        'khoa' => 'Khóa đào tạo',
+                        'hocvien' => 'Học viên',
+                        'xe' => 'Xe tập lái',
+                        'giaovien' => 'Giáo viên',
+                        'lythuyet' => 'Lý thuyết',
+                        'cabinkq' => 'Cabin (kết quả)',
+                        'hinh' => 'Thực hành hình',
+                        'dat' => 'DAT (trên đường)',
+                        'tonghop' => 'Tổng hợp',
+                    );
+                ?>
+                <li class="nav-item has-treeview <?=$menuopen_daotao?> <?=$none_daotao?>">
+                    <a class="nav-link <?=$active_daotao?>" href="#" title="Quản lý quá trình đào tạo">
+                        <i class="nav-icon text-sm fas fa-user-graduate"></i>
+                        <p>QL Đào Tạo<i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <?php foreach($dt_menu as $dtAct => $dtLabel): ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?=($com=='daotao' && $act==$dtAct)?'active':''?>" href="index.php?com=daotao&act=<?=$dtAct?>" title="<?=$dtLabel?>">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p><?=$dtLabel?></p>
+                            </a>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </li>
+
+                <?php
                     $active_hoadon = "";
-                    $menuopen_hoadon = "";
-                    $none_hoadon = "";
+                    $menuopen_hoadon = "";                    $none_hoadon = "";
                     $can_hoadon_man = true;
                     $can_hoadon_upload = true;
                     if(isset($kiemtra) && $kiemtra == true)

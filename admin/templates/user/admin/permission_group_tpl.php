@@ -952,6 +952,29 @@
 	    </div>
 	    <div class="card card-permission card-primary card-outline text-sm">
 	        <div class="card-header">
+	            <h3 class="card-title">Quản lý Đào Tạo</h3>
+	            <div class="card-tools">
+	                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+	            </div>
+	        </div>
+	        <div class="card-body">
+	            <div class="form-group row">
+	                <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3">Phân hệ đào tạo:</label>
+	                <div class="col-md-7">
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-man" value="daotao_man" <?=(isset($ds_quyen) && in_array('daotao_man', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-daotao-man" class="custom-control-label font-weight-normal">Xem &amp; quản lý</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-upload" value="daotao_upload" <?=(isset($ds_quyen) && in_array('daotao_upload', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-daotao-upload" class="custom-control-label font-weight-normal">Import file</label>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <div class="card card-permission card-primary card-outline text-sm">
+	        <div class="card-header">
 	            <h3 class="card-title">Quản lý Kỳ Sát Hạch</h3>
 	            <div class="card-tools">
 	                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>

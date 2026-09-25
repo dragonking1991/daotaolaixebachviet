@@ -132,6 +132,13 @@
 							$quyen_aliases[] = 'xangdau_config';
 						}
 
+						if($com == 'daotao')
+						{
+							$quyen_aliases[] = 'daotao_man';
+							$quyen_aliases[] = 'daotao_upload';
+							$quyen_aliases[] = 'product_man_cabin';
+						}
+
 						if($quyen_user == '_'){
 							$quyen_user=='';
 						}

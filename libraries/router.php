@@ -177,6 +177,22 @@
 			$title_crumb = 'Tra cứu chi phí xăng dầu';
 			break;
 
+		case 'tra-cuu-qua-trinh-hoc':
+			$source = "tracuu_daotao";
+			$template = "daotao/tracuu";
+			$type = 'tra-cuu-qua-trinh-hoc';
+			$seo->setSeo('type','article');
+			$title_crumb = 'Tra cứu quá trình học';
+			break;
+
+		case 'cong-giao-vien':
+			$source = "cong_giaovien";
+			$template = "daotao/giaovien";
+			$type = 'cong-giao-vien';
+			$seo->setSeo('type','article');
+			$title_crumb = 'Cổng giáo viên';
+			break;
+
 		case 'lien-he':
 			$source = "contact";
 			$template = "contact/contact";
