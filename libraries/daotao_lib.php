@@ -200,8 +200,10 @@ if(!function_exists('dt_mb_lower'))
 		$maHv = $hv['ma_hv'];
 
 		$tongMon = count(dt_mon_lythuyet());
-		$soDat = (int)$d->rawQueryValue("select count(*) from #_dt_lythuyet where id_khoa = ? and cccd = ? and dat = 1", array($idKhoa, $cccd));
-		$soCo = (int)$d->rawQueryValue("select count(*) from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+		$rDat = $d->rawQueryOne("select count(*) as c from #_dt_lythuyet where id_khoa = ? and cccd = ? and dat = 1", array($idKhoa, $cccd));
+		$soDat = (int)($rDat ? $rDat['c'] : 0);
+		$rCo = $d->rawQueryOne("select count(*) as c from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+		$soCo = (int)($rCo ? $rCo['c'] : 0);
 		$lyThuyetDat = ($soDat >= $tongMon) ? 1 : 0;
 
 		$cabin = $d->rawQueryOne("select dat from #_dt_cabin_kq where id_khoa = ? and ma_hv = ? limit 0,1", array($idKhoa, $maHv));

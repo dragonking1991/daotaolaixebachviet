@@ -28,14 +28,14 @@ if($dtAct === 'login')
 	if($gv && $gv['matkhau'] !== '' && $gv['matkhau'] === dt_gv_hash($pass))
 	{
 		$_SESSION['dt_gv'] = array('id' => (int)$gv['id'], 'cccd' => $gv['cccd'], 'hoten' => $gv['hoten'], 'gv_key' => $gv['gv_key']);
-		$func->redirect('index.php?com=cong-giao-vien');
+		$func->redirect('cong-giao-vien');
 	}
 	$dtGvErr = 'CCCD hoặc mật khẩu không đúng.';
 }
 elseif($dtAct === 'logout')
 {
 	unset($_SESSION['dt_gv']);
-	$func->redirect('index.php?com=cong-giao-vien');
+	$func->redirect('cong-giao-vien');
 }
 elseif($dtAct === 'changepass' && isset($_SESSION['dt_gv']))
 {

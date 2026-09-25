@@ -79,7 +79,8 @@ function dt_cabin_upload_excel()
 		}
 
 		$ghiChu = dt_val($row, $map, 'ghi_chu');
-		$dat = (strpos(dt_norm_header($ghiChu), 'dapung') !== false) ? 1 : 0;
+		$ghiNorm = dt_norm_header($ghiChu);
+		$dat = (strpos($ghiNorm, 'dapung') !== false && strpos($ghiNorm, 'khong') === false) ? 1 : 0;
 		$data = array(
 			'id_khoa' => $idKhoa,
 			'ma_hv' => $maHv,

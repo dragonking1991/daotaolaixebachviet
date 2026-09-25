@@ -6,7 +6,7 @@
 
 	<?php if(empty($dtGv)): ?>
 	<div style="max-width:400px;margin:0 auto;border:1px solid #ddd;border-radius:12px;padding:24px;">
-		<form method="post" action="index.php?com=cong-giao-vien">
+		<form method="post" action="cong-giao-vien">
 			<input type="hidden" name="dt_act" value="login">
 			<div style="margin-bottom:14px;">
 				<label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Số CCCD</label>
@@ -25,12 +25,12 @@
 			<div><strong style="font-size:16px;">Xin chào, <?=htmlspecialchars($dtGv['hoten'])?></strong> <span style="color:#888;">(CCCD: <?=htmlspecialchars($dtGv['cccd'])?>)</span></div>
 			<div>
 				<button type="button" onclick="document.getElementById('dt-changepass').style.display=(document.getElementById('dt-changepass').style.display==='none'?'block':'none')" style="height:36px;padding:0 14px;border:1px solid #2954f2;background:#fff;color:#2954f2;border-radius:6px;cursor:pointer;">Đổi mật khẩu</button>
-				<form method="post" action="index.php?com=cong-giao-vien" style="display:inline;"><input type="hidden" name="dt_act" value="logout"><button type="submit" style="height:36px;padding:0 14px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;">Đăng xuất</button></form>
+				<form method="post" action="cong-giao-vien" style="display:inline;"><input type="hidden" name="dt_act" value="logout"><button type="submit" style="height:36px;padding:0 14px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;">Đăng xuất</button></form>
 			</div>
 		</div>
 
 		<div id="dt-changepass" style="display:none;max-width:420px;margin:0 0 16px;border:1px solid #ddd;border-radius:10px;padding:16px;">
-			<form method="post" action="index.php?com=cong-giao-vien">
+			<form method="post" action="cong-giao-vien">
 				<input type="hidden" name="dt_act" value="changepass">
 				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;">Mật khẩu hiện tại</label><input type="password" name="old_pass" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;"></div>
 				<div style="margin-bottom:12px;"><label style="display:block;font-size:13px;color:#555;">Mật khẩu mới</label><input type="password" name="new_pass" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;"></div>
@@ -59,7 +59,7 @@
 					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=dt_gv_badge($s['ly_thuyet']['dat'])?></td>
 					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=dt_gv_badge($s['cabin']['dat'])?></td>
 					<td style="padding:8px;border:1px solid #e0e0e0;">
-						<form method="post" action="index.php?com=cong-giao-vien" style="display:flex;gap:4px;align-items:center;">
+						<form method="post" action="cong-giao-vien" style="display:flex;gap:4px;align-items:center;">
 							<input type="hidden" name="dt_act" value="savehinh">
 							<input type="hidden" name="id_khoa" value="<?=(int)$hv['id_khoa']?>">
 							<input type="hidden" name="cccd" value="<?=htmlspecialchars($hv['cccd'])?>">

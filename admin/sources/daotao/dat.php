@@ -56,8 +56,9 @@ function dt_dat_list()
 	{
 		$agg = dt_dat_aggregate($hv['cccd'], $id_khoa_sel);
 		list($dat, $thieu) = dt_dat_danhgia($hv['hang'], $agg);
-		$soPhien = $d->rawQueryValue("select count(*) from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($id_khoa_sel, $hv['cccd']));
-		$items[] = array('hv' => $hv, 'agg' => $agg, 'dat' => $dat, 'thieu' => $thieu, 'so_phien' => (int)(is_array($soPhien)?reset($soPhien):$soPhien));
+		$rPhien = $d->rawQueryOne("select count(*) as c from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($id_khoa_sel, $hv['cccd']));
+		$soPhien = (int)($rPhien ? $rPhien['c'] : 0);
+		$items[] = array('hv' => $hv, 'agg' => $agg, 'dat' => $dat, 'thieu' => $thieu, 'so_phien' => $soPhien);
 	}
 }
 

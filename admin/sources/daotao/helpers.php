@@ -270,8 +270,10 @@ function dt_student_summary($hv)
 
 	// Lý thuyết: cần cả 6 môn đạt
 	$tongMon = count(dt_mon_lythuyet());
-	$soDat = (int)$d->rawQueryValue("select count(*) from #_dt_lythuyet where id_khoa = ? and cccd = ? and dat = 1", array($idKhoa, $cccd));
-	$soCo = (int)$d->rawQueryValue("select count(*) from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+	$rDat = $d->rawQueryOne("select count(*) as c from #_dt_lythuyet where id_khoa = ? and cccd = ? and dat = 1", array($idKhoa, $cccd));
+	$soDat = (int)($rDat ? $rDat['c'] : 0);
+	$rCo = $d->rawQueryOne("select count(*) as c from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+	$soCo = (int)($rCo ? $rCo['c'] : 0);
 	$lyThuyetDat = ($soDat >= $tongMon) ? 1 : 0;
 
 	// Cabin

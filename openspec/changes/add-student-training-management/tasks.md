@@ -78,4 +78,4 @@
 - [x] 11.1 Quyền `daotao_man`/`daotao_upload` trong `requick.php` + `permission_group_tpl.php`
 - [x] 11.2 Lint PHP toàn bộ file mới — tất cả PASS
 - [x] 11.3 Kiểm thử logic (chuẩn hóa hạng, ngưỡng LT/hình/DAT, giờ đêm) + dò header trên tiêu đề file thật (xe, GV, mẫu2, LT, cabin, DAT) — tất cả PASS. *(Import e2e trên MySQL thật nên chạy khi deploy.)*
-- [ ] 11.4 Kiểm thử cổng học viên/giáo viên trên trình duyệt *(chạy khi deploy — code đã hoàn thiện, chưa dựng stack mysql+apache để e2e)*
+- [x] 11.4 Kiểm thử cổng học viên/giáo viên + toàn bộ luồng admin trên trình duyệt (Playwright, docker compose localhost:8080) — PASS: import 6 loại file, tổng hợp, xuất Excel, cổng HV, cổng GV (đăng nhập + cập nhật). 4 bug phát hiện & sửa (cabin substring, form-in-tr, rawQueryValue array, route cổng GV).
