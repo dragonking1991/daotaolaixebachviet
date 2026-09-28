@@ -12,7 +12,11 @@ function dt_crud_configs()
 			'bien_so' => 'Biển số', 'hang_xe' => 'Hạng xe', 'hang_dt' => 'Hạng đào tạo', 'so_dangky' => 'Số đăng ký', 'so_khung' => 'Số khung', 'so_may' => 'Số máy', 'loai_xe' => 'Loại xe', 'nhan_hieu' => 'Nhãn hiệu', 'gv_hoten' => 'Giáo viên'
 		)),
 		'giaovien' => array('title' => 'Giáo viên', 'table' => 'dt_giaovien', 'back' => 'giaovien', 'fields' => array(
-			'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'gioitinh' => 'Giới tính', 'hang_gplx' => 'Hạng GPLX', 'hang_daotao_phep' => 'Hạng đào tạo được phép', 'sdt' => 'Điện thoại', 'dia_chi' => 'Địa chỉ'
+			'ma_csdt' => 'Mã CSĐT', 'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'gioitinh' => 'Giới tính', 'sdt' => 'Điện thoại', 'dia_chi' => 'Địa chỉ',
+			'hang_gplx' => 'Hạng GPLX', 'so_gplx' => 'Số GPLX', 'ngay_cap_gplx' => 'Ngày cấp GPLX', 'ngay_hh_gplx' => 'Ngày hết hạn GPLX',
+			'hang_daotao_phep' => 'Hạng đào tạo được phép', 'loai_hinh_dt' => 'Loại hình đào tạo (LT/TH/AL)', 'hinh_thuc_td' => 'Hình thức tuyển dụng', 'tuyen_dung' => 'Ngày tuyển dụng',
+			'so_qd_gcn' => 'Số QĐ GCN', 'ngay_qd_gcn' => 'Ngày QĐ GCN', 'noi_cap_gcn' => 'Nơi cấp GCN', 'noi_ct' => 'Nơi công tác',
+			'trinh_do' => 'Trình độ', 'chuyen_mon' => 'Chuyên môn', 'su_pham' => 'Sư phạm', 'ghi_chu' => 'Ghi chú'
 		)),
 		'lythuyet' => array('title' => 'Lý thuyết', 'table' => 'dt_lythuyet', 'back' => 'lythuyet', 'fields' => array(
 			'id_khoa' => 'Khóa', 'cccd' => 'CCCD', 'mon' => 'Môn', 'tien_do' => 'Tiến độ (%)', 'diem_kt' => 'Điểm kiểm tra'
@@ -67,7 +71,7 @@ function dt_crud_save()
 		$value = is_array($p[$field]) ? '' : trim((string)$p[$field]);
 		if($field === 'id_khoa') $value = (int)$value;
 		elseif($field === 'cccd') $value = dt_normalize_cccd($value);
-		elseif(in_array($field, array('hang','hang_xe','hang_gplx','hang_daotao_phep'), true)) $value = dt_norm_hang($value);
+		elseif(in_array($field, array('hang','hang_xe'), true)) $value = dt_norm_hang($value);
 		elseif(in_array($field, array('tien_do','diem_kt','gio_thuchanh','km','gio','so_noidung'), true)) $value = dt_parse_number($value);
 		else $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 		$data[$field] = $value;
@@ -112,9 +116,46 @@ function dt_crud_delete()
 	$config = dt_crud_context($entity);
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 	if(!$config || !$id) $func->transfer('Dữ liệu không hợp lệ', 'index.php?com=daotao&act=khoa', false);
+
+	// Lưu bản ghi để hoàn tác (chỉ với mục không xóa dây chuyền)
+	$cascade = in_array($entity, array('khoa','hocvien'), true);
+	if(!$cascade)
+	{
+		$row = $d->rawQueryOne('select * from #_'.$config['table'].' where id = ? limit 0,1', array($id));
+		if($row) $_SESSION['dt_undo'] = array('entity' => $entity, 'row' => $row, 'time' => time());
+	}
 	dt_crud_delete_id($entity, $id);
-	$func->transfer('Đã xóa '.$config['title'], dt_crud_back($config));
+	dt_audit('delete', $entity, 1, 'id='.$id);
+	$back = dt_crud_back($config, dt_crud_ret_query().($cascade ? '' : '&undo=1'));
+	$func->transfer('Đã xóa '.$config['title'], $back);
 }
+
+/* Hoàn tác xóa: chèn lại bản ghi vừa xóa (chỉ mục không dây chuyền). */
+function dt_crud_undo()
+{
+	global $d, $func;
+	$u = isset($_SESSION['dt_undo']) ? $_SESSION['dt_undo'] : null;
+	if(!$u || (time() - (int)$u['time']) > 300) $func->transfer('Không có thao tác để hoàn tác', 'index.php?com=daotao&act=khoa', false);
+	$config = dt_crud_context($u['entity']);
+	if($config)
+	{
+		$d->rawQuery('delete from #_'.$config['table'].' where id = ?', array((int)$u['row']['id']));
+		$d->insert($config['table'], $u['row']);
+		dt_audit('undo', $u['entity'], 1, 'id='.$u['row']['id']);
+	}
+	unset($_SESSION['dt_undo']);
+	$func->transfer('Đã hoàn tác', dt_crud_back($config));
+}
+
+/* Giữ lại tham số lọc/phân trang để quay về đúng chỗ. */
+function dt_crud_ret_query()
+{
+	$q = array();
+	foreach(array('id_khoa','keyword','hang','p') as $k)
+		if(isset($_GET[$k]) && $_GET[$k] !== '') $q[$k] = $_GET[$k];
+	return empty($q) ? '' : '&'.http_build_query($q);
+}
+
 
 function dt_crud_delete_id($entity, $id)
 {
@@ -143,13 +184,28 @@ function dt_crud_delete_all()
 	$entity = preg_replace('/[^a-z]/', '', isset($_GET['entity']) ? $_GET['entity'] : '');
 	if($entity === 'all')
 	{
-		foreach(array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh','dt_hocvien','dt_xe','dt_giaovien','dt_khoa','dt_import_log') as $table) $d->rawQuery('delete from #_'.$table);
-		$func->transfer('Đã xóa toàn bộ dữ liệu đào tạo', 'index.php?com=daotao&act=tonghop');
+		dt_backup_tables(dt_backup_tables_list(), 'all');
+		$affected = 0;
+		foreach(array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh','dt_hocvien','dt_xe','dt_giaovien','dt_khoa','dt_import_log') as $table)
+		{
+			$c = $d->rawQueryOne("select count(*) as c from #_$table");
+			$affected += (int)($c ? $c['c'] : 0);
+			$d->rawQuery('delete from #_'.$table);
+		}
+		dt_audit('delete_all', 'all', $affected, 'Xóa toàn bộ dữ liệu đào tạo');
+		$func->transfer('Đã xóa toàn bộ dữ liệu đào tạo ('.$affected.' bản ghi)', 'index.php?com=daotao&act=tonghop');
 	}
 	$config = dt_crud_context($entity);
 	if(!$config) $func->transfer('Mục đào tạo không hợp lệ', 'index.php?com=daotao&act=khoa', false);
+
+	$cnt = $d->rawQueryOne("select count(*) as c from #_".$config['table']);
+	$affected = (int)($cnt ? $cnt['c'] : 0);
+	$backupTables = array_merge(array($config['table']), in_array($entity, array('khoa','hocvien'), true) ? array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') : array());
+	dt_backup_tables($backupTables, $entity);
+
 	if($entity === 'khoa') foreach($d->rawQuery('select id from #_dt_khoa') as $row) dt_khoa_delete_id((int)$row['id']);
 	elseif($entity === 'hocvien') foreach(array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table) $d->rawQuery('delete from #_'.$table);
 	$d->rawQuery('delete from #_'.$config['table']);
-	$func->transfer('Đã xóa toàn bộ '.$config['title'], dt_crud_back($config));
+	dt_audit('delete_all', $entity, $affected, 'Xóa toàn bộ '.$config['title']);
+	$func->transfer('Đã xóa toàn bộ '.$config['title'].' ('.$affected.' bản ghi)', dt_crud_back($config));
 }

@@ -56,6 +56,8 @@ function dt_xe_upload_excel()
 	if($score <= 0 || !isset($map['bien_so']))
 		$func->transfer("Không nhận diện được cột 'Biển số xe' trong file.", $back, false);
 
+	dt_backup_tables(array('dt_xe'), 'imp_xe');
+	$d->startTransaction();
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
@@ -84,6 +86,8 @@ function dt_xe_upload_excel()
 		$ok++;
 	}
 
+	$d->commit();
+	dt_audit('import', 'xe', $ok, $file['name']);
 	dt_log_import('xe', $file['name'], $ok, $err);
 	$func->transfer("Import xe: $ok dòng thành công", "index.php?com=daotao&act=xe");
 }

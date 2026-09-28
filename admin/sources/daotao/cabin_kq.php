@@ -62,6 +62,8 @@ function dt_cabin_upload_excel()
 	if(!isset($map['ma_hv']))
 		$func->transfer("Không nhận diện được cột 'Mã học viên' trong file cabin.", $back, false);
 
+	dt_backup_tables(array('dt_cabin_kq'), 'imp_cabin');
+	$d->startTransaction();
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
@@ -97,6 +99,8 @@ function dt_cabin_upload_excel()
 		$ok++;
 	}
 
+	$d->commit();
+	dt_audit('import', 'cabin', $ok, $file['name']);
 	dt_log_import('cabin', $file['name'], $ok, $err);
 	$msg = "Import cabin: $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);

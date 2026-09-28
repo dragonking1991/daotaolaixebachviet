@@ -78,6 +78,8 @@ function dt_lythuyet_upload_excel()
 	if(!isset($map['cccd']) || !isset($map['tien_do']) || !isset($map['diem_kt']))
 		$func->transfer("Không nhận diện đủ các cột 'Mã đăng nhập', 'Tiến độ hoàn thành', 'Điểm kiểm tra'.", $back, false);
 
+	dt_backup_tables(array('dt_lythuyet'), 'imp_lythuyet');
+	$d->startTransaction();
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = 2; $r <= $highestRow; $r++)
 	{
@@ -112,6 +114,8 @@ function dt_lythuyet_upload_excel()
 		$ok++;
 	}
 
+	$d->commit();
+	dt_audit('import', 'lythuyet:'.$mon, $ok, $file['name']);
 	dt_log_import('lythuyet:'.$mon, $file['name'], $ok, $err);
 	$msg = "Import môn ".$dsMon[$mon].": $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);

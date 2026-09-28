@@ -97,5 +97,6 @@ function dt_khoa_delete()
 	$d->rawQuery("delete from #_dt_cabin_kq where id_khoa = ?", array($id));
 	$d->rawQuery("delete from #_dt_dat_phien where id_khoa = ?", array($id));
 	$d->rawQuery("delete from #_dt_thuchanh_hinh where id_khoa = ?", array($id));
+	if(function_exists('dt_audit')) dt_audit('delete', 'khoa', 1, 'id='.$id.' (+dữ liệu liên quan)');
 	$func->transfer("Xóa khóa và dữ liệu liên quan thành công", "index.php?com=daotao&act=khoa");
 }

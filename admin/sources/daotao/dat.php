@@ -104,6 +104,8 @@ function dt_dat_upload_excel()
 	if(!isset($map['ma_phien']) || !isset($map['ma_hv']))
 		$func->transfer("Không nhận diện được cột 'Mã phiên học' và 'Mã học viên' trong file DAT.", $back, false);
 
+	dt_backup_tables(array('dt_dat_phien'), 'imp_dat');
+	$d->startTransaction();
 	$them = 0; $trung = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
@@ -150,6 +152,8 @@ function dt_dat_upload_excel()
 		if($d->insert('dt_dat_phien', $data)) $them++;
 	}
 
+	$d->commit();
+	dt_audit('import', 'dat', $them, $file['name']);
 	dt_log_import('dat', $file['name'], $them, $err);
 	$msg = "Import DAT: thêm $them phiên mới, bỏ qua $trung phiên đã có".($err ? ", $err phiên lỗi (HV không thuộc khóa)" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);

@@ -4,6 +4,7 @@ if(!defined('SOURCES')) die("Error");
 require_once SOURCES.'daotao/schema.php';
 require_once SOURCES.'daotao/config_daotao.php';
 require_once SOURCES.'daotao/helpers.php';
+require_once SOURCES.'daotao/ops.php';
 require_once SOURCES.'daotao/excel_open.php';
 require_once SOURCES.'daotao/khoa.php';
 require_once SOURCES.'daotao/hocvien.php';
@@ -37,6 +38,7 @@ switch($act)
 	case "crudEdit":   dt_guard($DT_MAN); dt_crud_form(); $template = "daotao/crud_form"; break;
 	case "crudSave":   dt_guard($DT_MAN); dt_crud_save(); break;
 	case "crudDelete": dt_guard($DT_MAN); dt_crud_delete(); break;
+	case "crudUndo":   dt_guard($DT_MAN); dt_crud_undo(); break;
 	case "crudDeleteAll": dt_guard($DT_MAN); dt_crud_delete_all(); break;
 
 	/* ---------- Học viên ---------- */

@@ -91,18 +91,35 @@ elseif($dtAct === 'savehinh' && isset($_SESSION['dt_gv']))
 	$idKhoa = (int)($_POST['id_khoa'] ?? 0);
 	$cccd = dt_normalize_cccd($_POST['cccd'] ?? '');
 	$hv = dt_find_hocvien_by_cccd($cccd, $idKhoa);
+	$isAjax = !empty($_POST['ajax']);
 	if($hv && $hv['gv_key'] === $_SESSION['dt_gv']['gv_key'])
 	{
-		$data = array('id_khoa' => $idKhoa, 'cccd' => $hv['cccd'],
-			'gio' => (float)str_replace(',', '.', $_POST['gio'] ?? 0),
-			'km' => (float)str_replace(',', '.', $_POST['km'] ?? 0),
+		$gio = (float)str_replace(',', '.', $_POST['gio'] ?? 0);
+		$km = (float)str_replace(',', '.', $_POST['km'] ?? 0);
+		$data = array('id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'gio' => $gio, 'km' => $km,
 			'nguoi_nhap' => 'GV:'.$_SESSION['dt_gv']['cccd']);
 		$exist = $d->rawQueryOne("select id from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $hv['cccd']));
 		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_thuchanh_hinh', $data); }
 		else { $data['ngaytao'] = time(); $d->insert('dt_thuchanh_hinh', $data); }
+		$hinhDat = dt_hinh_dat($hv['hang'], $gio, $km);
+		if($isAjax)
+		{
+			header('Content-Type: application/json; charset=utf-8');
+			echo json_encode(array('ok' => true, 'dat' => $hinhDat, 'msg' => 'Đã lưu cho '.$hv['hoten']));
+			exit;
+		}
 		$dtGvMsg = 'Đã lưu thực hành trong hình cho '.$hv['hoten'].'.';
 	}
-	else $dtGvErr = 'Học viên không thuộc quyền quản lý của bạn.';
+	else
+	{
+		if($isAjax)
+		{
+			header('Content-Type: application/json; charset=utf-8');
+			echo json_encode(array('ok' => false, 'msg' => 'Học viên không thuộc quyền quản lý của bạn.'));
+			exit;
+		}
+		$dtGvErr = 'Học viên không thuộc quyền quản lý của bạn.';
+	}
 }
 
 /* ----- Dữ liệu cho template ----- */

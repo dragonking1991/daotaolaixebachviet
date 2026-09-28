@@ -73,14 +73,14 @@
 					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=dt_gv_badge($s['ly_thuyet']['dat'])?></td>
 					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=dt_gv_badge($s['cabin']['dat'])?></td>
 					<td style="padding:8px;border:1px solid #e0e0e0;">
-						<form method="post" action="cong-giao-vien" style="display:flex;gap:4px;align-items:center;">
+						<form method="post" action="cong-giao-vien" class="dt-hinh-form" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
 							<input type="hidden" name="dt_act" value="savehinh">
 							<input type="hidden" name="id_khoa" value="<?=(int)$hv['id_khoa']?>">
 							<input type="hidden" name="cccd" value="<?=htmlspecialchars($hv['cccd'])?>">
 							<input type="number" step="0.01" name="gio" value="<?=$s['hinh']['gio']?>" placeholder="giờ" style="width:64px;height:32px;border:1px solid #ccc;border-radius:5px;padding:0 6px;">
 							<input type="number" step="0.01" name="km" value="<?=$s['hinh']['km']?>" placeholder="km" style="width:64px;height:32px;border:1px solid #ccc;border-radius:5px;padding:0 6px;">
 							<button type="submit" style="height:32px;padding:0 8px;border:none;background:#2954f2;color:#fff;border-radius:5px;cursor:pointer;">Lưu</button>
-							<?=dt_gv_badge($s['hinh']['dat'])?>
+							<span class="dt-hinh-badge"><?=dt_gv_badge($s['hinh']['dat'])?></span>
 						</form>
 					</td>
 					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=dt_gv_badge($s['dat']['dat'])?></td>
@@ -95,3 +95,43 @@
 	</div>
 	<?php endif; ?>
 </div>
+
+<style>
+@media (max-width: 640px){
+	.w_1000 table th, .w_1000 table td { font-size: 13px; padding: 6px !important; }
+	.dt-hinh-form input[type=number] { width: 56px !important; }
+	.w_1000 form[action="cong-giao-vien"] input[type=text],
+	.w_1000 form[action="cong-giao-vien"] input[type=password] { font-size: 16px; }
+}
+.dt-toast { position: fixed; bottom: 18px; right: 18px; background: #12673a; color: #fff; padding: 10px 16px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.2); font-size: 14px; z-index: 9999; opacity: 0; transform: translateY(8px); transition: all .2s; }
+.dt-toast.show { opacity: 1; transform: translateY(0); }
+.dt-toast.err { background: #912018; }
+</style>
+<script>
+(function(){
+	function toast(msg, ok){
+		var t = document.createElement('div');
+		t.className = 'dt-toast' + (ok ? '' : ' err');
+		t.textContent = msg;
+		document.body.appendChild(t);
+		requestAnimationFrame(function(){ t.classList.add('show'); });
+		setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 250); }, 2500);
+	}
+	document.querySelectorAll('form.dt-hinh-form').forEach(function(f){
+		f.addEventListener('submit', function(e){
+			e.preventDefault();
+			var btn = f.querySelector('button[type=submit]');
+			var old = btn.textContent; btn.disabled = true; btn.textContent = '...';
+			var body = new FormData(f); body.append('ajax', '1');
+			fetch('cong-giao-vien', { method: 'POST', body: body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+				.then(function(r){ return r.json(); })
+				.then(function(j){
+					toast(j.msg || (j.ok ? 'Đã lưu' : 'Lỗi'), j.ok);
+					if(j.ok){ var b = f.querySelector('.dt-hinh-badge'); if(b) b.innerHTML = '<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:' + (j.dat ? '#1e9e4a' : '#c0392b') + ';color:#fff;font-size:12px;">' + (j.dat ? 'Đạt' : 'Chưa') + '</span>'; }
+				})
+				.catch(function(){ toast('Lỗi kết nối', false); })
+				.finally(function(){ btn.disabled = false; btn.textContent = old; });
+		});
+	});
+})();
+</script>

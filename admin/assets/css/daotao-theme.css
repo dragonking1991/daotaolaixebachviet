@@ -261,7 +261,7 @@ body.com-daotao .dt-title { font-weight: 700; color: var(--dt-ink); font-size: .
 body.com-daotao .dt-title a { color: var(--dt-ink); text-decoration: none; }
 body.com-daotao .dt-title a:hover { color: var(--dt-blue-2); }
 body.com-daotao .dt-sub { color: var(--dt-muted); font-size: .76rem; line-height: 1.5; }
-body.com-daotao .dt-sub i { width: 13px; opacity: .7; margin-right: 3px; }
+body.com-daotao .dt-sub i { display: inline-block; width: 14px; text-align: center; font-size: 12px; opacity: .7; margin-right: 5px; }
 body.com-daotao .dt-sub strong { color: var(--dt-ink); font-weight: 600; }
 body.com-daotao .dt-sep { color: #cbd5e1; margin: 0 6px; }
 body.com-daotao .dt-tag {
@@ -282,3 +282,185 @@ body.com-daotao .dt-prog-num { font-size: .75rem; font-weight: 700; color: var(-
 /* make matrix/aggregate tables share the cleaner borderless look */
 body.com-daotao .card-body > .table-responsive > table.table,
 body.com-daotao .card-body > table.table { border-color: #f0f2f7; }
+
+/* ==========================================================================
+   Reference-style polish: soft colors, weight contrast, buttons, spacing
+   ========================================================================== */
+
+/* Airier rows + clearer text-weight hierarchy */
+body.com-daotao table.dt-list tbody td { padding: 14px 16px; }
+body.com-daotao table.dt-list thead th { padding: 12px 16px; }
+body.com-daotao .dt-title { font-size: .92rem; margin-bottom: 3px; }
+body.com-daotao .dt-sub { font-size: .78rem; line-height: 1.6; }
+body.com-daotao .dt-sub + .dt-sub { margin-top: 1px; }
+
+/* Soft pastel pill badges (like the reference status chips) */
+body.com-daotao .badge { border-radius: 999px; padding: .38em .8em; font-weight: 600; font-size: .72rem; }
+body.com-daotao .badge-success  { background: #e7f7ee; color: #15803d; }
+body.com-daotao .badge-danger   { background: #fdecee; color: #dc2626; }
+body.com-daotao .badge-secondary{ background: #eef1f6; color: #64748b; }
+body.com-daotao .badge-warning  { background: #fef4e6; color: #b45309; }
+body.com-daotao .badge-info     { background: #e6f3fb; color: #0369a1; }
+body.com-daotao .badge-primary  { background: var(--dt-blue-soft); color: var(--dt-blue-2); }
+
+/* Soft, evenly-spaced row action buttons (tinted, readable — override AdminLTE
+   gradient !important so icons keep strong contrast on a light chip) */
+body.com-daotao .dt-actions .btn { margin-left: 5px; }
+body.com-daotao .dt-actions .btn:first-child { margin-left: 0; }
+body.com-daotao .btn-xs {
+	border-radius: 8px;
+	padding: .32rem .5rem;
+	line-height: 1;
+	box-shadow: none !important;
+	border: 1px solid transparent;
+	transition: background-color .15s ease, border-color .15s ease;
+}
+body.com-daotao .btn-xs i { font-size: 13px; }
+body.com-daotao .btn-xs.bg-gradient-info {
+	background: #e8f0fe !important; color: #1d4ed8 !important; border-color: #cfe0fd;
+}
+body.com-daotao .btn-xs.bg-gradient-info:hover { background: #d6e6fd !important; border-color: #b8d3fb; }
+body.com-daotao .btn-xs.bg-gradient-danger {
+	background: #fdecec !important; color: #dc2626 !important; border-color: #f6cccc;
+}
+body.com-daotao .btn-xs.bg-gradient-danger:hover { background: #fbdcdc !important; border-color: #f2b8b8; }
+body.com-daotao .btn-xs.bg-gradient-warning {
+	background: #fef3e2 !important; color: #b45309 !important; border-color: #f6dfb6;
+}
+body.com-daotao .btn-xs.bg-gradient-warning:hover { background: #fbe7c9 !important; border-color: #f2d29a; }
+body.com-daotao .btn-xs.bg-gradient-success {
+	background: #e7f7ee !important; color: #15803d !important; border-color: #cbecd8;
+}
+body.com-daotao .btn-xs.bg-gradient-success:hover { background: #d6f1e2 !important; border-color: #b6e3c8; }
+
+/* Header toolbar buttons: rounded + spaced consistently */
+body.com-daotao .card-tools .btn { border-radius: 8px; }
+body.com-daotao .card-tools .btn + .btn { margin-left: 6px; }
+
+/* Tag chips: a touch more breathing room between adjacent chips */
+body.com-daotao .dt-tag { margin-right: 4px; }
+
+/* Empty state box */
+body.com-daotao .dt-empty { padding: 0 !important; border: none !important; }
+body.com-daotao .dt-empty-box {
+	text-align: center;
+	color: var(--dt-muted);
+	padding: 40px 16px;
+}
+body.com-daotao .dt-empty-box i { font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px; }
+body.com-daotao .dt-empty-box > div { font-size: .9rem; }
+
+/* Loading overlay */
+#dt-loading {
+	display: none;
+	position: fixed; inset: 0; z-index: 3000;
+	background: rgba(255, 255, 255, .55);
+	backdrop-filter: blur(1px);
+	align-items: center; justify-content: center;
+}
+#dt-loading .dt-spin {
+	width: 46px; height: 46px;
+	border: 4px solid #d7def0;
+	border-top-color: var(--dt-blue-2);
+	border-radius: 50%;
+	animation: dt-spin 0.7s linear infinite;
+}
+@keyframes dt-spin { to { transform: rotate(360deg); } }
+
+/* ==========================================================================
+   UX refinement v2 — calmer palette, weight hierarchy, icon/text rhythm.
+   Overrides earlier rules; also fixes icon spacing now that FontAwesome <i>
+   are rendered as Lucide <svg> (old `.dt-sub i` no longer matched).
+   ========================================================================== */
+body.com-daotao {
+	--dt-ink: #0f172a;        /* tiêu đề: gần đen, dịu */
+	--dt-muted: #64748b;      /* chữ phụ */
+	--dt-faint: #94a3b8;      /* icon / nhãn mờ */
+	--dt-border: #e6e9f0;
+	--dt-blue-2: #2563eb;
+	--dt-blue-soft: #eef4ff;
+	background: #f6f8fc;
+	color: #334155;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', 'Helvetica Neue', Arial, sans-serif;
+	letter-spacing: .1px;
+}
+
+/* Card & tiêu đề */
+body.com-daotao .card { border-radius: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.05); }
+body.com-daotao .card-header { padding: 16px 20px; border-bottom: 1px solid #eef1f6; }
+body.com-daotao .card-title, body.com-daotao .card-title strong { font-weight: 700; font-size: 1rem; color: var(--dt-ink); letter-spacing: 0; }
+body.com-daotao .card-body { padding: 8px 20px 16px; }
+
+/* Header cột: nhẹ nhàng, dễ quét */
+body.com-daotao table.dt-list thead th {
+	color: var(--dt-faint);
+	font-size: .66rem;
+	font-weight: 600;
+	letter-spacing: .8px;
+	padding: 14px 16px 10px;
+	border-bottom: 1px solid #eef1f6;
+}
+
+/* Hàng: thoáng + đường kẻ mảnh */
+body.com-daotao table.dt-list tbody td { padding: 15px 16px; border-bottom: 1px solid #f1f3f8; }
+body.com-daotao table.dt-list tbody tr:hover { background: #fafbfe; }
+
+/* Phân cấp chữ: tiêu đề semibold, giá trị vừa, nhãn mờ */
+body.com-daotao .dt-title { font-size: .94rem; font-weight: 600; color: var(--dt-ink); line-height: 1.35; margin-bottom: 4px; letter-spacing: 0; }
+body.com-daotao .dt-sub { color: var(--dt-muted); font-size: .8rem; line-height: 1.7; }
+body.com-daotao .dt-sub + .dt-sub { margin-top: 2px; }
+body.com-daotao .dt-sub strong { color: #334155; font-weight: 600; }
+body.com-daotao .dt-sep { color: #d3d9e4; margin: 0 8px; }
+
+/* Icon trong dòng phụ (Lucide svg + fallback <i>): mờ, cách chữ 7px, canh giữa */
+body.com-daotao .dt-sub svg.lucide-fa,
+body.com-daotao .dt-sub i {
+	width: 14px; height: 14px;
+	color: var(--dt-faint);
+	stroke-width: 2;
+	margin-right: 7px;
+	vertical-align: -0.15em;
+	opacity: 1;
+	flex-shrink: 0;
+}
+
+/* Tag/chip: mềm, chữ semibold vừa phải */
+body.com-daotao .dt-tag {
+	padding: 3px 10px; border-radius: 999px;
+	font-weight: 600; font-size: .72rem;
+	background: var(--dt-blue-soft); color: var(--dt-blue-2);
+	letter-spacing: .1px;
+}
+body.com-daotao .dt-tag.is-muted { background: #f1f4f9; color: #64748b; }
+
+/* Badge trạng thái: pastel, đủ tương phản chữ */
+body.com-daotao .badge { border-radius: 999px; padding: .4em .75em; font-weight: 600; font-size: .72rem; letter-spacing: .2px; }
+body.com-daotao .badge-success  { background: #e8f6ee; color: #147a3d; }
+body.com-daotao .badge-danger   { background: #fdeaec; color: #c92a37; }
+body.com-daotao .badge-secondary{ background: #eef1f6; color: #64748b; }
+body.com-daotao .badge-warning  { background: #fdf1e1; color: #a15c07; }
+body.com-daotao .badge-info     { background: #e8f2fc; color: #0b6bb3; }
+
+/* Nút thao tác: mềm, icon–chữ cân đối */
+body.com-daotao .btn-xs { padding: .34rem .52rem; }
+body.com-daotao .btn-xs svg.lucide-fa { width: 15px; height: 15px; }
+body.com-daotao .dt-actions .btn { margin-left: 6px; }
+
+/* Nút toolbar: gap icon–chữ thoáng */
+body.com-daotao .card-tools .btn { font-weight: 600; padding: .4rem .8rem; }
+body.com-daotao .btn svg.lucide-fa { margin-right: 6px; }
+body.com-daotao .btn svg.lucide-fa:only-child { margin-right: 0; }
+
+/* Ô lọc/tìm kiếm: bo tròn, viền dịu */
+body.com-daotao .form-control-sm { border-radius: 8px; border-color: #dfe4ee; height: calc(1.5em + .6rem + 2px); }
+body.com-daotao .form-inline { gap: 8px; }
+
+/* Thanh tiến độ: mảnh, bo tròn, màu dịu */
+body.com-daotao .dt-prog-bar { height: 7px; background: #eef1f6; }
+body.com-daotao .dt-prog-num { color: #475569; }
+
+/* Chip nhỏ (LT/Cabin/Hình/DAT) trong cột tiến độ: khoảng cách đều */
+body.com-daotao .dt-prog + .dt-sub .badge { margin-right: 3px; }
+

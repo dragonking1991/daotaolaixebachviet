@@ -70,6 +70,21 @@ function dt_ensure_tables()
 		hang_daotao_phep VARCHAR(50) DEFAULT '',
 		sdt VARCHAR(50) DEFAULT '',
 		dia_chi VARCHAR(500) DEFAULT '',
+		ma_csdt VARCHAR(50) DEFAULT '',
+		so_gplx VARCHAR(50) DEFAULT '',
+		ngay_cap_gplx VARCHAR(20) DEFAULT '',
+		ngay_hh_gplx VARCHAR(20) DEFAULT '',
+		noi_ct VARCHAR(255) DEFAULT '',
+		hinh_thuc_td VARCHAR(50) DEFAULT '',
+		loai_hinh_dt VARCHAR(50) DEFAULT '',
+		so_qd_gcn VARCHAR(100) DEFAULT '',
+		ngay_qd_gcn VARCHAR(20) DEFAULT '',
+		noi_cap_gcn VARCHAR(255) DEFAULT '',
+		trinh_do VARCHAR(100) DEFAULT '',
+		chuyen_mon VARCHAR(255) DEFAULT '',
+		su_pham VARCHAR(100) DEFAULT '',
+		tuyen_dung VARCHAR(50) DEFAULT '',
+		ghi_chu VARCHAR(500) DEFAULT '',
 		matkhau VARCHAR(255) DEFAULT '',
 		ngaytao INT DEFAULT 0,
 		UNIQUE KEY uq_dt_gv_cccd (cccd),
@@ -148,14 +163,63 @@ function dt_ensure_tables()
 		ngaytao INT DEFAULT 0
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_audit (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		action VARCHAR(50) DEFAULT '',
+		entity VARCHAR(50) DEFAULT '',
+		affected INT DEFAULT 0,
+		detail VARCHAR(1000) DEFAULT '',
+		user VARCHAR(255) DEFAULT '',
+		ip VARCHAR(50) DEFAULT '',
+		ngaytao INT DEFAULT 0,
+		KEY idx_dt_audit_ngay (ngaytao)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_migration (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		mkey VARCHAR(100) NOT NULL,
+		ngaytao INT DEFAULT 0,
+		UNIQUE KEY uq_dt_migration_key (mkey)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('gv_ext_cols_v1')) { dt_ensure_gv_columns(); dt_migration_mark('gv_ext_cols_v1'); }
+
 	$done = true;
+}
+
+/* Thêm cột mở rộng cho bảng giáo viên nếu bảng cũ chưa có (an toàn, idempotent). */
+function dt_ensure_gv_columns()
+{
+	global $d;
+	$cols = array(
+		'ma_csdt' => "VARCHAR(50) DEFAULT ''",
+		'so_gplx' => "VARCHAR(50) DEFAULT ''",
+		'ngay_cap_gplx' => "VARCHAR(20) DEFAULT ''",
+		'ngay_hh_gplx' => "VARCHAR(20) DEFAULT ''",
+		'noi_ct' => "VARCHAR(255) DEFAULT ''",
+		'hinh_thuc_td' => "VARCHAR(50) DEFAULT ''",
+		'loai_hinh_dt' => "VARCHAR(50) DEFAULT ''",
+		'so_qd_gcn' => "VARCHAR(100) DEFAULT ''",
+		'ngay_qd_gcn' => "VARCHAR(20) DEFAULT ''",
+		'noi_cap_gcn' => "VARCHAR(255) DEFAULT ''",
+		'trinh_do' => "VARCHAR(100) DEFAULT ''",
+		'chuyen_mon' => "VARCHAR(255) DEFAULT ''",
+		'su_pham' => "VARCHAR(100) DEFAULT ''",
+		'tuyen_dung' => "VARCHAR(50) DEFAULT ''",
+		'ghi_chu' => "VARCHAR(500) DEFAULT ''",
+	);
+	foreach($cols as $col => $def)
+	{
+		$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_giaovien' and column_name = ? limit 0,1", array($col));
+		if(!$exist) $d->rawQuery("ALTER TABLE table_dt_giaovien ADD COLUMN `$col` $def");
+	}
 }
 
 /* Ghi một dòng nhật ký import. */
 function dt_log_import($module, $filename, $soDong, $soLoi)
 {
 	global $d;
-	$d->insert('table_dt_import_log', array(
+	$d->insert('dt_import_log', array(
 		'module' => (string)$module,
 		'filename' => (string)$filename,
 		'so_dong' => (int)$soDong,

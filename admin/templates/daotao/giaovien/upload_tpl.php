@@ -24,6 +24,7 @@
 			</div>
 			<div class="card-footer">
 				<button type="submit" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import</button>
+				<button type="submit" name="preview" value="1" class="btn btn-sm bg-gradient-info"><i class="fas fa-eye mr-1"></i>Xem trước</button>
 				<a href="index.php?com=daotao&act=giaovien" class="btn btn-sm bg-gradient-secondary text-white">Quay lại</a>
 			</div>
 		</div>

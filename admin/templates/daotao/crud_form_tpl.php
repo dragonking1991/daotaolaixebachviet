@@ -11,7 +11,7 @@
 			<?php foreach($dt_crud_config['fields'] as $field => $label): $value=isset($item[$field])?$item[$field]:''; ?>
 				<div class="col-md-6 form-group"><label><?=$label?></label>
 				<?php if($field === 'id_khoa'): ?><select name="data[<?=$field?>]" class="form-control form-control-sm"><option value="0">— Chọn khóa —</option><?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$value==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?></select>
-				<?php elseif($field === 'hang' || $field === 'hang_xe' || $field === 'hang_gplx' || $field === 'hang_daotao_phep'): ?><select name="data[<?=$field?>]" class="form-control form-control-sm"><option value="">— Chọn hạng —</option><?php foreach(array('B11','B1','C1','C','CE','D','E','FC') as $h): ?><option value="<?=$h?>" <?=$value==$h?'selected':''?>><?=$h?></option><?php endforeach; ?></select>
+				<?php elseif($field === 'hang' || $field === 'hang_xe'): ?><select name="data[<?=$field?>]" class="form-control form-control-sm"><option value="">— Chọn hạng —</option><?php foreach(array('B11','B1','C1','C','CE','D','E','FC') as $h): ?><option value="<?=$h?>" <?=$value==$h?'selected':''?>><?=$h?></option><?php endforeach; ?></select>
 				<?php elseif($field === 'ghi_chu' || $field === 'dia_chi'): ?><textarea name="data[<?=$field?>]" class="form-control form-control-sm" rows="2"><?=htmlspecialchars($value)?></textarea>
 				<?php else: ?><input type="text" name="data[<?=$field?>]" class="form-control form-control-sm" value="<?=htmlspecialchars($value)?>">
 				<?php endif; ?></div>

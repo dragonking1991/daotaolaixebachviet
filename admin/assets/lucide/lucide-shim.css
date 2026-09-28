@@ -1,0 +1,13 @@
+/* Kích thước & canh chỉnh icon Lucide cho khớp vị trí icon FontAwesome cũ */
+svg.lucide-fa{
+	width: 1em;
+	height: 1em;
+	display: inline-block;
+	vertical-align: -0.125em;
+	stroke-width: 2.25;
+	flex-shrink: 0;
+}
+.btn svg.lucide-fa{ vertical-align: -0.15em; }
+.nav-icon.lucide-fa, .nav-icon svg.lucide-fa{ width: 1.1rem; height: 1.1rem; }
+.lucide-spin{ animation: lucide-spin 1s linear infinite; }
+@keyframes lucide-spin{ to { transform: rotate(360deg); } }
