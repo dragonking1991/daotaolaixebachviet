@@ -14,6 +14,7 @@ require_once SOURCES.'daotao/cabin_kq.php';
 require_once SOURCES.'daotao/thuchanh_hinh.php';
 require_once SOURCES.'daotao/dat.php';
 require_once SOURCES.'daotao/tonghop.php';
+require_once SOURCES.'daotao/crud.php';
 
 $DT_MAN = array('daotao_man', 'product_man_cabin');
 $DT_UP  = array('daotao_upload', 'daotao_man', 'product_man_cabin');
@@ -33,6 +34,10 @@ switch($act)
 	case "khoaEdit":   dt_guard($DT_MAN); dt_khoa_form();   $template = "daotao/khoa/item_add"; break;
 	case "khoaSave":   dt_guard($DT_MAN); dt_khoa_save();   break;
 	case "khoaDelete": dt_guard($DT_MAN); dt_khoa_delete(); break;
+	case "crudEdit":   dt_guard($DT_MAN); dt_crud_form(); $template = "daotao/crud_form"; break;
+	case "crudSave":   dt_guard($DT_MAN); dt_crud_save(); break;
+	case "crudDelete": dt_guard($DT_MAN); dt_crud_delete(); break;
+	case "crudDeleteAll": dt_guard($DT_MAN); dt_crud_delete_all(); break;
 
 	/* ---------- Học viên ---------- */
 	case "hocvien":            dt_guard($DT_MAN); dt_hocvien_list();   $template = "daotao/hocvien/items"; break;

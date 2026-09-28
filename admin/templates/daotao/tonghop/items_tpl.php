@@ -1,4 +1,15 @@
-<?php if(!defined('SOURCES')) die("Error"); $qs = http_build_query(array_filter(array('com'=>'daotao','act'=>'exportTonghop','id_khoa'=>$filters['id_khoa'],'tu_ngay'=>$filters['tu_ngay'],'toi_ngay'=>$filters['toi_ngay'],'cccd'=>$filters['cccd'],'hoten'=>$filters['hoten'],'hang'=>$filters['hang'],'gv'=>$filters['gv']))); ?>
+<?php
+	if(!defined('SOURCES')) die("Error");
+	$qs = http_build_query(array_filter(array('com'=>'daotao','act'=>'exportTonghop','id_khoa'=>$filters['id_khoa'],'tu_ngay'=>$filters['tu_ngay'],'toi_ngay'=>$filters['toi_ngay'],'cccd'=>$filters['cccd'],'hoten'=>$filters['hoten'],'hang'=>$filters['hang'],'gv'=>$filters['gv'])));
+	$tong_hv = is_array($items) ? count($items) : 0;
+	$so_du = 0; $so_dat_lt = 0;
+	if(!empty($items)) foreach($items as $__it){
+		if(!empty($__it['sum']['du_dieu_kien'])) $so_du++;
+		if(!empty($__it['sum']['ly_thuyet']['dat'])) $so_dat_lt++;
+	}
+	$so_chua = $tong_hv - $so_du;
+	$ty_le = $tong_hv > 0 ? round($so_du / $tong_hv * 100) : 0;
+?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<ol class="breadcrumb float-sm-left">
@@ -8,10 +19,28 @@
 	</div>
 </section>
 <section class="content">
+	<div class="dt-banner">
+		<div class="dt-banner-icon"><i class="fas fa-clipboard-check"></i></div>
+		<div>
+			<div class="dt-banner-kicker">Vận hành đào tạo</div>
+			<h2>Tổng hợp Đạt / Không đạt</h2>
+			<p>Theo dõi kết quả lý thuyết, cabin, hình, DAT và điều kiện dự thi theo từng học viên.</p>
+		</div>
+		<div class="dt-banner-stats">
+			<div class="dt-banner-stat"><div class="num"><?=$so_du?></div><div class="lbl">Đủ điều kiện</div></div>
+			<div class="dt-banner-stat"><div class="num"><?=$ty_le?>%</div><div class="lbl">Tỷ lệ đạt</div></div>
+		</div>
+	</div>
+	<div class="dt-stats">
+		<div class="dt-stat is-blue"><div class="dt-stat-label">Tổng học viên</div><div class="dt-stat-num"><?=$tong_hv?></div><div class="dt-stat-sub">Trong danh sách lọc</div></div>
+		<div class="dt-stat is-green"><div class="dt-stat-label">Đủ điều kiện dự thi</div><div class="dt-stat-num"><?=$so_du?></div><div class="dt-stat-sub">Đã đạt tất cả nội dung</div></div>
+		<div class="dt-stat is-amber"><div class="dt-stat-label">Đạt lý thuyết</div><div class="dt-stat-num"><?=$so_dat_lt?></div><div class="dt-stat-sub">Hoàn thành phần lý thuyết</div></div>
+		<div class="dt-stat is-red"><div class="dt-stat-label">Chưa đủ điều kiện</div><div class="dt-stat-num"><?=$so_chua?></div><div class="dt-stat-sub">Còn thiếu nội dung</div></div>
+	</div>
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Tổng hợp Đạt / Không đạt</strong></h3>
-			<div class="card-tools"><a href="index.php?<?=$qs?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a></div>
+			<div class="card-tools"><a href="index.php?<?=$qs?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=all" onclick="return confirm('Xóa toàn bộ dữ liệu trong Quản lý đào tạo? Thao tác không thể hoàn tác.')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ dữ liệu</a></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="mb-3">

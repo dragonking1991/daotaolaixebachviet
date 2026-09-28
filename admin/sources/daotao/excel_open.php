@@ -63,7 +63,17 @@ function dt_read_row($sheet, $rowNum, $highestColIndex)
 	$row = array();
 	for($c = 0; $c <= $highestColIndex; $c++)
 	{
-		$val = $sheet->getCellByColumnAndRow($c, $rowNum)->getValue();
+		$cell = $sheet->getCellByColumnAndRow($c, $rowNum);
+		$val = $cell->getValue();
+		if(is_string($val) && strlen($val) > 0 && $val[0] === '=')
+		{
+			$calculated = '';
+			try { $calculated = $cell->getCalculatedValue(); } catch(Exception $e) { $calculated = ''; }
+			if($calculated !== null && $calculated !== '' && $calculated !== $val && strpos((string)$calculated, '#') !== 0)
+				$val = $calculated;
+			else
+				$val = '';
+		}
 		$row[$c] = ($val === null) ? '' : trim((string)$val);
 	}
 	return $row;

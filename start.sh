@@ -7,6 +7,25 @@ echo "Listen ${PORT}" > /etc/apache2/ports.conf
 sed -i "s/<VirtualHost \*:[0-9]*>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf
 echo "Starting on port ${PORT}"
 
+# Docker Compose provides MariaDB as a separate `db` service. Do not start a
+# second database inside the web container in that mode.
+if [ -n "${MYSQLHOST:-}" ] && [ "${MYSQLHOST}" != "localhost" ] && [ "${MYSQLHOST}" != "127.0.0.1" ]; then
+  echo "Using external MariaDB at ${MYSQLHOST}:${MYSQLPORT:-3306}."
+  for i in $(seq 1 60); do
+    if mysqladmin ping -h "${MYSQLHOST}" -P "${MYSQLPORT:-3306}" -u "${MYSQLUSER:-root}" -p"${MYSQLPASSWORD:-}" --silent 2>/dev/null; then
+      echo "External MariaDB is ready."
+      break
+    fi
+    if [ "$i" -eq 60 ]; then
+      echo "ERROR: external MariaDB failed to start in 60s"
+      exit 1
+    fi
+    echo "Waiting for external MariaDB... ($i)"
+    sleep 1
+  done
+  exec apache2-foreground
+fi
+
 # Initialize MariaDB data directory if empty
 if [ ! -d "/var/lib/mysql/mysql" ]; then
   echo "Initializing MariaDB data directory..."

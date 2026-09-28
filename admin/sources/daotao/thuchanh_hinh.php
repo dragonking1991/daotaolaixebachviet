@@ -10,7 +10,7 @@ function dt_hinh_list()
 	$items = array();
 	if(!$id_khoa_sel) return;
 
-	$sql = "select h.id, h.cccd, h.hoten, h.hang, th.gio, th.km "
+	$sql = "select h.id, h.cccd, h.hoten, h.hang, th.id as data_id, th.gio, th.km "
 		. "from #_dt_hocvien h left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) "
 		. "where h.id_khoa = ? order by h.hoten asc";
 	$rows = $d->rawQuery($sql, array($id_khoa_sel));

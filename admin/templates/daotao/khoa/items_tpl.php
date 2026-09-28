@@ -13,6 +13,7 @@
 			<h3 class="card-title"><strong>Danh sách khóa đào tạo</strong></h3>
 			<div class="card-tools">
 				<a href="index.php?com=daotao&act=khoaAdd" class="btn btn-sm bg-gradient-success"><i class="fas fa-plus mr-1"></i>Thêm khóa</a>
+				<a href="index.php?com=daotao&act=crudDeleteAll&entity=khoa" onclick="return confirm('Xóa toàn bộ khóa và dữ liệu đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a>
 			</div>
 		</div>
 		<div class="card-body p-0">

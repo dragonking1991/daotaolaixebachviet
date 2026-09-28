@@ -44,12 +44,13 @@ function dt_dat_upload_form()
 /* Tra cứu tổng hợp DAT theo khóa (mỗi học viên 1 dòng, có tham số A/B/C/D/E). */
 function dt_dat_list()
 {
-	global $d, $func, $items, $ds_khoa, $id_khoa_sel;
+	global $d, $func, $items, $phien, $ds_khoa, $id_khoa_sel;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
-	$items = array();
+	$items = array(); $phien = array();
 	if(!$id_khoa_sel) return;
+	$phien = $d->rawQuery("select * from #_dt_dat_phien where id_khoa = ? order by id desc", array($id_khoa_sel));
 
 	$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
 	foreach($hvs as $hv)

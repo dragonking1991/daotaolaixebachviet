@@ -1,0 +1,236 @@
+/* ==========================================================================
+   Đào tạo admin theme
+   Scoped to <body class="com-daotao"> so it never leaks into other modules.
+   Goals:
+   - Fix breadcrumb/content overlap (floated breadcrumb collapsing its row)
+   - Modern blue tone + card arrangement matching the reference dashboard
+   ========================================================================== */
+
+body.com-daotao {
+	--dt-blue: #1e3a8a;
+	--dt-blue-2: #2b4fd6;
+	--dt-blue-soft: #eef2ff;
+	--dt-ink: #1f2937;
+	--dt-muted: #6b7280;
+	--dt-border: #e5e7eb;
+	--dt-green: #16a34a;
+	--dt-amber: #f59e0b;
+	--dt-red: #dc2626;
+	background: #f4f6fb;
+}
+
+/* --- Breadcrumb / content-header: stop the card from riding up beside it --- */
+body.com-daotao .content-header {
+	padding: 14px 0 4px;
+}
+body.com-daotao .content-header .container-fluid {
+	display: block;
+}
+/* clearfix so the floated <ol class="breadcrumb float-sm-left"> no longer
+   collapses its parent and lets the next .content section rise up beside it */
+body.com-daotao .content-header .container-fluid::after {
+	content: "";
+	display: table;
+	clear: both;
+}
+body.com-daotao .content-header .breadcrumb {
+	float: none !important;
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	font-weight: 600;
+}
+body.com-daotao .content-header .breadcrumb-item a {
+	color: var(--dt-blue-2);
+	text-decoration: none;
+}
+body.com-daotao .content-header .breadcrumb-item.active {
+	color: var(--dt-ink);
+}
+
+/* --- Cards --- */
+body.com-daotao .content > .container-fluid,
+body.com-daotao .content {
+	padding-top: 0;
+}
+body.com-daotao .card {
+	border: 1px solid var(--dt-border);
+	border-radius: 14px;
+	box-shadow: 0 6px 20px rgba(17, 24, 39, .06);
+	overflow: hidden;
+}
+body.com-daotao .card.card-outline {
+	border-top: 3px solid var(--dt-blue-2);
+}
+body.com-daotao .card-header {
+	background: #fff;
+	border-bottom: 1px solid var(--dt-border);
+	padding: 14px 18px;
+}
+body.com-daotao .card-title,
+body.com-daotao .card-title strong {
+	color: var(--dt-ink);
+	font-weight: 700;
+	letter-spacing: .2px;
+}
+body.com-daotao .card-body {
+	padding: 16px 18px;
+}
+
+/* --- Buttons --- */
+body.com-daotao .btn.bg-gradient-primary,
+body.com-daotao .btn.bg-gradient-info {
+	background-image: linear-gradient(135deg, var(--dt-blue-2), var(--dt-blue));
+	border: none;
+	border-radius: 8px;
+	font-weight: 600;
+	box-shadow: 0 4px 12px rgba(43, 79, 214, .25);
+}
+body.com-daotao .btn.bg-gradient-primary:hover,
+body.com-daotao .btn.bg-gradient-info:hover {
+	filter: brightness(1.05);
+}
+
+/* --- Form controls --- */
+body.com-daotao .form-control {
+	border-radius: 8px;
+	border-color: var(--dt-border);
+}
+body.com-daotao .form-control:focus {
+	border-color: var(--dt-blue-2);
+	box-shadow: 0 0 0 .15rem rgba(43, 79, 214, .15);
+}
+
+/* --- Tables --- */
+body.com-daotao .table thead th {
+	background: var(--dt-blue-soft);
+	color: var(--dt-ink);
+	border-bottom: 2px solid var(--dt-border);
+	text-transform: uppercase;
+	font-size: .72rem;
+	letter-spacing: .4px;
+}
+body.com-daotao .table td,
+body.com-daotao .table th {
+	vertical-align: middle;
+}
+body.com-daotao .table-hover tbody tr:hover {
+	background: #f8faff;
+}
+body.com-daotao .badge {
+	border-radius: 999px;
+	padding: .35em .7em;
+	font-weight: 600;
+}
+
+/* --- Dashboard banner (gradient hero like the reference) --- */
+body.com-daotao .dt-banner {
+	background: linear-gradient(120deg, var(--dt-blue) 0%, var(--dt-blue-2) 100%);
+	color: #fff;
+	border-radius: 16px;
+	padding: 20px 24px;
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	box-shadow: 0 10px 28px rgba(30, 58, 138, .28);
+}
+body.com-daotao .dt-banner .dt-banner-icon {
+	width: 54px;
+	height: 54px;
+	flex: 0 0 54px;
+	border-radius: 14px;
+	background: rgba(255, 255, 255, .15);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 24px;
+}
+body.com-daotao .dt-banner .dt-banner-kicker {
+	text-transform: uppercase;
+	letter-spacing: 1.2px;
+	font-size: .72rem;
+	opacity: .8;
+	margin-bottom: 2px;
+}
+body.com-daotao .dt-banner h2 {
+	font-size: 1.5rem;
+	font-weight: 800;
+	margin: 0 0 4px;
+	color: #fff;
+}
+body.com-daotao .dt-banner p {
+	margin: 0;
+	opacity: .85;
+	font-size: .85rem;
+}
+body.com-daotao .dt-banner-stats {
+	margin-left: auto;
+	display: flex;
+	gap: 12px;
+}
+body.com-daotao .dt-banner-stat {
+	background: rgba(255, 255, 255, .12);
+	border-radius: 12px;
+	padding: 10px 18px;
+	text-align: center;
+	min-width: 96px;
+}
+body.com-daotao .dt-banner-stat .num {
+	font-size: 1.4rem;
+	font-weight: 800;
+	line-height: 1;
+}
+body.com-daotao .dt-banner-stat .lbl {
+	font-size: .72rem;
+	opacity: .85;
+	margin-top: 4px;
+}
+
+/* --- Stat cards (colored left border) --- */
+body.com-daotao .dt-stats {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 14px;
+	margin-bottom: 16px;
+}
+@media (max-width: 991px) {
+	body.com-daotao .dt-stats { grid-template-columns: repeat(2, 1fr); }
+	body.com-daotao .dt-banner { flex-wrap: wrap; }
+	body.com-daotao .dt-banner-stats { margin-left: 0; }
+}
+@media (max-width: 575px) {
+	body.com-daotao .dt-stats { grid-template-columns: 1fr; }
+}
+body.com-daotao .dt-stat {
+	background: #fff;
+	border: 1px solid var(--dt-border);
+	border-left: 4px solid var(--dt-blue-2);
+	border-radius: 12px;
+	padding: 14px 16px;
+	box-shadow: 0 4px 14px rgba(17, 24, 39, .05);
+}
+body.com-daotao .dt-stat .dt-stat-label {
+	color: var(--dt-muted);
+	font-size: .8rem;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+body.com-daotao .dt-stat .dt-stat-num {
+	font-size: 1.9rem;
+	font-weight: 800;
+	color: var(--dt-ink);
+	line-height: 1;
+}
+body.com-daotao .dt-stat .dt-stat-sub {
+	font-size: .72rem;
+	color: var(--dt-muted);
+	margin-top: 6px;
+}
+body.com-daotao .dt-stat.is-blue   { border-left-color: var(--dt-blue-2); }
+body.com-daotao .dt-stat.is-green  { border-left-color: var(--dt-green); }
+body.com-daotao .dt-stat.is-amber  { border-left-color: var(--dt-amber); }
+body.com-daotao .dt-stat.is-red    { border-left-color: var(--dt-red); }
+body.com-daotao .dt-stat.is-green .dt-stat-num { color: var(--dt-green); }
+body.com-daotao .dt-stat.is-amber .dt-stat-num { color: var(--dt-amber); }
+body.com-daotao .dt-stat.is-red   .dt-stat-num { color: var(--dt-red); }

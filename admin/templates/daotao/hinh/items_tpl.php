@@ -9,7 +9,7 @@
 </section>
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
-		<div class="card-header"><h3 class="card-title"><strong>Thực hành trong hình (nhập tay)</strong></h3></div>
+		<div class="card-header"><h3 class="card-title"><strong>Thực hành trong hình (nhập tay)</strong></h3><div class="card-tools"><a href="index.php?com=daotao&act=crudDeleteAll&entity=hinh" onclick="return confirm('Xóa toàn bộ dữ liệu thực hành trong hình?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div></div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="hinh">
@@ -22,7 +22,7 @@
 			<div class="alert alert-info mb-0">Chọn khóa để nhập thực hành trong hình.</div>
 			<?php else: ?>
 			<table class="table table-bordered table-sm table-hover mb-0">
-				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Kết quả</th><th style="width:340px">Nhập thời gian (giờ) / quãng đường (km)</th></tr></thead>
+				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Kết quả</th><th style="width:340px">Nhập thời gian (giờ) / quãng đường (km)</th><th>Thao tác</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
@@ -38,9 +38,10 @@
 								<button class="btn btn-xs bg-gradient-success"><i class="fas fa-save mr-1"></i>Lưu</button>
 							</form>
 						</td>
+						<td class="text-center"><?php if(!empty($it['data_id'])): ?><a href="index.php?com=daotao&act=crudEdit&entity=hinh&id=<?=$it['data_id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=hinh&id=<?=$it['data_id']?>" onclick="return confirm('Xóa dữ liệu hình này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="5" class="text-center text-muted p-3">Chưa có học viên</td></tr>
+					<tr><td colspan="6" class="text-center text-muted p-3">Chưa có học viên</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

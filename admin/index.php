@@ -60,6 +60,7 @@
 	<link href="assets/holdon/HoldOn.css" rel="stylesheet">
 	<link href="assets/css/adminlte.css" rel="stylesheet">
 	<link href="assets/css/adminlte-style.css" rel="stylesheet">
+	<link href="assets/css/daotao-theme.css" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 
 	<!-- JS -->
@@ -171,7 +172,7 @@
 		};
 	</script>
 </head>
-<body class="sidebar-mini hold-transition text-sm <?=(!isset($_SESSION[$login_admin]['active']) || $_SESSION[$login_admin]['active']==false)?'login-page':''?>">
+<body class="sidebar-mini hold-transition text-sm com-<?=htmlspecialchars($com)?> <?=(!isset($_SESSION[$login_admin]['active']) || $_SESSION[$login_admin]['active']==false)?'login-page':''?>">
 	<?php /* if($template == 'index' || $template == 'user/login') include TEMPLATE.LAYOUT."loader.php"; */ ?>
     <!-- Wrapper -->
 	<?php if(isset($_SESSION[$login_admin]['active']) && ($_SESSION[$login_admin]['active'] == true)) { ?>

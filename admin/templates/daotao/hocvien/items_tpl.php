@@ -12,7 +12,9 @@
 		<div class="card-header">
 			<h3 class="card-title"><strong>Danh sách học viên</strong></h3>
 			<div class="card-tools">
+				<a href="index.php?com=daotao&act=crudEdit&entity=hocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a>
 				<a href="index.php?com=daotao&act=uploadHocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import học viên</a>
+				<a href="index.php?com=daotao&act=crudDeleteAll&entity=hocvien" onclick="return confirm('Xóa toàn bộ học viên và kết quả đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a>
 			</div>
 		</div>
 		<div class="card-body">
@@ -28,7 +30,7 @@
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
 			<table class="table table-bordered table-sm table-hover mb-0">
-				<thead><tr><th>Mã HV</th><th>Họ và tên</th><th>Ngày sinh</th><th>CCCD</th><th>Hạng</th><th>Khóa</th><th>Giáo viên</th><th>Người GT</th></tr></thead>
+				<thead><tr><th>Mã HV</th><th>Họ và tên</th><th>Ngày sinh</th><th>CCCD</th><th>Hạng</th><th>Khóa</th><th>Giáo viên</th><th>Người GT</th><th>Thao tác</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
@@ -40,9 +42,10 @@
 						<td><?=htmlspecialchars($it['ma_khoa'])?></td>
 						<td><?=htmlspecialchars($it['gv_hoten'])?></td>
 						<td><?=htmlspecialchars($it['nguoi_gioithieu'])?></td>
+						<td class="text-center"><a href="index.php?com=daotao&act=crudEdit&entity=hocvien&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=hocvien&id=<?=$it['id']?>" onclick="return confirm('Xóa học viên và kết quả liên quan?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="8" class="text-center text-muted p-3">Chưa có học viên</td></tr>
+					<tr><td colspan="9" class="text-center text-muted p-3">Chưa có học viên</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

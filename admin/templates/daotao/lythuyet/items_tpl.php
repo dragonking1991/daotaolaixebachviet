@@ -11,7 +11,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Tổng hợp lý thuyết (6 môn)</strong></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=uploadLythuyet<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import môn</a></div>
+			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=lythuyet" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm kết quả</a> <a href="index.php?com=daotao&act=uploadLythuyet<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import môn</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=lythuyet" onclick="return confirm('Xóa toàn bộ kết quả lý thuyết?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">
@@ -35,8 +35,7 @@
 						<?php foreach($ds_mon as $mk=>$lbl): $m=isset($it['mon'][$mk])?$it['mon'][$mk]:null; if($m && (int)$m['dat']===1) $soDat++; ?>
 						<td class="text-center">
 							<?php if(!$m): ?><span class="text-muted">—</span>
-							<?php elseif((int)$m['dat']===1): ?><span class="badge badge-success" title="TĐ <?=$m['tien_do']?> / Điểm <?=$m['diem_kt']?>">Đạt</span>
-							<?php else: ?><span class="badge badge-danger" title="TĐ <?=$m['tien_do']?> / Điểm <?=$m['diem_kt']?>">Chưa</span><?php endif; ?>
+							<?php else: ?><a href="index.php?com=daotao&act=crudEdit&entity=lythuyet&id=<?=$m['id']?>" title="Sửa kết quả"><span class="badge badge-<?=$m['dat']?'success':'danger'?>" title="TĐ <?=$m['tien_do']?> / Điểm <?=$m['diem_kt']?>"><?=$m['dat']?'Đạt':'Chưa'?></span></a> <a href="index.php?com=daotao&act=crudDelete&entity=lythuyet&id=<?=$m['id']?>" onclick="return confirm('Xóa kết quả môn này?')" class="text-danger"><i class="fas fa-times"></i></a><?php endif; ?>
 						</td>
 						<?php endforeach; ?>
 						<td class="text-center"><?php if($soDat>=count($ds_mon)): ?><span class="badge badge-success">Đạt</span><?php else: ?><span class="badge badge-secondary"><?=$soDat?>/<?=count($ds_mon)?></span><?php endif; ?></td>
