@@ -13,6 +13,19 @@ $dtGvMsg = '';
 $dtGvErr = '';
 $dtAct = isset($_POST['dt_act']) ? $_POST['dt_act'] : '';
 
+/* Chuẩn hóa ngày sinh về yyyymmdd để so khớp không phụ thuộc định dạng lưu trữ. */
+if(!function_exists('dt_gv_date_key'))
+{
+	function dt_gv_date_key($v)
+	{
+		$v = trim((string)$v);
+		if($v === '') return '';
+		if(preg_match('/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/', $v, $m)) return sprintf('%04d%02d%02d', $m[3], $m[2], $m[1]);
+		if(preg_match('/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/', $v, $m)) return sprintf('%04d%02d%02d', $m[1], $m[2], $m[3]);
+		return preg_replace('/\D+/', '', $v);
+	}
+}
+
 /* ----- Xử lý hành động ----- */
 if($dtAct === 'login')
 {
@@ -31,6 +44,33 @@ if($dtAct === 'login')
 		$func->redirect('cong-giao-vien');
 	}
 	$dtGvErr = 'CCCD hoặc mật khẩu không đúng.';
+}
+elseif($dtAct === 'resetpass')
+{
+	$cccd = dt_normalize_cccd($_POST['cccd'] ?? '');
+	$dobIn = dt_gv_date_key($_POST['ngaysinh'] ?? '');
+	$phoneIn = preg_replace('/\D+/', '', (string)($_POST['sdt'] ?? ''));
+	$new = (string)($_POST['new_pass'] ?? '');
+	$variants = dt_cccd_variants($cccd);
+	$gv = null;
+	if(!empty($variants))
+	{
+		$in = implode(',', array_fill(0, count($variants), '?'));
+		$gv = $d->rawQueryOne("select * from #_dt_giaovien where cccd in ($in) limit 0,1", $variants);
+	}
+	if(!$gv) $dtGvErr = 'Không tìm thấy giáo viên với CCCD này.';
+	elseif(strlen($new) < 4) $dtGvErr = 'Mật khẩu mới tối thiểu 4 ký tự.';
+	else
+	{
+		$dobDb = dt_gv_date_key($gv['ngaysinh']);
+		$phoneDb = preg_replace('/\D+/', '', (string)$gv['sdt']);
+		$checks = 0; $passed = 0;
+		if($dobDb !== '') { $checks++; if($dobIn !== '' && $dobIn === $dobDb) $passed++; }
+		if($phoneDb !== '') { $checks++; if($phoneIn !== '' && $phoneIn === $phoneDb) $passed++; }
+		if($checks === 0) $dtGvErr = 'Hồ sơ chưa có ngày sinh/số điện thoại để xác minh. Vui lòng liên hệ trung tâm để được cấp lại mật khẩu.';
+		elseif($passed < $checks) $dtGvErr = 'Thông tin xác minh (ngày sinh/số điện thoại) không khớp hồ sơ.';
+		else { $d->where('id', (int)$gv['id']); $d->update('dt_giaovien', array('matkhau' => dt_gv_hash($new))); $dtGvMsg = 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.'; }
+	}
 }
 elseif($dtAct === 'logout')
 {

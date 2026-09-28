@@ -18,6 +18,20 @@
 			</div>
 			<button type="submit" style="width:100%;height:44px;border:none;border-radius:6px;background:#2954f2;color:#fff;font-weight:700;cursor:pointer;">Đăng nhập</button>
 		</form>
+		<div style="text-align:center;margin-top:14px;">
+			<a href="javascript:void(0)" onclick="var f=document.getElementById('dt-forgot');f.style.display=(f.style.display==='none'?'block':'none');" style="font-size:13px;color:#2954f2;text-decoration:none;">Quên mật khẩu?</a>
+		</div>
+		<div id="dt-forgot" style="display:<?=(isset($dtAct)&&$dtAct==='resetpass')?'block':'none'?>;margin-top:14px;border-top:1px solid #eee;padding-top:14px;">
+			<div style="font-size:13px;color:#555;margin-bottom:10px;">Xác minh danh tính bằng thông tin đã đăng ký với trung tâm để đặt lại mật khẩu.</div>
+			<form method="post" action="cong-giao-vien">
+				<input type="hidden" name="dt_act" value="resetpass">
+				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Số CCCD</label><input type="text" name="cccd" required style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
+				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Ngày sinh <span style="color:#888;">(dd/mm/yyyy)</span></label><input type="text" name="ngaysinh" placeholder="dd/mm/yyyy" style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
+				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Số điện thoại</label><input type="text" name="sdt" style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
+				<div style="margin-bottom:12px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Mật khẩu mới <span style="color:#888;">(tối thiểu 4 ký tự)</span></label><input type="password" name="new_pass" required style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
+				<button type="submit" style="width:100%;height:42px;border:none;border-radius:6px;background:#1e9e4a;color:#fff;font-weight:700;cursor:pointer;">Đặt lại mật khẩu</button>
+			</form>
+		</div>
 	</div>
 	<?php else: ?>
 	<div style="max-width:1000px;margin:0 auto;">

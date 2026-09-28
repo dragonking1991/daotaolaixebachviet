@@ -25,7 +25,7 @@
 			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp lý thuyết.</div>
 			<?php else: ?>
 			<div class="table-responsive">
-			<table class="table table-bordered table-sm table-hover mb-0">
+			<table class="table dt-list table-hover mb-0">
 				<thead><tr><th>Họ và tên</th><th>CCCD</th><?php foreach($ds_mon as $lbl): ?><th class="text-center" style="font-size:11px"><?=htmlspecialchars($lbl)?></th><?php endforeach; ?><th class="text-center">Lý thuyết</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $hv=$it['hv']; $soDat=0; ?>

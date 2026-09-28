@@ -17,28 +17,32 @@
 			</div>
 		</div>
 		<div class="card-body p-0">
-			<table class="table table-bordered table-hover table-sm mb-0">
+			<table class="table dt-list table-hover mb-0">
 				<thead>
 					<tr>
-						<th>Mã khóa</th><th>Tên khóa</th><th>Hạng</th><th>Khai giảng</th><th>Mãn khóa</th><th class="text-center">Số HV</th><th class="text-center" style="width:120px">Thao tác</th>
+						<th>Khóa đào tạo</th><th>Đào tạo</th><th>Thời gian</th><th class="text-center">Sĩ số</th><th class="dt-actions">Hành động</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
-						<td><strong><?=htmlspecialchars($it['ma_khoa'])?></strong></td>
-						<td><?=htmlspecialchars($it['ten_khoa'])?></td>
-						<td><?=htmlspecialchars($it['hang'])?></td>
-						<td><?=$it['ngay_khaigiang'] ? date('d/m/Y', strtotime($it['ngay_khaigiang'])) : ''?></td>
-						<td><?=$it['ngay_manhoa'] ? date('d/m/Y', strtotime($it['ngay_manhoa'])) : ''?></td>
-						<td class="text-center"><a href="index.php?com=daotao&act=hocvien&id_khoa=<?=$it['id']?>"><?=(int)$it['so_hoc_vien']?></a></td>
-						<td class="text-center">
+						<td>
+							<div class="dt-title"><?=htmlspecialchars($it['ma_khoa'])?></div>
+							<div class="dt-sub"><?=htmlspecialchars($it['ten_khoa'] ?: '—')?></div>
+						</td>
+						<td>
+							<div><?php if(!empty($it['hang'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang'])?></span><?php endif; ?></div>
+							<?php if(!empty($it['he_daotao'])): ?><div class="dt-sub"><i class="fas fa-layer-group"></i><?=htmlspecialchars($it['he_daotao'])?></div><?php endif; ?>
+						</td>
+						<td class="dt-sub"><i class="far fa-calendar-alt"></i><?=$it['ngay_khaigiang'] ? date('d/m/Y', strtotime($it['ngay_khaigiang'])) : '—'?> <span class="dt-sep">→</span> <?=$it['ngay_manhoa'] ? date('d/m/Y', strtotime($it['ngay_manhoa'])) : '—'?></td>
+						<td class="text-center"><a href="index.php?com=daotao&act=hocvien&id_khoa=<?=$it['id']?>" class="dt-tag"><?=(int)$it['so_hoc_vien']?> HV</a></td>
+						<td class="dt-actions">
 							<a href="index.php?com=daotao&act=khoaEdit&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a>
 							<a href="index.php?com=daotao&act=khoaDelete&id=<?=$it['id']?>" onclick="return confirm('Xóa khóa và toàn bộ dữ liệu liên quan?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a>
 						</td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="7" class="text-center text-muted p-3">Chưa có khóa nào</td></tr>
+					<tr><td colspan="5" class="text-center text-muted p-3">Chưa có khóa nào</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

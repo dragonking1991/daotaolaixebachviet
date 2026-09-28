@@ -29,23 +29,28 @@
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD / Mã HV" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
-			<table class="table table-bordered table-sm table-hover mb-0">
-				<thead><tr><th>Mã HV</th><th>Họ và tên</th><th>Ngày sinh</th><th>CCCD</th><th>Hạng</th><th>Khóa</th><th>Giáo viên</th><th>Người GT</th><th>Thao tác</th></tr></thead>
+			<table class="table dt-list table-hover mb-0">
+				<thead><tr><th>Học viên</th><th>Thông tin đào tạo</th><th>Người giới thiệu</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
-						<td><?=htmlspecialchars($it['ma_hv'])?></td>
-						<td><?=htmlspecialchars($it['hoten'])?></td>
-						<td><?=htmlspecialchars($it['ngaysinh'])?></td>
-						<td><?=htmlspecialchars($it['cccd'])?></td>
-						<td><?=htmlspecialchars($it['hang'])?></td>
-						<td><?=htmlspecialchars($it['ma_khoa'])?></td>
-						<td><?=htmlspecialchars($it['gv_hoten'])?></td>
-						<td><?=htmlspecialchars($it['nguoi_gioithieu'])?></td>
-						<td class="text-center"><a href="index.php?com=daotao&act=crudEdit&entity=hocvien&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=hocvien&id=<?=$it['id']?>" onclick="return confirm('Xóa học viên và kết quả liên quan?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
+						<td>
+							<div class="dt-title"><?=htmlspecialchars($it['hoten'])?></div>
+							<div class="dt-sub">
+								<i class="fas fa-id-badge"></i><?=htmlspecialchars($it['ma_hv'] ?: '—')?>
+								<span class="dt-sep">•</span><i class="fas fa-id-card"></i><?=htmlspecialchars($it['cccd'] ?: '—')?>
+								<?php if(!empty($it['ngaysinh'])): ?><span class="dt-sep">•</span><i class="fas fa-birthday-cake"></i><?=htmlspecialchars($it['ngaysinh'])?><?php endif; ?>
+							</div>
+						</td>
+						<td>
+							<div><?php if(!empty($it['hang'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang'])?></span><?php endif; ?> <?php if(!empty($it['ma_khoa'])): ?><span class="dt-tag is-muted"><?=htmlspecialchars($it['ma_khoa'])?></span><?php endif; ?></div>
+							<div class="dt-sub"><i class="fas fa-chalkboard-teacher"></i>GV: <?=htmlspecialchars($it['gv_hoten'] ?: '—')?></div>
+						</td>
+						<td class="dt-sub"><?=htmlspecialchars($it['nguoi_gioithieu'] ?: '—')?></td>
+						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=hocvien&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=hocvien&id=<?=$it['id']?>" onclick="return confirm('Xóa học viên và kết quả liên quan?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="9" class="text-center text-muted p-3">Chưa có học viên</td></tr>
+					<tr><td colspan="4" class="text-center text-muted p-3">Chưa có học viên</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

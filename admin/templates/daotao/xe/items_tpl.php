@@ -23,21 +23,24 @@
 				</select>
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
-			<table class="table table-bordered table-sm table-hover mb-0">
-				<thead><tr><th>Biển số</th><th>Hạng xe</th><th>Loại</th><th>Nhãn hiệu</th><th>Số khung</th><th>Giáo viên</th><th>Thao tác</th></tr></thead>
+			<table class="table dt-list table-hover mb-0">
+				<thead><tr><th>Xe tập lái</th><th>Thông số</th><th>Giáo viên</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
-						<td><strong><?=htmlspecialchars($it['bien_so'])?></strong></td>
-						<td><?=htmlspecialchars($it['hang_xe'])?></td>
-						<td><?=htmlspecialchars($it['loai_xe'])?></td>
-						<td><?=htmlspecialchars($it['nhan_hieu'])?></td>
-						<td><?=htmlspecialchars($it['so_khung'])?></td>
-						<td><?=htmlspecialchars($it['gv_hoten'])?></td>
-						<td class="text-center"><a href="index.php?com=daotao&act=crudEdit&entity=xe&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=xe&id=<?=$it['id']?>" onclick="return confirm('Xóa xe này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
+						<td>
+							<div class="dt-title"><?=htmlspecialchars($it['bien_so'])?></div>
+							<div class="dt-sub"><i class="fas fa-car"></i><?=htmlspecialchars($it['nhan_hieu'] ?: '—')?></div>
+						</td>
+						<td>
+							<div><?php if(!empty($it['hang_xe'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang_xe'])?></span><?php endif; ?> <?php if(!empty($it['loai_xe'])): ?><span class="dt-tag is-muted">Loại <?=htmlspecialchars($it['loai_xe'])?></span><?php endif; ?></div>
+							<div class="dt-sub"><i class="fas fa-hashtag"></i>Số khung: <strong><?=htmlspecialchars($it['so_khung'] ?: '—')?></strong></div>
+						</td>
+						<td class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars($it['gv_hoten'] ?: '—')?></td>
+						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=xe&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=xe&id=<?=$it['id']?>" onclick="return confirm('Xóa xe này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="7" class="text-center text-muted p-3">Chưa có xe</td></tr>
+					<tr><td colspan="4" class="text-center text-muted p-3">Chưa có xe</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

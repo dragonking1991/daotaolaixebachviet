@@ -59,7 +59,7 @@
 				</div>
 			</form>
 			<div class="table-responsive">
-			<table class="table table-bordered table-sm table-hover mb-0">
+			<table class="table dt-list table-hover mb-0">
 				<thead><tr><th>Mã HV</th><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Lý thuyết</th><th class="text-center">Cabin</th><th class="text-center">Hình</th><th class="text-center">DAT</th><th class="text-center">Kết luận</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $hv=$it['hv']; $s=$it['sum']; ?>

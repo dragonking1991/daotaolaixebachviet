@@ -21,7 +21,7 @@
 			<?php if(!$id_khoa_sel): ?>
 			<div class="alert alert-info mb-0">Chọn khóa để nhập thực hành trong hình.</div>
 			<?php else: ?>
-			<table class="table table-bordered table-sm table-hover mb-0">
+			<table class="table dt-list table-hover mb-0">
 				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Kết quả</th><th style="width:340px">Nhập thời gian (giờ) / quãng đường (km)</th><th>Thao tác</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>

@@ -234,3 +234,51 @@ body.com-daotao .dt-stat.is-red    { border-left-color: var(--dt-red); }
 body.com-daotao .dt-stat.is-green .dt-stat-num { color: var(--dt-green); }
 body.com-daotao .dt-stat.is-amber .dt-stat-num { color: var(--dt-amber); }
 body.com-daotao .dt-stat.is-red   .dt-stat-num { color: var(--dt-red); }
+
+/* --- Clean list presentation: grouped, two-line cells like the reference --- */
+body.com-daotao table.dt-list { border-collapse: separate; border-spacing: 0; width: 100%; }
+body.com-daotao table.dt-list thead th {
+	background: #fff;
+	border: none;
+	border-bottom: 1px solid var(--dt-border);
+	color: var(--dt-muted);
+	text-transform: uppercase;
+	font-size: .68rem;
+	letter-spacing: .5px;
+	font-weight: 700;
+	padding: 10px 14px;
+	white-space: nowrap;
+}
+body.com-daotao table.dt-list tbody td {
+	border: none;
+	border-bottom: 1px solid #f0f2f7;
+	padding: 12px 14px;
+	vertical-align: middle;
+}
+body.com-daotao table.dt-list tbody tr:last-child td { border-bottom: none; }
+body.com-daotao table.dt-list tbody tr:hover { background: #f8faff; }
+body.com-daotao .dt-title { font-weight: 700; color: var(--dt-ink); font-size: .9rem; line-height: 1.25; }
+body.com-daotao .dt-title a { color: var(--dt-ink); text-decoration: none; }
+body.com-daotao .dt-title a:hover { color: var(--dt-blue-2); }
+body.com-daotao .dt-sub { color: var(--dt-muted); font-size: .76rem; line-height: 1.5; }
+body.com-daotao .dt-sub i { width: 13px; opacity: .7; margin-right: 3px; }
+body.com-daotao .dt-sub strong { color: var(--dt-ink); font-weight: 600; }
+body.com-daotao .dt-sep { color: #cbd5e1; margin: 0 6px; }
+body.com-daotao .dt-tag {
+	display: inline-block; padding: 2px 9px; border-radius: 6px;
+	background: var(--dt-blue-soft); color: var(--dt-blue-2);
+	font-weight: 700; font-size: .72rem; line-height: 1.6;
+}
+body.com-daotao .dt-tag.is-muted { background: #f1f3f7; color: var(--dt-muted); }
+body.com-daotao .dt-actions { white-space: nowrap; text-align: right; }
+body.com-daotao .dt-actions .btn { border-radius: 8px; margin-left: 2px; }
+
+/* slim inline progress bar */
+body.com-daotao .dt-prog { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+body.com-daotao .dt-prog-bar { flex: 1; height: 6px; border-radius: 999px; background: #eceff4; overflow: hidden; }
+body.com-daotao .dt-prog-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--dt-green), #22c55e); }
+body.com-daotao .dt-prog-num { font-size: .75rem; font-weight: 700; color: var(--dt-ink); min-width: 34px; text-align: right; }
+
+/* make matrix/aggregate tables share the cleaner borderless look */
+body.com-daotao .card-body > .table-responsive > table.table,
+body.com-daotao .card-body > table.table { border-color: #f0f2f7; }

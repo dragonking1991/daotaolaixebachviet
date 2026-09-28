@@ -25,7 +25,7 @@
 			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp DAT.</div>
 			<?php else: ?>
 			<div class="table-responsive">
-			<table class="table table-bordered table-sm table-hover mb-0">
+			<table class="table dt-list table-hover mb-0">
 				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Phiên</th><th class="text-center">A (giờ)</th><th class="text-center">B đêm</th><th class="text-center">C tự động</th><th class="text-center">D số sàn</th><th class="text-center">E (km)</th><th class="text-center">Kết quả</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $hv=$it['hv']; $a=$it['agg']; ?>
@@ -50,7 +50,7 @@
 			<?php endif; ?>
 		</div>
 			<?php if($id_khoa_sel && !empty($phien)): ?>
-			<div class="mt-3"><h5 class="mb-2">Chi tiết phiên DAT</h5><div class="table-responsive"><table class="table table-bordered table-sm table-hover mb-0"><thead><tr><th>Mã phiên</th><th>Mã HV</th><th>Ngày học</th><th>Giờ</th><th>Km</th><th>Biển số</th><th>Giáo viên</th><th>Thao tác</th></tr></thead><tbody><?php foreach($phien as $p): ?><tr><td><?=htmlspecialchars($p['ma_phien'])?></td><td><?=htmlspecialchars($p['ma_hv'])?></td><td><?=htmlspecialchars($p['ngay_hoc'])?></td><td><?=htmlspecialchars($p['gio_thuchanh'])?></td><td><?=htmlspecialchars($p['km'])?></td><td><?=htmlspecialchars($p['bien_so'])?></td><td><?=htmlspecialchars($p['gv_hoten'])?></td><td class="text-center"><a href="index.php?com=daotao&act=crudEdit&entity=dat&id=<?=$p['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=dat&id=<?=$p['id']?>" onclick="return confirm('Xóa phiên DAT này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td></tr><?php endforeach; ?></tbody></table></div></div>
+			<div class="mt-3"><h5 class="mb-2">Chi tiết phiên DAT</h5><div class="table-responsive"><table class="table dt-list table-hover mb-0"><thead><tr><th>Mã phiên</th><th>Mã HV</th><th>Ngày học</th><th>Giờ</th><th>Km</th><th>Biển số</th><th>Giáo viên</th><th>Thao tác</th></tr></thead><tbody><?php foreach($phien as $p): ?><tr><td><?=htmlspecialchars($p['ma_phien'])?></td><td><?=htmlspecialchars($p['ma_hv'])?></td><td><?=htmlspecialchars($p['ngay_hoc'])?></td><td><?=htmlspecialchars($p['gio_thuchanh'])?></td><td><?=htmlspecialchars($p['km'])?></td><td><?=htmlspecialchars($p['bien_so'])?></td><td><?=htmlspecialchars($p['gv_hoten'])?></td><td class="text-center"><a href="index.php?com=daotao&act=crudEdit&entity=dat&id=<?=$p['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=dat&id=<?=$p['id']?>" onclick="return confirm('Xóa phiên DAT này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td></tr><?php endforeach; ?></tbody></table></div></div>
 			<?php endif; ?>
 	</div>
 </section>

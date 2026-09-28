@@ -21,21 +21,24 @@
 					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
 				</select>
 			</form>
-			<table class="table table-bordered table-sm table-hover mb-0">
-				<thead><tr><th>Mã HV</th><th>Họ và tên</th><th>Tổng thời gian</th><th class="text-center">Số nội dung</th><th>Ghi chú</th><th class="text-center">Kết quả</th><th>Thao tác</th></tr></thead>
+			<table class="table dt-list table-hover mb-0">
+				<thead><tr><th>Học viên</th><th>Kết quả cabin</th><th class="text-center">Trạng thái</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
-						<td><?=htmlspecialchars($it['ma_hv'])?></td>
-						<td><?=htmlspecialchars($it['hoten'])?></td>
-						<td><?=htmlspecialchars($it['tong_thoigian'])?></td>
-						<td class="text-center"><?=(int)$it['so_noidung']?></td>
-						<td><?=htmlspecialchars($it['ghi_chu'])?></td>
+						<td>
+							<div class="dt-title"><?=htmlspecialchars($it['hoten'] ?: $it['ma_hv'])?></div>
+							<div class="dt-sub"><i class="fas fa-id-badge"></i><?=htmlspecialchars($it['ma_hv'] ?: '—')?></div>
+						</td>
+						<td>
+							<div class="dt-sub">Tổng thời gian: <strong><?=htmlspecialchars($it['tong_thoigian'] ?: '—')?></strong> <span class="dt-sep">•</span> Số nội dung: <strong><?=(int)$it['so_noidung']?></strong></div>
+							<?php if(!empty($it['ghi_chu'])): ?><div class="dt-sub"><i class="fas fa-comment-dots"></i><?=htmlspecialchars($it['ghi_chu'])?></div><?php endif; ?>
+						</td>
 						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đạt</span><?php else: ?><span class="badge badge-danger">Không đạt</span><?php endif; ?></td>
-						<td class="text-center"><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=cabinkq&id=<?=$it['id']?>" onclick="return confirm('Xóa kết quả cabin này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
+						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=cabinkq&id=<?=$it['id']?>" onclick="return confirm('Xóa kết quả cabin này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="7" class="text-center text-muted p-3">Chưa có kết quả cabin</td></tr>
+					<tr><td colspan="4" class="text-center text-muted p-3">Chưa có kết quả cabin</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

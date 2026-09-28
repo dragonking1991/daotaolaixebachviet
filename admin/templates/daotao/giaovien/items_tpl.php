@@ -19,20 +19,24 @@
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
-			<table class="table table-bordered table-sm table-hover mb-0">
-				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng GPLX</th><th>Hạng ĐT được phép</th><th>Điện thoại</th><th class="text-center">Thao tác</th></tr></thead>
+			<table class="table dt-list table-hover mb-0">
+				<thead><tr><th>Giáo viên</th><th>Hạng đào tạo</th><th>Liên hệ</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
-						<td><?=htmlspecialchars($it['hoten'])?></td>
-						<td><?=htmlspecialchars($it['cccd'])?></td>
-						<td><?=htmlspecialchars($it['hang_gplx'])?></td>
-						<td><?=htmlspecialchars($it['hang_daotao_phep'])?></td>
-						<td><?=htmlspecialchars($it['sdt'])?></td>
-						<td class="text-center"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=gvResetPass&id=<?=$it['id']?>" onclick="return confirm('Đặt lại mật khẩu cổng giáo viên về mặc định (= CCCD)?')" class="btn btn-xs bg-gradient-warning" title="Đặt lại mật khẩu"><i class="fas fa-key"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=giaovien&id=<?=$it['id']?>" onclick="return confirm('Xóa giáo viên này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
+						<td>
+							<div class="dt-title"><?=htmlspecialchars($it['hoten'] ?: '—')?></div>
+							<div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($it['cccd'] ?: '—')?></div>
+						</td>
+						<td>
+							<div class="dt-sub"><i class="fas fa-id-badge"></i>GPLX: <strong><?=htmlspecialchars($it['hang_gplx'] ?: '—')?></strong></div>
+							<div class="dt-sub"><i class="fas fa-check-circle"></i>Được phép: <strong><?=htmlspecialchars($it['hang_daotao_phep'] ?: '—')?></strong></div>
+						</td>
+						<td class="dt-sub"><i class="fas fa-phone"></i><?=htmlspecialchars($it['sdt'] ?: '—')?></td>
+						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=gvResetPass&id=<?=$it['id']?>" onclick="return confirm('Đặt lại mật khẩu cổng giáo viên về mặc định (= CCCD)?')" class="btn btn-xs bg-gradient-warning" title="Đặt lại mật khẩu"><i class="fas fa-key"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=giaovien&id=<?=$it['id']?>" onclick="return confirm('Xóa giáo viên này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="6" class="text-center text-muted p-3">Chưa có giáo viên</td></tr>
+					<tr><td colspan="4" class="text-center text-muted p-3">Chưa có giáo viên</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>
