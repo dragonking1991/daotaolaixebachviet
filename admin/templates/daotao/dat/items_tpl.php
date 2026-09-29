@@ -26,23 +26,34 @@
 			<?php else: ?>
 			<div class="table-responsive">
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Phiên</th><th class="text-center">A (giờ)</th><th class="text-center">B đêm</th><th class="text-center">C tự động</th><th class="text-center">D số sàn</th><th class="text-center">E (km)</th><th class="text-center">Kết quả</th></tr></thead>
+				<thead><tr><th>Học viên</th><th>Tiến độ định mức</th><th>Phân bổ giờ &amp; phiên</th><th class="text-center">Điều kiện DAT</th></tr></thead>
 				<tbody>
-					<?php if(!empty($items)): foreach($items as $it): $hv=$it['hv']; $a=$it['agg']; ?>
+					<?php if(!empty($items)): foreach($items as $it):
+						$hv=$it['hv']; $a=$it['agg']; $nguong=dt_nguong_dat(); $hangDat=dt_norm_hang($hv['hang']);
+						$gioMucTieu=isset($nguong[$hangDat])?(float)$nguong[$hangDat]['a']:0;
+						$kmMucTieu=isset($nguong[$hangDat])?(float)$nguong[$hangDat]['km']:0;
+						$pctGio=$gioMucTieu>0?min(100,(int)round($a['a']/$gioMucTieu*100)):0;
+						$pctKm=$kmMucTieu>0?min(100,(int)round($a['e']/$kmMucTieu*100)):0;
+					?>
 					<tr>
-						<td><?=htmlspecialchars($hv['hoten'])?></td>
-						<td><?=htmlspecialchars($hv['cccd'])?></td>
-						<td><?=htmlspecialchars($hv['hang'])?></td>
-						<td class="text-center"><?=$it['so_phien']?></td>
-						<td class="text-center"><?=$a['a']?></td>
-						<td class="text-center"><?=$a['b']?></td>
-						<td class="text-center"><?=$a['c']?></td>
-						<td class="text-center"><?=$a['d']?></td>
-						<td class="text-center"><?=$a['e']?></td>
-						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đạt</span><?php else: ?><span class="badge badge-danger" title="<?=htmlspecialchars(implode(', ', $it['thieu']))?>">Chưa</span><?php endif; ?></td>
+						<td>
+							<div class="dt-title"><?=htmlspecialchars($hv['hoten'])?></div>
+							<div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($hv['cccd'])?><span class="dt-sep">•</span><span class="dt-tag is-muted"><?=htmlspecialchars($hv['hang'])?></span></div>
+						</td>
+						<td class="dt-dat-progress">
+							<div class="dt-dat-progress-line"><span>Giờ thực hành</span><strong><?=$a['a']?><?php if($gioMucTieu): ?> / <?=$gioMucTieu?> giờ<?php else: ?> giờ<?php endif; ?></strong></div>
+							<div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pctGio?>%"></span></div><span class="dt-prog-num"><?=$pctGio?>%</span></div>
+							<div class="dt-dat-progress-line"><span>Quãng đường</span><strong><?=$a['e']?><?php if($kmMucTieu): ?> / <?=$kmMucTieu?> km<?php else: ?> km<?php endif; ?></strong></div>
+							<div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pctKm?>%"></span></div><span class="dt-prog-num"><?=$pctKm?>%</span></div>
+						</td>
+						<td>
+							<div class="dt-sub"><span class="dt-tag is-muted"><?=$it['so_phien']?> phiên</span><span class="dt-sep">•</span>Đêm <strong><?=$a['b']?> giờ</strong></div>
+							<div class="dt-sub"><i class="fas fa-car"></i>Tự động <strong><?=$a['c']?> giờ</strong><span class="dt-sep">•</span>Số sàn <strong><?=$a['d']?> giờ</strong></div>
+						</td>
+						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đủ điều kiện</span><?php else: ?><span class="badge badge-danger" title="<?=htmlspecialchars(implode(', ', $it['thieu']))?>">Chưa đủ</span><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="10" class="text-center text-muted p-3">Chưa có dữ liệu</td></tr>
+					<tr><td colspan="4" class="dt-empty"><div class="dt-empty-box"><i class="fas fa-road"></i><div>Chưa có dữ liệu DAT trong khóa này</div></div></td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>
@@ -50,7 +61,7 @@
 			<?php endif; ?>
 		</div>
 			<?php if($id_khoa_sel && !empty($phien)): ?>
-			<div class="mt-3"><h5 class="mb-2">Chi tiết phiên DAT</h5><div class="table-responsive"><table class="table dt-list table-hover mb-0"><thead><tr><th>Mã phiên</th><th>Mã HV</th><th>Ngày học</th><th>Giờ</th><th>Km</th><th>Biển số</th><th>Giáo viên</th><th>Thao tác</th></tr></thead><tbody><?php foreach($phien as $p): ?><tr><td><?=htmlspecialchars($p['ma_phien'])?></td><td><?=htmlspecialchars($p['ma_hv'])?></td><td><?=htmlspecialchars($p['ngay_hoc'])?></td><td><?=htmlspecialchars($p['gio_thuchanh'])?></td><td><?=htmlspecialchars($p['km'])?></td><td><?=htmlspecialchars($p['bien_so'])?></td><td><?=htmlspecialchars($p['gv_hoten'])?></td><td class="text-center"><a href="index.php?com=daotao&act=crudEdit&entity=dat&id=<?=$p['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=dat&id=<?=$p['id']?>" onclick="return confirm('Xóa phiên DAT này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td></tr><?php endforeach; ?></tbody></table></div></div>
+			<div class="mt-4"><h5 class="mb-2">Chi tiết phiên DAT</h5><div class="table-responsive"><table class="table dt-list table-hover mb-0"><thead><tr><th>Phiên học</th><th>Thời gian</th><th>Quãng đường &amp; xe</th><th>Giáo viên</th><th class="dt-actions">Hành động</th></tr></thead><tbody><?php foreach($phien as $p): ?><tr><td><div class="dt-title"><?=htmlspecialchars($p['ma_phien'])?></div><div class="dt-sub"><?=htmlspecialchars($p['ma_hv'])?></div></td><td><div class="dt-title"><?=!empty($p['ngay_hoc'])?date('d/m/Y',strtotime($p['ngay_hoc'])):'—'?></div><div class="dt-sub"><?=!empty($p['tg_batdau'])?date('H:i',strtotime($p['tg_batdau'])):'--:--'?> – <?=!empty($p['tg_ketthuc'])?date('H:i',strtotime($p['tg_ketthuc'])):'--:--'?></div></td><td><div class="dt-title"><?=htmlspecialchars($p['km'])?> km <span class="dt-sep">•</span><?=htmlspecialchars($p['gio_thuchanh'])?> giờ</div><div class="dt-sub"><span class="dt-tag is-muted"><?=htmlspecialchars($p['bien_so']?:'Chưa gán xe')?></span> <?=!empty($p['la_xe_tudong'])?'<span class="dt-tag">Tự động</span>':'<span class="dt-tag is-muted">Số sàn</span>'?></div></td><td class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars($p['gv_hoten']?:'—')?></td><td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=dat&id=<?=$p['id']?>" class="btn btn-xs bg-gradient-info" title="Sửa"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=dat&id=<?=$p['id']?>" class="btn btn-xs bg-gradient-danger dt-del" data-name="<?=htmlspecialchars($p['ma_phien'])?>" title="Xóa"><i class="fas fa-trash"></i></a></td></tr><?php endforeach; ?></tbody></table></div></div>
 			<?php endif; ?>
 	</div>
 </section>

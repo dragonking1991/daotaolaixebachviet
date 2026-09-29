@@ -463,6 +463,33 @@ body.com-daotao .dt-prog-num { color: #475569; }
 
 /* Chip nhỏ (LT/Cabin/Hình/DAT) trong cột tiến độ: khoảng cách đều */
 body.com-daotao .dt-prog + .dt-sub .badge { margin-right: 3px; }
+body.com-daotao .dt-dat-progress { min-width: 210px; }
+body.com-daotao .dt-dat-progress-line { display: flex; justify-content: space-between; gap: 12px; color: var(--dt-muted); font-size: .76rem; line-height: 1.4; }
+body.com-daotao .dt-dat-progress-line strong { color: #334155; font-weight: 600; white-space: nowrap; }
+body.com-daotao .dt-dat-progress .dt-prog { min-width: 150px; margin: 4px 0 8px; }
+body.com-daotao .dt-dat-progress .dt-prog:last-child { margin-bottom: 0; }
+body.com-daotao table.dt-summary-list { min-width: 1120px; }
+body.com-daotao table.dt-summary-list thead th:nth-child(1) { width: 19%; }
+body.com-daotao table.dt-summary-list thead th:nth-child(2) { width: 19%; }
+body.com-daotao table.dt-summary-list thead th:nth-child(3) { width: 43%; }
+body.com-daotao table.dt-summary-list thead th:nth-child(4) { width: 13%; }
+body.com-daotao table.dt-summary-list thead th:nth-child(5) { width: 6%; }
+body.com-daotao table.dt-summary-list tbody td { vertical-align: top; }
+body.com-daotao .dt-summary-progress { min-width: 390px; }
+body.com-daotao .dt-summary-progress > .dt-prog { max-width: 240px; margin-bottom: 8px; }
+body.com-daotao .dt-summary-modules { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+body.com-daotao .dt-summary-module { display: grid; grid-template-columns: minmax(88px, 108px) auto; align-items: center; gap: 4px 8px; min-width: 0; padding: 7px 0; border-top: 1px solid #f1f3f8; }
+body.com-daotao .dt-summary-label { color: #475569; font-size: .76rem; font-weight: 600; }
+body.com-daotao .dt-summary-module .badge { justify-self: start; }
+body.com-daotao .dt-summary-module .dt-sub,
+body.com-daotao .dt-summary-missing { grid-column: 1 / -1; }
+body.com-daotao .dt-summary-module .dt-sub { font-size: .73rem; line-height: 1.5; }
+body.com-daotao .dt-summary-missing { color: #9f2525; font-size: .7rem; line-height: 1.45; }
+body.com-daotao .dt-summary-score { color: var(--dt-ink); font-size: 1rem; font-weight: 700; }
+@media (max-width: 767px) {
+	body.com-daotao .dt-summary-modules { grid-template-columns: 1fr; }
+	body.com-daotao .dt-summary-progress { min-width: 350px; }
+}
 
 /* Persistent import feedback, positioned under the breadcrumb by daotao.js. */
 body.com-daotao .dt-import-notice {

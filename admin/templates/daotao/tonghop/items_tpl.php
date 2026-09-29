@@ -59,23 +59,35 @@
 				</div>
 			</form>
 			<div class="table-responsive">
-			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Mã HV</th><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Lý thuyết</th><th class="text-center">Cabin</th><th class="text-center">Hình</th><th class="text-center">DAT</th><th class="text-center">Kết luận</th></tr></thead>
+			<table class="table dt-list dt-summary-list table-hover mb-0">
+				<thead><tr><th>Học viên</th><th>Thông tin đào tạo</th><th>Tiến độ &amp; nội dung</th><th class="text-center">Điều kiện dự thi</th><th class="text-center">Kết luận</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $hv=$it['hv']; $s=$it['sum']; ?>
 					<tr>
-						<td><?=htmlspecialchars($hv['ma_hv'])?></td>
-						<td><?=htmlspecialchars($hv['hoten'])?></td>
-						<td><?=htmlspecialchars($hv['cccd'])?></td>
-						<td><?=htmlspecialchars($hv['hang'])?></td>
-						<td class="text-center"><span class="badge badge-<?=$s['ly_thuyet']['dat']?'success':'secondary'?>"><?=$s['ly_thuyet']['dat']?'Đạt':($s['ly_thuyet']['so_dat'].'/'.$s['ly_thuyet']['tong'])?></span></td>
-						<td class="text-center"><span class="badge badge-<?=$s['cabin']['dat']?'success':'secondary'?>"><?=$s['cabin']['dat']?'Đạt':'Chưa'?></span></td>
-						<td class="text-center"><span class="badge badge-<?=$s['hinh']['dat']?'success':'secondary'?>"><?=$s['hinh']['dat']?'Đạt':'Chưa'?></span></td>
-						<td class="text-center"><span class="badge badge-<?=$s['dat']['dat']?'success':'secondary'?>" title="<?=htmlspecialchars(implode(', ',$s['dat']['thieu']))?>"><?=$s['dat']['dat']?'Đạt':'Chưa'?></span></td>
-						<td class="text-center"><?php if($s['du_dieu_kien']): ?><span class="badge badge-success">Đủ ĐK</span><?php else: ?><span class="badge badge-danger">Chưa đủ</span><?php endif; ?></td>
+						<td>
+							<div class="dt-title"><?=htmlspecialchars($hv['hoten'])?></div>
+							<div class="dt-sub"><i class="fas fa-id-badge"></i><?=htmlspecialchars($hv['ma_hv'] ?: '—')?><span class="dt-sep">•</span><i class="fas fa-id-card"></i><?=htmlspecialchars($hv['cccd'])?></div>
+						</td>
+						<td>
+							<div><span class="dt-tag"><?=htmlspecialchars($hv['hang'] ?: 'Chưa rõ hạng')?></span> <span class="dt-tag is-muted"><?=htmlspecialchars($hv['ma_khoa'] ?: 'Chưa gán khóa')?></span></div>
+							<div class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars($hv['gv_hoten'] ?: 'Chưa phân giáo viên')?></div>
+							<?php if(!empty($hv['he_daotao'])): ?><div class="dt-sub"><i class="fas fa-layer-group"></i><?=htmlspecialchars($hv['he_daotao'])?></div><?php endif; ?>
+						</td>
+						<td class="dt-summary-progress">
+							<?php $done=($s['ly_thuyet']['dat']?1:0)+($s['cabin']['dat']?1:0)+($s['hinh']['dat']?1:0)+($s['dat']['dat']?1:0); $pct=(int)round($done/4*100); $agg=$s['dat']['agg']; ?>
+							<div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pct?>%"></span></div><span class="dt-prog-num"><?=$pct?>%</span></div>
+							<div class="dt-summary-modules">
+								<div class="dt-summary-module"><span class="dt-summary-label">Lý thuyết</span><span class="badge badge-<?=$s['ly_thuyet']['dat']?'success':'secondary'?>"><?=$s['ly_thuyet']['dat']?'Đạt':$s['ly_thuyet']['so_dat'].'/'.$s['ly_thuyet']['tong']?></span></div>
+								<div class="dt-summary-module"><span class="dt-summary-label">Cabin</span><span class="badge badge-<?=$s['cabin']['dat']?'success':'secondary'?>"><?=$s['cabin']['dat']?'Đạt':($s['cabin']['co']?'Chưa đạt':'Chưa có')?></span></div>
+								<div class="dt-summary-module"><span class="dt-summary-label">Thực hành hình</span><span class="badge badge-<?=$s['hinh']['dat']?'success':'secondary'?>"><?=$s['hinh']['dat']?'Đạt':'Chưa đạt'?></span><span class="dt-sub"><?=htmlspecialchars($s['hinh']['gio'])?> giờ<span class="dt-sep">•</span><?=htmlspecialchars($s['hinh']['km'])?> km</span></div>
+								<div class="dt-summary-module dt-summary-dat"><span class="dt-summary-label">DAT</span><span class="badge badge-<?=$s['dat']['dat']?'success':'secondary'?>"><?=$s['dat']['dat']?'Đạt':'Chưa đạt'?></span><span class="dt-sub">A <?=$agg['a']?>h<span class="dt-sep">•</span>B <?=$agg['b']?>h<span class="dt-sep">•</span>C <?=$agg['c']?>h<span class="dt-sep">•</span>D <?=$agg['d']?>h<span class="dt-sep">•</span>E <?=$agg['e']?> km</span><?php if(!$s['dat']['dat'] && !empty($s['dat']['thieu'])): ?><span class="dt-summary-missing"><?=htmlspecialchars(implode(' · ', $s['dat']['thieu']))?></span><?php endif; ?></div>
+							</div>
+						</td>
+						<td class="text-center"><span class="badge badge-<?=$s['du_dieu_kien']?'success':'danger'?>"><?=$s['du_dieu_kien']?'Đủ điều kiện':'Chưa đủ'?></span></td>
+						<td class="text-center"><span class="dt-summary-score"><?=$done?>/4</span><div class="dt-sub">nội dung đạt</div></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="9" class="text-center text-muted p-3">Chọn khóa hoặc nhập tiêu chí để xem tổng hợp</td></tr>
+					<tr><td colspan="5" class="text-center text-muted p-3">Chọn khóa hoặc nhập tiêu chí để xem tổng hợp</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>
