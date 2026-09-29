@@ -1,0 +1,41 @@
+HƯỚNG DẪN DÙNG BỘ FILE IMPORT MẪU — QUẢN LÝ ĐÀO TẠO
+=====================================================
+
+CẬP NHẬT: Các mục import (học viên, cabin, lý thuyết, DAT) KHÔNG cần chọn khóa nữa.
+- File học viên có cột "Khóa" + "Hạng" -> hệ thống TỰ TẠO khóa nếu chưa có.
+- File cabin/lý thuyết/DAT tự khớp học viên (theo mã HV/CCCD) và dùng đúng khóa của họ.
+
+THỨ TỰ IMPORT (khuyến nghị)
+---------------------------
+1) 00_khoa.xlsx          -> Khóa đào tạo > Import khóa   (tùy chọn: có thể bỏ qua,
+                             vì import học viên sẽ tự tạo khóa còn thiếu)
+2) 01_giao_vien.xlsx     -> Giáo viên > Import giáo viên
+3) 03_xe_tap_lai.xlsx    -> Xe tập lái > Import xe
+4) 02_hoc_vien.xlsx      -> Học viên > Import  (KHÔNG cần chọn khóa — tự nhận từ cột "Khóa")
+5) 04_cabin.xlsx         -> Cabin (kết quả) > Import  (không cần chọn khóa)
+6) 05_lythuyet_*.xlsx    -> Lý thuyết > chọn MÔN tương ứng > Import  (không cần chọn khóa)
+   - 6 file cho 6 môn: Cấu tạo, Kỹ thuật, Pháp luật 1/2/3, Đạo đức.
+7) 06_dat.xlsx           -> DAT (trên đường) > Import  (không cần chọn khóa)
+
+Mỗi màn Import đều có nút "Xem trước" để kiểm tra trước khi ghi.
+
+FILE IMPORT KHÓA (00_khoa.xlsx)
+-------------------------------
+Cột: Mã khóa | Tên khóa | Hạng | Ngày khai giảng | Ngày mãn khóa | Hệ đào tạo.
+- Bắt buộc: "Mã khóa" (hoặc cột "Khóa"). Khóa trùng mã sẽ được cập nhật.
+- Dựa trên định dạng thực tế: mã khóa như 120B (tự động = B11), 199B (số sàn = B1)...
+
+PHÂN BỐ TRẠNG THÁI (100 học viên HV0001..HV0100)
+------------------------------------------------
+- Học viên được chia vào 3 khóa: 120B (B11), 199B (B1), 121C1 (C1).
+- HV0001–HV0035: mạnh (Cabin đạt, Lý thuyết đủ 6 môn, DAT đủ định mức).
+- HV0036–HV0070: trung bình (đạt một phần).
+- HV0071–HV0100: yếu (rớt phần lớn).
+=> Xem "Tổng hợp" để thấy đủ trạng thái Đạt/Không đạt và "Đủ điều kiện".
+   ("Thực hành trong hình" nhập tay, không có file import.)
+
+GHI CHÚ
+-------
+- CCCD lưu dạng chuỗi 12 số (giữ số 0 đầu).
+- Xe hạng B11 (số tự động) = biển số chia hết cho 5 (51F00005...). DAT dùng 51F00005
+  (tự động) và 51F00001 (số sàn).

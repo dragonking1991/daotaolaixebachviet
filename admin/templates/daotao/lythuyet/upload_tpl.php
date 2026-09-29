@@ -17,8 +17,8 @@
 				<div class="row">
 					<div class="col-md-6 form-group">
 						<label>Khóa <span class="text-danger">*</span></label>
-						<select name="id_khoa" class="form-control form-control-sm" required>
-							<option value="">— Chọn khóa —</option>
+						<select name="id_khoa" class="form-control form-control-sm">
+							<option value="">— Tất cả khóa (tự nhận theo học viên) —</option>
 							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
 						</select>
 					</div>
@@ -33,7 +33,7 @@
 				<div class="form-group">
 					<label>File Excel (.xlsx)</label>
 					<div class="custom-file">
-						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx" required>
+						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx,.xls" required>
 						<label class="custom-file-label" for="file-excel">Chọn file...</label>
 					</div>
 				</div>

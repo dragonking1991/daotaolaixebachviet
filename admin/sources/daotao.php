@@ -35,6 +35,8 @@ switch($act)
 	case "khoaEdit":   dt_guard($DT_MAN); dt_khoa_form();   $template = "daotao/khoa/item_add"; break;
 	case "khoaSave":   dt_guard($DT_MAN); dt_khoa_save();   break;
 	case "khoaDelete": dt_guard($DT_MAN); dt_khoa_delete(); break;
+	case "uploadKhoa":      dt_guard($DT_UP); dt_khoa_upload_form(); $template = "daotao/khoa/upload"; break;
+	case "uploadKhoaExcel": dt_guard($DT_UP); dt_khoa_upload_excel(); break;
 	case "crudEdit":   dt_guard($DT_MAN); dt_crud_form(); $template = "daotao/crud_form"; break;
 	case "crudSave":   dt_guard($DT_MAN); dt_crud_save(); break;
 	case "crudDelete": dt_guard($DT_MAN); dt_crud_delete(); break;

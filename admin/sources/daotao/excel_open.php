@@ -14,8 +14,8 @@ function dt_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 	require_once LIBRARIES.'PHPExcel.php';
 
 	$ext = strtolower($ext);
-	if($ext !== 'xlsx')
-		$func->transfer("Chỉ hỗ trợ file .xlsx. Vui lòng mở file và lưu lại dưới định dạng .xlsx rồi import lại.", $backUrl, false);
+	if($ext !== 'xlsx' && $ext !== 'xls')
+		$func->transfer("Chỉ hỗ trợ file .xlsx hoặc .xls. Vui lòng lưu lại đúng định dạng rồi import lại.", $backUrl, false);
 
 	$inputFileName = $file['tmp_name'];
 	if(empty($inputFileName) || !is_readable($inputFileName))
@@ -24,7 +24,7 @@ function dt_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 	if(is_string($sheetHints)) $sheetHints = ($sheetHints === '') ? array() : array($sheetHints);
 
 	try {
-		$reader = PHPExcel_IOFactory::createReader('Excel2007');
+		$reader = PHPExcel_IOFactory::createReader($ext === 'xls' ? 'Excel5' : 'Excel2007');
 		$reader->setReadDataOnly(true);
 
 		$targetSheet = null;
@@ -91,4 +91,43 @@ function dt_find_header_row($sheet, $highestRow, $highestColIndex, $aliasGroups,
 		if($score > $bestScore) { $bestScore = $score; $bestMap = $map; $bestRow = $r; }
 	}
 	return array($bestRow, $bestMap, $bestScore);
+}
+
+/**
+ * Trích "Mã khóa học" và "Hạng đào tạo" ghi ở phần tiêu đề file (dạng nhãn:giá trị),
+ * ví dụ file cabin: dòng "Mã khóa học : K13C1", "Hạng đào tạo : C1".
+ * Quét từ đầu tới trước dòng header dữ liệu. @return array('khoa'=>..,'hang'=>..)
+ */
+function dt_extract_meta_khoa($sheet, $maxRow, $highestColIndex)
+{
+	$khoa = ''; $hang = '';
+	$maxRow = min((int)$maxRow, 25);
+	for($r = 1; $r <= $maxRow; $r++)
+	{
+		for($c = 0; $c <= $highestColIndex; $c++)
+		{
+			$val = $sheet->getCellByColumnAndRow($c, $r)->getValue();
+			if($val === null || trim((string)$val) === '') continue;
+			$txt = trim((string)$val);
+			$norm = dt_norm_header($txt);
+			$isKhoa = ($khoa === '' && (strpos($norm, 'makhoahoc') !== false || strpos($norm, 'makhoa') !== false));
+			$isHang = ($hang === '' && strpos($norm, 'hangdaotao') !== false && strpos($norm, 'duocphep') === false);
+			if(!$isKhoa && !$isHang) continue;
+
+			$v = '';
+			if(strpos($txt, ':') !== false) { $parts = explode(':', $txt); $v = trim(end($parts)); }
+			if($v === '')
+			{
+				for($cc = $c + 1; $cc <= $highestColIndex; $cc++)
+				{
+					$nv = $sheet->getCellByColumnAndRow($cc, $r)->getValue();
+					if($nv !== null && trim((string)$nv) !== '') { $v = trim((string)$nv); break; }
+				}
+			}
+			if($v === '') continue;
+			if($isKhoa) $khoa = $v; elseif($isHang) $hang = $v;
+		}
+		if($khoa !== '' && $hang !== '') break;
+	}
+	return array('khoa' => $khoa, 'hang' => $hang);
 }

@@ -67,9 +67,8 @@ function dt_dat_upload_excel()
 {
 	global $d, $func;
 
-	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
-	$back = "index.php?com=daotao&act=uploadDat&id_khoa=".$idKhoa;
-	if(!$idKhoa) $func->transfer("Vui lòng chọn khóa học", $back, false);
+	$idKhoaSel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$back = "index.php?com=daotao&act=uploadDat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : "");
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
 		$func->transfer("Vui lòng chọn file Excel", $back, false);
 
@@ -84,6 +83,7 @@ function dt_dat_upload_excel()
 		'gio_thuchanh' => array('thoigianthuchanhgio','thoigianthuchanh'),
 		'km' => array('quangduongthuchanhkm','quangduongthuchanh','quangduong'),
 		'ma_hv' => array('mahocvien'),
+		'khoa' => array('makhoahoc','makhoa','khoa'),
 		'gv_hoten' => array('hovatengiaovien','tengiaovien'),
 		'hang' => array('hangdaotao'),
 		'bien_so' => array('biensoxe','bienso'),
@@ -96,6 +96,7 @@ function dt_dat_upload_excel()
 		'gio_thuchanh' => array('thoigianthuchanh'),
 		'km' => array('quangduong'),
 		'ma_hv' => array('mahocvien'),
+		'khoa' => array('makhoa'),
 		'hang' => array('hangdaotao'),
 		'bien_so' => array('bienso'),
 	);
@@ -105,6 +106,7 @@ function dt_dat_upload_excel()
 		$func->transfer("Không nhận diện được cột 'Mã phiên học' và 'Mã học viên' trong file DAT.", $back, false);
 
 	dt_backup_tables(array('dt_dat_phien'), 'imp_dat');
+	$hasKhoaCol = isset($map['khoa']);
 	$d->startTransaction();
 	$them = 0; $trung = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
@@ -119,13 +121,16 @@ function dt_dat_upload_excel()
 		$exist = $d->rawQueryOne("select id from #_dt_dat_phien where ma_phien = ? limit 0,1", array($maPhien));
 		if($exist && $exist['id']) { $trung++; continue; }
 
-		$hv = dt_find_hocvien_by_mahv($maHv, $idKhoa);
+		$khoaCode = dt_val($row, $map, 'khoa');
+		$idKhoaEnsured = ($hasKhoaCol && $khoaCode !== '') ? dt_khoa_ensure($khoaCode, $khoaCode, dt_val($row, $map, 'hang')) : 0;
+		$hv = dt_find_hocvien_by_mahv($maHv, $idKhoaSel);
 		if(!$hv)
 		{
 			$err++;
-			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: mã HV $maHv không thuộc khóa";
+			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: mã HV $maHv chưa có trong danh sách học viên";
 			continue;
 		}
+		$idKhoa = (int)$hv['id_khoa'] ?: $idKhoaEnsured;
 
 		$tgBatdau = dt_parse_datetime(dt_val($row, $map, 'tg_batdau'));
 		$tgKetthuc = dt_parse_datetime(dt_val($row, $map, 'tg_ketthuc'));
@@ -155,7 +160,7 @@ function dt_dat_upload_excel()
 	$d->commit();
 	dt_audit('import', 'dat', $them, $file['name']);
 	dt_log_import('dat', $file['name'], $them, $err);
-	$msg = "Import DAT: thêm $them phiên mới, bỏ qua $trung phiên đã có".($err ? ", $err phiên lỗi (HV không thuộc khóa)" : "");
+	$msg = "Import DAT: thêm $them phiên mới, bỏ qua $trung phiên đã có".($err ? ", $err phiên lỗi (HV chưa có)" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	$func->transfer($msg, "index.php?com=daotao&act=dat&id_khoa=".$idKhoa, $err === 0);
+	$func->transfer($msg, "index.php?com=daotao&act=dat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
 }

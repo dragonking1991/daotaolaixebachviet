@@ -21,7 +21,7 @@ services:
   db:
     image: mysql:8.0
     container_name: bachviet_db
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --sql-mode=NO_ENGINE_SUBSTITUTION
     ports:
       - "3307:3306"
     environment:

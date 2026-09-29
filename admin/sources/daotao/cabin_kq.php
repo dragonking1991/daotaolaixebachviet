@@ -31,9 +31,8 @@ function dt_cabin_upload_excel()
 {
 	global $d, $func;
 
-	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
-	$back = "index.php?com=daotao&act=uploadCabin&id_khoa=".$idKhoa;
-	if(!$idKhoa) $func->transfer("Vui lòng chọn khóa học", $back, false);
+	$idKhoaSel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$back = "index.php?com=daotao&act=uploadCabin".($idKhoaSel ? "&id_khoa=".$idKhoaSel : "");
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
 		$func->transfer("Vui lòng chọn file Excel", $back, false);
 
@@ -45,6 +44,7 @@ function dt_cabin_upload_excel()
 		'ma_hv' => array('mahocvien','mahv'),
 		'hoten' => array('hovaten','hoten'),
 		'ngaysinh' => array('ngaysinh'),
+		'khoa' => array('khoa','makhoahoc','makhoa'),
 		'tong_thoigian' => array('tongthoigiandaotao','tongthoigian','tongthoigiandat'),
 		'so_noidung' => array('tongsonoidung','sonoidung'),
 		'ghi_chu' => array('ghichu','ketqua','danhgia'),
@@ -52,6 +52,7 @@ function dt_cabin_upload_excel()
 	$contains = array(
 		'ma_hv' => array('mahoc','mahv'),
 		'hoten' => array('hovaten','hoten'),
+		'khoa' => array('makhoa'),
 		'tong_thoigian' => array('thoigian'),
 		'so_noidung' => array('noidung'),
 		'ghi_chu' => array('ghichu','ketqua'),
@@ -63,6 +64,14 @@ function dt_cabin_upload_excel()
 		$func->transfer("Không nhận diện được cột 'Mã học viên' trong file cabin.", $back, false);
 
 	dt_backup_tables(array('dt_cabin_kq'), 'imp_cabin');
+	$hasKhoaCol = isset($map['khoa']);
+	// Không có cột khóa & chưa chọn khóa -> lấy "Mã khóa học" ở phần tiêu đề file (nếu có)
+	$metaKhoaId = 0;
+	if(!$hasKhoaCol)
+	{
+		$meta = dt_extract_meta_khoa($sheet, $headerRow, $highestCol);
+		if($meta['khoa'] !== '') $metaKhoaId = dt_khoa_ensure($meta['khoa'], $meta['khoa'], $meta['hang']);
+	}
 	$d->startTransaction();
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
@@ -72,13 +81,16 @@ function dt_cabin_upload_excel()
 		if($maHv === '') { if(++$emptyStreak >= 40) break; continue; }
 		$emptyStreak = 0;
 
-		$hv = dt_find_hocvien_by_mahv($maHv, $idKhoa);
+		$khoaCode = dt_val($row, $map, 'khoa');
+		$rowKhoaId = ($hasKhoaCol && $khoaCode !== '') ? dt_khoa_ensure($khoaCode, $khoaCode) : 0;
+		$hv = dt_find_hocvien_by_mahv($maHv, $idKhoaSel);
 		if(!$hv)
 		{
 			$err++;
-			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: mã HV $maHv không thuộc khóa";
+			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: mã HV $maHv chưa có trong danh sách học viên";
 			continue;
 		}
+		$idKhoa = $rowKhoaId ?: ($metaKhoaId ?: ((int)$hv['id_khoa'] ?: $idKhoaSel));
 
 		$ghiChu = dt_val($row, $map, 'ghi_chu');
 		$ghiNorm = dt_norm_header($ghiChu);
@@ -104,5 +116,5 @@ function dt_cabin_upload_excel()
 	dt_log_import('cabin', $file['name'], $ok, $err);
 	$msg = "Import cabin: $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	$func->transfer($msg, "index.php?com=daotao&act=cabinkq&id_khoa=".$idKhoa, $err === 0);
+	$func->transfer($msg, "index.php?com=daotao&act=cabinkq".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
 }

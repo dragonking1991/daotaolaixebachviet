@@ -100,3 +100,126 @@ function dt_khoa_delete()
 	if(function_exists('dt_audit')) dt_audit('delete', 'khoa', 1, 'id='.$id.' (+dữ liệu liên quan)');
 	$func->transfer("Xóa khóa và dữ liệu liên quan thành công", "index.php?com=daotao&act=khoa");
 }
+
+/**
+ * Tìm khóa theo mã; nếu chưa có thì tự tạo. Trả về id_khoa (0 nếu mã rỗng).
+ * Dùng chung cho các importer để "khóa thiếu thì tự thêm".
+ */
+function dt_khoa_ensure($maKhoa, $tenKhoa = '', $hang = '')
+{
+	global $d, $login_admin;
+	static $cache = array();
+	$maKhoa = trim(preg_replace('/\s+/', ' ', (string)$maKhoa));
+	if($maKhoa === '') return 0;
+	$key = function_exists('mb_strtolower') ? mb_strtolower($maKhoa, 'UTF-8') : strtolower($maKhoa);
+	if(isset($cache[$key])) return $cache[$key];
+
+	$row = $d->rawQueryOne("select id, hang, ten_khoa from #_dt_khoa where ma_khoa = ? limit 0,1", array($maKhoa));
+	if($row && $row['id'])
+	{
+		$upd = array();
+		if($hang !== '' && (string)$row['hang'] === '') $upd['hang'] = dt_norm_hang($hang);
+		if($tenKhoa !== '' && (string)$row['ten_khoa'] === '') $upd['ten_khoa'] = $tenKhoa;
+		if($upd) { $d->where('id', (int)$row['id']); $d->update('dt_khoa', $upd); }
+		return $cache[$key] = (int)$row['id'];
+	}
+
+	$id = $d->insert('dt_khoa', array(
+		'ma_khoa' => $maKhoa,
+		'ten_khoa' => $tenKhoa !== '' ? $tenKhoa : $maKhoa,
+		'hang' => $hang !== '' ? dt_norm_hang($hang) : '',
+		'ngay_khaigiang' => null,
+		'ngay_manhoa' => null,
+		'ngaytao' => time(),
+		'user_tao' => isset($_SESSION[$login_admin]['username']) ? $_SESSION[$login_admin]['username'] : '',
+		'hienthi' => 1,
+	));
+	return $cache[$key] = (int)$id;
+}
+
+/* Hạng của khóa theo id (cache). */
+function dt_khoa_hang($idKhoa)
+{
+	global $d;
+	static $cache = array();
+	$idKhoa = (int)$idKhoa;
+	if(!$idKhoa) return '';
+	if(isset($cache[$idKhoa])) return $cache[$idKhoa];
+	$row = $d->rawQueryOne("select hang from #_dt_khoa where id = ? limit 0,1", array($idKhoa));
+	return $cache[$idKhoa] = ($row ? (string)$row['hang'] : '');
+}
+
+function dt_khoa_upload_form() { /* template tĩnh */ }
+
+/* Import danh sách khóa từ Excel (mã khóa + tên khóa + hạng + ngày...). */
+function dt_khoa_upload_excel()
+{
+	global $d, $func;
+
+	$back = "index.php?com=daotao&act=uploadKhoa";
+	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
+		$func->transfer("Vui lòng chọn file Excel", $back, false);
+	$file = $_FILES['file-excel'];
+	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+	list($sheet, $highestRow, $highestCol) = dt_open_upload_sheet($file, $ext, $back);
+
+	$aliases = array(
+		'ma_khoa' => array('makhoa','makhoahoc','makh','khoa','khoahoc'),
+		'ten_khoa' => array('tenkhoa','tenkhoahoc'),
+		'hang' => array('hang','hangdaotao'),
+		'ngay_khaigiang' => array('ngaykhaigiang','khaigiang','ngaykhaigiangkhoa'),
+		'ngay_manhoa' => array('ngaymanhoa','manhoa','ngayketthuc','ngayketthuckhoa'),
+		'he_daotao' => array('hedaotao','he'),
+	);
+	$contains = array(
+		'ma_khoa' => array('makhoa','makhoahoc'),
+		'ten_khoa' => array('tenkhoa'),
+		'hang' => array('hang'),
+		'ngay_khaigiang' => array('khaigiang'),
+		'ngay_manhoa' => array('manhoa','ketthuc'),
+	);
+
+	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains);
+	if($score <= 0 || !isset($map['ma_khoa']))
+		$func->transfer("Không nhận diện được cột 'Mã khóa' (hoặc 'Khóa') trong file.", $back, false);
+
+	dt_backup_tables(array('dt_khoa'), 'imp_khoa');
+	$d->startTransaction();
+	$them = 0; $capnhat = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
+	for($r = $headerRow + 1; $r <= $highestRow; $r++)
+	{
+		$row = dt_read_row($sheet, $r, $highestCol);
+		$maKhoa = trim(preg_replace('/\s+/', ' ', dt_val($row, $map, 'ma_khoa')));
+		if($maKhoa === '') { if(++$emptyStreak >= 30) break; continue; }
+		$emptyStreak = 0;
+
+		$tenKhoa = dt_val($row, $map, 'ten_khoa');
+		$hang = dt_val($row, $map, 'hang');
+		$data = array(
+			'ten_khoa' => $tenKhoa !== '' ? $tenKhoa : $maKhoa,
+			'hang' => $hang !== '' ? dt_norm_hang($hang) : '',
+			'he_daotao' => dt_val($row, $map, 'he_daotao'),
+			'ngay_khaigiang' => null,
+			'ngay_manhoa' => null,
+		);
+		$kg = dt_parse_date(dt_val($row, $map, 'ngay_khaigiang'));
+		$mh = dt_parse_date(dt_val($row, $map, 'ngay_manhoa'));
+		if($kg) $data['ngay_khaigiang'] = $kg;
+		if($mh) $data['ngay_manhoa'] = $mh;
+
+		$exist = $d->rawQueryOne("select id from #_dt_khoa where ma_khoa = ? limit 0,1", array($maKhoa));
+		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_khoa', $data); $capnhat++; }
+		else
+		{
+			$data['ma_khoa'] = $maKhoa; $data['ngaytao'] = time(); $data['hienthi'] = 1;
+			$data['user_tao'] = dt_username();
+			$d->insert('dt_khoa', $data); $them++;
+		}
+	}
+	$d->commit();
+	dt_audit('import', 'khoa', $them + $capnhat, $file['name']);
+	dt_log_import('khoa', $file['name'], $them + $capnhat, $err);
+	$func->transfer("Import khóa: thêm mới $them, cập nhật $capnhat".($err ? ", $err lỗi" : ""), "index.php?com=daotao&act=khoa", $err === 0);
+}
+

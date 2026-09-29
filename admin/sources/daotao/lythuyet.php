@@ -36,12 +36,11 @@ function dt_lythuyet_upload_excel()
 {
 	global $d, $func;
 
-	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$idKhoaSel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$mon = isset($_REQUEST['mon']) ? preg_replace('/[^a-z0-9_]/', '', $_REQUEST['mon']) : '';
-	$back = "index.php?com=daotao&act=uploadLythuyet&id_khoa=".$idKhoa;
+	$back = "index.php?com=daotao&act=uploadLythuyet".($idKhoaSel ? "&id_khoa=".$idKhoaSel : "");
 	$dsMon = dt_mon_lythuyet();
 
-	if(!$idKhoa) $func->transfer("Vui lòng chọn khóa học", $back, false);
 	if(!isset($dsMon[$mon])) $func->transfer("Vui lòng chọn môn học hợp lệ", $back, false);
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
 		$func->transfer("Vui lòng chọn file Excel", $back, false);
@@ -93,13 +92,14 @@ function dt_lythuyet_upload_excel()
 		}
 		$emptyStreak = 0;
 
-		$hv = dt_find_hocvien_by_cccd($cccd, $idKhoa);
+		$hv = dt_find_hocvien_by_cccd($cccd, $idKhoaSel);
 		if(!$hv)
 		{
 			$err++;
-			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: CCCD $cccd không thuộc khóa";
+			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: CCCD $cccd chưa có trong danh sách học viên";
 			continue;
 		}
+		$idKhoa = (int)$hv['id_khoa'];
 
 		$tienDo = dt_parse_number(dt_val($row, $map, 'tien_do'));
 		$diemKt = dt_parse_number(dt_val($row, $map, 'diem_kt'));
@@ -119,5 +119,5 @@ function dt_lythuyet_upload_excel()
 	dt_log_import('lythuyet:'.$mon, $file['name'], $ok, $err);
 	$msg = "Import môn ".$dsMon[$mon].": $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	$func->transfer($msg, "index.php?com=daotao&act=lythuyet&id_khoa=".$idKhoa, $err === 0);
+	$func->transfer($msg, "index.php?com=daotao&act=lythuyet".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
 }

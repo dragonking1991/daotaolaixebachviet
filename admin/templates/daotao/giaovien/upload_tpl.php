@@ -17,7 +17,7 @@
 				<div class="form-group">
 					<label>File Excel (.xlsx)</label>
 					<div class="custom-file">
-						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx" required>
+						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx,.xls" required>
 						<label class="custom-file-label" for="file-excel">Chọn file...</label>
 					</div>
 				</div>

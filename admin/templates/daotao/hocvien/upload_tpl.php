@@ -15,9 +15,9 @@
 			<div class="card-body">
 				<div class="alert alert-warning">File phải có <strong>cả Mã đăng ký (mã học viên) và Số CMND/CCCD</strong>. Dòng thiếu một trong hai sẽ bị báo lỗi và không nạp.</div>
 				<div class="form-group">
-					<label>Chọn khóa <span class="text-danger">*</span></label>
-					<select name="id_khoa" class="form-control form-control-sm" required>
-						<option value="">— Chọn khóa —</option>
+					<label>Khóa <span class="text-muted">(tự nhận từ cột “Khóa” trong file; để trống nếu file đã có)</span></label>
+					<select name="id_khoa" class="form-control form-control-sm">
+						<option value="">— Tự nhận từ file / hoặc chọn khóa —</option>
 						<?php foreach($ds_khoa as $k): ?>
 						<option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option>
 						<?php endforeach; ?>
@@ -26,7 +26,7 @@
 				<div class="form-group">
 					<label>File Excel (.xlsx)</label>
 					<div class="custom-file">
-						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx" required>
+						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx,.xls" required>
 						<label class="custom-file-label" for="file-excel">Chọn file...</label>
 					</div>
 				</div>
