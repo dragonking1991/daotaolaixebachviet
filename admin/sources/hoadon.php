@@ -495,18 +495,25 @@ function uploadExcel_hoadon()
 	if(empty($inputFileName) || !is_file($inputFileName) || !is_readable($inputFileName))
 		$func->transfer("Không thể đọc file upload tạm thời. Vui lòng thử lại.", "index.php?com=hoadon&act=upload", false);
 
-	$sheet = null;
-	$rowsFallback = array();
-	$useFallbackRows = false;
+	// Gom tất cả sheet để import (file mua vào có 3 sheet: initCode/noCode/hasCode).
+	$sheetContexts = array();
+	$objPHPExcel = null;
 
 	try
 	{
 		$objReader = ($ext == 'xlsx') ? PHPExcel_IOFactory::createReader('Excel2007') : PHPExcel_IOFactory::createReader('Excel5');
 		$objPHPExcel = $objReader->load($inputFileName);
-		$sheet = $objPHPExcel->getSheet(0);
-		$highestRow = (int)$sheet->getHighestRow();
-		$highestColumn = $sheet->getHighestColumn();
-		$highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn);
+		foreach($objPHPExcel->getAllSheets() as $wsheet)
+		{
+			$sheetContexts[] = array(
+				'sheet' => $wsheet,
+				'title' => $wsheet->getTitle(),
+				'fallback' => false,
+				'rows' => array(),
+				'highestRow' => (int)$wsheet->getHighestRow(),
+				'highestCol' => PHPExcel_Cell::columnIndexFromString($wsheet->getHighestColumn())
+			);
+		}
 	}
 	catch(Throwable $e)
 	{
@@ -521,10 +528,36 @@ function uploadExcel_hoadon()
 			$func->transfer("File Excel không hợp lệ hoặc chứa dữ liệu không tương thích. Vui lòng lưu lại file ở định dạng .xlsx và import lại.", "index.php?com=hoadon&act=upload", false);
 		}
 
-		$useFallbackRows = true;
-		$highestRow = (int)max(array_keys($rowsFallback));
-		$highestColumnIndex = max(5, hoadon_get_max_column_index_from_rows($rowsFallback));
+		$sheetContexts[] = array(
+			'sheet' => null,
+			'title' => 'Sheet 1',
+			'fallback' => true,
+			'rows' => $rowsFallback,
+			'highestRow' => (int)max(array_keys($rowsFallback)),
+			'highestCol' => max(5, hoadon_get_max_column_index_from_rows($rowsFallback))
+		);
 	}
+
+	if(empty($sheetContexts))
+		$func->transfer("File Excel không có sheet dữ liệu nào.", "index.php?com=hoadon&act=upload", false);
+
+	$imported = 0;
+	$inserted = 0;
+	$updated = 0;
+	$skipped = 0;
+	$failed = 0;
+	$firstDbError = '';
+	$firstFailedRows = array();
+	$username = isset($_SESSION[$login_admin]['username']) ? $_SESSION[$login_admin]['username'] : '';
+
+	foreach($sheetContexts as $ctx)
+	{
+		$sheet = $ctx['sheet'];
+		$useFallbackRows = $ctx['fallback'];
+		$rowsFallback = $ctx['rows'];
+		$highestRow = $ctx['highestRow'];
+		$highestColumnIndex = $ctx['highestCol'];
+		if($highestRow < 1 || $highestColumnIndex < 1) continue;
 
 	$maSoAliases = array('masohoadon', 'mahoadon', 'sohoadon', 'invoicecode', 'invoiceno', 'invoiceid');
 	$buyerAliases = array('hotennguoimuahang', 'tennguoimuatennguoinhanhang', 'tennguoimuatenguoinhanhang', 'tennguoimuahang', 'hotennguoimua', 'nguoimuahang', 'nguoimua', 'buyername', 'buyer', 'hoten');
@@ -619,15 +652,6 @@ function uploadExcel_hoadon()
 	if($detailCol === null) $detailCol = 2;
 	if($dateCol === null) $dateCol = 3;
 	if($totalCol === null) $totalCol = 4;
-
-	$imported = 0;
-	$inserted = 0;
-	$updated = 0;
-	$skipped = 0;
-	$failed = 0;
-	$firstDbError = '';
-	$firstFailedRows = array();
-	$username = isset($_SESSION[$login_admin]['username']) ? $_SESSION[$login_admin]['username'] : '';
 
 	for($row = $headerRow + 1; $row <= $highestRow; $row++)
 	{
@@ -837,6 +861,7 @@ function uploadExcel_hoadon()
 			}
 		}
 	}
+	} // end foreach sheet
 
 	if($imported <= 0)
 	{

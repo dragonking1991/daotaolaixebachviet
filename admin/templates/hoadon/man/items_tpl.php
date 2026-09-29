@@ -48,6 +48,47 @@
 			return trim($text);
 		}
 	}
+
+	if(!function_exists('hoadon_pick'))
+	{
+		// Lấy giá trị đầu tiên khớp một trong các alias (đã chuẩn hoá) từ JSON hóa đơn.
+		function hoadon_pick($info, $aliases)
+		{
+			if(!is_array($info)) return '';
+			foreach($info as $k => $v)
+			{
+				$norm = function_exists('normalize_hoadon_header_label') ? normalize_hoadon_header_label($k) : strtolower(preg_replace('/[^a-z0-9]/i', '', (string)$k));
+				if(in_array($norm, $aliases, true))
+				{
+					$val = trim((string)$v);
+					if($val !== '') return $val;
+				}
+			}
+			return '';
+		}
+	}
+
+	if(!function_exists('hoadon_money_display'))
+	{
+		// Chuẩn hoá chuỗi tiền (US "800,000.000000" hoặc VN "800.000") thành dạng VND "800.000".
+		function hoadon_money_display($raw)
+		{
+			$raw = trim((string)$raw);
+			if($raw === '') return '';
+			$clean = preg_replace('/[^0-9.,\-]/', '', $raw);
+			if($clean === '' || $clean === '-') return $raw;
+
+			if(preg_match('/^-?\d{1,3}(,\d{3})*(\.\d+)?$/', $clean))       // US: , = ngàn, . = thập phân
+				$num = (float)str_replace(',', '', $clean);
+			elseif(preg_match('/^-?\d{1,3}(\.\d{3})*(,\d+)?$/', $clean))   // VN: . = ngàn, , = thập phân
+				$num = (float)str_replace(',', '.', str_replace('.', '', $clean));
+			else
+				$num = (float)str_replace(',', '', $clean);
+
+			if($num == 0.0 && !preg_match('/[1-9]/', $clean)) return $raw;
+			return number_format($num, 0, ',', '.');
+		}
+	}
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -105,25 +146,25 @@
 			<h3 class="card-title">Danh sách hóa đơn</h3>
 		</div>
 		<div class="card-body table-responsive p-0">
-			<table class="table table-hover">
+			<table class="table table-hover hd-list">
 				<thead>
 					<tr>
-						<th class="align-middle" width="5%">
+						<th width="34">
 							<div class="custom-control custom-checkbox my-checkbox">
 								<input type="checkbox" class="custom-control-input" id="selectall-checkbox">
 								<label for="selectall-checkbox" class="custom-control-label"></label>
 							</div>
 						</th>
-						<th class="align-middle">STT</th>
-						<th class="align-middle col-loai-hoa-don">Loại</th>
-						<?php for($h = 0; $h < count($excelColumns); $h++) { ?>
-							<th class="align-middle"><?=htmlspecialchars($excelColumns[$h])?></th>
-						<?php } ?>
-						<th class="align-middle text-center" width="8%">Thao tác</th>
+						<th>Hóa đơn</th>
+						<th>Bên bán</th>
+						<th>Bên mua</th>
+						<th>Chi tiết</th>
+						<th class="text-right">Số tiền</th>
+						<th class="text-right">Thao tác</th>
 					</tr>
 				</thead>
 				<?php if(empty($items)) { ?>
-					<tbody><tr><td colspan="100" class="text-center">Không có dữ liệu</td></tr></tbody>
+					<tbody><tr><td colspan="7" class="text-center text-muted py-4">Không có dữ liệu</td></tr></tbody>
 				<?php } else { ?>
 					<tbody>
 						<?php for($i = 0; $i < count($items); $i++) { ?>
@@ -147,44 +188,81 @@
 								}
 
 								$invoiceInfoJson = htmlspecialchars(json_encode($invoiceInfo, JSON_UNESCAPED_UNICODE), ENT_NOQUOTES, 'UTF-8');
+
+								$loai = isset($items[$i]['loai_hoa_don']) ? $items[$i]['loai_hoa_don'] : '';
+
+								$maSo = hoadon_pick($invoiceInfo, array('sohoadon', 'masohoadon'));
+								if($maSo === '') $maSo = trim((string)$items[$i]['ma_so_hoa_don']);
+								$kyHieu = hoadon_pick($invoiceInfo, array('kyhieuhoadon'));
+								$ngay = hoadon_pick($invoiceInfo, array('ngaylap', 'ngayhoadon'));
+								if($ngay === '' && !empty($items[$i]['ngay_hoa_don']) && $items[$i]['ngay_hoa_don'] != '0000-00-00') $ngay = date('d/m/Y', strtotime($items[$i]['ngay_hoa_don']));
+								$trangThai = hoadon_pick($invoiceInfo, array('trangthaihoadon', 'trangthai'));
+
+								$tenBan = hoadon_pick($invoiceInfo, array('tennguoibantennguoixuathang', 'tennguoiban'));
+								$mstBan = hoadon_pick($invoiceInfo, array('mstnguoibanmstnguoixuathang', 'mstnguoiban', 'msonguoiban'));
+
+								$tenMua = hoadon_pick($invoiceInfo, array('tennguoimuatennguoinhanhang', 'tennguoimua'));
+								$mstMua = hoadon_pick($invoiceInfo, array('mstnguoimuamstnguoinhanhang', 'mstnguoimua', 'msonguoimua'));
+								$diaChiMua = hoadon_pick($invoiceInfo, array('diachinguoimua'));
+								$hoTenMua = hoadon_pick($invoiceInfo, array('hotennguoimuahang'));
+								if($hoTenMua === '') $hoTenMua = trim((string)$items[$i]['ho_ten_nguoi_mua']);
+
+								$chiTiet = hoadon_pick($invoiceInfo, array('chitiethoadon', 'chitiet'));
+								if($chiTiet === '') $chiTiet = trim((string)$items[$i]['chi_tiet_hoa_don']);
+								$chiTiet = hoadon_format_multiline_items($chiTiet);
+
+								$tongTT = hoadon_pick($invoiceInfo, array('tongtienthanhtoan', 'tongthanhtoan'));
+								$chuaThue = hoadon_pick($invoiceInfo, array('tongtienchuathue'));
+								$tienThue = hoadon_pick($invoiceInfo, array('tongtienthue', 'tienthue'));
+								if($tongTT === '' && !empty($items[$i]['tong_tien'])) $tongTT = number_format((float)$items[$i]['tong_tien'], 0, ',', '.');
+								else $tongTT = hoadon_money_display($tongTT);
+								$chuaThue = hoadon_money_display($chuaThue);
+								$tienThue = hoadon_money_display($tienThue);
 							?>
 							<tr>
-								<td class="align-middle">
+								<td>
 									<div class="custom-control custom-checkbox my-checkbox">
 										<input type="checkbox" class="custom-control-input select-checkbox" id="select-checkbox-<?=$items[$i]['id']?>" value="<?=$items[$i]['id']?>">
 										<label for="select-checkbox-<?=$items[$i]['id']?>" class="custom-control-label"></label>
 									</div>
 								</td>
-								<td class="align-middle"><?=(($curPage - 1) * $per_page) + $i + 1?></td>
-								<td class="align-middle col-loai-hoa-don">
-									<?php
-										if(isset($items[$i]['loai_hoa_don']) && $items[$i]['loai_hoa_don'] == 'mua_vao') echo 'Mua vào';
-										elseif(isset($items[$i]['loai_hoa_don']) && $items[$i]['loai_hoa_don'] == 'ban_ra') echo 'Bán ra';
-										else echo '-';
-									?>
+								<td>
+									<div class="hd-title"><?= $maSo !== '' ? htmlspecialchars(($kyHieu !== '' ? $kyHieu.' · ' : '').$maSo) : '-' ?></div>
+									<div class="hd-sub">
+										<?php if($ngay !== '') { ?><span><i class="far fa-calendar-alt"></i><?=htmlspecialchars($ngay)?></span><?php } ?>
+										<div class="mt-1">
+											<?php if($loai == 'mua_vao') { ?><span class="hd-tag is-buy">Mua vào</span><?php } elseif($loai == 'ban_ra') { ?><span class="hd-tag is-sell">Bán ra</span><?php } ?>
+											<?php if($trangThai !== '') { ?><span class="hd-tag is-status"><?=htmlspecialchars($trangThai)?></span><?php } ?>
+										</div>
+									</div>
 								</td>
-								<?php for($c = 0; $c < count($excelColumns); $c++) {
-									$colName = $excelColumns[$c];
-									$val = isset($invoiceInfo[$colName]) ? (string)$invoiceInfo[$colName] : '';
-									$isDetailColumn = preg_match('/chi\s*ti[eế]t|di[eễ]n\s*gi[aả]i/iu', (string)$colName);
-									if($isDetailColumn) $val = hoadon_format_multiline_items($val);
-								?>
-									<td class="align-middle" style="white-space: normal; min-width: 180px; max-width: 380px;">
+								<td class="hd-party">
+									<div class="hd-title"><?= $tenBan !== '' ? htmlspecialchars($tenBan) : '<span class="hd-muted">—</span>' ?></div>
+									<?php if($mstBan !== '') { ?><div class="hd-sub"><strong>MST:</strong> <?=htmlspecialchars($mstBan)?></div><?php } ?>
+								</td>
+								<td class="hd-party">
+									<div class="hd-title"><?= $tenMua !== '' ? htmlspecialchars($tenMua) : '<span class="hd-muted">—</span>' ?></div>
+									<?php if($mstMua !== '') { ?><div class="hd-sub"><strong>MST:</strong> <?=htmlspecialchars($mstMua)?></div><?php } ?>
+									<?php if($hoTenMua !== '' && $hoTenMua !== $tenMua) { ?><div class="hd-sub"><i class="far fa-user"></i><?=htmlspecialchars($hoTenMua)?></div><?php } ?>
+									<?php if($diaChiMua !== '') { ?><div class="hd-sub hd-muted"><?=htmlspecialchars(mb_substr($diaChiMua, 0, 80))?><?=mb_strlen($diaChiMua) > 80 ? '…' : ''?></div><?php } ?>
+								</td>
+								<td>
+									<div class="hd-detail">
 										<?php
-											$trimVal = trim($val);
-											if($trimVal === '')
-											{
-												echo '-';
-											}
-											else
-											{
-												echo nl2br(htmlspecialchars(mb_substr($trimVal, 0, 180)));
-												if(mb_strlen($trimVal) > 180) echo '...';
+											if($chiTiet === '') echo '<span class="hd-muted">—</span>';
+											else {
+												echo nl2br(htmlspecialchars(mb_substr($chiTiet, 0, 200)));
+												if(mb_strlen($chiTiet) > 200) echo '…';
 											}
 										?>
-									</td>
-								<?php } ?>
-								<td class="align-middle text-center text-md text-nowrap">
+									</div>
+								</td>
+								<td class="text-right">
+									<div class="hd-amount"><?= $tongTT !== '' ? htmlspecialchars($tongTT) : '-' ?></div>
+									<?php if($chuaThue !== '') { ?><div class="hd-amount-line"><span>Chưa thuế</span><strong><?=htmlspecialchars($chuaThue)?></strong></div><?php } ?>
+									<?php if($tienThue !== '') { ?><div class="hd-amount-line"><span>Thuế</span><strong><?=htmlspecialchars($tienThue)?></strong></div><?php } ?>
+								</td>
+								<td class="hd-actions">
 									<textarea class="d-none hoadon-info-data" id="hoadon-info-<?=$items[$i]['id']?>"><?=$invoiceInfoJson?></textarea>
 									<a class="btn btn-xs bg-gradient-info text-white mr-2 btn-hoadon-detail" href="#" data-id="<?=$items[$i]['id']?>" title="Xem chi tiết">Chi tiết</a>
 									<a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
@@ -194,6 +272,7 @@
 					</tbody>
 				<?php } ?>
 			</table>
+
 		</div>
 	</div>
 

@@ -61,6 +61,7 @@
 	<link href="assets/css/adminlte.css" rel="stylesheet">
 	<link href="assets/css/adminlte-style.css" rel="stylesheet">
 	<link href="assets/css/daotao-theme.css" rel="stylesheet">
+	<link href="assets/css/hoadon-theme.css" rel="stylesheet">
 	<link href="assets/lucide/lucide-shim.css" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 

@@ -1,0 +1,42 @@
+/* Danh sách hóa đơn — trình bày nhóm cột 2 dòng, đồng bộ phong cách đào tạo.
+   Scoped body.com-hoadon nên không ảnh hưởng module khác. */
+body.com-hoadon { background: #f6f8fc; color: #334155; -webkit-font-smoothing: antialiased; }
+body.com-hoadon .card { border: 1px solid #e6e9f0; border-radius: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.05); overflow: hidden; }
+body.com-hoadon .card-header { border-bottom: 1px solid #eef1f6; padding: 14px 18px; }
+body.com-hoadon .card-title { font-weight: 700; color: #0f172a; }
+
+body.com-hoadon table.hd-list { width: 100%; border-collapse: separate; border-spacing: 0; }
+body.com-hoadon table.hd-list thead th {
+	background: #fff; border: none; border-bottom: 1px solid #eef1f6;
+	color: #94a3b8; text-transform: uppercase; font-size: .66rem; font-weight: 700;
+	letter-spacing: .6px; padding: 14px 14px 10px; white-space: nowrap; vertical-align: bottom;
+}
+body.com-hoadon table.hd-list tbody td { border: none; border-bottom: 1px solid #f1f3f8; padding: 13px 14px; vertical-align: top; }
+body.com-hoadon table.hd-list tbody tr:hover { background: #fafbfe; }
+
+body.com-hoadon .hd-title { font-weight: 600; color: #0f172a; font-size: .9rem; line-height: 1.35; }
+body.com-hoadon .hd-sub { color: #64748b; font-size: .78rem; line-height: 1.6; }
+body.com-hoadon .hd-sub svg.lucide-fa, body.com-hoadon .hd-sub i { width: 13px; height: 13px; color: #94a3b8; margin-right: 6px; vertical-align: -0.12em; }
+body.com-hoadon .hd-sub strong { color: #334155; font-weight: 600; }
+body.com-hoadon .hd-sep { color: #cbd5e1; margin: 0 6px; }
+body.com-hoadon .hd-muted { color: #94a3b8; font-size: .72rem; }
+
+body.com-hoadon .hd-tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-weight: 600; font-size: .7rem; letter-spacing: .2px; }
+body.com-hoadon .hd-tag.is-buy { background: #e8f2fc; color: #0b6bb3; }
+body.com-hoadon .hd-tag.is-sell { background: #edf1f7; color: #475569; }
+body.com-hoadon .hd-tag.is-status { background: #edf8f1; color: #176b3a; }
+
+body.com-hoadon .hd-amount { font-weight: 700; color: #0f172a; font-size: .92rem; white-space: nowrap; }
+body.com-hoadon .hd-amount-line { color: #64748b; font-size: .74rem; display: flex; justify-content: space-between; gap: 10px; }
+body.com-hoadon .hd-amount-line strong { color: #334155; font-weight: 600; }
+
+body.com-hoadon .hd-detail { color: #475569; font-size: .77rem; line-height: 1.55; white-space: normal; max-width: 340px; }
+body.com-hoadon .hd-party { max-width: 260px; }
+body.com-hoadon .hd-party .hd-title { font-size: .82rem; word-break: break-word; }
+
+body.com-hoadon .hd-actions { white-space: nowrap; text-align: right; }
+body.com-hoadon .hd-actions .btn { border-radius: 8px; }
+
+/* Thanh công cụ lọc gọn hơn */
+body.com-hoadon .hoadon-toolbar { gap: 4px; }
+body.com-hoadon .form-control-sm { border-radius: 8px; border-color: #dfe4ee; }

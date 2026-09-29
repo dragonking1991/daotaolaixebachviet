@@ -491,6 +491,28 @@ body.com-daotao .dt-summary-score { color: var(--dt-ink); font-size: 1rem; font-
 	body.com-daotao .dt-summary-progress { min-width: 350px; }
 }
 
+/* Danh sách lý thuyết: gộp 6 môn thành lưới chip 2 cột (thay 6 cột riêng). */
+body.com-daotao table.dt-lythuyet-list { min-width: 900px; }
+body.com-daotao table.dt-lythuyet-list thead th:nth-child(1) { width: 24%; }
+body.com-daotao table.dt-lythuyet-list thead th:nth-child(2) { width: 60%; }
+body.com-daotao table.dt-lythuyet-list thead th:nth-child(3) { width: 16%; }
+body.com-daotao table.dt-lythuyet-list tbody td { vertical-align: top; }
+body.com-daotao .dt-ly-modules { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+body.com-daotao .dt-ly-module { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-top: 1px solid #f1f3f8; min-width: 0; }
+body.com-daotao .dt-ly-modules > .dt-ly-module:nth-child(1),
+body.com-daotao .dt-ly-modules > .dt-ly-module:nth-child(2) { border-top: none; }
+body.com-daotao .dt-ly-label { color: #475569; font-size: .78rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.com-daotao .dt-ly-val { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+body.com-daotao .dt-ly-val a { text-decoration: none; }
+body.com-daotao .dt-ly-del { font-size: .8rem; opacity: .55; }
+body.com-daotao .dt-ly-del:hover { opacity: 1; }
+body.com-daotao .dt-ly-add { color: #94a3b8; font-size: .74rem; font-weight: 600; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+body.com-daotao .dt-ly-add:hover { color: var(--dt-blue-2); }
+@media (max-width: 767px) {
+	body.com-daotao .dt-ly-modules { grid-template-columns: 1fr; }
+	body.com-daotao .dt-ly-modules > .dt-ly-module:nth-child(2) { border-top: 1px solid #f1f3f8; }
+}
+
 /* Persistent import feedback, positioned under the breadcrumb by daotao.js. */
 body.com-daotao .dt-import-notice {
 	position: relative;

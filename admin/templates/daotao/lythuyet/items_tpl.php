@@ -25,23 +25,39 @@
 			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp lý thuyết.</div>
 			<?php else: ?>
 			<div class="table-responsive">
-			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Họ và tên</th><th>CCCD</th><?php foreach($ds_mon as $lbl): ?><th class="text-center" style="font-size:11px"><?=htmlspecialchars($lbl)?></th><?php endforeach; ?><th class="text-center">Lý thuyết</th></tr></thead>
+			<table class="table dt-list dt-lythuyet-list table-hover mb-0">
+				<thead><tr><th>Học viên</th><th>Kết quả 6 môn lý thuyết</th><th class="text-center">Tổng kết</th></tr></thead>
 				<tbody>
-					<?php if(!empty($items)): foreach($items as $it): $hv=$it['hv']; $soDat=0; ?>
+					<?php if(!empty($items)): foreach($items as $it): $hv=$it['hv']; $soDat=0; $tongMon=count($ds_mon); ?>
 					<tr>
-						<td><?=htmlspecialchars($hv['hoten'])?></td>
-						<td><?=htmlspecialchars($hv['cccd'])?></td>
-						<?php foreach($ds_mon as $mk=>$lbl): $m=isset($it['mon'][$mk])?$it['mon'][$mk]:null; if($m && (int)$m['dat']===1) $soDat++; ?>
-						<td class="text-center">
-							<?php if(!$m): ?><span class="text-muted">—</span>
-							<?php else: ?><a href="index.php?com=daotao&act=crudEdit&entity=lythuyet&id=<?=$m['id']?>" title="Sửa kết quả"><span class="badge badge-<?=$m['dat']?'success':'danger'?>" title="TĐ <?=$m['tien_do']?> / Điểm <?=$m['diem_kt']?>"><?=$m['dat']?'Đạt':'Chưa'?></span></a> <a href="index.php?com=daotao&act=crudDelete&entity=lythuyet&id=<?=$m['id']?>" onclick="return confirm('Xóa kết quả môn này?')" class="text-danger"><i class="fas fa-times"></i></a><?php endif; ?>
+						<td>
+							<div class="dt-title"><?=htmlspecialchars($hv['hoten'] ?: '—')?></div>
+							<div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($hv['cccd'] ?: '—')?></div>
 						</td>
-						<?php endforeach; ?>
-						<td class="text-center"><?php if($soDat>=count($ds_mon)): ?><span class="badge badge-success">Đạt</span><?php else: ?><span class="badge badge-secondary"><?=$soDat?>/<?=count($ds_mon)?></span><?php endif; ?></td>
+						<td>
+							<div class="dt-ly-modules">
+								<?php foreach($ds_mon as $mk=>$lbl): $m=isset($it['mon'][$mk])?$it['mon'][$mk]:null; if($m && (int)$m['dat']===1) $soDat++; ?>
+								<div class="dt-ly-module">
+									<span class="dt-ly-label"><?=htmlspecialchars($lbl)?></span>
+									<?php if(!$m): ?>
+										<a class="dt-ly-add" href="index.php?com=daotao&act=crudEdit&entity=lythuyet" title="Thêm kết quả môn này"><i class="fas fa-plus"></i> Thêm</a>
+									<?php else: ?>
+										<span class="dt-ly-val">
+											<a href="index.php?com=daotao&act=crudEdit&entity=lythuyet&id=<?=$m['id']?>" title="TĐ <?=htmlspecialchars($m['tien_do'])?> / Điểm <?=htmlspecialchars($m['diem_kt'])?> — bấm để sửa"><span class="badge badge-<?=$m['dat']?'success':'danger'?>"><?=$m['dat']?'Đạt':'Chưa'?></span></a>
+											<a href="index.php?com=daotao&act=crudDelete&entity=lythuyet&id=<?=$m['id']?>" onclick="return confirm('Xóa kết quả môn này?')" class="text-danger dt-ly-del" title="Xóa"><i class="fas fa-times"></i></a>
+										</span>
+									<?php endif; ?>
+								</div>
+								<?php endforeach; ?>
+							</div>
+						</td>
+						<td class="text-center">
+							<div class="dt-summary-score"><?=$soDat?>/<?=$tongMon?></div>
+							<?php if($soDat>=$tongMon): ?><span class="badge badge-success">Đạt lý thuyết</span><?php else: ?><span class="badge badge-secondary">Chưa đủ</span><?php endif; ?>
+						</td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="<?=count($ds_mon)+3?>" class="text-center text-muted p-3">Chưa có học viên</td></tr>
+					<tr><td colspan="3" class="text-center text-muted p-3">Chưa có học viên</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>
