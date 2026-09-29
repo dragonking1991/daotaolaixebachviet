@@ -41,9 +41,9 @@ function dt_lythuyet_upload_excel()
 	$back = "index.php?com=daotao&act=uploadLythuyet".($idKhoaSel ? "&id_khoa=".$idKhoaSel : "");
 	$dsMon = dt_mon_lythuyet();
 
-	if(!isset($dsMon[$mon])) $func->transfer("Vui lòng chọn môn học hợp lệ", $back, false);
+	if(!isset($dsMon[$mon])) dt_import_notice("Vui lòng chọn môn học hợp lệ", $back, false);
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
-		$func->transfer("Vui lòng chọn file Excel", $back, false);
+		dt_import_notice("Vui lòng chọn file Excel", $back, false);
 
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -75,7 +75,7 @@ function dt_lythuyet_upload_excel()
 	);
 	list($map, $score) = dt_detect_header($merged, $aliases, $contains);
 	if(!isset($map['cccd']) || !isset($map['tien_do']) || !isset($map['diem_kt']))
-		$func->transfer("Không nhận diện đủ các cột 'Mã đăng nhập', 'Tiến độ hoàn thành', 'Điểm kiểm tra'.", $back, false);
+		dt_import_notice("Không nhận diện đủ các cột 'Mã đăng nhập', 'Tiến độ hoàn thành', 'Điểm kiểm tra'.", $back, false);
 
 	dt_backup_tables(array('dt_lythuyet'), 'imp_lythuyet');
 	$d->startTransaction();
@@ -119,5 +119,5 @@ function dt_lythuyet_upload_excel()
 	dt_log_import('lythuyet:'.$mon, $file['name'], $ok, $err);
 	$msg = "Import môn ".$dsMon[$mon].": $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	$func->transfer($msg, "index.php?com=daotao&act=lythuyet".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
+	dt_import_notice($msg, "index.php?com=daotao&act=lythuyet".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
 }

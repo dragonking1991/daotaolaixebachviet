@@ -70,7 +70,7 @@ function dt_dat_upload_excel()
 	$idKhoaSel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$back = "index.php?com=daotao&act=uploadDat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : "");
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
-		$func->transfer("Vui lòng chọn file Excel", $back, false);
+		dt_import_notice("Vui lòng chọn file Excel", $back, false);
 
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -103,7 +103,7 @@ function dt_dat_upload_excel()
 
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains, 12);
 	if(!isset($map['ma_phien']) || !isset($map['ma_hv']))
-		$func->transfer("Không nhận diện được cột 'Mã phiên học' và 'Mã học viên' trong file DAT.", $back, false);
+		dt_import_notice("Không nhận diện được cột 'Mã phiên học' và 'Mã học viên' trong file DAT.", $back, false);
 
 	dt_backup_tables(array('dt_dat_phien'), 'imp_dat');
 	$hasKhoaCol = isset($map['khoa']);
@@ -162,5 +162,5 @@ function dt_dat_upload_excel()
 	dt_log_import('dat', $file['name'], $them, $err);
 	$msg = "Import DAT: thêm $them phiên mới, bỏ qua $trung phiên đã có".($err ? ", $err phiên lỗi (HV chưa có)" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	$func->transfer($msg, "index.php?com=daotao&act=dat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
+	dt_import_notice($msg, "index.php?com=daotao&act=dat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
 }

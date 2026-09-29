@@ -195,6 +195,13 @@
 						</div>
 					</section>
 				<?php } ?>
+				<?php if(isset($_SESSION['dt_import_notice']) && is_array($_SESSION['dt_import_notice'])) { $dtImportNotice = $_SESSION['dt_import_notice']; unset($_SESSION['dt_import_notice']); ?>
+				<div id="dt-import-notice" class="dt-import-notice alert <?=$dtImportNotice['success'] ? 'alert-success' : 'alert-danger'?>" role="status" aria-live="polite">
+					<i class="fas <?=$dtImportNotice['success'] ? 'fa-check-circle' : 'fa-exclamation-circle'?>"></i>
+					<div class="dt-import-notice-message"><?=nl2br(htmlspecialchars($dtImportNotice['message'], ENT_QUOTES, 'UTF-8'))?></div>
+					<button type="button" class="dt-import-notice-close" aria-label="Đóng thông báo" title="Đóng">&times;</button>
+				</div>
+				<?php } ?>
 				<?php include TEMPLATE.$template."_tpl.php"; ?>
 			</div>
 			<?php include TEMPLATE.LAYOUT."footer.php"; ?>

@@ -15,7 +15,7 @@
 			<div class="card-body">
 				<div class="alert alert-warning">Chống trùng theo <strong>Mã phiên học</strong>: chỉ nạp phiên chưa có, báo số phiên đã tồn tại bị bỏ qua. Ghép học viên theo Mã học viên.</div>
 				<div class="form-group">
-					<label>Khóa <span class="text-danger">*</span></label>
+					<label>Khóa <span class="text-muted">(tùy chọn)</span></label>
 					<select name="id_khoa" class="form-control form-control-sm">
 						<option value="">— Tất cả khóa (tự nhận theo học viên) —</option>
 						<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>

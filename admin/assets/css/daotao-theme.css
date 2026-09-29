@@ -464,3 +464,54 @@ body.com-daotao .dt-prog-num { color: #475569; }
 /* Chip nhỏ (LT/Cabin/Hình/DAT) trong cột tiến độ: khoảng cách đều */
 body.com-daotao .dt-prog + .dt-sub .badge { margin-right: 3px; }
 
+/* Persistent import feedback, positioned under the breadcrumb by daotao.js. */
+body.com-daotao .dt-import-notice {
+	position: relative;
+	display: grid !important;
+	grid-template-columns: 18px minmax(0, 1fr) 32px;
+	align-items: start;
+	column-gap: 10px;
+	margin: 0 16px 12px;
+	padding: 12px 12px 12px 14px;
+	border: 1px solid transparent;
+	border-radius: 9px;
+	box-shadow: 0 3px 12px rgba(15, 23, 42, .06);
+	font-size: .88rem;
+	line-height: 1.55;
+	white-space: normal;
+	word-break: break-word;
+	opacity: 0;
+	transform: translateY(-7px);
+	transition: opacity .22s ease, transform .22s ease;
+}
+body.com-daotao .dt-import-notice.is-visible { opacity: 1; transform: translateY(0); }
+body.com-daotao .dt-import-notice.is-dismissed { opacity: 0; transform: translateY(-5px); }
+body.com-daotao .dt-import-notice.alert-success { background: #edf8f1; border-color: #cdebd7; color: #176b3a; }
+body.com-daotao .dt-import-notice.alert-danger { background: #fff1f1; border-color: #f3d0d0; color: #9f2525; }
+body.com-daotao .dt-import-notice > svg,
+body.com-daotao .dt-import-notice > i { grid-column: 1; grid-row: 1; width: 16px; height: 16px; margin-top: 2px; }
+body.com-daotao .dt-import-notice-message { grid-column: 2; grid-row: 1; min-width: 0; overflow-wrap: anywhere; }
+body.com-daotao .dt-import-notice-close {
+	grid-column: 3;
+	grid-row: 1;
+	justify-self: end;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: 1px solid rgba(15, 23, 42, .12);
+	border-radius: 8px;
+	background: rgba(255, 255, 255, .72);
+	color: #475569;
+	font-family: Arial, sans-serif;
+	font-size: 19px;
+	line-height: 1;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, .08);
+	transition: background-color .16s ease, border-color .16s ease, transform .16s ease, box-shadow .16s ease;
+	cursor: pointer;
+}
+body.com-daotao .dt-import-notice-close:hover { background: #fff; border-color: rgba(15, 23, 42, .22); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(15, 23, 42, .12); }
+body.com-daotao .dt-import-notice-close:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+@media (max-width: 575px) {
+	body.com-daotao .dt-import-notice { grid-template-columns: 18px minmax(0, 1fr) 30px; column-gap: 8px; margin: 0 8px 10px; padding: 10px; }
+}
+

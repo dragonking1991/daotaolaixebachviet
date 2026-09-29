@@ -158,7 +158,7 @@ function dt_khoa_upload_excel()
 
 	$back = "index.php?com=daotao&act=uploadKhoa";
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
-		$func->transfer("Vui lòng chọn file Excel", $back, false);
+		dt_import_notice("Vui lòng chọn file Excel", $back, false);
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
@@ -182,7 +182,7 @@ function dt_khoa_upload_excel()
 
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains);
 	if($score <= 0 || !isset($map['ma_khoa']))
-		$func->transfer("Không nhận diện được cột 'Mã khóa' (hoặc 'Khóa') trong file.", $back, false);
+		dt_import_notice("Không nhận diện được cột 'Mã khóa' (hoặc 'Khóa') trong file.", $back, false);
 
 	dt_backup_tables(array('dt_khoa'), 'imp_khoa');
 	$d->startTransaction();
@@ -220,6 +220,6 @@ function dt_khoa_upload_excel()
 	$d->commit();
 	dt_audit('import', 'khoa', $them + $capnhat, $file['name']);
 	dt_log_import('khoa', $file['name'], $them + $capnhat, $err);
-	$func->transfer("Import khóa: thêm mới $them, cập nhật $capnhat".($err ? ", $err lỗi" : ""), "index.php?com=daotao&act=khoa", $err === 0);
+	dt_import_notice("Import khóa: thêm mới $them, cập nhật $capnhat".($err ? ", $err lỗi" : ""), "index.php?com=daotao&act=khoa", $err === 0);
 }
 

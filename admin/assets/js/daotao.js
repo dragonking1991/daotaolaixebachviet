@@ -5,6 +5,20 @@
 		if(!document.body || !document.body.classList.contains('com-daotao')) return;
 		var hasSwal = (typeof Swal !== 'undefined');
 
+		// Move the persistent import result directly below the breadcrumb.
+		var importNotice = document.getElementById('dt-import-notice');
+		if(importNotice){
+			var crumb = document.querySelector('.content-header');
+			if(crumb) crumb.insertAdjacentElement('afterend', importNotice);
+			requestAnimationFrame(function(){ importNotice.classList.add('is-visible'); });
+			var closeNotice = importNotice.querySelector('.dt-import-notice-close');
+			if(closeNotice) closeNotice.addEventListener('click', function(){
+				importNotice.classList.remove('is-visible');
+				importNotice.classList.add('is-dismissed');
+				setTimeout(function(){ if(importNotice.parentNode) importNotice.parentNode.removeChild(importNotice); }, 240);
+			});
+		}
+
 		// Loading overlay
 		if(!document.getElementById('dt-loading')){
 			var ov = document.createElement('div');

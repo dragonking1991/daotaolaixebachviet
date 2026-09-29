@@ -16,7 +16,7 @@
 				<div class="alert alert-warning">Đọc theo tên cột: <strong>Mã đăng nhập (CCCD), Tiến độ hoàn thành, Điểm kiểm tra</strong>. Đạt khi tiến độ &gt; 70 và điểm kiểm tra &gt; 5.</div>
 				<div class="row">
 					<div class="col-md-6 form-group">
-						<label>Khóa <span class="text-danger">*</span></label>
+						<label>Khóa <span class="text-muted">(tùy chọn)</span></label>
 						<select name="id_khoa" class="form-control form-control-sm">
 							<option value="">— Tất cả khóa (tự nhận theo học viên) —</option>
 							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>

@@ -34,7 +34,7 @@ function dt_cabin_upload_excel()
 	$idKhoaSel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$back = "index.php?com=daotao&act=uploadCabin".($idKhoaSel ? "&id_khoa=".$idKhoaSel : "");
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
-		$func->transfer("Vui lòng chọn file Excel", $back, false);
+		dt_import_notice("Vui lòng chọn file Excel", $back, false);
 
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -61,7 +61,7 @@ function dt_cabin_upload_excel()
 	// Header nằm sâu trong file cabin -> quét tối đa 20 dòng đầu.
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains, 20);
 	if(!isset($map['ma_hv']))
-		$func->transfer("Không nhận diện được cột 'Mã học viên' trong file cabin.", $back, false);
+		dt_import_notice("Không nhận diện được cột 'Mã học viên' trong file cabin.", $back, false);
 
 	dt_backup_tables(array('dt_cabin_kq'), 'imp_cabin');
 	$hasKhoaCol = isset($map['khoa']);
@@ -116,5 +116,5 @@ function dt_cabin_upload_excel()
 	dt_log_import('cabin', $file['name'], $ok, $err);
 	$msg = "Import cabin: $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	$func->transfer($msg, "index.php?com=daotao&act=cabinkq".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
+	dt_import_notice($msg, "index.php?com=daotao&act=cabinkq".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
 }

@@ -29,7 +29,7 @@ function dt_xe_upload_excel()
 
 	$back = "index.php?com=daotao&act=uploadXe";
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
-		$func->transfer("Vui lòng chọn file Excel", $back, false);
+		dt_import_notice("Vui lòng chọn file Excel", $back, false);
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
@@ -54,7 +54,7 @@ function dt_xe_upload_excel()
 
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains);
 	if($score <= 0 || !isset($map['bien_so']))
-		$func->transfer("Không nhận diện được cột 'Biển số xe' trong file.", $back, false);
+		dt_import_notice("Không nhận diện được cột 'Biển số xe' trong file.", $back, false);
 
 	dt_backup_tables(array('dt_xe'), 'imp_xe');
 	$d->startTransaction();
@@ -89,7 +89,7 @@ function dt_xe_upload_excel()
 	$d->commit();
 	dt_audit('import', 'xe', $ok, $file['name']);
 	dt_log_import('xe', $file['name'], $ok, $err);
-	$func->transfer("Import xe: $ok dòng thành công", "index.php?com=daotao&act=xe");
+	dt_import_notice("Import xe: $ok dòng thành công", "index.php?com=daotao&act=xe");
 }
 
 /* Trả về true nếu biển số thuộc xe số tự động (hạng B11). */

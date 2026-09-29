@@ -31,7 +31,7 @@ function dt_giaovien_upload_excel()
 
 	$back = "index.php?com=daotao&act=uploadGiaovien";
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
-		$func->transfer("Vui lòng chọn file Excel", $back, false);
+		dt_import_notice("Vui lòng chọn file Excel", $back, false);
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
@@ -76,7 +76,7 @@ function dt_giaovien_upload_excel()
 
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains);
 	if($score <= 0 || !isset($map['cccd']))
-		$func->transfer("Không nhận diện được cột 'SoCMT' (CCCD) trong file.", $back, false);
+		dt_import_notice("Không nhận diện được cột 'SoCMT' (CCCD) trong file.", $back, false);
 
 	$preview = !empty($_REQUEST['preview']);
 	$previewRows = array(); $insCnt = 0; $updCnt = 0;
@@ -152,7 +152,7 @@ function dt_giaovien_upload_excel()
 	$d->commit();
 	dt_audit('import', 'giaovien', $ok, $file['name']);
 	dt_log_import('giaovien', $file['name'], $ok, $err);
-	$func->transfer("Import giáo viên: $ok dòng thành công".($err?", $err dòng thiếu CCCD":""), "index.php?com=daotao&act=giaovien", $err === 0);
+	dt_import_notice("Import giáo viên: $ok dòng thành công".($err?", $err dòng thiếu CCCD":""), "index.php?com=daotao&act=giaovien", $err === 0);
 }
 
 /* Định dạng ngày về dd/mm/yyyy: nhận serial Excel, chuỗi 'ddmmyyyy', hoặc chuỗi có sẵn. */

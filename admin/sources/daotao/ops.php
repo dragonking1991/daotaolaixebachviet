@@ -18,6 +18,18 @@ function dt_audit($action, $entity, $affected = 0, $detail = '')
 	));
 }
 
+/* Persist an import result across redirect so errors stay visible on the list page. */
+function dt_import_notice($message, $url, $success = true)
+{
+	global $func;
+	$_SESSION['dt_import_notice'] = array(
+		'message' => (string)$message,
+		'success' => (bool)$success,
+		'time' => time(),
+	);
+	$func->redirect($url);
+}
+
 /* Các bảng dữ liệu đào tạo được phép sao lưu (whitelist an toàn). */
 function dt_backup_tables_list()
 {

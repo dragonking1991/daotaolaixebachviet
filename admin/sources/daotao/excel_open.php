@@ -15,11 +15,11 @@ function dt_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 
 	$ext = strtolower($ext);
 	if($ext !== 'xlsx' && $ext !== 'xls')
-		$func->transfer("Chỉ hỗ trợ file .xlsx hoặc .xls. Vui lòng lưu lại đúng định dạng rồi import lại.", $backUrl, false);
+		dt_import_notice("Chỉ hỗ trợ file .xlsx hoặc .xls. Vui lòng lưu lại đúng định dạng rồi import lại.", $backUrl, false);
 
 	$inputFileName = $file['tmp_name'];
 	if(empty($inputFileName) || !is_readable($inputFileName))
-		$func->transfer("Không đọc được file tạm. Vui lòng thử lại.", $backUrl, false);
+		dt_import_notice("Không đọc được file tạm. Vui lòng thử lại.", $backUrl, false);
 
 	if(is_string($sheetHints)) $sheetHints = ($sheetHints === '') ? array() : array($sheetHints);
 
@@ -46,7 +46,7 @@ function dt_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 		$sheet = ($targetSheet !== null) ? $objPHPExcel->getSheetByName($targetSheet) : $objPHPExcel->getSheet(0);
 		if($sheet === null) $sheet = $objPHPExcel->getSheet(0);
 	} catch(Exception $e) {
-		$func->transfer("Lỗi đọc file Excel: ".$e->getMessage(), $backUrl, false);
+		dt_import_notice("Lỗi đọc file Excel: ".$e->getMessage(), $backUrl, false);
 		return null;
 	}
 
