@@ -8,7 +8,7 @@ function dt_hocvien_current_khoa()
 
 function dt_hocvien_list()
 {
-	global $d, $func, $curPage, $items, $paging, $ds_khoa, $id_khoa_sel;
+	global $d, $func, $curPage, $items, $paging, $ds_khoa, $id_khoa_sel, $total_items;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = dt_hocvien_current_khoa();
@@ -22,6 +22,7 @@ function dt_hocvien_list()
 	foreach($items as &$__it) $__it['sum'] = dt_student_summary($__it);
 	unset($__it);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_hocvien h where 1 $where", $params);
+	$total_items = (int)$count['num'];
 	$url = "index.php?com=daotao&act=hocvien".($id_khoa_sel ? "&id_khoa=".$id_khoa_sel : "");
 	$paging = $func->pagination($count['num'], $per_page, $curPage, $url);
 }

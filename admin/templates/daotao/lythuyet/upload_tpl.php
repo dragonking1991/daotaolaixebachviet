@@ -31,7 +31,7 @@
 						<label>Khóa <span class="text-muted">(tùy chọn)</span></label>
 						<select name="id_khoa" class="form-control form-control-sm">
 							<option value="">— Tất cả khóa (tự nhận theo học viên) —</option>
-							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
+							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option><?php endforeach; ?>
 						</select>
 					</div>
 				</div>

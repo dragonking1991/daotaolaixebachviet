@@ -73,6 +73,7 @@ body.com-daotao .card-title strong {
 	font-weight: 700;
 	letter-spacing: .2px;
 }
+body.com-daotao .dt-count { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 22px; margin-left: 6px; padding: 0 8px; border-radius: 999px; background: #eef4ff; color: #2563eb; font-size: .72rem; font-weight: 700; vertical-align: 2px; }
 body.com-daotao .card-body {
 	padding: 16px 18px;
 }
@@ -456,6 +457,16 @@ body.com-daotao .btn svg.lucide-fa:only-child { margin-right: 0; }
 /* Ô lọc/tìm kiếm: bo tròn, viền dịu */
 body.com-daotao .form-control-sm { border-radius: 8px; border-color: #dfe4ee; height: calc(1.5em + .6rem + 2px); }
 body.com-daotao .form-inline { gap: 8px; }
+body.com-daotao select.form-control:not([multiple]) {
+	appearance: none;
+	-webkit-appearance: none;
+	padding-right: 34px;
+	background-color: #fff;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	background-size: 12px 8px;
+}
 
 /* Thanh tiến độ: mảnh, bo tròn, màu dịu */
 body.com-daotao .dt-prog-bar { height: 7px; background: #eef1f6; }

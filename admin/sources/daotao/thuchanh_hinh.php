@@ -3,11 +3,12 @@ if(!defined('SOURCES')) die("Error");
 
 function dt_hinh_list()
 {
-	global $d, $func, $items, $ds_khoa, $id_khoa_sel;
+	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $total_items;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array();
+	$total_items = 0;
 	if(!$id_khoa_sel) return;
 
 	$sql = "select h.id, h.cccd, h.hoten, h.hang, th.id as data_id, th.gio, th.km "
@@ -24,6 +25,7 @@ function dt_hinh_list()
 		if($tt === 'chua' && $rw['dat']) continue;
 		$items[] = $rw;
 	}
+	$total_items = count($items);
 }
 
 function dt_hinh_save()

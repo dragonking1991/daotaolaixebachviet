@@ -10,7 +10,7 @@
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
-			<h3 class="card-title"><strong>Tổng hợp lý thuyết (6 môn)</strong></h3>
+			<h3 class="card-title"><strong>Tổng hợp lý thuyết (6 môn)</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
 			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=lythuyet" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm kết quả</a> <a href="index.php?com=daotao&act=uploadLythuyet<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import môn</a> <a href="<?=dt_export_link('exportLythuyet', array('id_khoa','keyword','trang_thai','du_lieu'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=lythuyet" onclick="return confirm('Xóa toàn bộ kết quả lý thuyết?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
 		</div>
 		<div class="card-body">
@@ -18,7 +18,7 @@
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="lythuyet">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
 					<option value="0">— Chọn khóa —</option>
-					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
+					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option><?php endforeach; ?>
 				</select>
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD / Mã HV" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
 				<select name="trang_thai" class="form-control form-control-sm mr-2">

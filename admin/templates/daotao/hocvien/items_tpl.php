@@ -14,7 +14,7 @@
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
-			<h3 class="card-title"><strong>Danh sách học viên</strong></h3>
+			<h3 class="card-title"><strong>Danh sách học viên</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
 			<div class="card-tools">
 				<a href="index.php?com=daotao&act=crudEdit&entity=hocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a>
 				<a href="index.php?com=daotao&act=uploadHocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import học viên</a>
@@ -28,7 +28,7 @@
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
 					<option value="0">— Tất cả khóa —</option>
 					<?php foreach($ds_khoa as $k): ?>
-					<option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option>
+					<option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option>
 					<?php endforeach; ?>
 				</select>
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD / Mã HV" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">

@@ -9,7 +9,7 @@ function dt_gv_hash($plain)
 
 function dt_giaovien_list()
 {
-	global $d, $func, $curPage, $items, $paging;
+	global $d, $func, $curPage, $items, $paging, $total_items;
 
 	list($where, $params) = dt_giaovien_where();
 
@@ -17,6 +17,7 @@ function dt_giaovien_list()
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$items = $d->rawQuery("select * from #_dt_giaovien where 1 $where order by hoten asc limit $startpoint,$per_page", $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_giaovien where 1 $where", $params);
+	$total_items = (int)$count['num'];
 	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=giaovien");
 }
 

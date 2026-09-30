@@ -49,10 +49,11 @@ function dt_tonghop_rows($f)
 
 function dt_tonghop_list()
 {
-	global $items, $ds_khoa, $filters, $ds_gv;
+	global $items, $ds_khoa, $filters, $ds_gv, $total_items;
 	$ds_khoa = dt_khoa_options();
 	$filters = dt_tonghop_filters();
 	$items = ($filters['id_khoa'] || $filters['cccd'] !== '' || $filters['hoten'] !== '') ? dt_tonghop_rows($filters) : array();
+	$total_items = count($items);
 }
 
 function dt_tonghop_export()

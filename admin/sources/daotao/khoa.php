@@ -3,7 +3,7 @@ if(!defined('SOURCES')) die("Error");
 
 function dt_khoa_list()
 {
-	global $d, $func, $curPage, $items, $paging;
+	global $d, $func, $curPage, $items, $paging, $total_items;
 
 	list($where, $params) = dt_khoa_where();
 
@@ -14,6 +14,7 @@ function dt_khoa_list()
 		. "from #_dt_khoa k where k.hienthi >= 0 $where order by k.ngay_khaigiang desc, k.id desc limit $startpoint,$per_page";
 	$items = $d->rawQuery($sql, $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_khoa k where k.hienthi >= 0 $where", $params);
+	$total_items = (int)$count['num'];
 	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=khoa");
 }
 
@@ -21,7 +22,7 @@ function dt_khoa_list()
 function dt_khoa_options()
 {
 	global $d;
-	return $d->rawQuery("select id, ma_khoa, ten_khoa, hang from #_dt_khoa where hienthi = 1 order by ngay_khaigiang desc, id desc");
+	return $d->rawQuery("select k.id, k.ma_khoa, k.ten_khoa, k.hang, (select count(*) from #_dt_hocvien h where h.id_khoa = k.id) as so_hoc_vien from #_dt_khoa k where k.hienthi = 1 order by k.ngay_khaigiang desc, k.id desc");
 }
 
 function dt_khoa_form()

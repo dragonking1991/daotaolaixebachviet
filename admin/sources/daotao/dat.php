@@ -44,11 +44,12 @@ function dt_dat_upload_form()
 /* Tra cứu tổng hợp DAT theo khóa (mỗi học viên 1 dòng, có tham số A/B/C/D/E). */
 function dt_dat_list()
 {
-	global $d, $func, $items, $phien, $ds_khoa, $id_khoa_sel;
+	global $d, $func, $items, $phien, $ds_khoa, $id_khoa_sel, $total_items;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array(); $phien = array();
+	$total_items = 0;
 	if(!$id_khoa_sel) return;
 	$phien = $d->rawQuery("select * from #_dt_dat_phien where id_khoa = ? order by id desc", array($id_khoa_sel));
 
@@ -66,6 +67,7 @@ function dt_dat_list()
 		$soPhien = (int)($rPhien ? $rPhien['c'] : 0);
 		$items[] = array('hv' => $hv, 'agg' => $agg, 'dat' => $dat, 'thieu' => $thieu, 'so_phien' => $soPhien);
 	}
+	$total_items = count($items);
 }
 
 function dt_dat_upload_excel()

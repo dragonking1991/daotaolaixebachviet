@@ -39,14 +39,14 @@
 	</div>
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
-			<h3 class="card-title"><strong>Tổng hợp Đạt / Không đạt</strong></h3>
+			<h3 class="card-title"><strong>Tổng hợp Đạt / Không đạt</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
 			<div class="card-tools"><a href="index.php?<?=$qs?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=all" onclick="return confirm('Xóa toàn bộ dữ liệu trong Quản lý đào tạo? Thao tác không thể hoàn tác.')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ dữ liệu</a></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="mb-3">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="tonghop">
 				<div class="row">
-					<div class="col-md-3 form-group mb-1"><select name="id_khoa" class="form-control form-control-sm"><option value="0">— Tất cả khóa —</option><?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$filters['id_khoa']==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?></select></div>
+					<div class="col-md-3 form-group mb-1"><select name="id_khoa" class="form-control form-control-sm"><option value="0">— Tất cả khóa —</option><?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$filters['id_khoa']==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option><?php endforeach; ?></select></div>
 					<div class="col-md-2 form-group mb-1"><input type="date" name="tu_ngay" class="form-control form-control-sm" value="<?=htmlspecialchars($filters['tu_ngay'])?>" title="Từ ngày (DAT)"></div>
 					<div class="col-md-2 form-group mb-1"><input type="date" name="toi_ngay" class="form-control form-control-sm" value="<?=htmlspecialchars($filters['toi_ngay'])?>" title="Tới ngày (DAT)"></div>
 					<div class="col-md-2 form-group mb-1"><input type="text" name="cccd" class="form-control form-control-sm" placeholder="CCCD" value="<?=htmlspecialchars($filters['cccd'])?>"></div>

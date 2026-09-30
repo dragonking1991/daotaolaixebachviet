@@ -9,13 +9,13 @@
 </section>
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
-		<div class="card-header"><h3 class="card-title"><strong>Thực hành trong hình (nhập tay)</strong></h3><div class="card-tools"><a href="<?=dt_export_link('exportHinh', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=hinh" onclick="return confirm('Xóa toàn bộ dữ liệu thực hành trong hình?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div></div>
+		<div class="card-header"><h3 class="card-title"><strong>Thực hành trong hình (nhập tay)</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3><div class="card-tools"><a href="<?=dt_export_link('exportHinh', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=hinh" onclick="return confirm('Xóa toàn bộ dữ liệu thực hành trong hình?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div></div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="hinh">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
 					<option value="0">— Chọn khóa —</option>
-					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
+					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option><?php endforeach; ?>
 				</select>
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
 				<select name="trang_thai" class="form-control form-control-sm mr-2">

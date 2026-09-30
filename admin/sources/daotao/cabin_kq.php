@@ -10,7 +10,7 @@ function dt_cabin_upload_form()
 
 function dt_cabin_list()
 {
-	global $d, $func, $curPage, $items, $paging, $ds_khoa, $id_khoa_sel;
+	global $d, $func, $curPage, $items, $paging, $ds_khoa, $id_khoa_sel, $total_items;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
@@ -19,9 +19,10 @@ function dt_cabin_list()
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select c.*, h.hoten, h.cccd as hv_cccd from #_dt_cabin_kq c left join #_dt_hocvien h on (h.id_khoa = c.id_khoa and h.ma_hv = c.ma_hv) where 1 $where order by c.id desc limit $startpoint,$per_page";
+	$sql = "select c.*, h.hoten, h.cccd as hv_cccd, h.hang, k.ma_khoa, k.ten_khoa from #_dt_cabin_kq c left join #_dt_hocvien h on (h.id_khoa = c.id_khoa and h.ma_hv = c.ma_hv) left join #_dt_khoa k on k.id = c.id_khoa where 1 $where order by c.id desc limit $startpoint,$per_page";
 	$items = $d->rawQuery($sql, $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_cabin_kq c where 1 $where", $params);
+	$total_items = (int)$count['num'];
 	$url = "index.php?com=daotao&act=cabinkq".($id_khoa_sel ? "&id_khoa=".$id_khoa_sel : "");
 	$paging = $func->pagination($count['num'], $per_page, $curPage, $url);
 }

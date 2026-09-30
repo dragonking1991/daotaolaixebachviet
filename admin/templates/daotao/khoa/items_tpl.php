@@ -10,7 +10,7 @@
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
-			<h3 class="card-title"><strong>Danh sách khóa đào tạo</strong></h3>
+			<h3 class="card-title"><strong>Danh sách khóa đào tạo</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
 			<div class="card-tools">
 				<a href="index.php?com=daotao&act=khoaAdd" class="btn btn-sm bg-gradient-success"><i class="fas fa-plus mr-1"></i>Thêm khóa</a>
 				<a href="index.php?com=daotao&act=uploadKhoa" class="btn btn-sm bg-gradient-primary"><i class="fas fa-upload mr-1"></i>Import khóa</a>

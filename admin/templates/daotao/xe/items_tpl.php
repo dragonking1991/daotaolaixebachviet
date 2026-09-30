@@ -10,7 +10,7 @@
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
-			<h3 class="card-title"><strong>Danh sách xe tập lái</strong></h3>
+			<h3 class="card-title"><strong>Danh sách xe tập lái</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
 			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=xe" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadXe" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import xe</a> <a href="<?=dt_export_link('exportXe', array('keyword','hang','loai_xe','nhan_hieu'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=xe" onclick="return confirm('Xóa toàn bộ xe tập lái?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
 		</div>
 		<div class="card-body">

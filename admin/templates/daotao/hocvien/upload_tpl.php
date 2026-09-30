@@ -19,7 +19,7 @@
 					<select name="id_khoa" class="form-control form-control-sm">
 						<option value="">— Tự nhận từ file / hoặc chọn khóa —</option>
 						<?php foreach($ds_khoa as $k): ?>
-						<option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option>
+						<option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option>
 						<?php endforeach; ?>
 					</select>
 				</div>

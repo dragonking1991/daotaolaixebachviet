@@ -12,7 +12,7 @@ function dt_lythuyet_upload_form()
 /* Danh sách tổng hợp 6 môn theo học viên của một khóa. */
 function dt_lythuyet_list()
 {
-	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $ds_mon, $du_lieu_filter;
+	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $ds_mon, $du_lieu_filter, $total_items;
 
 	$ds_khoa = dt_khoa_options();
 	$ds_mon = dt_mon_lythuyet();
@@ -20,6 +20,7 @@ function dt_lythuyet_list()
 	$du_lieu_filter = dt_req('du_lieu', 'co');
 	if(!in_array($du_lieu_filter, array('co', 'tat_ca', 'chua'), true)) $du_lieu_filter = 'co';
 	$items = array();
+	$total_items = 0;
 	if(!$id_khoa_sel) return;
 
 	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
@@ -45,6 +46,7 @@ function dt_lythuyet_list()
 		}
 		$items[] = array('hv' => $hv, 'mon' => $monData);
 	}
+	$total_items = count($items);
 }
 
 function dt_lythuyet_upload_excel()
