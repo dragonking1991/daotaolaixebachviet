@@ -15,8 +15,7 @@ function dt_cabin_list()
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 
-	$where = ""; $params = array();
-	if($id_khoa_sel) { $where .= " and c.id_khoa = ?"; $params[] = $id_khoa_sel; }
+	list($where, $params) = dt_cabin_where();
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;

@@ -14,9 +14,14 @@ function dt_hinh_list()
 		. "from #_dt_hocvien h left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) "
 		. "where h.id_khoa = ? order by h.hoten asc";
 	$rows = $d->rawQuery($sql, array($id_khoa_sel));
+	$kw = dt_mb_lower(dt_req('keyword'));
+	$tt = dt_req('trang_thai');
 	foreach($rows as $rw)
 	{
+		if($kw !== '' && strpos(dt_mb_lower($rw['hoten'].' '.$rw['cccd']), $kw) === false) continue;
 		$rw['dat'] = dt_hinh_dat($rw['hang'], $rw['gio'], $rw['km']);
+		if($tt === 'dat' && !$rw['dat']) continue;
+		if($tt === 'chua' && $rw['dat']) continue;
 		$items[] = $rw;
 	}
 }

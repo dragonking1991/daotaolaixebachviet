@@ -53,10 +53,15 @@ function dt_dat_list()
 	$phien = $d->rawQuery("select * from #_dt_dat_phien where id_khoa = ? order by id desc", array($id_khoa_sel));
 
 	$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
+	$kw = dt_mb_lower(dt_req('keyword'));
+	$tt = dt_req('trang_thai');
 	foreach($hvs as $hv)
 	{
+		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
 		$agg = dt_dat_aggregate($hv['cccd'], $id_khoa_sel);
 		list($dat, $thieu) = dt_dat_danhgia($hv['hang'], $agg);
+		if($tt === 'dat' && !$dat) continue;
+		if($tt === 'chua' && $dat) continue;
 		$rPhien = $d->rawQueryOne("select count(*) as c from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($id_khoa_sel, $hv['cccd']));
 		$soPhien = (int)($rPhien ? $rPhien['c'] : 0);
 		$items[] = array('hv' => $hv, 'agg' => $agg, 'dat' => $dat, 'thieu' => $thieu, 'so_phien' => $soPhien);

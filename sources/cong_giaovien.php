@@ -3,6 +3,11 @@ if(!defined('SOURCES')) die("Error");
 
 require_once LIBRARIES.'daotao_lib.php';
 
+function dt_gv_badge($ok)
+{
+	return '<span class="dt-gv-badge '.((int)$ok ? 'is-pass' : 'is-pending').'">'.((int)$ok ? 'Đạt' : 'Chưa').'</span>';
+}
+
 $seo->setSeo('h1', 'Cổng giáo viên');
 $seo->setSeo('title', 'Cổng giáo viên');
 $seo->setSeo('url', $func->getPageURL());
@@ -85,41 +90,6 @@ elseif($dtAct === 'changepass' && isset($_SESSION['dt_gv']))
 	if(!$gv || $gv['matkhau'] !== dt_gv_hash($old)) $dtGvErr = 'Mật khẩu hiện tại không đúng.';
 	elseif(strlen($new) < 4) $dtGvErr = 'Mật khẩu mới tối thiểu 4 ký tự.';
 	else { $d->where('id', (int)$gv['id']); $d->update('dt_giaovien', array('matkhau' => dt_gv_hash($new))); $dtGvMsg = 'Đã đổi mật khẩu thành công.'; }
-}
-elseif($dtAct === 'savehinh' && isset($_SESSION['dt_gv']))
-{
-	$idKhoa = (int)($_POST['id_khoa'] ?? 0);
-	$cccd = dt_normalize_cccd($_POST['cccd'] ?? '');
-	$hv = dt_find_hocvien_by_cccd($cccd, $idKhoa);
-	$isAjax = !empty($_POST['ajax']);
-	if($hv && $hv['gv_key'] === $_SESSION['dt_gv']['gv_key'])
-	{
-		$gio = (float)str_replace(',', '.', $_POST['gio'] ?? 0);
-		$km = (float)str_replace(',', '.', $_POST['km'] ?? 0);
-		$data = array('id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'gio' => $gio, 'km' => $km,
-			'nguoi_nhap' => 'GV:'.$_SESSION['dt_gv']['cccd']);
-		$exist = $d->rawQueryOne("select id from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $hv['cccd']));
-		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_thuchanh_hinh', $data); }
-		else { $data['ngaytao'] = time(); $d->insert('dt_thuchanh_hinh', $data); }
-		$hinhDat = dt_hinh_dat($hv['hang'], $gio, $km);
-		if($isAjax)
-		{
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode(array('ok' => true, 'dat' => $hinhDat, 'msg' => 'Đã lưu cho '.$hv['hoten']));
-			exit;
-		}
-		$dtGvMsg = 'Đã lưu thực hành trong hình cho '.$hv['hoten'].'.';
-	}
-	else
-	{
-		if($isAjax)
-		{
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode(array('ok' => false, 'msg' => 'Học viên không thuộc quyền quản lý của bạn.'));
-			exit;
-		}
-		$dtGvErr = 'Học viên không thuộc quyền quản lý của bạn.';
-	}
 }
 
 /* ----- Dữ liệu cho template ----- */

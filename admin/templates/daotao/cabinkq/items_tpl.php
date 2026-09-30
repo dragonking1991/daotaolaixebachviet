@@ -11,7 +11,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Kết quả cabin</strong></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadCabin<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import cabin</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=cabinkq" onclick="return confirm('Xóa toàn bộ kết quả cabin?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
+			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadCabin<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import cabin</a> <a href="<?=dt_export_link('exportCabin', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=cabinkq" onclick="return confirm('Xóa toàn bộ kết quả cabin?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">
@@ -20,6 +20,13 @@
 					<option value="0">— Tất cả khóa —</option>
 					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
 				</select>
+				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD / Mã HV" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
+				<select name="trang_thai" class="form-control form-control-sm mr-2">
+					<option value="">— Trạng thái —</option>
+					<option value="dat" <?=(isset($_REQUEST['trang_thai'])&&$_REQUEST['trang_thai']=='dat')?'selected':''?>>Đạt</option>
+					<option value="chua" <?=(isset($_REQUEST['trang_thai'])&&$_REQUEST['trang_thai']=='chua')?'selected':''?>>Chưa đạt</option>
+				</select>
+				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
 			<table class="table dt-list table-hover mb-0">
 				<thead><tr><th>Học viên</th><th>Kết quả cabin</th><th class="text-center">Trạng thái</th><th class="dt-actions">Hành động</th></tr></thead>

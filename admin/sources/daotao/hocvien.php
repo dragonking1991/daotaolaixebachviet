@@ -13,14 +13,7 @@ function dt_hocvien_list()
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = dt_hocvien_current_khoa();
 
-	$where = "";
-	$params = array();
-	if($id_khoa_sel) { $where .= " and h.id_khoa = ?"; $params[] = $id_khoa_sel; }
-	if(isset($_REQUEST['keyword']) && $_REQUEST['keyword'] !== '')
-	{
-		$kw = $d->escape(htmlspecialchars($_REQUEST['keyword']));
-		$where .= " and (h.hoten like '%$kw%' or h.cccd like '%$kw%' or h.ma_hv like '%$kw%')";
-	}
+	list($where, $params) = dt_hocvien_where();
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;

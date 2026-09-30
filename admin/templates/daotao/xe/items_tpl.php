@@ -11,7 +11,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Danh sách xe tập lái</strong></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=xe" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadXe" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import xe</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=xe" onclick="return confirm('Xóa toàn bộ xe tập lái?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
+			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=xe" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadXe" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import xe</a> <a href="<?=dt_export_link('exportXe', array('keyword','hang','loai_xe','nhan_hieu'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=xe" onclick="return confirm('Xóa toàn bộ xe tập lái?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">
@@ -21,6 +21,8 @@
 					<option value="">— Hạng —</option>
 					<?php foreach(array('B11','B1','C1','C','CE') as $h): ?><option value="<?=$h?>" <?=(isset($_REQUEST['hang'])&&$_REQUEST['hang']==$h)?'selected':''?>><?=$h?></option><?php endforeach; ?>
 				</select>
+				<input type="text" name="loai_xe" class="form-control form-control-sm mr-2" placeholder="Loại xe" value="<?=isset($_REQUEST['loai_xe'])?htmlspecialchars($_REQUEST['loai_xe']):''?>">
+				<input type="text" name="nhan_hieu" class="form-control form-control-sm mr-2" placeholder="Nhãn hiệu" value="<?=isset($_REQUEST['nhan_hieu'])?htmlspecialchars($_REQUEST['nhan_hieu']):''?>">
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
 			<table class="table dt-list table-hover mb-0">

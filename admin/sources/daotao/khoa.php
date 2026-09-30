@@ -5,20 +5,15 @@ function dt_khoa_list()
 {
 	global $d, $func, $curPage, $items, $paging;
 
-	$where = "";
-	if(isset($_REQUEST['keyword']) && $_REQUEST['keyword'] !== '')
-	{
-		$kw = $d->escape(htmlspecialchars($_REQUEST['keyword']));
-		$where .= " and (k.ma_khoa like '%$kw%' or k.ten_khoa like '%$kw%' or k.hang like '%$kw%')";
-	}
+	list($where, $params) = dt_khoa_where();
 
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$sql = "select k.*, "
 		. "(select count(*) from #_dt_hocvien h where h.id_khoa = k.id) as so_hoc_vien "
 		. "from #_dt_khoa k where k.hienthi >= 0 $where order by k.ngay_khaigiang desc, k.id desc limit $startpoint,$per_page";
-	$items = $d->rawQuery($sql);
-	$count = $d->rawQueryOne("select count(*) as num from #_dt_khoa k where k.hienthi >= 0 $where");
+	$items = $d->rawQuery($sql, $params);
+	$count = $d->rawQueryOne("select count(*) as num from #_dt_khoa k where k.hienthi >= 0 $where", $params);
 	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=khoa");
 }
 

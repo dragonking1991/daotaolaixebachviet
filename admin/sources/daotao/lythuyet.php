@@ -25,9 +25,20 @@ function dt_lythuyet_list()
 	$byCccd = array();
 	foreach($rows as $rw) $byCccd[$rw['cccd']][$rw['mon']] = $rw;
 
+	$kw = dt_mb_lower(dt_req('keyword'));
+	$tt = dt_req('trang_thai');
+	$tongMon = count($ds_mon);
 	foreach($hvs as $hv)
 	{
+		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
 		$monData = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : array();
+		if($tt !== '')
+		{
+			$soDat = 0;
+			foreach($ds_mon as $mk => $lbl) if(isset($monData[$mk]) && (int)$monData[$mk]['dat'] === 1) $soDat++;
+			if($tt === 'dat' && $soDat < $tongMon) continue;
+			if($tt === 'chua' && $soDat >= $tongMon) continue;
+		}
 		$items[] = array('hv' => $hv, 'mon' => $monData);
 	}
 }

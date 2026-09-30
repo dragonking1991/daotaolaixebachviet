@@ -11,12 +11,19 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Danh sách giáo viên</strong></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadGiaovien" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import giáo viên</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=giaovien" onclick="return confirm('Xóa toàn bộ giáo viên?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
+			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadGiaovien" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import giáo viên</a> <a href="<?=dt_export_link('exportGiaovien', array('keyword','gioitinh','hang_gplx','hang'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=giaovien" onclick="return confirm('Xóa toàn bộ giáo viên?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="giaovien">
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
+				<select name="gioitinh" class="form-control form-control-sm mr-2">
+					<option value="">— Giới tính —</option>
+					<option value="M" <?=(isset($_REQUEST['gioitinh'])&&$_REQUEST['gioitinh']=='M')?'selected':''?>>Nam</option>
+					<option value="F" <?=(isset($_REQUEST['gioitinh'])&&$_REQUEST['gioitinh']=='F')?'selected':''?>>Nữ</option>
+				</select>
+				<input type="text" name="hang_gplx" class="form-control form-control-sm mr-2" placeholder="Hạng GPLX" value="<?=isset($_REQUEST['hang_gplx'])?htmlspecialchars($_REQUEST['hang_gplx']):''?>">
+				<input type="text" name="hang" class="form-control form-control-sm mr-2" placeholder="Hạng ĐT được phép" value="<?=isset($_REQUEST['hang'])?htmlspecialchars($_REQUEST['hang']):''?>">
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
 			<div class="table-responsive">

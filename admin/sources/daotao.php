@@ -15,6 +15,7 @@ require_once SOURCES.'daotao/cabin_kq.php';
 require_once SOURCES.'daotao/thuchanh_hinh.php';
 require_once SOURCES.'daotao/dat.php';
 require_once SOURCES.'daotao/tonghop.php';
+require_once SOURCES.'daotao/export.php';
 require_once SOURCES.'daotao/crud.php';
 
 $DT_MAN = array('daotao_man', 'product_man_cabin');
@@ -31,6 +32,7 @@ switch($act)
 {
 	/* ---------- Khóa học ---------- */
 	case "khoa":       dt_guard($DT_MAN); dt_khoa_list();   $template = "daotao/khoa/items"; break;
+	case "exportKhoa": dt_guard($DT_MAN); dt_khoa_export(); break;
 	case "khoaAdd":    dt_guard($DT_MAN); dt_khoa_form();   $template = "daotao/khoa/item_add"; break;
 	case "khoaEdit":   dt_guard($DT_MAN); dt_khoa_form();   $template = "daotao/khoa/item_add"; break;
 	case "khoaSave":   dt_guard($DT_MAN); dt_khoa_save();   break;
@@ -45,36 +47,43 @@ switch($act)
 
 	/* ---------- Học viên ---------- */
 	case "hocvien":            dt_guard($DT_MAN); dt_hocvien_list();   $template = "daotao/hocvien/items"; break;
+	case "exportHocvien":      dt_guard($DT_MAN); dt_hocvien_export(); break;
 	case "uploadHocvien":      dt_guard($DT_UP);  dt_hocvien_upload_form(); $template = "daotao/hocvien/upload"; break;
 	case "uploadHocvienExcel": dt_guard($DT_UP);  dt_hocvien_upload_excel(); break;
 
 	/* ---------- Xe ---------- */
 	case "xe":            dt_guard($DT_MAN); dt_xe_list();         $template = "daotao/xe/items"; break;
+	case "exportXe":      dt_guard($DT_MAN); dt_xe_export(); break;
 	case "uploadXe":      dt_guard($DT_UP);  $template = "daotao/xe/upload"; break;
 	case "uploadXeExcel": dt_guard($DT_UP);  dt_xe_upload_excel(); break;
 
 	/* ---------- Giáo viên ---------- */
 	case "giaovien":            dt_guard($DT_MAN); dt_giaovien_list();  $template = "daotao/giaovien/items"; break;
+	case "exportGiaovien":      dt_guard($DT_MAN); dt_giaovien_export(); break;
 	case "uploadGiaovien":      dt_guard($DT_UP);  $template = "daotao/giaovien/upload"; break;
 	case "uploadGiaovienExcel": dt_guard($DT_UP);  dt_giaovien_upload_excel(); break;
 	case "gvResetPass":         dt_guard($DT_MAN); dt_giaovien_reset_pass(); break;
 
 	/* ---------- Lý thuyết ---------- */
 	case "lythuyet":            dt_guard($DT_MAN); dt_lythuyet_list();  $template = "daotao/lythuyet/items"; break;
+	case "exportLythuyet":      dt_guard($DT_MAN); dt_lythuyet_export(); break;
 	case "uploadLythuyet":      dt_guard($DT_UP);  dt_lythuyet_upload_form(); $template = "daotao/lythuyet/upload"; break;
 	case "uploadLythuyetExcel": dt_guard($DT_UP);  dt_lythuyet_upload_excel(); break;
 
 	/* ---------- Cabin kết quả ---------- */
 	case "cabinkq":          dt_guard($DT_MAN); dt_cabin_list();  $template = "daotao/cabinkq/items"; break;
+	case "exportCabin":      dt_guard($DT_MAN); dt_cabin_export(); break;
 	case "uploadCabin":      dt_guard($DT_UP);  dt_cabin_upload_form(); $template = "daotao/cabinkq/upload"; break;
 	case "uploadCabinExcel": dt_guard($DT_UP);  dt_cabin_upload_excel(); break;
 
 	/* ---------- Thực hành trong hình ---------- */
 	case "hinh":     dt_guard($DT_MAN); dt_hinh_list(); $template = "daotao/hinh/items"; break;
+	case "exportHinh": dt_guard($DT_MAN); dt_hinh_export(); break;
 	case "saveHinh": dt_guard($DT_MAN); dt_hinh_save(); break;
 
 	/* ---------- DAT ---------- */
 	case "dat":            dt_guard($DT_MAN); dt_dat_list();  $template = "daotao/dat/items"; break;
+	case "exportDat":      dt_guard($DT_MAN); dt_dat_export(); break;
 	case "uploadDat":      dt_guard($DT_UP);  dt_dat_upload_form(); $template = "daotao/dat/upload"; break;
 	case "uploadDatExcel": dt_guard($DT_UP);  dt_dat_upload_excel(); break;
 

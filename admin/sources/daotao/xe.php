@@ -5,16 +5,7 @@ function dt_xe_list()
 {
 	global $d, $func, $curPage, $items, $paging;
 
-	$where = ""; $params = array();
-	if(isset($_REQUEST['keyword']) && $_REQUEST['keyword'] !== '')
-	{
-		$kw = $d->escape(htmlspecialchars($_REQUEST['keyword']));
-		$where .= " and (bien_so like '%$kw%' or gv_hoten like '%$kw%')";
-	}
-	if(isset($_REQUEST['hang']) && $_REQUEST['hang'] !== '')
-	{
-		$where .= " and hang_xe = ?"; $params[] = dt_norm_hang($_REQUEST['hang']);
-	}
+	list($where, $params) = dt_xe_where();
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;

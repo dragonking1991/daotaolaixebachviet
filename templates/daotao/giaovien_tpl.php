@@ -65,26 +65,18 @@
 			</tr></thead>
 			<tbody>
 				<?php
-				if(!function_exists('dt_gv_badge')){ function dt_gv_badge($ok){ return '<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:'.($ok?'#1e9e4a':'#c0392b').';color:#fff;font-size:12px;">'.($ok?'Đạt':'Chưa').'</span>'; } }
 				if(!empty($dtStudents)): foreach($dtStudents as $it): $hv=$it['hv']; $s=$it['sum']; ?>
 				<tr>
 					<td style="padding:8px;border:1px solid #e0e0e0;"><?=htmlspecialchars($hv['hoten'])?><br><span style="color:#888;font-size:12px;">CCCD: <?=htmlspecialchars($hv['cccd'])?> • Hạng <?=htmlspecialchars($hv['hang'])?></span></td>
 					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=htmlspecialchars($hv['ma_khoa'])?></td>
-					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=dt_gv_badge($s['ly_thuyet']['dat'])?></td>
-					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=dt_gv_badge($s['cabin']['dat'])?></td>
-					<td style="padding:8px;border:1px solid #e0e0e0;">
-						<form method="post" action="cong-giao-vien" class="dt-hinh-form" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-							<input type="hidden" name="dt_act" value="savehinh">
-							<input type="hidden" name="id_khoa" value="<?=(int)$hv['id_khoa']?>">
-							<input type="hidden" name="cccd" value="<?=htmlspecialchars($hv['cccd'])?>">
-							<input type="number" step="0.01" name="gio" value="<?=$s['hinh']['gio']?>" placeholder="giờ" style="width:64px;height:32px;border:1px solid #ccc;border-radius:5px;padding:0 6px;">
-							<input type="number" step="0.01" name="km" value="<?=$s['hinh']['km']?>" placeholder="km" style="width:64px;height:32px;border:1px solid #ccc;border-radius:5px;padding:0 6px;">
-							<button type="submit" style="height:32px;padding:0 8px;border:none;background:#2954f2;color:#fff;border-radius:5px;cursor:pointer;">Lưu</button>
-							<span class="dt-hinh-badge"><?=dt_gv_badge($s['hinh']['dat'])?></span>
-						</form>
+					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['ly_thuyet']['dat'])?></td>
+					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['cabin']['dat'])?></td>
+					<td class="dt-gv-hinh-cell">
+						<div class="dt-gv-measures"><span>Giờ <strong><?=htmlspecialchars((string)$s['hinh']['gio'])?></strong></span><span>Km <strong><?=htmlspecialchars((string)$s['hinh']['km'])?></strong></span></div>
+						<?=dt_gv_badge($s['hinh']['dat'])?>
 					</td>
-					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=dt_gv_badge($s['dat']['dat'])?></td>
-					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?php if($s['du_dieu_kien']): ?><span style="color:#1e9e4a;font-weight:700;">Đủ ĐK</span><?php else: ?><span style="color:#c0392b;font-weight:700;">Chưa đủ</span><?php endif; ?></td>
+					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['dat']['dat'])?></td>
+					<td class="dt-gv-conclusion-cell"><span class="dt-gv-conclusion <?=$s['du_dieu_kien']?'is-ready':'is-not-ready'?>"><?=$s['du_dieu_kien']?'Đủ ĐK':'Chưa đủ'?></span></td>
 				</tr>
 				<?php endforeach; else: ?>
 				<tr><td colspan="7" style="padding:16px;text-align:center;color:#888;border:1px solid #e0e0e0;">Chưa có học viên nào được phân công cho bạn.</td></tr>
@@ -99,39 +91,17 @@
 <style>
 @media (max-width: 640px){
 	.w_1000 table th, .w_1000 table td { font-size: 13px; padding: 6px !important; }
-	.dt-hinh-form input[type=number] { width: 56px !important; }
 	.w_1000 form[action="cong-giao-vien"] input[type=text],
 	.w_1000 form[action="cong-giao-vien"] input[type=password] { font-size: 16px; }
 }
-.dt-toast { position: fixed; bottom: 18px; right: 18px; background: #12673a; color: #fff; padding: 10px 16px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.2); font-size: 14px; z-index: 9999; opacity: 0; transform: translateY(8px); transition: all .2s; }
-.dt-toast.show { opacity: 1; transform: translateY(0); }
-.dt-toast.err { background: #912018; }
+.dt-gv-status-cell, .dt-gv-conclusion-cell { padding: 8px !important; border: 1px solid #e0e0e0; text-align: center; }
+.dt-gv-badge { display: inline-block; min-width: 44px; padding: 4px 9px; border-radius: 999px; font-size: 12px; line-height: 1.15; font-weight: 700; }
+.dt-gv-badge.is-pass { background: #e7f5ec; color: #176b3a; }
+.dt-gv-badge.is-pending { background: #fff0e8; color: #a9441b; }
+.dt-gv-hinh-cell { padding: 8px !important; border: 1px solid #e0e0e0; text-align: center; white-space: nowrap; }
+.dt-gv-measures { display: flex; justify-content: center; gap: 12px; margin-bottom: 6px; color: #64748b; font-size: 12px; }
+.dt-gv-measures strong { color: #334155; font-weight: 700; }
+.dt-gv-conclusion { display: inline-block; padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.dt-gv-conclusion.is-ready { background: #e7f5ec; color: #176b3a; }
+.dt-gv-conclusion.is-not-ready { background: #fff0e8; color: #a9441b; }
 </style>
-<script>
-(function(){
-	function toast(msg, ok){
-		var t = document.createElement('div');
-		t.className = 'dt-toast' + (ok ? '' : ' err');
-		t.textContent = msg;
-		document.body.appendChild(t);
-		requestAnimationFrame(function(){ t.classList.add('show'); });
-		setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 250); }, 2500);
-	}
-	document.querySelectorAll('form.dt-hinh-form').forEach(function(f){
-		f.addEventListener('submit', function(e){
-			e.preventDefault();
-			var btn = f.querySelector('button[type=submit]');
-			var old = btn.textContent; btn.disabled = true; btn.textContent = '...';
-			var body = new FormData(f); body.append('ajax', '1');
-			fetch('cong-giao-vien', { method: 'POST', body: body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-				.then(function(r){ return r.json(); })
-				.then(function(j){
-					toast(j.msg || (j.ok ? 'Đã lưu' : 'Lỗi'), j.ok);
-					if(j.ok){ var b = f.querySelector('.dt-hinh-badge'); if(b) b.innerHTML = '<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:' + (j.dat ? '#1e9e4a' : '#c0392b') + ';color:#fff;font-size:12px;">' + (j.dat ? 'Đạt' : 'Chưa') + '</span>'; }
-				})
-				.catch(function(){ toast('Lỗi kết nối', false); })
-				.finally(function(){ btn.disabled = false; btn.textContent = old; });
-		});
-	});
-})();
-</script>

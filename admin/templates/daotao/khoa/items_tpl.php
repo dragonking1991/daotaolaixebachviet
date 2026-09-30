@@ -14,8 +14,24 @@
 			<div class="card-tools">
 				<a href="index.php?com=daotao&act=khoaAdd" class="btn btn-sm bg-gradient-success"><i class="fas fa-plus mr-1"></i>Thêm khóa</a>
 				<a href="index.php?com=daotao&act=uploadKhoa" class="btn btn-sm bg-gradient-primary"><i class="fas fa-upload mr-1"></i>Import khóa</a>
+				<a href="<?=dt_export_link('exportKhoa', array('keyword','hang','he','tu_ngay','toi_ngay'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a>
 				<a href="index.php?com=daotao&act=crudDeleteAll&entity=khoa" onclick="return confirm('Xóa toàn bộ khóa và dữ liệu đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a>
 			</div>
+		</div>
+		<div class="card-body pb-0">
+			<form method="get" class="form-inline mb-0">
+				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="khoa">
+				<input type="text" name="keyword" class="form-control form-control-sm mr-2 mb-1" placeholder="Mã / Tên khóa" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
+				<select name="hang" class="form-control form-control-sm mr-2 mb-1">
+					<option value="">— Hạng —</option>
+					<?php foreach(array('B11','B1','C1','C','CE') as $h): ?><option value="<?=$h?>" <?=(isset($_REQUEST['hang'])&&$_REQUEST['hang']==$h)?'selected':''?>><?=$h?></option><?php endforeach; ?>
+				</select>
+				<input type="text" name="he" class="form-control form-control-sm mr-2 mb-1" placeholder="Hệ đào tạo" value="<?=isset($_REQUEST['he'])?htmlspecialchars($_REQUEST['he']):''?>">
+				<input type="date" name="tu_ngay" class="form-control form-control-sm mr-2 mb-1" title="Khai giảng từ" value="<?=isset($_REQUEST['tu_ngay'])?htmlspecialchars($_REQUEST['tu_ngay']):''?>">
+				<input type="date" name="toi_ngay" class="form-control form-control-sm mr-2 mb-1" title="Khai giảng đến" value="<?=isset($_REQUEST['toi_ngay'])?htmlspecialchars($_REQUEST['toi_ngay']):''?>">
+				<button class="btn btn-sm bg-gradient-primary mb-1 mr-2">Lọc</button>
+				<a href="index.php?com=daotao&act=khoa" class="btn btn-sm btn-outline-secondary mb-1">Xóa lọc</a>
+			</form>
 		</div>
 		<div class="card-body p-0">
 			<table class="table dt-list table-hover mb-0">

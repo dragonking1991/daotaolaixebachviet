@@ -11,12 +11,7 @@ function dt_giaovien_list()
 {
 	global $d, $func, $curPage, $items, $paging;
 
-	$where = ""; $params = array();
-	if(isset($_REQUEST['keyword']) && $_REQUEST['keyword'] !== '')
-	{
-		$kw = $d->escape(htmlspecialchars($_REQUEST['keyword']));
-		$where .= " and (hoten like '%$kw%' or cccd like '%$kw%')";
-	}
+	list($where, $params) = dt_giaovien_where();
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
