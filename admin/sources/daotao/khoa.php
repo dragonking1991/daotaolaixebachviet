@@ -215,6 +215,6 @@ function dt_khoa_upload_excel()
 	$d->commit();
 	dt_audit('import', 'khoa', $them + $capnhat, $file['name']);
 	dt_log_import('khoa', $file['name'], $them + $capnhat, $err);
-	dt_import_notice("Import khóa: thêm mới $them, cập nhật $capnhat".($err ? ", $err lỗi" : ""), "index.php?com=daotao&act=khoa", $err === 0);
+	dt_import_notice("Import khóa: thêm mới $them, cập nhật $capnhat".($err ? ", $err lỗi" : ""), "index.php?com=daotao&act=khoa", (($them + $capnhat) > 0 || $err === 0));
 }
 

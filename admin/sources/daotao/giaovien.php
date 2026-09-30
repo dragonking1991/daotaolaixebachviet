@@ -147,7 +147,7 @@ function dt_giaovien_upload_excel()
 	$d->commit();
 	dt_audit('import', 'giaovien', $ok, $file['name']);
 	dt_log_import('giaovien', $file['name'], $ok, $err);
-	dt_import_notice("Import giáo viên: $ok dòng thành công".($err?", $err dòng thiếu CCCD":""), "index.php?com=daotao&act=giaovien", $err === 0);
+	dt_import_notice("Import giáo viên: $ok dòng thành công".($err?", $err dòng thiếu CCCD":""), "index.php?com=daotao&act=giaovien", ($ok > 0 || $err === 0));
 }
 
 /* Định dạng ngày về dd/mm/yyyy: nhận serial Excel, chuỗi 'ddmmyyyy', hoặc chuỗi có sẵn. */

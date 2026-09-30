@@ -15,10 +15,13 @@
 			<div class="card-body">
 				<div class="alert alert-info">File cần có cột <strong>Mã khóa</strong> (hoặc <strong>Khóa</strong>). Các cột tùy chọn: Tên khóa, Hạng, Ngày khai giảng, Ngày mãn khóa, Hệ đào tạo. Khóa đã tồn tại (trùng mã) sẽ được cập nhật.</div>
 				<div class="form-group">
-					<label>File Excel (.xlsx)</label>
-					<div class="custom-file">
-						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx,.xls" required>
-						<label class="custom-file-label" for="file-excel">Chọn file...</label>
+					<label>File Excel (.xlsx, .xls) — có thể chọn/thả nhiều file</label>
+					<div class="dt-dropzone" data-back="index.php?com=daotao&act=khoa">
+						<label class="dt-dz-area">
+							<input type="file" class="dt-dz-input" name="file-excel" accept=".xlsx,.xls" multiple>
+							<span class="dt-dz-hint"><i class="fas fa-cloud-upload-alt"></i>Kéo &amp; thả hoặc <b>bấm để chọn</b> file .xlsx/.xls (nhiều file cùng lúc)</span>
+						</label>
+						<ul class="dt-dz-list"></ul>
 					</div>
 				</div>
 			</div>
@@ -29,4 +32,3 @@
 		</div>
 	</form>
 </section>
-<script>document.getElementById('file-excel').addEventListener('change',function(){var l=this.nextElementSibling;if(l)l.textContent=this.files[0]?this.files[0].name:'Chọn file...';});</script>

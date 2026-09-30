@@ -1,4 +1,16 @@
-<?php if(!defined('SOURCES')) die("Error"); ?>
+<?php if(!defined('SOURCES')) die("Error");
+	$monKw = array(
+		'cau_tao' => array('cautao'),
+		'ky_thuat' => array('kythuat'),
+		'phan_1' => array('phan1', 'phapluat1'),
+		'phan_2' => array('phan2', 'phapluat2'),
+		'phan_3' => array('phan3', 'phapluat3'),
+		'dao_duc' => array('daoduc'),
+	);
+	$monMeta = array();
+	foreach($ds_mon as $mk => $lbl) $monMeta[] = array('v' => $mk, 'l' => $lbl, 'kw' => isset($monKw[$mk]) ? $monKw[$mk] : array());
+	$monJson = htmlspecialchars(json_encode($monMeta, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<ol class="breadcrumb float-sm-left">
@@ -11,9 +23,9 @@
 <section class="content">
 	<form method="post" action="index.php?com=daotao&act=uploadLythuyetExcel" enctype="multipart/form-data">
 		<div class="card card-primary card-outline text-sm">
-			<div class="card-header"><h3 class="card-title"><strong>Import kết quả một môn lý thuyết</strong></h3></div>
+			<div class="card-header"><h3 class="card-title"><strong>Import kết quả lý thuyết (tự nhận môn theo tên file)</strong></h3></div>
 			<div class="card-body">
-				<div class="alert alert-warning">Đọc theo tên cột: <strong>Mã đăng nhập (CCCD), Tiến độ hoàn thành, Điểm kiểm tra</strong>. Đạt khi tiến độ &gt; 70 và điểm kiểm tra &gt; 5.</div>
+				<div class="alert alert-warning">Đọc theo tên cột: <strong>Mã đăng nhập (CCCD), Tiến độ hoàn thành, Điểm kiểm tra</strong>. Đạt khi tiến độ &gt; 70 và điểm kiểm tra &gt; 5.<br>Môn học được <strong>tự nhận theo tên file</strong> (ví dụ "Cấu tạo", "Kỹ thuật lái", "Phần 1 - Pháp luật", "Đạo đức"…) — có thể chọn lại tay cho từng file.</div>
 				<div class="row">
 					<div class="col-md-6 form-group">
 						<label>Khóa <span class="text-muted">(tùy chọn)</span></label>
@@ -22,19 +34,15 @@
 							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
 						</select>
 					</div>
-					<div class="col-md-6 form-group">
-						<label>Môn học <span class="text-danger">*</span></label>
-						<select name="mon" class="form-control form-control-sm" required>
-							<option value="">— Chọn môn —</option>
-							<?php foreach($ds_mon as $mk=>$lbl): ?><option value="<?=$mk?>"><?=htmlspecialchars($lbl)?></option><?php endforeach; ?>
-						</select>
-					</div>
 				</div>
 				<div class="form-group">
-					<label>File Excel (.xlsx)</label>
-					<div class="custom-file">
-						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx,.xls" required>
-						<label class="custom-file-label" for="file-excel">Chọn file...</label>
+					<label>File Excel (.xlsx, .xls) — có thể chọn/thả nhiều file (mỗi file một môn)</label>
+					<div class="dt-dropzone" data-back="index.php?com=daotao&act=lythuyet" data-mon="<?=$monJson?>">
+						<label class="dt-dz-area">
+							<input type="file" class="dt-dz-input" name="file-excel" accept=".xlsx,.xls" multiple>
+							<span class="dt-dz-hint"><i class="fas fa-cloud-upload-alt"></i>Kéo &amp; thả hoặc <b>bấm để chọn</b> file .xlsx/.xls (nhiều file cùng lúc)</span>
+						</label>
+						<ul class="dt-dz-list"></ul>
 					</div>
 				</div>
 			</div>
@@ -45,4 +53,3 @@
 		</div>
 	</form>
 </section>
-<script>document.getElementById('file-excel').addEventListener('change',function(){var l=this.nextElementSibling;if(l)l.textContent=this.files[0]?this.files[0].name:'Chọn file...';});</script>

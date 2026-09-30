@@ -60,7 +60,7 @@
 	<link href="assets/holdon/HoldOn.css" rel="stylesheet">
 	<link href="assets/css/adminlte.css" rel="stylesheet">
 	<link href="assets/css/adminlte-style.css" rel="stylesheet">
-	<link href="assets/css/daotao-theme.css" rel="stylesheet">
+	<link href="assets/css/daotao-theme.css?v=<?=@filemtime(__DIR__.'/assets/css/daotao-theme.css')?>" rel="stylesheet">
 	<link href="assets/css/hoadon-theme.css" rel="stylesheet">
 	<link href="assets/lucide/lucide-shim.css" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
@@ -83,7 +83,8 @@
 	<script src="assets/sortable/Sortable.js"></script>
 	<script src="assets/js/bootstrap.bundle.js"></script>
 	<script src="assets/js/adminlte.js"></script>
-	<script src="assets/js/daotao.js"></script>
+	<script src="assets/js/daotao.js?v=<?=@filemtime(__DIR__.'/assets/js/daotao.js')?>"></script>
+	<script src="assets/js/daotao-import.js?v=<?=@filemtime(__DIR__.'/assets/js/daotao-import.js')?>"></script>
 	<script src="assets/lucide/lucide.min.js"></script>
 	<script src="assets/lucide/lucide-shim.js"></script>
 	<!-- Ckeditor - Elfinder -->

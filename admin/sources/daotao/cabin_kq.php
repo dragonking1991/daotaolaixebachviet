@@ -115,5 +115,5 @@ function dt_cabin_upload_excel()
 	dt_log_import('cabin', $file['name'], $ok, $err);
 	$msg = "Import cabin: $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	dt_import_notice($msg, "index.php?com=daotao&act=cabinkq".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
+	dt_import_notice($msg, "index.php?com=daotao&act=cabinkq".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($ok > 0 || $err === 0));
 }

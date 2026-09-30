@@ -18,10 +18,19 @@ function dt_audit($action, $entity, $affected = 0, $detail = '')
 	));
 }
 
-/* Persist an import result across redirect so errors stay visible on the list page. */
+/* Persist an import result across redirect so errors stay visible on the list page.
+ * Khi import nhiều file qua dropzone (dt_ajax=1) thì trả JSON để JS gộp kết quả. */
 function dt_import_notice($message, $url, $success = true)
 {
 	global $func;
+
+	if(!empty($_POST['dt_ajax']))
+	{
+		if(!headers_sent()) header('Content-Type: application/json; charset=utf-8');
+		echo json_encode(array('success' => (bool)$success, 'message' => (string)$message));
+		exit;
+	}
+
 	$_SESSION['dt_import_notice'] = array(
 		'message' => (string)$message,
 		'success' => (bool)$success,

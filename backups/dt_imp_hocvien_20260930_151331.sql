@@ -1,0 +1,15 @@
+-- Đào tạo auto-backup 2026-09-30 15:13:31 (tag: imp_hocvien)
+SET NAMES utf8mb4;
+
+-- table_dt_khoa (11 dòng)
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''51'',''K13C1'',''K13C1'',''C1'',''0000-00-00'',''0000-00-00'','''',''1790754778'',''admin'',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''52'',''120B'',''Khóa 120B (Tự động)'',''B11'',''2026-03-15'',NULL,''Bình thường'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''53'',''199B'',''Khóa 199B (Số sàn)'',''B1'',''2026-04-01'',NULL,''Bình thường'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''54'',''121C1'',''Khóa 121 (Hạng C1)'',''C1'',''2026-02-10'',NULL,''Bình thường'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''55'',''122C'',''Khóa 122 (Hạng C)'',''C'',''2026-01-05'',NULL,''Cấp tốc'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''56'',''123CE'',''Khóa 123 (Hạng CE)'',''CE'',''2026-05-20'',NULL,''Bình thường'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''57'',''124D'',''Khóa 124 (Hạng D)'',''D'',''2026-03-12'',NULL,''Bình thường'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''58'',''125FC'',''Khóa 125 (Hạng FC)'',''FC'',''2026-06-18'',NULL,''Bình thường'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''59'',''126B'',''Khóa 126B (Tự động)'',''B11'',''2026-07-01'',NULL,''DAT'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''60'',''127B'',''Khóa 127B (Số sàn)'',''B1'',''2026-08-08'',NULL,''DAT'',''1790755420'','''',''0'',''1'');
+INSERT INTO `table_dt_khoa` (`id`,`ma_khoa`,`ten_khoa`,`hang`,`ngay_khaigiang`,`ngay_manhoa`,`he_daotao`,`ngaytao`,`user_tao`,`stt`,`hienthi`) VALUES (''61'',''128C1'',''Khóa 128 (Hạng C1)'',''C1'',''2026-02-22'',NULL,''Cấp tốc'',''1790755420'','''',''0'',''1'');

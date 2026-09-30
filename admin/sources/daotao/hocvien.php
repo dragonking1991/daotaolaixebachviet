@@ -166,5 +166,5 @@ function dt_hocvien_upload_excel()
 
 	$msg = "Import học viên: $ok dòng thành công".($err ? ", $err dòng lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	dt_import_notice($msg, "index.php?com=daotao&act=hocvien".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), $err === 0);
+	dt_import_notice($msg, "index.php?com=daotao&act=hocvien".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($ok > 0 || $err === 0));
 }

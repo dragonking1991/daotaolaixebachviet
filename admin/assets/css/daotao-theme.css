@@ -564,3 +564,43 @@ body.com-daotao .dt-import-notice-close:focus-visible { outline: 2px solid #2563
 	body.com-daotao .dt-import-notice { grid-template-columns: 18px minmax(0, 1fr) 30px; column-gap: 8px; margin: 0 8px 10px; padding: 10px; }
 }
 
+/* ===== Dropzone import (kéo-thả + nhiều file) ===== */
+body.com-daotao .dt-dropzone { border: 2px dashed #cbd5e1; border-radius: 12px; background: #fbfcfe; transition: border-color .15s, background .15s; }
+body.com-daotao .dt-dropzone.is-drag { border-color: var(--dt-blue-2, #2563eb); background: #eff5ff; }
+body.com-daotao .dt-dropzone.has-files { border-style: solid; border-color: #dfe4ee; }
+body.com-daotao .dt-dz-area { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 96px; margin: 0; padding: 18px; text-align: center; color: #64748b; cursor: pointer; }
+body.com-daotao .dt-dz-area:hover { color: #334155; }
+body.com-daotao .dt-dz-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+body.com-daotao .dt-dz-hint { font-size: .84rem; line-height: 1.5; }
+body.com-daotao .dt-dz-hint i { font-size: 1.4rem; color: #94a3b8; margin-right: 8px; vertical-align: -2px; }
+body.com-daotao .dt-dz-hint b { color: var(--dt-blue-2, #2563eb); }
+body.com-daotao .dt-dz-list { list-style: none; margin: 0; padding: 0 12px 12px; }
+body.com-daotao .dt-dz-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; margin-top: 6px; background: #fff; border: 1px solid #eef1f6; border-radius: 8px; font-size: .82rem; }
+body.com-daotao .dt-dz-item i { color: #1f9d55; }
+body.com-daotao .dt-dz-name { flex: 0 1 auto; min-width: 60px; max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; }
+body.com-daotao .dt-dz-spacer { flex: 1 1 auto; }
+body.com-daotao .dt-dz-size { color: #94a3b8; font-size: .74rem; white-space: nowrap; }
+body.com-daotao .dt-dz-mon { flex: 0 0 auto; width: auto; max-width: 230px; height: 30px; font-size: .78rem; border-color: #cbd5e1; }
+body.com-daotao .dt-dz-mon.is-empty { border-color: #e0a800; background: #fffdf5; }
+body.com-daotao .dt-dz-remove { border: none; background: #f1f4f9; color: #64748b; width: 22px; height: 22px; line-height: 1; border-radius: 6px; cursor: pointer; font-size: 1rem; flex-shrink: 0; }
+body.com-daotao .dt-dz-remove:hover { background: #fdeaec; color: #c92a37; }
+
+/* Overlay tiến trình upload nhiều file */
+.dt-dz-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .5); z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dt-dz-panel { width: 100%; max-width: 520px; max-height: 82vh; overflow: auto; background: #fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(15, 23, 42, .3); padding: 18px 20px; position: relative; }
+.dt-dz-close { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; line-height: 1; border: none; border-radius: 8px; background: #f1f4f9; color: #475569; font-size: 1.35rem; cursor: pointer; }
+.dt-dz-close:hover { background: #fdeaec; color: #c92a37; }
+.dt-dz-panel-head { font-weight: 700; color: #0f172a; font-size: 1rem; margin-bottom: 12px; padding-right: 34px; }
+.dt-dz-panel-head i { color: #2563eb; margin-right: 6px; }
+.dt-dz-progress { list-style: none; margin: 0; padding: 0; }
+.dt-dz-progress li { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-top: 1px solid #f1f3f8; font-size: .85rem; }
+.dt-dz-progress li:first-child { border-top: none; }
+.dt-dz-p-ic { width: 18px; text-align: center; color: #94a3b8; }
+.dt-dz-progress li.is-ok .dt-dz-p-ic { color: #147a3d; }
+.dt-dz-progress li.is-warn .dt-dz-p-ic { color: #a16207; }
+.dt-dz-progress li.is-fail .dt-dz-p-ic { color: #c92a37; }
+.dt-dz-progress li.is-running .dt-dz-p-ic { color: #2563eb; }
+.dt-dz-p-name { flex: 0 0 auto; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; font-weight: 600; }
+.dt-dz-p-msg { flex: 1 1 auto; min-width: 0; color: #64748b; font-size: .78rem; }
+.dt-dz-panel-foot { margin-top: 16px; display: flex; justify-content: flex-end; align-items: center; }
+
