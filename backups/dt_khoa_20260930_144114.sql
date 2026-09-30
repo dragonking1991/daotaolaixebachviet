@@ -1,4 +1,4 @@
--- Đào tạo auto-backup 2026-09-29 13:50:35 (tag: imp_hocvien)
+-- Đào tạo auto-backup 2026-09-30 14:41:14 (tag: khoa)
 SET NAMES utf8mb4;
 
 -- table_dt_khoa (35 dòng)

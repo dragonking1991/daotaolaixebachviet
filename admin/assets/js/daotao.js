@@ -28,6 +28,7 @@
 		}
 		function showLoading(){ var o = document.getElementById('dt-loading'); if(o) o.style.display = 'flex'; }
 		function go(href){ showLoading(); window.location.href = href; }
+		function isConfirmed(result){ return !!(result && (result.isConfirmed || result.value)); }
 
 		// Chặn ở pha capture để thay thế confirm() gắn sẵn trên thẻ
 		document.addEventListener('click', function(e){
@@ -45,7 +46,7 @@
 					showCancelButton: true, confirmButtonText: 'Xóa toàn bộ', cancelButtonText: 'Hủy',
 					confirmButtonColor: '#dc2626',
 					preConfirm: function(v){ if((v||'').trim().toUpperCase() !== 'XOA') Swal.showValidationMessage('Gõ đúng chữ XOA để xác nhận'); return v; }
-				}).then(function(r){ if(r.isConfirmed) go(href); });
+				}).then(function(r){ if(isConfirmed(r)) go(href); });
 				return;
 			}
 
@@ -57,7 +58,7 @@
 					title: 'Xóa' + (name ? ' "' + name + '"' : '') + '?',
 					text: 'Bản ghi và dữ liệu liên quan sẽ bị xóa.', icon: 'warning',
 					showCancelButton: true, confirmButtonText: 'Xóa', cancelButtonText: 'Hủy', confirmButtonColor: '#dc2626'
-				}).then(function(r){ if(r.isConfirmed) go(href); });
+				}).then(function(r){ if(isConfirmed(r)) go(href); });
 				return;
 			}
 
@@ -66,7 +67,7 @@
 				if(!hasSwal){ if(confirm('Đặt lại mật khẩu về mặc định (= CCCD)?')) go(href); return; }
 				Swal.fire({ title: 'Đặt lại mật khẩu?', text: 'Mật khẩu cổng giáo viên sẽ về mặc định (= CCCD).', icon: 'question',
 					showCancelButton: true, confirmButtonText: 'Đặt lại', cancelButtonText: 'Hủy' })
-					.then(function(r){ if(r.isConfirmed) go(href); });
+					.then(function(r){ if(isConfirmed(r)) go(href); });
 				return;
 			}
 		}, true);

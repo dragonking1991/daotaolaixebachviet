@@ -239,6 +239,8 @@ function dt_lythuyet_export()
 
 	$kw = dt_mb_lower(dt_req('keyword'));
 	$tt = dt_req('trang_thai');
+	$duLieu = dt_req('du_lieu', 'co');
+	if(!in_array($duLieu, array('co', 'tat_ca', 'chua'), true)) $duLieu = 'co';
 	$headers = array_merge(array('STT','Mã HV','Họ và tên','CCCD','Hạng'), array_values($dsMon), array('Kết luận LT'));
 	$textCols = array(1, 3);
 	$out = array(); $stt = 1;
@@ -246,6 +248,8 @@ function dt_lythuyet_export()
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
 		$monData = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : array();
+		if($duLieu === 'co' && empty($monData)) continue;
+		if($duLieu === 'chua' && !empty($monData)) continue;
 		$soDat = 0; $cells = array();
 		foreach($dsMon as $mk => $lbl)
 		{

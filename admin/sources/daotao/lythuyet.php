@@ -12,11 +12,13 @@ function dt_lythuyet_upload_form()
 /* Danh sách tổng hợp 6 môn theo học viên của một khóa. */
 function dt_lythuyet_list()
 {
-	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $ds_mon;
+	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $ds_mon, $du_lieu_filter;
 
 	$ds_khoa = dt_khoa_options();
 	$ds_mon = dt_mon_lythuyet();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$du_lieu_filter = dt_req('du_lieu', 'co');
+	if(!in_array($du_lieu_filter, array('co', 'tat_ca', 'chua'), true)) $du_lieu_filter = 'co';
 	$items = array();
 	if(!$id_khoa_sel) return;
 
@@ -32,6 +34,8 @@ function dt_lythuyet_list()
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
 		$monData = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : array();
+		if($du_lieu_filter === 'co' && empty($monData)) continue;
+		if($du_lieu_filter === 'chua' && !empty($monData)) continue;
 		if($tt !== '')
 		{
 			$soDat = 0;
