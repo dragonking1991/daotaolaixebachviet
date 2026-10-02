@@ -61,11 +61,11 @@
 						</td>
 						<td>
 							<div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pct?>%"></span></div><span class="dt-prog-num"><?=$done?>/4</span></div>
-							<?php if($s): ?><div class="dt-sub mt-1">
-								<span class="badge badge-<?=$s['ly_thuyet']['dat']?'success':'secondary'?>">LT</span>
-								<span class="badge badge-<?=$s['cabin']['dat']?'success':'secondary'?>">Cabin</span>
-								<span class="badge badge-<?=$s['hinh']['dat']?'success':'secondary'?>">Hình</span>
-								<span class="badge badge-<?=$s['dat']['dat']?'success':'secondary'?>">DAT</span>
+							<?php if($s): $__kq = ($it['id_khoa']?'&id_khoa='.(int)$it['id_khoa']:'').'&keyword='.urlencode($it['cccd'] ?: $it['ma_hv']); ?><div class="dt-sub mt-1">
+								<a href="index.php?com=daotao&act=lythuyet<?=$__kq?>" class="badge badge-<?=$s['ly_thuyet']['dat']?'success':'secondary'?>" title="Xem lý thuyết">LT</a>
+								<a href="index.php?com=daotao&act=cabinkq<?=$__kq?>" class="badge badge-<?=$s['cabin']['dat']?'success':'secondary'?>" title="Xem cabin">Cabin</a>
+								<a href="index.php?com=daotao&act=hinh<?=$__kq?>" class="badge badge-<?=$s['hinh']['dat']?'success':'secondary'?>" title="Xem thực hành hình">Hình</a>
+								<a href="index.php?com=daotao&act=dat<?=$__kq?>" class="badge badge-<?=$s['dat']['dat']?'success':'secondary'?>" title="Xem DAT">DAT</a>
 							</div><?php endif; ?>
 						</td>
 						<td class="text-center"><?php if($s && $s['du_dieu_kien']): ?><span class="badge badge-success">Đủ ĐK</span><?php else: ?><span class="badge badge-danger">Chưa đủ</span><?php endif; ?></td>

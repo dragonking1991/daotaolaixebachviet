@@ -128,7 +128,11 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="11" class="text-center text-muted">Chưa có học viên nào</td></tr>
+					<tr><td colspan="11" class="text-center text-muted py-4">
+						<div style="font-size:34px;line-height:1;color:#c8ccd4;margin-bottom:8px;"><i class="fas fa-users"></i></div>
+						<div class="mb-2">Chưa có học viên xăng dầu nào.</div>
+						<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên ngay</a>
+					</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

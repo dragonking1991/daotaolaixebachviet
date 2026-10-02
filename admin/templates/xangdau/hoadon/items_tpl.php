@@ -131,7 +131,11 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="15" class="text-center text-muted">Chưa có hóa đơn nào</td></tr>
+					<tr><td colspan="15" class="text-center text-muted py-4">
+						<div style="font-size:34px;line-height:1;color:#c8ccd4;margin-bottom:8px;"><i class="fas fa-file-invoice-dollar"></i></div>
+						<div class="mb-2"><?=($xd_filter_keyword!==''||$xd_filter_from!==''||$xd_filter_to!=='') ? 'Không có hóa đơn khớp bộ lọc.' : 'Chưa có hóa đơn xăng dầu nào.'?></div>
+						<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import hóa đơn ngay</a>
+					</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

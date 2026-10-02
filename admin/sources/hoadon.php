@@ -33,10 +33,19 @@ switch($act)
 		$template = "404";
 }
 
+/* Hiển thị kết quả qua flash toast (thay trang chuyển tiếp 1 giây). */
+function hoadon_flash($msg, $url, $success = true)
+{
+	global $func;
+	$plain = preg_replace('/<br\s*\/?>/i', "\n", (string)$msg);
+	$plain = trim(strip_tags($plain));
+	$_SESSION['dt_import_notice'] = array('message' => $plain, 'success' => (bool)$success, 'time' => time());
+	$func->redirect($url);
+}
+
 function hoadon_permission_denied($permissions = array())
 {
 	global $func, $login_admin;
-
 	if(!$func->check_permission()) return false;
 	if(!isset($_SESSION[$login_admin]['active']) || $_SESSION[$login_admin]['active'] != true) return true;
 	if(!isset($_SESSION['list_quyen']) || !is_array($_SESSION['list_quyen'])) return true;
@@ -441,11 +450,14 @@ function get_items_hoadon()
 
 function uploadExcel_hoadon()
 {
-	global $d, $func, $login_admin;
+	global $d, $func, $login_admin, $template;
 
 	@ini_set('memory_limit', '1024M');
 	@ini_set('max_execution_time', '300');
 	@set_time_limit(300);
+
+	$isPreview = !empty($_REQUEST['preview']);
+	$previewSample = array();
 
 	register_shutdown_function(function() use ($func) {
 		$error = error_get_last();
@@ -798,6 +810,20 @@ function uploadExcel_hoadon()
 		);
 
 		$exists = $d->rawQueryOne("select id from #_hoadon where ma_so_hoa_don = ? limit 0,1", array($maSo));
+		if($isPreview)
+		{
+			if($exists && isset($exists['id']) && (int)$exists['id'] > 0) $updated++; else $inserted++;
+			$imported++;
+			if(count($previewSample) < 50) $previewSample[] = array(
+				'ma_so' => $maSo,
+				'ngay' => $ngayHoaDon,
+				'buyer' => $buyer,
+				'loai' => $loaiHoaDon,
+				'tong' => $totalRaw,
+				'action' => ($exists && (int)$exists['id'] > 0) ? 'update' : 'insert',
+			);
+			continue;
+		}
 		if($exists && isset($exists['id']) && (int)$exists['id'] > 0)
 		{
 			$d->where('id', (int)$exists['id']);
@@ -863,6 +889,20 @@ function uploadExcel_hoadon()
 	}
 	} // end foreach sheet
 
+	if($isPreview)
+	{
+		global $hoadonPreview;
+		$hoadonPreview = array(
+			'inserted' => $inserted,
+			'updated' => $updated,
+			'skipped' => $skipped,
+			'total' => $imported,
+			'rows' => $previewSample,
+		);
+		$template = "hoadon/upload/preview";
+		return;
+	}
+
 	if($imported <= 0)
 	{
 		$message = "Không có hóa đơn nào được lưu thành công.";
@@ -874,7 +914,7 @@ function uploadExcel_hoadon()
 			$message .= ".";
 		}
 		if($firstDbError !== '') $message .= "<br>Chi tiết DB: ".htmlspecialchars($firstDbError);
-		$func->transfer($message, "index.php?com=hoadon&act=upload", false);
+		hoadon_flash($message, "index.php?com=hoadon&act=upload", false);
 	}
 
 	$message = "Import thành công $imported hóa đơn (thêm mới: $inserted, cập nhật: $updated).";
@@ -887,7 +927,7 @@ function uploadExcel_hoadon()
 		if($firstDbError !== '') $message .= "<br>Chi tiết DB: ".htmlspecialchars($firstDbError);
 	}
 
-	$func->transfer($message, "index.php?com=hoadon&act=man");
+	hoadon_flash($message, "index.php?com=hoadon&act=man");
 }
 
 function delete_item_hoadon()
@@ -900,7 +940,7 @@ function delete_item_hoadon()
 	if($id)
 	{
 		$d->rawQuery("delete from #_hoadon where id = ?", array($id));
-		$func->transfer("Xóa dữ liệu thành công", $linkRedirect);
+		hoadon_flash("Xóa dữ liệu thành công", $linkRedirect);
 	}
 	elseif(isset($_GET['listid']))
 	{
@@ -910,11 +950,11 @@ function delete_item_hoadon()
 			$tid = (int)htmlspecialchars($listid[$i]);
 			if($tid > 0) $d->rawQuery("delete from #_hoadon where id = ?", array($tid));
 		}
-		$func->transfer("Xóa dữ liệu thành công", $linkRedirect);
+		hoadon_flash("Xóa dữ liệu thành công", $linkRedirect);
 	}
 	else
 	{
-		$func->transfer("Không nhận được dữ liệu", $linkRedirect, false);
+		hoadon_flash("Không nhận được dữ liệu", $linkRedirect, false);
 	}
 }
 
@@ -926,5 +966,5 @@ function delete_all_hoadon()
 	$total = isset($count['num']) ? (int)$count['num'] : 0;
 
 	$d->rawQuery("delete from #_hoadon");
-	$func->transfer("Đã xóa toàn bộ $total hóa đơn", "index.php?com=hoadon&act=man");
+	hoadon_flash("Đã xóa toàn bộ $total hóa đơn", "index.php?com=hoadon&act=man");
 }

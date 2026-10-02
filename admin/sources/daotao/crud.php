@@ -151,7 +151,7 @@ function dt_crud_undo()
 function dt_crud_ret_query()
 {
 	$q = array();
-	foreach(array('id_khoa','keyword','hang','p') as $k)
+	foreach(array('id_khoa','keyword','hang','loai_xe','nhan_hieu','gioitinh','hang_gplx','gv','he','p') as $k)
 		if(isset($_GET[$k]) && $_GET[$k] !== '') $q[$k] = $_GET[$k];
 	return empty($q) ? '' : '&'.http_build_query($q);
 }
@@ -184,7 +184,8 @@ function dt_crud_delete_all()
 	$entity = preg_replace('/[^a-z]/', '', isset($_GET['entity']) ? $_GET['entity'] : '');
 	if($entity === 'all')
 	{
-		dt_backup_tables(dt_backup_tables_list(), 'all');
+		if(dt_backup_tables(dt_backup_tables_list(), 'all') === '')
+			$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', 'index.php?com=daotao&act=tonghop', false);
 		$affected = 0;
 		foreach(array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh','dt_hocvien','dt_xe','dt_giaovien','dt_khoa','dt_import_log') as $table)
 		{
@@ -201,7 +202,8 @@ function dt_crud_delete_all()
 	$cnt = $d->rawQueryOne("select count(*) as c from #_".$config['table']);
 	$affected = (int)($cnt ? $cnt['c'] : 0);
 	$backupTables = array_merge(array($config['table']), in_array($entity, array('khoa','hocvien'), true) ? array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') : array());
-	dt_backup_tables($backupTables, $entity);
+	if(dt_backup_tables($backupTables, $entity) === '')
+		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', dt_crud_back($config), false);
 
 	if($entity === 'khoa') foreach($d->rawQuery('select id from #_dt_khoa') as $row) dt_khoa_delete_id((int)$row['id']);
 	elseif($entity === 'hocvien') foreach(array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table) $d->rawQuery('delete from #_'.$table);

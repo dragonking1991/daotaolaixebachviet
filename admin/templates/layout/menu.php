@@ -586,6 +586,7 @@
                     }
                     if($com=='daotao') { $active_daotao = 'active'; $menuopen_daotao = 'menu-open'; }
                     $dt_menu = array(
+                        'dashboard' => 'Tổng quan',
                         'khoa' => 'Khóa đào tạo',
                         'hocvien' => 'Học viên',
                         'xe' => 'Xe tập lái',
@@ -595,6 +596,8 @@
                         'hinh' => 'Thực hành hình',
                         'dat' => 'DAT (trên đường)',
                         'tonghop' => 'Tổng hợp',
+                        'audit' => 'Nhật ký thao tác',
+                        'backup' => 'Sao lưu &amp; khôi phục',
                     );
                 ?>
                 <li class="nav-item has-treeview <?=$menuopen_daotao?> <?=$none_daotao?>">

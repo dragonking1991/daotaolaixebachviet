@@ -31,6 +31,16 @@ body.com-hoadon .hd-amount-line { color: #64748b; font-size: .74rem; display: fl
 body.com-hoadon .hd-amount-line strong { color: #334155; font-weight: 600; }
 
 body.com-hoadon .hd-detail { color: #475569; font-size: .77rem; line-height: 1.55; white-space: normal; max-width: 340px; }
+body.com-hoadon .hd-detail-list { list-style: none; margin: 0; padding: 0; }
+body.com-hoadon .hd-detail-list li {
+	position: relative; padding: 2px 0 2px 14px; line-height: 1.45;
+	border-bottom: 1px dashed #eef1f6; word-break: break-word;
+}
+body.com-hoadon .hd-detail-list li:last-child { border-bottom: none; }
+body.com-hoadon .hd-detail-list li::before {
+	content: ""; position: absolute; left: 2px; top: 10px;
+	width: 5px; height: 5px; border-radius: 50%; background: #cbd5e1;
+}
 body.com-hoadon .hd-party { max-width: 260px; }
 body.com-hoadon .hd-party .hd-title { font-size: .82rem; word-break: break-word; }
 

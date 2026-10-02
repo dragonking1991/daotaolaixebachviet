@@ -1,4 +1,8 @@
-<?php if(!defined('SOURCES')) die("Error"); ?>
+<?php if(!defined('SOURCES')) die("Error");
+	$dt_ret = ''; $__q = array();
+	foreach(array('keyword','gioitinh','hang_gplx','hang','p') as $__k) if(isset($_GET[$__k]) && $_GET[$__k] !== '') $__q[$__k] = $_GET[$__k];
+	if($__q) $dt_ret = '&'.http_build_query($__q);
+?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<ol class="breadcrumb float-sm-left">
@@ -54,7 +58,7 @@
 							<div class="dt-sub"><i class="fas fa-phone"></i><?=htmlspecialchars($it['sdt'] ?: '—')?></div>
 							<?php if(!empty($it['dia_chi'])): ?><div class="dt-sub"><i class="fas fa-map-marker-alt"></i><?=htmlspecialchars($it['dia_chi'])?></div><?php endif; ?>
 						</td>
-						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=gvResetPass&id=<?=$it['id']?>" onclick="return confirm('Đặt lại mật khẩu cổng giáo viên về mặc định (= CCCD)?')" class="btn btn-xs bg-gradient-warning" title="Đặt lại mật khẩu"><i class="fas fa-key"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=giaovien&id=<?=$it['id']?>" onclick="return confirm('Xóa giáo viên này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
+						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=gvResetPass&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Đặt lại mật khẩu cổng giáo viên về mặc định (= CCCD)?')" class="btn btn-xs bg-gradient-warning" title="Đặt lại mật khẩu"><i class="fas fa-key"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=giaovien&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Xóa giáo viên này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
 					<tr><td colspan="5" class="text-center text-muted p-3">Chưa có giáo viên</td></tr>

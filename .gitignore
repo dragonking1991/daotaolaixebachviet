@@ -3,4 +3,5 @@ logs/
 node_modules/
 thumbs/
 upload/
+dist/
 .npm-cache

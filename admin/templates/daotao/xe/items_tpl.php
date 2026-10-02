@@ -1,4 +1,8 @@
-<?php if(!defined('SOURCES')) die("Error"); ?>
+<?php if(!defined('SOURCES')) die("Error");
+	$dt_ret = ''; $__q = array();
+	foreach(array('keyword','hang','loai_xe','nhan_hieu','p') as $__k) if(isset($_GET[$__k]) && $_GET[$__k] !== '') $__q[$__k] = $_GET[$__k];
+	if($__q) $dt_ret = '&'.http_build_query($__q);
+?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<ol class="breadcrumb float-sm-left">
@@ -39,7 +43,7 @@
 							<div class="dt-sub"><i class="fas fa-hashtag"></i>Số khung: <strong><?=htmlspecialchars($it['so_khung'] ?: '—')?></strong></div>
 						</td>
 						<td class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars($it['gv_hoten'] ?: '—')?></td>
-						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=xe&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=xe&id=<?=$it['id']?>" onclick="return confirm('Xóa xe này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
+						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=xe&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=xe&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Xóa xe này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
 					<tr><td colspan="4" class="text-center text-muted p-3">Chưa có xe</td></tr>

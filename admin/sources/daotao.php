@@ -91,6 +91,13 @@ switch($act)
 	case "tonghop":       dt_guard($DT_MAN); dt_tonghop_list();   $template = "daotao/tonghop/items"; break;
 	case "exportTonghop": dt_guard($DT_MAN); dt_tonghop_export(); break;
 
+	/* ---------- Tổng quan / Nhật ký / Sao lưu ---------- */
+	case "dashboard": dt_guard($DT_MAN); dt_dashboard_page(); $template = "daotao/dashboard/items"; break;
+	case "audit":     dt_guard($DT_MAN); dt_audit_page();     $template = "daotao/audit/items"; break;
+	case "backup":    dt_guard($DT_MAN); dt_backup_page();    $template = "daotao/backup/items"; break;
+	case "backupRestore":  dt_guard($DT_MAN); dt_backup_restore_action(); break;
+	case "backupDownload": dt_guard($DT_MAN); dt_backup_download_action(); break;
+
 	default:
 		dt_guard($DT_MAN);
 		dt_khoa_list();

@@ -49,6 +49,37 @@
 		}
 	}
 
+	if(!function_exists('hoadon_detail_segments'))
+	{
+		// Tách chuỗi "chi tiết" dạng nối bằng "|" thành các dòng sạch:
+		// bỏ rỗng/"0", bỏ trùng lặp và bỏ giá trị đã hiển thị ở cột khác ($exclude).
+		function hoadon_detail_segments($text, $exclude = array())
+		{
+			$text = trim((string)$text);
+			if($text === '' || strpos($text, '|') === false) return array();
+
+			$excl = array();
+			foreach($exclude as $e)
+			{
+				$e = trim((string)$e);
+				if($e !== '') $excl[mb_strtolower($e, 'UTF-8')] = 1;
+			}
+
+			$out = array();
+			$seen = array();
+			foreach(explode('|', $text) as $p)
+			{
+				$p = trim($p);
+				if($p === '' || $p === '0') continue;
+				$key = mb_strtolower($p, 'UTF-8');
+				if(isset($excl[$key]) || isset($seen[$key])) continue;
+				$seen[$key] = 1;
+				$out[] = $p;
+			}
+			return $out;
+		}
+	}
+
 	if(!function_exists('hoadon_pick'))
 	{
 		// Lấy giá trị đầu tiên khớp một trong các alias (đã chuẩn hoá) từ JSON hóa đơn.
@@ -164,7 +195,11 @@
 					</tr>
 				</thead>
 				<?php if(empty($items)) { ?>
-					<tbody><tr><td colspan="7" class="text-center text-muted py-4">Không có dữ liệu</td></tr></tbody>
+					<tbody><tr><td colspan="7" class="text-center text-muted py-4">
+						<div style="font-size:34px;line-height:1;color:#c8ccd4;margin-bottom:8px;"><i class="fas fa-file-invoice"></i></div>
+						<div class="mb-2">Chưa có hóa đơn nào. Import file hóa đơn (.xlsx) để bắt đầu.</div>
+						<a class="btn btn-sm bg-gradient-success text-white" href="index.php?com=hoadon&act=upload"><i class="fas fa-upload mr-1"></i>Import hóa đơn ngay</a>
+					</td></tr></tbody>
 				<?php } else { ?>
 					<tbody>
 						<?php for($i = 0; $i < count($items); $i++) { ?>
@@ -249,10 +284,21 @@
 								<td>
 									<div class="hd-detail">
 										<?php
-											if($chiTiet === '') echo '<span class="hd-muted">—</span>';
+											if($chiTiet === '') { echo '<span class="hd-muted">—</span>'; }
 											else {
-												echo nl2br(htmlspecialchars(mb_substr($chiTiet, 0, 200)));
-												if(mb_strlen($chiTiet) > 200) echo '…';
+												$segs = hoadon_detail_segments($chiTiet, array($maSo, $kyHieu, $tenBan, $mstBan, $tenMua, $mstMua, $hoTenMua));
+												if(!empty($segs)) {
+													echo '<ul class="hd-detail-list">';
+													foreach(array_slice($segs, 0, 6) as $sg) {
+														echo '<li>'.htmlspecialchars(mb_substr($sg, 0, 70)).(mb_strlen($sg) > 70 ? '…' : '').'</li>';
+													}
+													echo '</ul>';
+													if(count($segs) > 6) echo '<div class="hd-muted">+'.(count($segs) - 6).' mục khác…</div>';
+												}
+												else {
+													echo nl2br(htmlspecialchars(mb_substr($chiTiet, 0, 200)));
+													if(mb_strlen($chiTiet) > 200) echo '…';
+												}
 											}
 										?>
 									</div>
