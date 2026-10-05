@@ -201,8 +201,9 @@ function dt_lythuyet_dat($tienDo, $diemKt)
 }
 
 /* Đạt thực hành trong hình theo hạng. */
-function dt_hinh_dat($hang, $gio, $km)
+function dt_hinh_dat($hang, $gio, $km, $override = null)
 {
+	if($override !== null && $override !== '') return (int)$override === 1 ? 1 : 0;
 	$hang = dt_norm_hang($hang);
 	$ng = dt_nguong_hinh();
 	if(!isset($ng[$hang])) return 0;
@@ -221,11 +222,12 @@ function dt_dat_danhgia($hang, $agg)
 	if(!isset($ng[$hang])) return array(0, array('Hạng không xác định'));
 	$r = $ng[$hang];
 	$thieu = array();
-	if($agg['a'] < $r['a']) $thieu[] = 'Giờ (A) < '.$r['a'];
-	if($r['dem'] > 0 && $agg['b'] < $r['dem']) $thieu[] = 'Giờ đêm (B) < '.$r['dem'];
-	if($r['c'] > 0 && $agg['c'] < $r['c']) $thieu[] = 'Giờ tự động (C) < '.$r['c'];
-	if($r['d'] > 0 && $agg['d'] < $r['d']) $thieu[] = 'Giờ số sàn (D) < '.$r['d'];
-	if($agg['e'] < $r['km']) $thieu[] = 'Quãng đường (E) < '.$r['km'].' km';
+	$f = function($v) { return rtrim(rtrim(number_format((float)$v, 2, '.', ''), '0'), '.'); };
+	if($agg['a'] < $r['a']) $thieu[] = 'Thiếu '.$f($r['a'] - $agg['a']).' giờ tổng (A)';
+	if($r['dem'] > 0 && $agg['b'] < $r['dem']) $thieu[] = 'Thiếu '.$f($r['dem'] - $agg['b']).' giờ đêm (B)';
+	if($r['c'] > 0 && $agg['c'] < $r['c']) $thieu[] = 'Thiếu '.$f($r['c'] - $agg['c']).' giờ tự động (C)';
+	if($r['d'] > 0 && $agg['d'] < $r['d']) $thieu[] = 'Thiếu '.$f($r['d'] - $agg['d']).' giờ số sàn (D)';
+	if($agg['e'] < $r['km']) $thieu[] = 'Thiếu '.$f($r['km'] - $agg['e']).' km (E)';
 	return array(empty($thieu) ? 1 : 0, $thieu);
 }
 
@@ -282,17 +284,20 @@ function dt_student_summary($hv)
 	$cabinCo = $cabin ? 1 : 0;
 
 	// Thực hành trong hình
-	$hinh = $d->rawQueryOne("select gio, km from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
-	$hinhDat = $hinh ? dt_hinh_dat($hv['hang'], $hinh['gio'], $hinh['km']) : 0;
+	$hinh = $d->rawQueryOne("select gio, km, dat_override from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+	$hinhDat = $hinh ? dt_hinh_dat($hv['hang'], $hinh['gio'], $hinh['km'], $hinh['dat_override']) : 0;
 
 	// DAT
 	$agg = function_exists('dt_dat_aggregate') ? dt_dat_aggregate($cccd, $idKhoa) : array('a'=>0,'b'=>0,'c'=>0,'d'=>0,'e'=>0);
 	list($datDat, $datThieu) = dt_dat_danhgia($hv['hang'], $agg);
 
-	$duDieuKien = ($lyThuyetDat && $cabinDat && $hinhDat && $datDat) ? 1 : 0;
+	$mophong = $d->rawQueryOne("select tien_do, dat from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+	$mophongDat = ($mophong && (int)$mophong['dat'] === 1) ? 1 : 0;
+	$duDieuKien = ($lyThuyetDat && $mophongDat && $cabinDat && $hinhDat && $datDat) ? 1 : 0;
 
 	return array(
 		'ly_thuyet' => array('dat' => $lyThuyetDat, 'so_dat' => $soDat, 'so_co' => $soCo, 'tong' => $tongMon),
+		'mophong' => array('dat' => $mophongDat, 'tien_do' => $mophong ? (float)$mophong['tien_do'] : null, 'co' => $mophong ? 1 : 0),
 		'cabin' => array('dat' => $cabinDat, 'co' => $cabinCo),
 		'hinh' => array('dat' => $hinhDat, 'gio' => $hinh ? (float)$hinh['gio'] : 0, 'km' => $hinh ? (float)$hinh['km'] : 0),
 		'dat' => array('dat' => $datDat, 'agg' => $agg, 'thieu' => $datThieu),
@@ -310,4 +315,48 @@ function dt_permission_denied($permissions = array())
 	foreach($permissions as $permission)
 		if(in_array($permission, $_SESSION['list_quyen'])) return false;
 	return true;
+}
+
+/* Admin/root (tài khoản 'admin' hoặc dev) — được phép bỏ qua ràng buộc cam kết khi thanh lý. */
+function dt_is_admin()
+{
+	global $func;
+	return !$func->check_permission();
+}
+
+/* Thông tin hết hạn theo ngày (dd/mm/yyyy hoặc Y-m-d). Cảnh báo khi còn <= 30 ngày.
+ * @return array|null [status: con_han|sap_het|het_han, days: số ngày (âm nếu đã hết hạn), ts]. */
+function dt_expiry_info($dateStr, $warnDays = 30)
+{
+	$dateStr = trim((string)$dateStr);
+	if($dateStr === '') return null;
+	$ts = false;
+	if(preg_match('/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/', $dateStr, $m)) $ts = mktime(0, 0, 0, (int)$m[2], (int)$m[1], (int)$m[3]);
+	elseif(preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $dateStr, $m)) $ts = mktime(0, 0, 0, (int)$m[2], (int)$m[3], (int)$m[1]);
+	if($ts === false || $ts === -1) return null;
+	$today = mktime(0, 0, 0, (int)date('n'), (int)date('j'), (int)date('Y'));
+	$days = (int)floor(($ts - $today) / 86400);
+	$status = $days < 0 ? 'het_han' : ($days <= $warnDays ? 'sap_het' : 'con_han');
+	return array('status' => $status, 'days' => $days, 'ts' => $ts);
+}
+
+/* Cam kết gắn bó của giáo viên: từ số năm + ngày bắt đầu, tính ngày kết thúc và thời hạn còn lại.
+ * @return array|null [con_hieu_luc(bool), nam(int), tu_ngay, den_ngay, con_ngay, con_text]. */
+function dt_cam_ket_info($nam, $tuNgay)
+{
+	$nam = (int)$nam;
+	$tuNgay = trim((string)$tuNgay);
+	if($nam <= 0) return null;
+	$start = false;
+	if(preg_match('/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/', $tuNgay, $m)) $start = mktime(0, 0, 0, (int)$m[2], (int)$m[1], (int)$m[3]);
+	elseif(preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $tuNgay, $m)) $start = mktime(0, 0, 0, (int)$m[2], (int)$m[3], (int)$m[1]);
+	if($start === false || $start === -1) return array('con_hieu_luc' => true, 'nam' => $nam, 'tu_ngay' => '', 'den_ngay' => '', 'con_ngay' => null, 'con_text' => $nam.' năm');
+	$end = mktime(0, 0, 0, (int)date('n', $start), (int)date('j', $start), (int)date('Y', $start) + $nam);
+	$today = mktime(0, 0, 0, (int)date('n'), (int)date('j'), (int)date('Y'));
+	$conNgay = (int)floor(($end - $today) / 86400);
+	$conHieuLuc = $conNgay > 0;
+	if($conNgay <= 0) $conText = 'Hết cam kết';
+	elseif($conNgay >= 365) $conText = round($conNgay / 365, 1).' năm';
+	else $conText = $conNgay.' ngày';
+	return array('con_hieu_luc' => $conHieuLuc, 'nam' => $nam, 'tu_ngay' => date('d/m/Y', $start), 'den_ngay' => date('d/m/Y', $end), 'con_ngay' => $conNgay, 'con_text' => $conText);
 }

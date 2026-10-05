@@ -68,7 +68,7 @@ function dt_tonghop_export()
 	$sheet = $objPHPExcel->getActiveSheet();
 	$sheet->setTitle('Tong hop dao tao');
 
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Khóa','Lý thuyết','Cabin','Th.hành hình','DAT',
+	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên','Lý thuyết','Mô phỏng (%)','Mô phỏng','Cabin','Th.hành hình','DAT',
 		'Tổng giờ H','Tổng km H','Tổng giờ Đ','Tổng km Đ','A','B','C','D','Kết luận');
 	$col = 'A';
 	foreach($headers as $h)
@@ -88,23 +88,27 @@ function dt_tonghop_export()
 		$sheet->setCellValueExplicit('D'.$r, $hv['cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
 		$sheet->setCellValue('E'.$r, $hv['hang']);
 		$sheet->setCellValue('F'.$r, isset($hv['ma_khoa']) ? $hv['ma_khoa'] : '');
-		$sheet->setCellValue('G'.$r, $s['ly_thuyet']['dat'] ? 'Đạt' : 'Chưa đạt');
-		$sheet->setCellValue('H'.$r, $s['cabin']['dat'] ? 'Đạt' : 'Chưa đạt');
-		$sheet->setCellValue('I'.$r, $s['hinh']['dat'] ? 'Đạt' : 'Chưa đạt');
-		$sheet->setCellValue('J'.$r, $s['dat']['dat'] ? 'Đạt' : 'Chưa đạt');
-		$sheet->setCellValue('K'.$r, $s['hinh']['gio']);
-		$sheet->setCellValue('L'.$r, $s['hinh']['km']);
-		$sheet->setCellValue('M'.$r, $agg['a']);
-		$sheet->setCellValue('N'.$r, $agg['e']);
-		$sheet->setCellValue('O'.$r, $agg['a']);
-		$sheet->setCellValue('P'.$r, $agg['b']);
-		$sheet->setCellValue('Q'.$r, $agg['c']);
-		$sheet->setCellValue('R'.$r, $agg['d']);
-		$sheet->setCellValue('S'.$r, $s['du_dieu_kien'] ? 'Đủ điều kiện' : 'Chưa đủ');
+		$sheet->setCellValue('G'.$r, isset($hv['ten_khoa']) ? $hv['ten_khoa'] : '');
+		$sheet->setCellValue('H'.$r, isset($hv['gv_hoten']) ? $hv['gv_hoten'] : '');
+		$sheet->setCellValue('I'.$r, $s['ly_thuyet']['dat'] ? 'Đạt' : 'Chưa đạt');
+		$sheet->setCellValue('J'.$r, $s['mophong']['tien_do'] === null ? 'Chưa nhập' : $s['mophong']['tien_do']);
+		$sheet->setCellValue('K'.$r, $s['mophong']['dat'] ? 'Đạt' : 'Chưa đạt');
+		$sheet->setCellValue('L'.$r, $s['cabin']['dat'] ? 'Đạt' : 'Chưa đạt');
+		$sheet->setCellValue('M'.$r, $s['hinh']['dat'] ? 'Đạt' : 'Chưa đạt');
+		$sheet->setCellValue('N'.$r, $s['dat']['dat'] ? 'Đạt' : 'Chưa đạt');
+		$sheet->setCellValue('O'.$r, $s['hinh']['gio']);
+		$sheet->setCellValue('P'.$r, $s['hinh']['km']);
+		$sheet->setCellValue('Q'.$r, $agg['a']);
+		$sheet->setCellValue('R'.$r, $agg['e']);
+		$sheet->setCellValue('S'.$r, $agg['a']);
+		$sheet->setCellValue('T'.$r, $agg['b']);
+		$sheet->setCellValue('U'.$r, $agg['c']);
+		$sheet->setCellValue('V'.$r, $agg['d']);
+		$sheet->setCellValue('W'.$r, $s['du_dieu_kien'] ? 'Đủ điều kiện' : 'Chưa đủ');
 		$r++; $stt++;
 	}
 
-	foreach(range('A','S') as $c) $sheet->getColumnDimension($c)->setAutoSize(true);
+	foreach(range('A','W') as $c) $sheet->getColumnDimension($c)->setAutoSize(true);
 
 	$filename = 'tonghop-daotao-'.date('Ymd_His').'.xlsx';
 	if(ob_get_length()) ob_end_clean();

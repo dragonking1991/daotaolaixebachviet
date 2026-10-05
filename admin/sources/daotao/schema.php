@@ -104,6 +104,17 @@ function dt_ensure_tables()
 		KEY idx_dt_lythuyet_cccd (cccd)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_mophong (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		id_khoa INT NOT NULL DEFAULT 0,
+		cccd VARCHAR(20) DEFAULT '',
+		tien_do DECIMAL(6,2) DEFAULT 0,
+		dat TINYINT DEFAULT 0,
+		ngaytao INT DEFAULT 0,
+		UNIQUE KEY uq_dt_mophong (id_khoa, cccd),
+		KEY idx_dt_mophong_cccd (cccd)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_cabin_kq (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		id_khoa INT NOT NULL DEFAULT 0,
@@ -148,6 +159,7 @@ function dt_ensure_tables()
 		cccd VARCHAR(20) DEFAULT '',
 		gio DECIMAL(8,2) DEFAULT 0,
 		km DECIMAL(10,2) DEFAULT 0,
+		dat_override TINYINT NULL DEFAULT NULL,
 		nguoi_nhap VARCHAR(255) DEFAULT '',
 		ngaytao INT DEFAULT 0,
 		UNIQUE KEY uq_dt_hinh (id_khoa, cccd)
@@ -183,11 +195,62 @@ function dt_ensure_tables()
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('gv_ext_cols_v1')) { dt_ensure_gv_columns(); dt_migration_mark('gv_ext_cols_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('hinh_override_v1')) { dt_ensure_hinh_override(); dt_migration_mark('hinh_override_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_gv_lifecycle_v1')) { dt_ensure_lifecycle_cols(); dt_migration_mark('xe_gv_lifecycle_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('gv_commitment_v1')) { dt_ensure_gv_commitment_cols(); dt_migration_mark('gv_commitment_v1'); }
 
 	$done = true;
 }
 
+/* Cam kết gắn bó của giáo viên: số năm + ngày bắt đầu (để tính thời hạn còn lại). */
+function dt_ensure_gv_commitment_cols()
+{
+	global $d;
+	$cols = array(
+		'cam_ket_nam' => "INT DEFAULT 0",
+		'cam_ket_tu_ngay' => "VARCHAR(20) DEFAULT ''",
+	);
+	foreach($cols as $col => $def)
+	{
+		$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_giaovien' and column_name = ? limit 0,1", array($col));
+		if(!$exist) $d->rawQuery("ALTER TABLE table_dt_giaovien ADD COLUMN `$col` $def");
+	}
+}
+
+/* Thêm cột vòng đời (thanh lý) + cam kết cho xe và giáo viên nếu bảng cũ chưa có. */
+function dt_ensure_lifecycle_cols()
+{
+	global $d;
+	$xe = array(
+		'ngay_hethan' => "VARCHAR(20) DEFAULT ''",
+		'cam_ket' => "VARCHAR(500) DEFAULT ''",
+		'thanh_ly' => "TINYINT DEFAULT 0",
+		'ngay_thanh_ly' => "VARCHAR(20) DEFAULT ''",
+	);
+	foreach($xe as $col => $def)
+	{
+		$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_xe' and column_name = ? limit 0,1", array($col));
+		if(!$exist) $d->rawQuery("ALTER TABLE table_dt_xe ADD COLUMN `$col` $def");
+	}
+	$gv = array(
+		'thanh_ly' => "TINYINT DEFAULT 0",
+		'ngay_thanh_ly' => "VARCHAR(20) DEFAULT ''",
+	);
+	foreach($gv as $col => $def)
+	{
+		$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_giaovien' and column_name = ? limit 0,1", array($col));
+		if(!$exist) $d->rawQuery("ALTER TABLE table_dt_giaovien ADD COLUMN `$col` $def");
+	}
+}
+
 /* Thêm cột mở rộng cho bảng giáo viên nếu bảng cũ chưa có (an toàn, idempotent). */
+function dt_ensure_hinh_override()
+{
+	global $d;
+	$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_thuchanh_hinh' and column_name = 'dat_override' limit 0,1");
+	if(!$exist) $d->rawQuery("ALTER TABLE table_dt_thuchanh_hinh ADD COLUMN dat_override TINYINT NULL DEFAULT NULL AFTER km");
+}
+
 function dt_ensure_gv_columns()
 {
 	global $d;

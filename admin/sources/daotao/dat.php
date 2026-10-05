@@ -50,20 +50,28 @@ function dt_dat_list()
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array(); $phien = array();
 	$total_items = 0;
-	if(!$id_khoa_sel) return;
-	$phien = $d->rawQuery("select * from #_dt_dat_phien where id_khoa = ? order by id desc", array($id_khoa_sel));
-
-	$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
 	$kw = dt_mb_lower(dt_req('keyword'));
+	if(!$id_khoa_sel && $kw === '') return;
+	if($id_khoa_sel)
+	{
+		$phien = $d->rawQuery("select * from #_dt_dat_phien where id_khoa = ? order by id desc", array($id_khoa_sel));
+		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
+	}
+	else
+	{
+		$e = $d->escape(htmlspecialchars(dt_req('keyword')));
+		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where (hoten like '%$e%' or cccd like '%$e%' or ma_hv like '%$e%') order by hoten asc limit 0,200");
+	}
 	$tt = dt_req('trang_thai');
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
-		$agg = dt_dat_aggregate($hv['cccd'], $id_khoa_sel);
+		$idKhoaHv = (int)$hv['id_khoa'];
+		$agg = dt_dat_aggregate($hv['cccd'], $idKhoaHv);
 		list($dat, $thieu) = dt_dat_danhgia($hv['hang'], $agg);
 		if($tt === 'dat' && !$dat) continue;
 		if($tt === 'chua' && $dat) continue;
-		$rPhien = $d->rawQueryOne("select count(*) as c from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($id_khoa_sel, $hv['cccd']));
+		$rPhien = $d->rawQueryOne("select count(*) as c from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($idKhoaHv, $hv['cccd']));
 		$soPhien = (int)($rPhien ? $rPhien['c'] : 0);
 		$items[] = array('hv' => $hv, 'agg' => $agg, 'dat' => $dat, 'thieu' => $thieu, 'so_phien' => $soPhien);
 	}
@@ -113,7 +121,6 @@ function dt_dat_upload_excel()
 		dt_import_notice("Không nhận diện được cột 'Mã phiên học' và 'Mã học viên' trong file DAT.", $back, false);
 
 	dt_backup_tables(array('dt_dat_phien'), 'imp_dat');
-	$hasKhoaCol = isset($map['khoa']);
 	$d->startTransaction();
 	$them = 0; $trung = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
@@ -129,15 +136,20 @@ function dt_dat_upload_excel()
 		if($exist && $exist['id']) { $trung++; continue; }
 
 		$khoaCode = dt_val($row, $map, 'khoa');
-		$idKhoaEnsured = ($hasKhoaCol && $khoaCode !== '') ? dt_khoa_ensure($khoaCode, $khoaCode, dt_val($row, $map, 'hang')) : 0;
-		$hv = dt_find_hocvien_by_mahv($maHv, $idKhoaSel);
+		$lookupKhoaId = $idKhoaSel;
+		if(!$lookupKhoaId && $khoaCode !== '')
+		{
+			$khoa = $d->rawQueryOne("select id from #_dt_khoa where ma_khoa = ? limit 0,1", array($khoaCode));
+			if($khoa) $lookupKhoaId = (int)$khoa['id'];
+		}
+		$hv = dt_find_hocvien_by_mahv($maHv, $lookupKhoaId);
 		if(!$hv)
 		{
 			$err++;
 			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: mã HV $maHv chưa có trong danh sách học viên";
 			continue;
 		}
-		$idKhoa = (int)$hv['id_khoa'] ?: $idKhoaEnsured;
+		$idKhoa = (int)$hv['id_khoa'];
 
 		$tgBatdau = dt_parse_datetime(dt_val($row, $map, 'tg_batdau'));
 		$tgKetthuc = dt_parse_datetime(dt_val($row, $map, 'tg_ketthuc'));

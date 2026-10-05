@@ -15,6 +15,7 @@
 				<a href="index.php?com=daotao&act=khoaAdd" class="btn btn-sm bg-gradient-success"><i class="fas fa-plus mr-1"></i>Thêm khóa</a>
 				<a href="index.php?com=daotao&act=uploadKhoa" class="btn btn-sm bg-gradient-primary"><i class="fas fa-upload mr-1"></i>Import khóa</a>
 				<a href="<?=dt_export_link('exportKhoa', array('keyword','hang','he','tu_ngay','toi_ngay'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a>
+				<button type="submit" form="dt-khoa-delete-form" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa khóa đã chọn</button>
 				<a href="index.php?com=daotao&act=crudDeleteAll&entity=khoa" onclick="return confirm('Xóa toàn bộ khóa và dữ liệu đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a>
 			</div>
 		</div>
@@ -33,16 +34,18 @@
 				<a href="index.php?com=daotao&act=khoa" class="btn btn-sm btn-outline-secondary mb-1">Xóa lọc</a>
 			</form>
 		</div>
+		<form id="dt-khoa-delete-form" method="post" action="index.php?com=daotao&act=khoaDeleteSelected" class="dt-khoa-delete-form">
 		<div class="card-body p-0">
 			<table class="table dt-list table-hover mb-0">
 				<thead>
 					<tr>
-						<th>Khóa đào tạo</th><th>Đào tạo</th><th>Thời gian</th><th class="text-center">Sĩ số</th><th class="dt-actions">Hành động</th>
+						<th class="text-center"><input type="checkbox" class="dt-khoa-select-all" aria-label="Chọn tất cả khóa trên trang"></th><th>Khóa đào tạo</th><th>Đào tạo</th><th>Thời gian</th><th class="text-center">Sĩ số</th><th class="dt-actions">Hành động</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
+						<td class="text-center"><input type="checkbox" name="ids[]" value="<?=(int)$it['id']?>" class="dt-khoa-select"></td>
 						<td>
 							<div class="dt-title"><?=htmlspecialchars($it['ma_khoa'])?></div>
 							<div class="dt-sub"><?=htmlspecialchars($it['ten_khoa'] ?: '—')?></div>
@@ -59,11 +62,12 @@
 						</td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="5" class="text-center text-muted p-3">Chưa có khóa nào</td></tr>
+					<tr><td colspan="6" class="text-center text-muted p-3">Chưa có khóa nào</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>
 		</div>
+		</form>
 		<div class="card-footer"><?php if(isset($paging)) echo $paging; ?></div>
 	</div>
 </section>

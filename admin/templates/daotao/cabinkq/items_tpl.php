@@ -34,16 +34,17 @@
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
 						<td>
-							<div class="dt-title"><?=htmlspecialchars($it['hoten'] ?: $it['ma_hv'])?></div>
-							<div class="dt-sub"><i class="fas fa-id-badge"></i><?=htmlspecialchars($it['ma_hv'] ?: '—')?><span class="dt-sep">•</span><?=htmlspecialchars($it['hv_cccd'] ?: '—')?></div>
+							<div class="dt-title"><?=htmlspecialchars($it['hoten'] ?: $it['roster_ma_hv'])?></div>
+							<div class="dt-sub"><i class="fas fa-id-badge"></i><?=htmlspecialchars($it['roster_ma_hv'] ?: '—')?><span class="dt-sep">•</span><?=htmlspecialchars($it['hv_cccd'] ?: '—')?></div>
 							<div class="dt-sub"><i class="fas fa-graduation-cap"></i><?=htmlspecialchars($it['ma_khoa'] ?: '—')?><?=!empty($it['ten_khoa']) ? ' — '.htmlspecialchars($it['ten_khoa']) : ''?><span class="dt-sep">•</span><span class="dt-tag is-muted"><?=htmlspecialchars($it['hang'] ?: '—')?></span></div>
 						</td>
 						<td>
-							<div class="dt-sub">Tổng thời gian: <strong><?=htmlspecialchars($it['tong_thoigian'] ?: '—')?></strong> <span class="dt-sep">•</span> Số nội dung: <strong><?=(int)$it['so_noidung']?></strong></div>
+							<?php if(!empty($it['id'])): ?><div class="dt-sub">Tổng thời gian: <strong><?=htmlspecialchars($it['tong_thoigian'] ?: '—')?></strong> <span class="dt-sep">•</span> Số nội dung: <strong><?=(int)$it['so_noidung']?></strong></div>
 							<?php if(!empty($it['ghi_chu'])): ?><div class="dt-sub"><i class="fas fa-comment-dots"></i><?=htmlspecialchars($it['ghi_chu'])?></div><?php endif; ?>
+							<?php else: ?><span class="text-muted">Chưa có dữ liệu cabin</span><?php endif; ?>
 						</td>
-						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đạt</span><?php else: ?><span class="badge badge-danger">Không đạt</span><?php endif; ?></td>
-						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=cabinkq&id=<?=$it['id']?>" onclick="return confirm('Xóa kết quả cabin này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a></td>
+						<td class="text-center"><?php if(empty($it['id'])): ?><span class="badge badge-secondary">Chưa nhập</span><?php elseif((int)$it['dat']===1): ?><span class="badge badge-success">Đạt</span><?php else: ?><span class="badge badge-danger">Không đạt</span><?php endif; ?></td>
+						<td class="dt-actions"><?php if(!empty($it['id'])): ?><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=cabinkq&id=<?=$it['id']?>" onclick="return confirm('Xóa kết quả cabin này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a><?php else: ?><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq&id_khoa=<?=(int)$id_khoa_sel?>" class="btn btn-xs bg-gradient-primary" title="Thêm kết quả cabin"><i class="fas fa-plus"></i></a><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
 					<tr><td colspan="4" class="text-center text-muted p-3">Chưa có kết quả cabin</td></tr>

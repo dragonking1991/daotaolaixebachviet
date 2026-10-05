@@ -3,16 +3,65 @@ if(!defined('SOURCES')) die("Error");
 
 function dt_xe_list()
 {
-	global $d, $func, $curPage, $items, $paging, $total_items;
+	global $d, $func, $curPage, $items, $paging, $total_items, $xe_stats;
 
 	list($where, $params) = dt_xe_where();
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$items = $d->rawQuery("select * from #_dt_xe where 1 $where order by bien_so asc limit $startpoint,$per_page", $params);
+	// Gắn cam kết còn lại của giáo viên đang đứng xe (theo gv_key).
+	$gvCache = array();
+	foreach($items as &$__it)
+	{
+		$__it['gv_cam_ket'] = null;
+		$key = isset($__it['gv_key']) ? $__it['gv_key'] : '';
+		if($key === '') continue;
+		if(!array_key_exists($key, $gvCache))
+			$gvCache[$key] = $d->rawQueryOne("select cam_ket_nam, cam_ket_tu_ngay, thanh_ly from #_dt_giaovien where gv_key = ? order by thanh_ly asc limit 0,1", array($key));
+		$gv = $gvCache[$key];
+		if($gv) $__it['gv_cam_ket'] = dt_cam_ket_info(isset($gv['cam_ket_nam'])?$gv['cam_ket_nam']:0, isset($gv['cam_ket_tu_ngay'])?$gv['cam_ket_tu_ngay']:'');
+	}
+	unset($__it);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_xe where 1 $where", $params);
 	$total_items = (int)$count['num'];
 	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=xe");
+	$xe_stats = dt_xe_expiry_stats();
+}
+
+/* Thống kê hết hạn GPLX xe tập lái theo hạng (chỉ xe chưa thanh lý). */
+function dt_xe_expiry_stats()
+{
+	global $d;
+	$rows = $d->rawQuery("select hang_xe, ngay_hethan from #_dt_xe where (thanh_ly is null or thanh_ly = 0)");
+	$stats = array();
+	foreach($rows as $row)
+	{
+		$hang = dt_norm_hang($row['hang_xe']) ?: 'Khác';
+		if(!isset($stats[$hang])) $stats[$hang] = array('het_han' => 0, 'sap_het' => 0, 'con_han' => 0, 'tong' => 0);
+		$stats[$hang]['tong']++;
+		$info = dt_expiry_info($row['ngay_hethan']);
+		if($info === null) { $stats[$hang]['con_han']++; continue; }
+		$stats[$hang][$info['status']]++;
+	}
+	ksort($stats);
+	return $stats;
+}
+
+/* Thanh lý / hủy thanh lý xe (thanh lý tài sản xe). */
+function dt_xe_thanh_ly()
+{
+	global $d, $func;
+	$id = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
+	$huy = isset($_REQUEST['huy']) && $_REQUEST['huy'] == '1';
+	if(!$id) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=xe", false);
+	$xe = $d->rawQueryOne("select id, bien_so from #_dt_xe where id = ? limit 0,1", array($id));
+	if(!$xe) $func->transfer("Xe không tồn tại", "index.php?com=daotao&act=xe", false);
+
+	$d->where('id', $id);
+	$d->update('dt_xe', array('thanh_ly' => $huy ? 0 : 1, 'ngay_thanh_ly' => $huy ? '' : date('d/m/Y')));
+	if(function_exists('dt_audit')) dt_audit($huy ? 'huy_thanh_ly' : 'thanh_ly', 'xe', 1, 'id='.$id.' '.$xe['bien_so']);
+	$func->transfer($huy ? "Đã hủy thanh lý xe" : "Đã thanh lý xe", "index.php?com=daotao&act=xe");
 }
 
 function dt_xe_upload_excel()
@@ -37,11 +86,13 @@ function dt_xe_upload_excel()
 		'loai_xe' => array('loaixe'),
 		'nhan_hieu' => array('nhanhieu'),
 		'giaovien' => array('giaovien','gv'),
+		'ngay_hethan' => array('ngayhethangiayphepxetaplai','ngayhethangplxtl','ngayhethangplx','ngayhethan','hangiayphepxetaplai','hanxetaplai'),
 	);
 	$contains = array(
 		'bien_so' => array('bienso'),
 		'hang_xe' => array('hangxe','hangtaplai'),
 		'giaovien' => array('giaovien'),
+		'ngay_hethan' => array('hethan','hanxetaplai'),
 	);
 
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains);
@@ -71,6 +122,7 @@ function dt_xe_upload_excel()
 			'gv_hoten' => $gvHoten,
 			'gv_key' => dt_gv_key($gvHoten),
 		);
+		if(isset($map['ngay_hethan'])) $data['ngay_hethan'] = dt_gv_fmt_date(dt_val($row, $map, 'ngay_hethan'));
 
 		$exist = $d->rawQueryOne("select id from #_dt_xe where bien_so = ? limit 0,1", array($bienSo));
 		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_xe', $data); }

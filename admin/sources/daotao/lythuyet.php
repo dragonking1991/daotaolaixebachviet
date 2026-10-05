@@ -21,20 +21,37 @@ function dt_lythuyet_list()
 	if(!in_array($du_lieu_filter, array('co', 'tat_ca', 'chua'), true)) $du_lieu_filter = 'co';
 	$items = array();
 	$total_items = 0;
-	if(!$id_khoa_sel) return;
-
-	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
-	$rows = $d->rawQuery("select cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
-	$byCccd = array();
-	foreach($rows as $rw) $byCccd[$rw['cccd']][$rw['mon']] = $rw;
-
 	$kw = dt_mb_lower(dt_req('keyword'));
+	// Cho phép tra cứu CCCD/tên trên toàn bộ khóa khi chưa chọn khóa (nếu có từ khóa).
+	if(!$id_khoa_sel && $kw === '') return;
+
+	if($id_khoa_sel)
+	{
+		$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
+		$rows = $d->rawQuery("select id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
+	}
+	else
+	{
+		$e = $d->escape(htmlspecialchars(dt_req('keyword')));
+		$hvs = $d->rawQuery("select * from #_dt_hocvien where (hoten like '%$e%' or cccd like '%$e%' or ma_hv like '%$e%') order by hoten asc limit 0,200");
+		$ids = array();
+		foreach($hvs as $hv) $ids[(int)$hv['id_khoa']] = true;
+		$rows = array();
+		if($ids)
+		{
+			$in = implode(',', array_map('intval', array_keys($ids)));
+			$rows = $d->rawQuery("select id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa in ($in)");
+		}
+	}
+	$byCccd = array();
+	foreach($rows as $rw) $byCccd[$rw['id_khoa'].'|'.$rw['cccd']][$rw['mon']] = $rw;
+
 	$tt = dt_req('trang_thai');
 	$tongMon = count($ds_mon);
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
-		$monData = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : array();
+		$monData = isset($byCccd[$hv['id_khoa'].'|'.$hv['cccd']]) ? $byCccd[$hv['id_khoa'].'|'.$hv['cccd']] : array();
 		if($du_lieu_filter === 'co' && empty($monData)) continue;
 		if($du_lieu_filter === 'chua' && !empty($monData)) continue;
 		if($tt !== '')

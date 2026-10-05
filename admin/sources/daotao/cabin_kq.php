@@ -19,9 +19,9 @@ function dt_cabin_list()
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select c.*, h.hoten, h.cccd as hv_cccd, h.hang, k.ma_khoa, k.ten_khoa from #_dt_cabin_kq c left join #_dt_hocvien h on (h.id_khoa = c.id_khoa and h.ma_hv = c.ma_hv) left join #_dt_khoa k on k.id = c.id_khoa where 1 $where order by c.id desc limit $startpoint,$per_page";
+	$sql = "select c.*, h.ma_hv as roster_ma_hv, h.hoten, h.cccd as hv_cccd, h.hang, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by h.hoten asc limit $startpoint,$per_page";
 	$items = $d->rawQuery($sql, $params);
-	$count = $d->rawQueryOne("select count(*) as num from #_dt_cabin_kq c where 1 $where", $params);
+	$count = $d->rawQueryOne("select count(*) as num from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $where", $params);
 	$total_items = (int)$count['num'];
 	$url = "index.php?com=daotao&act=cabinkq".($id_khoa_sel ? "&id_khoa=".$id_khoa_sel : "");
 	$paging = $func->pagination($count['num'], $per_page, $curPage, $url);
@@ -65,12 +65,13 @@ function dt_cabin_upload_excel()
 
 	dt_backup_tables(array('dt_cabin_kq'), 'imp_cabin');
 	$hasKhoaCol = isset($map['khoa']);
-	// Không có cột khóa & chưa chọn khóa -> lấy "Mã khóa học" ở phần tiêu đề file (nếu có)
+	$metaKhoa = '';
 	$metaKhoaId = 0;
-	if(!$hasKhoaCol)
+	if(!$hasKhoaCol && !$idKhoaSel)
 	{
 		$meta = dt_extract_meta_khoa($sheet, $headerRow, $highestCol);
-		if($meta['khoa'] !== '') $metaKhoaId = dt_khoa_ensure($meta['khoa'], $meta['khoa'], $meta['hang']);
+		$metaKhoa = trim((string)$meta['khoa']);
+		if($metaKhoa !== '') $metaKhoaId = dt_khoa_ensure($metaKhoa, $metaKhoa, $meta['hang']);
 	}
 	$d->startTransaction();
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
@@ -82,15 +83,24 @@ function dt_cabin_upload_excel()
 		$emptyStreak = 0;
 
 		$khoaCode = dt_val($row, $map, 'khoa');
-		$rowKhoaId = ($hasKhoaCol && $khoaCode !== '') ? dt_khoa_ensure($khoaCode, $khoaCode) : 0;
-		$hv = dt_find_hocvien_by_mahv($maHv, $idKhoaSel);
+		$lookupKhoaId = $idKhoaSel;
+		if(!$lookupKhoaId && $khoaCode !== '')
+		{
+			$khoa = $d->rawQueryOne("select id from #_dt_khoa where ma_khoa = ? limit 0,1", array($khoaCode));
+			if($khoa) $lookupKhoaId = (int)$khoa['id'];
+		}
+		if(!$lookupKhoaId && $metaKhoa !== '')
+		{
+			$lookupKhoaId = $metaKhoaId;
+		}
+		$hv = dt_find_hocvien_by_mahv($maHv, $lookupKhoaId);
 		if(!$hv)
 		{
 			$err++;
 			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: mã HV $maHv chưa có trong danh sách học viên";
 			continue;
 		}
-		$idKhoa = $rowKhoaId ?: ($metaKhoaId ?: ((int)$hv['id_khoa'] ?: $idKhoaSel));
+		$idKhoa = (int)$hv['id_khoa'];
 
 		$ghiChu = dt_val($row, $map, 'ghi_chu');
 		$ghiNorm = dt_norm_header($ghiChu);

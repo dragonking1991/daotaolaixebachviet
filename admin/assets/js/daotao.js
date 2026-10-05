@@ -30,6 +30,11 @@
 		function go(href){ showLoading(); window.location.href = href; }
 		function isConfirmed(result){ return !!(result && (result.isConfirmed || result.value)); }
 
+		var selectAllKhoa = document.querySelector('.dt-khoa-select-all');
+		if(selectAllKhoa) selectAllKhoa.addEventListener('change', function(){
+			Array.prototype.forEach.call(document.querySelectorAll('.dt-khoa-select'), function(box){ box.checked = selectAllKhoa.checked; });
+		});
+
 		// Chặn ở pha capture để thay thế confirm() gắn sẵn trên thẻ
 		document.addEventListener('click', function(e){
 			var a = e.target.closest ? e.target.closest('a') : null;
@@ -86,6 +91,16 @@
 		document.addEventListener('submit', function(e){
 			var form = e.target;
 			if(!form) return;
+
+			if(form.classList && form.classList.contains('dt-khoa-delete-form')){
+				var selectedKhoa = form.querySelectorAll('input[name="ids[]"]:checked').length;
+				if(!selectedKhoa){ e.preventDefault(); if(hasSwal) Swal.fire({icon:'info',text:'Chọn ít nhất một khóa để xóa.'}); else alert('Chọn ít nhất một khóa để xóa.'); return; }
+				e.preventDefault(); e.stopImmediatePropagation();
+				var submitDelete = function(){ showLoading(); form.submit(); };
+				if(!hasSwal){ if(confirm('Xóa '+selectedKhoa+' khóa cùng toàn bộ dữ liệu liên quan?')) submitDelete(); return; }
+				Swal.fire({title:'Xóa '+selectedKhoa+' khóa đã chọn?',icon:'warning',html:'Toàn bộ học viên và kết quả thuộc các khóa này sẽ bị xóa. Hệ thống sao lưu trước khi thực hiện.<br>Gõ <b>XOA</b> để xác nhận.',input:'text',inputPlaceholder:'Gõ XOA',showCancelButton:true,confirmButtonText:'Xóa khóa đã chọn',cancelButtonText:'Hủy',confirmButtonColor:'#dc2626',preConfirm:function(value){if((value||'').trim().toUpperCase()!=='XOA') Swal.showValidationMessage('Gõ đúng chữ XOA để xác nhận');return value;}}).then(function(result){if(isConfirmed(result)) submitDelete();});
+				return;
+			}
 
 			// Xác nhận khôi phục backup (ghi đè dữ liệu).
 			if(form.classList && form.classList.contains('dt-restore-form') && !form.dataset.dtConfirmed){

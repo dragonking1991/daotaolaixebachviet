@@ -9,18 +9,20 @@ function dt_crud_configs()
 			'id_khoa' => 'Khóa', 'ma_hv' => 'Mã học viên', 'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'hang' => 'Hạng', 'gv_hoten' => 'Giáo viên', 'nguoi_gioithieu' => 'Người giới thiệu', 'he_daotao' => 'Hệ đào tạo'
 		)),
 		'xe' => array('title' => 'Xe tập lái', 'table' => 'dt_xe', 'back' => 'xe', 'fields' => array(
-			'bien_so' => 'Biển số', 'hang_xe' => 'Hạng xe', 'hang_dt' => 'Hạng đào tạo', 'so_dangky' => 'Số đăng ký', 'so_khung' => 'Số khung', 'so_may' => 'Số máy', 'loai_xe' => 'Loại xe', 'nhan_hieu' => 'Nhãn hiệu', 'gv_hoten' => 'Giáo viên'
+			'bien_so' => 'Biển số', 'hang_xe' => 'Hạng xe', 'hang_dt' => 'Hạng đào tạo', 'so_dangky' => 'Số đăng ký', 'so_khung' => 'Số khung', 'so_may' => 'Số máy', 'loai_xe' => 'Loại xe', 'nhan_hieu' => 'Nhãn hiệu', 'gv_hoten' => 'Giáo viên', 'ngay_hethan' => 'Ngày hết hạn GPLX xe tập lái'
 		)),
 		'giaovien' => array('title' => 'Giáo viên', 'table' => 'dt_giaovien', 'back' => 'giaovien', 'fields' => array(
 			'ma_csdt' => 'Mã CSĐT', 'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'gioitinh' => 'Giới tính', 'sdt' => 'Điện thoại', 'dia_chi' => 'Địa chỉ',
 			'hang_gplx' => 'Hạng GPLX', 'so_gplx' => 'Số GPLX', 'ngay_cap_gplx' => 'Ngày cấp GPLX', 'ngay_hh_gplx' => 'Ngày hết hạn GPLX',
 			'hang_daotao_phep' => 'Hạng đào tạo được phép', 'loai_hinh_dt' => 'Loại hình đào tạo (LT/TH/AL)', 'hinh_thuc_td' => 'Hình thức tuyển dụng', 'tuyen_dung' => 'Ngày tuyển dụng',
+			'cam_ket_nam' => 'Số năm cam kết gắn bó', 'cam_ket_tu_ngay' => 'Cam kết từ ngày',
 			'so_qd_gcn' => 'Số QĐ GCN', 'ngay_qd_gcn' => 'Ngày QĐ GCN', 'noi_cap_gcn' => 'Nơi cấp GCN', 'noi_ct' => 'Nơi công tác',
 			'trinh_do' => 'Trình độ', 'chuyen_mon' => 'Chuyên môn', 'su_pham' => 'Sư phạm', 'ghi_chu' => 'Ghi chú'
 		)),
 		'lythuyet' => array('title' => 'Lý thuyết', 'table' => 'dt_lythuyet', 'back' => 'lythuyet', 'fields' => array(
 			'id_khoa' => 'Khóa', 'cccd' => 'CCCD', 'mon' => 'Môn', 'tien_do' => 'Tiến độ (%)', 'diem_kt' => 'Điểm kiểm tra'
 		)),
+		'mophong' => array('title' => 'Mô phỏng', 'table' => 'dt_mophong', 'back' => 'mophong', 'fields' => array()),
 		'cabinkq' => array('title' => 'Cabin kết quả', 'table' => 'dt_cabin_kq', 'back' => 'cabinkq', 'fields' => array(
 			'id_khoa' => 'Khóa', 'ma_hv' => 'Mã học viên', 'cccd' => 'CCCD', 'tong_thoigian' => 'Tổng thời gian', 'so_noidung' => 'Số nội dung', 'ghi_chu' => 'Ghi chú'
 		)),
@@ -71,6 +73,7 @@ function dt_crud_save()
 		$value = is_array($p[$field]) ? '' : trim((string)$p[$field]);
 		if($field === 'id_khoa') $value = (int)$value;
 		elseif($field === 'cccd') $value = dt_normalize_cccd($value);
+		elseif($field === 'cam_ket_nam') $value = (int)$value;
 		elseif(in_array($field, array('hang','hang_xe'), true)) $value = dt_norm_hang($value);
 		elseif(in_array($field, array('tien_do','diem_kt','gio_thuchanh','km','gio','so_noidung'), true)) $value = dt_parse_number($value);
 		else $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
@@ -166,7 +169,7 @@ function dt_crud_delete_id($entity, $id)
 	if($entity === 'hocvien')
 	{
 		$hv = $d->rawQueryOne('select id_khoa, cccd from #_dt_hocvien where id = ? limit 0,1', array($id));
-		if($hv) foreach(array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table) $d->rawQuery('delete from #_'.$table.' where id_khoa = ? and cccd = ?', array($hv['id_khoa'], $hv['cccd']));
+		if($hv) foreach(array('dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table) $d->rawQuery('delete from #_'.$table.' where id_khoa = ? and cccd = ?', array($hv['id_khoa'], $hv['cccd']));
 	}
 	$d->rawQuery('delete from #_'.$config['table'].' where id = ?', array($id));
 }
@@ -174,8 +177,37 @@ function dt_crud_delete_id($entity, $id)
 function dt_khoa_delete_id($id)
 {
 	global $d;
-	foreach(array('dt_hocvien','dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table) $d->rawQuery('delete from #_'.$table.' where id_khoa = ?', array($id));
+	foreach(array('dt_hocvien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table) $d->rawQuery('delete from #_'.$table.' where id_khoa = ?', array($id));
 	$d->rawQuery('delete from #_dt_khoa where id = ?', array($id));
+}
+
+function dt_khoa_delete_selected()
+{
+	global $d, $func;
+	$ids = isset($_POST['ids']) && is_array($_POST['ids']) ? array_values(array_unique(array_filter(array_map('intval', $_POST['ids'])))) : array();
+	if(!$ids) $func->transfer('Vui lòng chọn ít nhất một khóa', 'index.php?com=daotao&act=khoa', false);
+
+	$placeholders = implode(',', array_fill(0, count($ids), '?'));
+	$rows = $d->rawQuery("select id from #_dt_khoa where id in ($placeholders)", $ids);
+	$ids = array_map('intval', array_column($rows, 'id'));
+	if(!$ids) $func->transfer('Không tìm thấy khóa đã chọn', 'index.php?com=daotao&act=khoa', false);
+	if(dt_backup_tables(array('dt_khoa','dt_hocvien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh'), 'del_khoa') === '')
+		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', 'index.php?com=daotao&act=khoa', false);
+
+	$affected = 0;
+	$d->startTransaction();
+	foreach($ids as $id)
+	{
+		foreach(array('dt_khoa','dt_hocvien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table)
+		{
+			$count = $d->rawQueryOne('select count(*) as c from #_'.$table.' where id'.($table === 'dt_khoa' ? '' : '_khoa').' = ?', array($id));
+			$affected += (int)($count ? $count['c'] : 0);
+		}
+		dt_khoa_delete_id($id);
+	}
+	$d->commit();
+	dt_audit('delete_selected', 'khoa', $affected, 'Khóa: '.implode(',', $ids));
+	$func->transfer('Đã xóa '.count($ids).' khóa và dữ liệu liên quan ('.$affected.' bản ghi)', 'index.php?com=daotao&act=khoa');
 }
 
 function dt_crud_delete_all()
@@ -187,7 +219,7 @@ function dt_crud_delete_all()
 		if(dt_backup_tables(dt_backup_tables_list(), 'all') === '')
 			$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', 'index.php?com=daotao&act=tonghop', false);
 		$affected = 0;
-		foreach(array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh','dt_hocvien','dt_xe','dt_giaovien','dt_khoa','dt_import_log') as $table)
+		foreach(array('dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh','dt_hocvien','dt_xe','dt_giaovien','dt_khoa','dt_import_log') as $table)
 		{
 			$c = $d->rawQueryOne("select count(*) as c from #_$table");
 			$affected += (int)($c ? $c['c'] : 0);
@@ -201,12 +233,12 @@ function dt_crud_delete_all()
 
 	$cnt = $d->rawQueryOne("select count(*) as c from #_".$config['table']);
 	$affected = (int)($cnt ? $cnt['c'] : 0);
-	$backupTables = array_merge(array($config['table']), in_array($entity, array('khoa','hocvien'), true) ? array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') : array());
+	$backupTables = array_merge(array($config['table']), in_array($entity, array('khoa','hocvien'), true) ? array('dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') : array());
 	if(dt_backup_tables($backupTables, $entity) === '')
 		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', dt_crud_back($config), false);
 
 	if($entity === 'khoa') foreach($d->rawQuery('select id from #_dt_khoa') as $row) dt_khoa_delete_id((int)$row['id']);
-	elseif($entity === 'hocvien') foreach(array('dt_lythuyet','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table) $d->rawQuery('delete from #_'.$table);
+	elseif($entity === 'hocvien') foreach(array('dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') as $table) $d->rawQuery('delete from #_'.$table);
 	$d->rawQuery('delete from #_'.$config['table']);
 	dt_audit('delete_all', $entity, $affected, 'Xóa toàn bộ '.$config['title']);
 	$func->transfer('Đã xóa toàn bộ '.$config['title'].' ('.$affected.' bản ghi)', dt_crud_back($config));

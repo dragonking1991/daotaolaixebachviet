@@ -33,8 +33,8 @@
 				</select>
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
-			<?php if(!$id_khoa_sel): ?>
-			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp lý thuyết.</div>
+			<?php if(!$id_khoa_sel && empty($items)): ?>
+			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp lý thuyết, hoặc nhập CCCD/tên để tra cứu toàn bộ khóa.</div>
 			<?php else: ?>
 			<div class="table-responsive">
 			<table class="table dt-list dt-lythuyet-list table-hover mb-0">

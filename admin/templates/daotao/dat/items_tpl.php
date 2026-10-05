@@ -28,8 +28,8 @@
 				</select>
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
-			<?php if(!$id_khoa_sel): ?>
-			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp DAT.</div>
+			<?php if(!$id_khoa_sel && empty($items)): ?>
+			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp DAT, hoặc nhập CCCD/tên để tra cứu toàn bộ khóa.</div>
 			<?php else: ?>
 			<div class="table-responsive">
 			<table class="table dt-list table-hover mb-0">
@@ -58,7 +58,7 @@
 							<div class="dt-sub"><span class="dt-tag is-muted"><?=$it['so_phien']?> phiên</span><span class="dt-sep">•</span>Đêm <strong><?=$a['b']?> giờ</strong></div>
 							<div class="dt-sub"><i class="fas fa-car"></i>Tự động <strong><?=$a['c']?> giờ</strong><span class="dt-sep">•</span>Số sàn <strong><?=$a['d']?> giờ</strong></div>
 						</td>
-						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đủ điều kiện</span><?php else: ?><span class="badge badge-danger" title="<?=htmlspecialchars(implode(', ', $it['thieu']))?>">Chưa đủ</span><?php endif; ?></td>
+						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đủ điều kiện</span><?php else: ?><span class="badge badge-danger">Chưa đủ</span><?php if(!empty($it['thieu'])): ?><div class="dt-sub mt-1 text-danger text-left"><?php foreach($it['thieu'] as $__t): ?><div><i class="fas fa-exclamation-circle"></i> <?=htmlspecialchars($__t)?></div><?php endforeach; ?></div><?php endif; ?><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
 					<tr><td colspan="4" class="dt-empty"><div class="dt-empty-box"><i class="fas fa-road"></i><div>Chưa có dữ liệu DAT trong khóa này</div></div></td></tr>

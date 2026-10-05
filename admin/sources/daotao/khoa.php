@@ -86,13 +86,12 @@ function dt_khoa_delete()
 	global $d, $func;
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 	if(!$id) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=khoa", false);
+	if(dt_backup_tables(array('dt_khoa','dt_hocvien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh'), 'del_khoa') === '')
+		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', 'index.php?com=daotao&act=khoa', false);
 
-	$d->rawQuery("delete from #_dt_khoa where id = ?", array($id));
-	$d->rawQuery("delete from #_dt_hocvien where id_khoa = ?", array($id));
-	$d->rawQuery("delete from #_dt_lythuyet where id_khoa = ?", array($id));
-	$d->rawQuery("delete from #_dt_cabin_kq where id_khoa = ?", array($id));
-	$d->rawQuery("delete from #_dt_dat_phien where id_khoa = ?", array($id));
-	$d->rawQuery("delete from #_dt_thuchanh_hinh where id_khoa = ?", array($id));
+	$d->startTransaction();
+	dt_khoa_delete_id($id);
+	$d->commit();
 	if(function_exists('dt_audit')) dt_audit('delete', 'khoa', 1, 'id='.$id.' (+dữ liệu liên quan)');
 	$func->transfer("Xóa khóa và dữ liệu liên quan thành công", "index.php?com=daotao&act=khoa");
 }

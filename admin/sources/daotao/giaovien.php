@@ -21,6 +21,30 @@ function dt_giaovien_list()
 	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=giaovien");
 }
 
+/* Thanh lý / hủy thanh lý giáo viên (nghỉ việc). Mặc định ẩn khỏi danh sách.
+ * Ràng buộc: nếu cam kết gắn bó còn hiệu lực thì người phụ trách không được thanh lý; chỉ admin bỏ qua. */
+function dt_giaovien_thanh_ly()
+{
+	global $d, $func;
+	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+	$huy = isset($_GET['huy']) && $_GET['huy'] == '1';
+	if(!$id) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=giaovien", false);
+	$gv = $d->rawQueryOne("select id, hoten, cam_ket_nam, cam_ket_tu_ngay from #_dt_giaovien where id = ? limit 0,1", array($id));
+	if(!$gv) $func->transfer("Giáo viên không tồn tại", "index.php?com=daotao&act=giaovien", false);
+
+	if(!$huy)
+	{
+		$ck = dt_cam_ket_info(isset($gv['cam_ket_nam'])?$gv['cam_ket_nam']:0, isset($gv['cam_ket_tu_ngay'])?$gv['cam_ket_tu_ngay']:'');
+		if($ck && $ck['con_hieu_luc'] && !dt_is_admin())
+			$func->transfer("Giáo viên còn cam kết gắn bó (còn ".$ck['con_text'].", đến ".$ck['den_ngay']."). Không thể thanh lý. Chỉ admin mới được bỏ qua.", "index.php?com=daotao&act=giaovien", false);
+	}
+
+	$d->where('id', $id);
+	$d->update('dt_giaovien', array('thanh_ly' => $huy ? 0 : 1, 'ngay_thanh_ly' => $huy ? '' : date('d/m/Y')));
+	if(function_exists('dt_audit')) dt_audit($huy ? 'huy_thanh_ly' : 'thanh_ly', 'giaovien', 1, 'id='.$id.' '.$gv['hoten']);
+	$func->transfer($huy ? "Đã hủy thanh lý giáo viên" : "Đã đánh dấu giáo viên đã thanh lý (nghỉ việc)", "index.php?com=daotao&act=giaovien");
+}
+
 function dt_giaovien_upload_excel()
 {
 	global $d, $func;

@@ -124,6 +124,10 @@ function dt_xe_where()
 	if(dt_req('hang') !== '') { $where .= " and hang_xe = ?"; $params[] = dt_norm_hang(dt_req('hang')); }
 	if(dt_req('loai_xe') !== '') { $where .= " and loai_xe like ?"; $params[] = '%'.dt_req('loai_xe').'%'; }
 	if(dt_req('nhan_hieu') !== '') { $where .= " and nhan_hieu like ?"; $params[] = '%'.dt_req('nhan_hieu').'%'; }
+	// Mặc định ẩn xe đã thanh lý; show_thanh_ly=1 để xem, =chi để chỉ xem đã thanh lý.
+	$tl = dt_req('show_thanh_ly');
+	if($tl === 'chi') $where .= " and thanh_ly = 1";
+	elseif($tl !== '1') $where .= " and (thanh_ly is null or thanh_ly = 0)";
 	return array($where, $params);
 }
 
@@ -140,6 +144,10 @@ function dt_giaovien_where()
 	if(dt_req('gioitinh') !== '') { $where .= " and gioitinh = ?"; $params[] = dt_req('gioitinh'); }
 	if(dt_req('hang_gplx') !== '') { $where .= " and hang_gplx like ?"; $params[] = '%'.dt_req('hang_gplx').'%'; }
 	if(dt_req('hang') !== '') { $where .= " and hang_daotao_phep like ?"; $params[] = '%'.dt_req('hang').'%'; }
+	// Mặc định ẩn giáo viên đã thanh lý (nghỉ việc).
+	$tl = dt_req('show_thanh_ly');
+	if($tl === 'chi') $where .= " and thanh_ly = 1";
+	elseif($tl !== '1') $where .= " and (thanh_ly is null or thanh_ly = 0)";
 	return array($where, $params);
 }
 
@@ -148,16 +156,16 @@ function dt_cabin_where()
 	global $d;
 	$where = ""; $params = array();
 	$idKhoa = (int)dt_req('id_khoa', 0);
-	if($idKhoa) { $where .= " and c.id_khoa = ?"; $params[] = $idKhoa; }
+	if($idKhoa) { $where .= " and h.id_khoa = ?"; $params[] = $idKhoa; }
 	$kw = dt_req('keyword');
 	if($kw !== '')
 	{
 		$e = $d->escape(htmlspecialchars($kw));
-		$where .= " and (h.hoten like '%$e%' or h.cccd like '%$e%' or c.ma_hv like '%$e%')";
+		$where .= " and (h.hoten like '%$e%' or h.cccd like '%$e%' or h.ma_hv like '%$e%')";
 	}
 	$tt = dt_req('trang_thai');
 	if($tt === 'dat') { $where .= " and c.dat = 1"; }
-	elseif($tt === 'chua') { $where .= " and c.dat = 0"; }
+	elseif($tt === 'chua') { $where .= " and (c.id is null or c.dat = 0)"; }
 	return array($where, $params);
 }
 
@@ -192,10 +200,22 @@ function dt_xe_export()
 	global $d;
 	list($where, $params) = dt_xe_where();
 	$rows = $d->rawQuery("select * from #_dt_xe where 1 $where order by bien_so asc", $params);
-	$headers = array('STT','Biển số','Hạng xe','Hạng đào tạo','Số đăng ký','Số khung','Số máy','Loại xe','Nhãn hiệu','Giáo viên');
+	$headers = array('STT','Biển số','Hạng xe','Hạng đào tạo','Số đăng ký','Số khung','Số máy','Loại xe','Nhãn hiệu','Giáo viên','Ngày HH GPLX tập lái','Cam kết GV (năm)','Cam kết còn lại','Trạng thái','Ngày thanh lý');
+	$gvCache = array();
 	$out = array(); $stt = 1;
 	foreach($rows as $x)
-		$out[] = array($stt++, $x['bien_so'], $x['hang_xe'], $x['hang_dt'], $x['so_dangky'], $x['so_khung'], $x['so_may'], $x['loai_xe'], $x['nhan_hieu'], $x['gv_hoten']);
+	{
+		$key = isset($x['gv_key']) ? $x['gv_key'] : '';
+		$ck = null;
+		if($key !== '')
+		{
+			if(!array_key_exists($key, $gvCache))
+				$gvCache[$key] = $d->rawQueryOne("select cam_ket_nam, cam_ket_tu_ngay from #_dt_giaovien where gv_key = ? order by thanh_ly asc limit 0,1", array($key));
+			$gv = $gvCache[$key];
+			if($gv) $ck = dt_cam_ket_info(isset($gv['cam_ket_nam'])?$gv['cam_ket_nam']:0, isset($gv['cam_ket_tu_ngay'])?$gv['cam_ket_tu_ngay']:'');
+		}
+		$out[] = array($stt++, $x['bien_so'], $x['hang_xe'], $x['hang_dt'], $x['so_dangky'], $x['so_khung'], $x['so_may'], $x['loai_xe'], $x['nhan_hieu'], $x['gv_hoten'], isset($x['ngay_hethan'])?$x['ngay_hethan']:'', $ck?(int)$ck['nam']:'', $ck?($ck['con_hieu_luc']?$ck['con_text']:'Hết cam kết'):'', !empty($x['thanh_ly'])?'Đã thanh lý':'Đang hoạt động', isset($x['ngay_thanh_ly'])?$x['ngay_thanh_ly']:'');
+	}
 	dt_xlsx_simple('Xe tap lai', 'xe-tap-lai-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 4, 5, 6));
 }
 
@@ -218,11 +238,11 @@ function dt_cabin_export()
 {
 	global $d;
 	list($where, $params) = dt_cabin_where();
-	$rows = $d->rawQuery("select c.*, h.hoten, h.cccd as hv_cccd from #_dt_cabin_kq c left join #_dt_hocvien h on (h.id_khoa = c.id_khoa and h.ma_hv = c.ma_hv) where 1 $where order by c.id desc", $params);
+	$rows = $d->rawQuery("select c.*, h.hoten, h.cccd as hv_cccd, h.ma_hv as roster_ma_hv from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $where order by h.hoten asc", $params);
 	$headers = array('STT','Mã HV','Họ và tên','CCCD','Tổng thời gian','Số nội dung','Kết quả','Ghi chú');
 	$out = array(); $stt = 1;
 	foreach($rows as $c)
-		$out[] = array($stt++, $c['ma_hv'], $c['hoten'], $c['hv_cccd'], $c['tong_thoigian'], (int)$c['so_noidung'], ((int)$c['dat'] === 1 ? 'Đạt' : 'Chưa đạt'), $c['ghi_chu']);
+		$out[] = array($stt++, $c['roster_ma_hv'], $c['hoten'], $c['hv_cccd'], $c['tong_thoigian'], (int)$c['so_noidung'], empty($c['id']) ? 'Chưa nhập' : ((int)$c['dat'] === 1 ? 'Đạt' : 'Chưa đạt'), $c['ghi_chu']);
 	dt_xlsx_simple('Cabin', 'cabin-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 3));
 }
 
@@ -241,7 +261,9 @@ function dt_lythuyet_export()
 	$tt = dt_req('trang_thai');
 	$duLieu = dt_req('du_lieu', 'co');
 	if(!in_array($duLieu, array('co', 'tat_ca', 'chua'), true)) $duLieu = 'co';
-	$headers = array_merge(array('STT','Mã HV','Họ và tên','CCCD','Hạng'), array_values($dsMon), array('Kết luận LT'));
+	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng');
+	foreach($dsMon as $label) $headers = array_merge($headers, array($label.' - Tiến độ', $label.' - Điểm kiểm tra', $label.' - Kết quả'));
+	$headers[] = 'Kết luận LT';
 	$textCols = array(1, 3);
 	$out = array(); $stt = 1;
 	foreach($hvs as $hv)
@@ -255,7 +277,9 @@ function dt_lythuyet_export()
 		{
 			$m = isset($monData[$mk]) ? $monData[$mk] : null;
 			if($m && (int)$m['dat'] === 1) $soDat++;
-			$cells[] = !$m ? '—' : ((int)$m['dat'] === 1 ? 'Đạt' : 'Chưa');
+			$cells[] = $m ? (float)$m['tien_do'] : '';
+			$cells[] = $m ? (float)$m['diem_kt'] : '';
+			$cells[] = !$m ? 'Chưa có dữ liệu' : ((int)$m['dat'] === 1 ? 'Đạt' : 'Chưa đạt');
 		}
 		$ketLuan = ($soDat >= count($dsMon)) ? 'Đạt' : 'Chưa đủ ('.$soDat.'/'.count($dsMon).')';
 		if($tt === 'dat' && $soDat < count($dsMon)) continue;
@@ -270,7 +294,7 @@ function dt_hinh_export()
 	global $d;
 	$idKhoa = (int)dt_req('id_khoa', 0);
 	if(!$idKhoa) $GLOBALS['func']->transfer('Vui lòng chọn khóa để xuất', 'index.php?com=daotao&act=hinh', false);
-	$sql = "select h.cccd, h.hoten, h.hang, h.ma_hv, th.gio, th.km from #_dt_hocvien h "
+	$sql = "select h.cccd, h.hoten, h.hang, h.ma_hv, th.gio, th.km, th.dat_override from #_dt_hocvien h "
 		. "left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) where h.id_khoa = ? order by h.hoten asc";
 	$rows = $d->rawQuery($sql, array($idKhoa));
 	$kw = dt_mb_lower(dt_req('keyword'));
@@ -280,7 +304,7 @@ function dt_hinh_export()
 	foreach($rows as $rw)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($rw['hoten'].' '.$rw['cccd'].' '.$rw['ma_hv']), $kw) === false) continue;
-		$dat = dt_hinh_dat($rw['hang'], $rw['gio'], $rw['km']);
+		$dat = dt_hinh_dat($rw['hang'], $rw['gio'], $rw['km'], $rw['dat_override']);
 		if($tt === 'dat' && !$dat) continue;
 		if($tt === 'chua' && $dat) continue;
 		$out[] = array($stt++, $rw['ma_hv'], $rw['hoten'], $rw['cccd'], $rw['hang'], (float)$rw['gio'], (float)$rw['km'], $dat ? 'Đạt' : 'Chưa đạt');

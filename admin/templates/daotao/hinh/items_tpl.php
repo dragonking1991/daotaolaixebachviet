@@ -25,11 +25,11 @@
 				</select>
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
-			<?php if(!$id_khoa_sel): ?>
-			<div class="alert alert-info mb-0">Chọn khóa để nhập thực hành trong hình.</div>
+			<?php if(!$id_khoa_sel && empty($items)): ?>
+			<div class="alert alert-info mb-0">Chọn khóa để nhập thực hành trong hình, hoặc nhập CCCD/tên để tra cứu toàn bộ khóa.</div>
 			<?php else: ?>
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Kết quả</th><th style="width:340px">Nhập thời gian (giờ) / quãng đường (km)</th><th>Thao tác</th></tr></thead>
+				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Kết quả</th><th style="width:420px">Giờ / km / xác nhận</th><th>Thao tác</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
@@ -38,10 +38,11 @@
 						<td><?=htmlspecialchars($it['hang'])?></td>
 						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đạt</span><?php else: ?><span class="badge badge-secondary">Chưa</span><?php endif; ?></td>
 						<td>
-							<form method="post" action="index.php?com=daotao&act=saveHinh&id_khoa=<?=$id_khoa_sel?>" style="display:flex;gap:6px;align-items:center;margin:0;">
+							<form method="post" action="index.php?com=daotao&act=saveHinh&id_khoa=<?=(int)(isset($it['id_khoa'])?$it['id_khoa']:$id_khoa_sel)?>" style="display:flex;gap:6px;align-items:center;margin:0;">
 								<input type="hidden" name="cccd" value="<?=htmlspecialchars($it['cccd'])?>">
 								<input type="number" step="0.01" name="gio" class="form-control form-control-sm" style="width:90px" placeholder="giờ" value="<?=$it['gio']!==null?htmlspecialchars($it['gio']):''?>">
 								<input type="number" step="0.01" name="km" class="form-control form-control-sm" style="width:90px" placeholder="km" value="<?=$it['km']!==null?htmlspecialchars($it['km']):''?>">
+								<label class="mb-0 text-nowrap"><input type="checkbox" name="dat_override" value="1" <?=$it['dat_override']!==null && (int)$it['dat_override']===1?'checked':''?>> Đạt</label>
 								<button class="btn btn-xs bg-gradient-success"><i class="fas fa-save mr-1"></i>Lưu</button>
 							</form>
 						</td>

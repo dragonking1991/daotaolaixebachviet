@@ -592,6 +592,7 @@
                         'xe' => 'Xe tập lái',
                         'giaovien' => 'Giáo viên',
                         'lythuyet' => 'Lý thuyết',
+                        'mophong' => 'Mô phỏng',
                         'cabinkq' => 'Cabin (kết quả)',
                         'hinh' => 'Thực hành hình',
                         'dat' => 'DAT (trên đường)',
