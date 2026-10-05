@@ -83,8 +83,9 @@ function dt_khoa_where()
 	$kw = dt_req('keyword');
 	if($kw !== '')
 	{
-		$e = $d->escape(htmlspecialchars($kw));
-		$where .= " and (k.ma_khoa like '%$e%' or k.ten_khoa like '%$e%' or k.hang like '%$e%')";
+		$where .= " and (k.ma_khoa like ? or k.ten_khoa like ? or k.hang like ?)";
+		$like = '%'.$kw.'%';
+		$params[] = $like; $params[] = $like; $params[] = $like;
 	}
 	if(dt_req('hang') !== '') { $where .= " and k.hang = ?"; $params[] = dt_norm_hang(dt_req('hang')); }
 	if(dt_req('he') !== '') { $where .= " and k.he_daotao like ?"; $params[] = '%'.dt_req('he').'%'; }
@@ -102,8 +103,9 @@ function dt_hocvien_where()
 	$kw = dt_req('keyword');
 	if($kw !== '')
 	{
-		$e = $d->escape(htmlspecialchars($kw));
-		$where .= " and (h.hoten like '%$e%' or h.cccd like '%$e%' or h.ma_hv like '%$e%')";
+		$where .= " and (h.hoten like ? or h.cccd like ? or h.ma_hv like ?)";
+		$like = '%'.$kw.'%';
+		$params[] = $like; $params[] = $like; $params[] = $like;
 	}
 	if(dt_req('hang') !== '') { $where .= " and h.hang = ?"; $params[] = dt_norm_hang(dt_req('hang')); }
 	if(dt_req('gv') !== '') { $where .= " and h.gv_key = ?"; $params[] = dt_gv_key(dt_req('gv')); }
@@ -118,8 +120,9 @@ function dt_xe_where()
 	$kw = dt_req('keyword');
 	if($kw !== '')
 	{
-		$e = $d->escape(htmlspecialchars($kw));
-		$where .= " and (bien_so like '%$e%' or gv_hoten like '%$e%' or so_khung like '%$e%' or so_may like '%$e%')";
+		$where .= " and (bien_so like ? or gv_hoten like ? or so_khung like ? or so_may like ?)";
+		$like = '%'.$kw.'%';
+		$params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
 	}
 	if(dt_req('hang') !== '') { $where .= " and hang_xe = ?"; $params[] = dt_norm_hang(dt_req('hang')); }
 	if(dt_req('loai_xe') !== '') { $where .= " and loai_xe like ?"; $params[] = '%'.dt_req('loai_xe').'%'; }
@@ -138,8 +141,9 @@ function dt_giaovien_where()
 	$kw = dt_req('keyword');
 	if($kw !== '')
 	{
-		$e = $d->escape(htmlspecialchars($kw));
-		$where .= " and (hoten like '%$e%' or cccd like '%$e%' or sdt like '%$e%')";
+		$where .= " and (hoten like ? or cccd like ? or sdt like ?)";
+		$like = '%'.$kw.'%';
+		$params[] = $like; $params[] = $like; $params[] = $like;
 	}
 	if(dt_req('gioitinh') !== '') { $where .= " and gioitinh = ?"; $params[] = dt_req('gioitinh'); }
 	if(dt_req('hang_gplx') !== '') { $where .= " and hang_gplx like ?"; $params[] = '%'.dt_req('hang_gplx').'%'; }
@@ -160,8 +164,9 @@ function dt_cabin_where()
 	$kw = dt_req('keyword');
 	if($kw !== '')
 	{
-		$e = $d->escape(htmlspecialchars($kw));
-		$where .= " and (h.hoten like '%$e%' or h.cccd like '%$e%' or h.ma_hv like '%$e%')";
+		$where .= " and (h.hoten like ? or h.cccd like ? or h.ma_hv like ?)";
+		$like = '%'.$kw.'%';
+		$params[] = $like; $params[] = $like; $params[] = $like;
 	}
 	$tt = dt_req('trang_thai');
 	if($tt === 'dat') { $where .= " and c.dat = 1"; }

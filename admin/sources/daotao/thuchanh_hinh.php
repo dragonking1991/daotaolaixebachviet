@@ -21,11 +21,11 @@ function dt_hinh_list()
 	}
 	else
 	{
-		$e = $d->escape(htmlspecialchars(dt_req('keyword')));
+		$like = '%'.dt_req('keyword').'%';
 		$sql = "select h.id, h.cccd, h.hoten, h.hang, h.id_khoa, th.id as data_id, th.gio, th.km, th.dat_override "
 			. "from #_dt_hocvien h left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) "
-			. "where (h.hoten like '%$e%' or h.cccd like '%$e%' or h.ma_hv like '%$e%') order by h.hoten asc limit 0,200";
-		$rows = $d->rawQuery($sql);
+			. "where (h.hoten like ? or h.cccd like ? or h.ma_hv like ?) order by h.hoten asc limit 0,200";
+		$rows = $d->rawQuery($sql, array($like, $like, $like));
 	}
 	$tt = dt_req('trang_thai');
 	foreach($rows as $rw)

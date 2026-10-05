@@ -25,8 +25,9 @@ function dt_mophong_list()
 	else { $where = '1'; $params = array(); }
 	if($keyword !== '')
 	{
-		$e = $d->escape(htmlspecialchars($keyword));
-		$where .= " and (h.hoten like '%$e%' or h.cccd like '%$e%' or h.ma_hv like '%$e%')";
+		$where .= " and (h.hoten like ? or h.cccd like ? or h.ma_hv like ?)";
+		$like = '%'.$keyword.'%';
+		$params[] = $like; $params[] = $like; $params[] = $like;
 	}
 	$status = dt_req('trang_thai');
 	if($status === 'dat') $where .= ' and m.dat = 1';
@@ -141,8 +142,9 @@ function dt_mophong_where($idKhoa)
 	$keyword = dt_req('keyword');
 	if($keyword !== '')
 	{
-		$e = $d->escape(htmlspecialchars($keyword));
-		$where .= " and (h.hoten like '%$e%' or h.cccd like '%$e%' or h.ma_hv like '%$e%')";
+		$where .= " and (h.hoten like ? or h.cccd like ? or h.ma_hv like ?)";
+		$like = '%'.$keyword.'%';
+		$params[] = $like; $params[] = $like; $params[] = $like;
 	}
 	$status = dt_req('trang_thai');
 	if($status === 'dat') $where .= ' and m.dat = 1';

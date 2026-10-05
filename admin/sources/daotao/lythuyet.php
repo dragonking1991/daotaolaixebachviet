@@ -32,8 +32,8 @@ function dt_lythuyet_list()
 	}
 	else
 	{
-		$e = $d->escape(htmlspecialchars(dt_req('keyword')));
-		$hvs = $d->rawQuery("select * from #_dt_hocvien where (hoten like '%$e%' or cccd like '%$e%' or ma_hv like '%$e%') order by hoten asc limit 0,200");
+		$like = '%'.dt_req('keyword').'%';
+		$hvs = $d->rawQuery("select * from #_dt_hocvien where (hoten like ? or cccd like ? or ma_hv like ?) order by hoten asc limit 0,200", array($like, $like, $like));
 		$ids = array();
 		foreach($hvs as $hv) $ids[(int)$hv['id_khoa']] = true;
 		$rows = array();

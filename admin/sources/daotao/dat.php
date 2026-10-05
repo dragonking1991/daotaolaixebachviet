@@ -59,8 +59,8 @@ function dt_dat_list()
 	}
 	else
 	{
-		$e = $d->escape(htmlspecialchars(dt_req('keyword')));
-		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where (hoten like '%$e%' or cccd like '%$e%' or ma_hv like '%$e%') order by hoten asc limit 0,200");
+		$like = '%'.dt_req('keyword').'%';
+		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where (hoten like ? or cccd like ? or ma_hv like ?) order by hoten asc limit 0,200", array($like, $like, $like));
 	}
 	$tt = dt_req('trang_thai');
 	foreach($hvs as $hv)
