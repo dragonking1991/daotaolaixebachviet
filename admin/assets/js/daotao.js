@@ -117,7 +117,9 @@
 			}
 
 			if(form.hasAttribute('data-noload')) return;
-			showLoading();
+			window.setTimeout(function(){
+				if(!e.defaultPrevented) showLoading();
+			}, 0);
 		}, true);
 
 		// Chuẩn hóa CCCD khi dán/gõ: bỏ khoảng trắng, dấu chấm; chỉ giữ chữ số; cảnh báo độ dài.

@@ -15,7 +15,6 @@ function dt_crud_configs()
 			'ma_csdt' => 'Mã CSĐT', 'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'gioitinh' => 'Giới tính', 'sdt' => 'Điện thoại', 'dia_chi' => 'Địa chỉ',
 			'hang_gplx' => 'Hạng GPLX', 'so_gplx' => 'Số GPLX', 'ngay_cap_gplx' => 'Ngày cấp GPLX', 'ngay_hh_gplx' => 'Ngày hết hạn GPLX',
 			'hang_daotao_phep' => 'Hạng đào tạo được phép', 'loai_hinh_dt' => 'Loại hình đào tạo (LT/TH/AL)', 'hinh_thuc_td' => 'Hình thức tuyển dụng', 'tuyen_dung' => 'Ngày tuyển dụng',
-			'cam_ket_nam' => 'Số năm cam kết gắn bó', 'cam_ket_tu_ngay' => 'Cam kết từ ngày',
 			'so_qd_gcn' => 'Số QĐ GCN', 'ngay_qd_gcn' => 'Ngày QĐ GCN', 'noi_cap_gcn' => 'Nơi cấp GCN', 'noi_ct' => 'Nơi công tác',
 			'trinh_do' => 'Trình độ', 'chuyen_mon' => 'Chuyên môn', 'su_pham' => 'Sư phạm', 'ghi_chu' => 'Ghi chú'
 		)),
@@ -55,7 +54,17 @@ function dt_crud_form()
 	$ds_khoa = dt_khoa_options();
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 	$item = $id ? $d->rawQueryOne('select * from #_'.$dt_crud_config['table'].' where id = ? limit 0,1', array($id)) : array();
-	if(!$id && isset($_GET['id_khoa'])) $item['id_khoa'] = (int)$_GET['id_khoa'];
+	if(!$id)
+	{
+		if(isset($_GET['id_khoa'])) $item['id_khoa'] = (int)$_GET['id_khoa'];
+		if($dt_crud_entity === 'lythuyet')
+		{
+			if(isset($_GET['cccd'])) $item['cccd'] = dt_normalize_cccd($_GET['cccd']);
+			$mon = isset($_GET['mon']) ? preg_replace('/[^a-z0-9_]/', '', $_GET['mon']) : '';
+			$monOptions = dt_mon_lythuyet();
+			if(isset($monOptions[$mon])) $item['mon'] = $mon;
+		}
+	}
 	if($id && (!$item || empty($item['id']))) $func->transfer('Dữ liệu không tồn tại', dt_crud_back($dt_crud_config), false);
 }
 
@@ -73,13 +82,12 @@ function dt_crud_save()
 		$value = is_array($p[$field]) ? '' : trim((string)$p[$field]);
 		if($field === 'id_khoa') $value = (int)$value;
 		elseif($field === 'cccd') $value = dt_normalize_cccd($value);
-		elseif($field === 'cam_ket_nam') $value = (int)$value;
 		elseif(in_array($field, array('hang','hang_xe'), true)) $value = dt_norm_hang($value);
 		elseif(in_array($field, array('tien_do','diem_kt','gio_thuchanh','km','gio','so_noidung'), true)) $value = dt_parse_number($value);
 		else $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 		$data[$field] = $value;
 	}
-	if($entity === 'lythuyet') $data['dat'] = dt_lythuyet_dat($data['tien_do'] ?? 0, $data['diem_kt'] ?? 0);
+	if($entity === 'lythuyet') $data['dat'] = dt_lythuyet_dat($data['tien_do'] ?? 0, $data['diem_kt'] ?? 0, $data['mon'] ?? '');
 	if($entity === 'cabinkq') $data['dat'] = (strpos(dt_norm_header($data['ghi_chu'] ?? ''), 'dapung') !== false && strpos(dt_norm_header($data['ghi_chu'] ?? ''), 'khong') === false) ? 1 : 0;
 	if(isset($data['gv_hoten'])) $data['gv_key'] = dt_gv_key($data['gv_hoten']);
 	if($entity === 'giaovien' && isset($data['hoten'])) $data['gv_key'] = dt_gv_key($data['hoten']);

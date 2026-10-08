@@ -12,11 +12,12 @@ function dt_lythuyet_upload_form()
 /* Danh sách tổng hợp 6 môn theo học viên của một khóa. */
 function dt_lythuyet_list()
 {
-	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $ds_mon, $du_lieu_filter, $total_items;
+	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $ds_mon, $du_lieu_filter, $total_items, $lt_mode;
 
 	$ds_khoa = dt_khoa_options();
 	$ds_mon = dt_mon_lythuyet();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$lt_mode = 'import';
 	$du_lieu_filter = dt_req('du_lieu', 'co');
 	if(!in_array($du_lieu_filter, array('co', 'tat_ca', 'chua'), true)) $du_lieu_filter = 'co';
 	$items = array();
@@ -27,8 +28,16 @@ function dt_lythuyet_list()
 
 	if($id_khoa_sel)
 	{
+		$khoaHang = '';
+		$rk = $d->rawQueryOne("select hang from #_dt_khoa where id = ?", array($id_khoa_sel));
+		if($rk) $khoaHang = $rk['hang'];
+		if(dt_is_nang_hang($khoaHang))
+		{
+			$ds_mon = dt_mon_lythuyet_nang_hang();
+			$lt_mode = 'check';
+		}
 		$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
-		$rows = $d->rawQuery("select id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
+		$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
 	}
 	else
 	{
@@ -40,7 +49,7 @@ function dt_lythuyet_list()
 		if($ids)
 		{
 			$in = implode(',', array_map('intval', array_keys($ids)));
-			$rows = $d->rawQuery("select id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa in ($in)");
+			$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa in ($in)");
 		}
 	}
 	$byCccd = array();
@@ -51,7 +60,8 @@ function dt_lythuyet_list()
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
-		$monData = isset($byCccd[$hv['id_khoa'].'|'.$hv['cccd']]) ? $byCccd[$hv['id_khoa'].'|'.$hv['cccd']] : array();
+		$key = $hv['id_khoa'].'|'.$hv['cccd'];
+		$monData = isset($byCccd[$key]) ? $byCccd[$key] : array();
 		if($du_lieu_filter === 'co' && empty($monData)) continue;
 		if($du_lieu_filter === 'chua' && !empty($monData)) continue;
 		if($tt !== '')
@@ -78,7 +88,6 @@ function dt_lythuyet_upload_excel()
 	if(!isset($dsMon[$mon])) dt_import_notice("Vui lòng chọn môn học hợp lệ", $back, false);
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
 		dt_import_notice("Vui lòng chọn file Excel", $back, false);
-
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 	list($sheet, $highestRow, $highestCol) = dt_open_upload_sheet($file, $ext, $back);
@@ -100,7 +109,7 @@ function dt_lythuyet_upload_excel()
 	$aliases = array(
 		'cccd' => array('madangnhap','madangky','cccd'),
 		'tien_do' => array('tiendohoanthanh'),
-		'diem_kt' => array('diemkiemtra'),
+		'diem_kt' => array('diemkiemtra','diem','diemmophong'),
 	);
 	$contains = array(
 		'cccd' => array('madangnhap','madangky'),
@@ -108,7 +117,13 @@ function dt_lythuyet_upload_excel()
 		'diem_kt' => array('diemkiemtra'),
 	);
 	list($map, $score) = dt_detect_header($merged, $aliases, $contains);
-	if(!isset($map['cccd']) || !isset($map['tien_do']) || !isset($map['diem_kt']))
+	// Mô phỏng chỉ cần CCCD + tiến độ (điểm thang /4, không bắt buộc); 6 môn còn lại cần đủ 3 cột.
+	if($mon === 'mophong')
+	{
+		if(!isset($map['cccd']) || !isset($map['tien_do']))
+			dt_import_notice("Không nhận diện được cột 'Mã đăng nhập' và 'Tiến độ hoàn thành' trong file mô phỏng.", $back, false);
+	}
+	elseif(!isset($map['cccd']) || !isset($map['tien_do']) || !isset($map['diem_kt']))
 		dt_import_notice("Không nhận diện đủ các cột 'Mã đăng nhập', 'Tiến độ hoàn thành', 'Điểm kiểm tra'.", $back, false);
 
 	dt_backup_tables(array('dt_lythuyet'), 'imp_lythuyet');
@@ -137,7 +152,7 @@ function dt_lythuyet_upload_excel()
 
 		$tienDo = dt_parse_number(dt_val($row, $map, 'tien_do'));
 		$diemKt = dt_parse_number(dt_val($row, $map, 'diem_kt'));
-		$dat = dt_lythuyet_dat($tienDo, $diemKt);
+		$dat = dt_lythuyet_dat($tienDo, $diemKt, $mon);
 
 		$data = array('id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'mon' => $mon,
 			'tien_do' => $tienDo, 'diem_kt' => $diemKt, 'dat' => $dat);
@@ -154,4 +169,45 @@ function dt_lythuyet_upload_excel()
 	$msg = "Import môn ".$dsMon[$mon].": $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
 	dt_import_notice($msg, "index.php?com=daotao&act=lythuyet".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($ok > 0 || $err === 0));
+}
+
+/* Lưu kết quả check 4 môn lý thuyết nâng hạng (C/CE). POST: id_khoa, check[cccd][mon]=1, nút "Đạt toàn bộ". */
+function dt_lythuyet_save_check()
+{
+	global $d, $func;
+
+	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$back = "index.php?com=daotao&act=lythuyet".($idKhoa ? "&id_khoa=".$idKhoa : "");
+	if(!$idKhoa) dt_import_notice("Thiếu khóa học", $back, false);
+
+	$rk = $d->rawQueryOne("select hang from #_dt_khoa where id = ?", array($idKhoa));
+	if(!$rk || !dt_is_nang_hang($rk['hang']))
+		dt_import_notice("Khóa này không phải khóa nâng hạng", $back, false);
+
+	$dsMon = dt_mon_lythuyet_nang_hang();
+	$datAll = !empty($_POST['dat_all']);
+	$check = isset($_POST['check']) && is_array($_POST['check']) ? $_POST['check'] : array();
+
+	$hvs = $d->rawQuery("select cccd from #_dt_hocvien where id_khoa = ?", array($idKhoa));
+	dt_backup_tables(array('dt_lythuyet'), 'imp_lythuyet');
+	$d->startTransaction();
+	$n = 0;
+	foreach($hvs as $hv)
+	{
+		$cccd = $hv['cccd'];
+		$cc = isset($check[$cccd]) && is_array($check[$cccd]) ? $check[$cccd] : array();
+		foreach($dsMon as $mk => $lbl)
+		{
+			$dat = ($datAll || !empty($cc[$mk])) ? 1 : 0;
+			$data = array('id_khoa' => $idKhoa, 'cccd' => $cccd, 'mon' => $mk,
+				'tien_do' => $dat ? 100 : 0, 'diem_kt' => 0, 'dat' => $dat);
+			$exist = $d->rawQueryOne("select id from #_dt_lythuyet where id_khoa = ? and cccd = ? and mon = ? limit 0,1", array($idKhoa, $cccd, $mk));
+			if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_lythuyet', $data); }
+			else { $data['ngaytao'] = time(); $d->insert('dt_lythuyet', $data); }
+			$n++;
+		}
+	}
+	$d->commit();
+	dt_audit('check', 'lythuyet_nang_hang', $n, '');
+	dt_import_notice("Đã lưu kết quả lý thuyết nâng hạng (".count($hvs)." học viên)", $back, true);
 }

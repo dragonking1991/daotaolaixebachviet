@@ -581,7 +581,7 @@
                     if(isset($kiemtra) && $kiemtra == true)
                     {
                         $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
-                        $can_daotao = in_array('daotao_man', $list_quyen) || in_array('daotao_upload', $list_quyen) || in_array('product_man_cabin', $list_quyen);
+                        $can_daotao = in_array('daotao_man', $list_quyen) || in_array('daotao_upload', $list_quyen) || in_array('daotao_import', $list_quyen) || in_array('daotao_tracuu', $list_quyen) || in_array('product_man_cabin', $list_quyen);
                         if(!$can_daotao) $none_daotao = "d-none";
                     }
                     if($com=='daotao') { $active_daotao = 'active'; $menuopen_daotao = 'menu-open'; }
@@ -592,11 +592,14 @@
                         'xe' => 'Xe tập lái',
                         'giaovien' => 'Giáo viên',
                         'lythuyet' => 'Lý thuyết',
-                        'mophong' => 'Mô phỏng',
                         'cabinkq' => 'Cabin (kết quả)',
                         'hinh' => 'Thực hành hình',
                         'dat' => 'DAT (trên đường)',
                         'tonghop' => 'Tổng hợp',
+                        'kythi' => 'Ngày kiểm tra',
+                        'ketquadaotao' => 'Kết quả đào tạo',
+                        'htkh' => 'Số giấy HTKH',
+                        'sathach' => 'Kết quả sát hạch',
                         'audit' => 'Nhật ký thao tác',
                         'backup' => 'Sao lưu &amp; khôi phục',
                     );

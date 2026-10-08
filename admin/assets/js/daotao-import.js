@@ -130,6 +130,10 @@
 				var missing = [];
 				files.forEach(function(f, i){ if(!mons[i]) missing.push(f.name); });
 				if(missing.length){ e.preventDefault(); notify(false, 'Chưa chọn môn học cho: ' + missing.join(', ')); return; }
+				if(mons.indexOf('mophong') !== -1){
+					var khoaSelect = form.querySelector('[name="id_khoa"]');
+					if(!khoaSelect || !khoaSelect.value){ e.preventDefault(); notify(false, 'Vui lòng chọn khóa trước khi import mô phỏng.'); return; }
+				}
 				e.preventDefault();
 				uploadSequential(form, zone, files, mons);
 				return;

@@ -193,11 +193,12 @@ function dt_parse_datetime($v)
 
 /* ============================ Đánh giá kết quả ============================ */
 
-/* Đạt một môn lý thuyết: tiến độ > 70 VÀ điểm kiểm tra > 5. */
-function dt_lythuyet_dat($tienDo, $diemKt)
+/* Đạt một môn lý thuyết: tiến độ >= 70 VÀ điểm kiểm tra >= 5. Môn mô phỏng chỉ xét tiến độ >= 70 (điểm thang /4). */
+function dt_lythuyet_dat($tienDo, $diemKt, $mon = '')
 {
 	$ng = dt_nguong_lythuyet();
-	return ((float)$tienDo > $ng['tien_do'] && (float)$diemKt > $ng['diem_kt']) ? 1 : 0;
+	if($mon === 'mophong') return ((float)$tienDo >= $ng['tien_do']) ? 1 : 0;
+	return ((float)$tienDo >= $ng['tien_do'] && (float)$diemKt >= $ng['diem_kt']) ? 1 : 0;
 }
 
 /* Đạt thực hành trong hình theo hạng. */
@@ -231,6 +232,14 @@ function dt_dat_danhgia($hang, $agg)
 	return array(empty($thieu) ? 1 : 0, $thieu);
 }
 
+/* Lấy trạng thái override Đạt DAT thủ công: 1 = Đạt override, null = không override. */
+function dt_dat_override_get($idKhoa, $cccd)
+{
+	global $d;
+	$r = $d->rawQueryOne("select dat from #_dt_dat_override where id_khoa = ? and cccd = ? limit 0,1", array((int)$idKhoa, $cccd));
+	return ($r && (int)$r['dat'] === 1) ? 1 : null;
+}
+
 /* ============================ Tra cứu học viên (cầu nối) ============================ */
 
 function dt_find_hocvien_by_cccd($cccd, $idKhoa = 0)
@@ -258,6 +267,12 @@ function dt_find_hocvien_by_mahv($maHv, $idKhoa = 0)
 	return $d->rawQueryOne($sql, $params);
 }
 
+/* Cabin được xem là đạt khi thực sự đạt HOẶC khóa không yêu cầu cabin (nâng hạng C/CE). */
+function dt_cabin_pass($cabin)
+{
+	return (!empty($cabin['dat']) || empty($cabin['yeu_cau'])) ? 1 : 0;
+}
+
 /**
  * Tổng hợp trạng thái 4 module của một học viên.
  * Yêu cầu dat.php đã được nạp (dùng dt_dat_aggregate).
@@ -270,15 +285,21 @@ function dt_student_summary($hv)
 	$cccd = $hv['cccd'];
 	$maHv = $hv['ma_hv'];
 
-	// Lý thuyết: cần cả 6 môn đạt
-	$tongMon = count(dt_mon_lythuyet());
-	$rDat = $d->rawQueryOne("select count(*) as c from #_dt_lythuyet where id_khoa = ? and cccd = ? and dat = 1", array($idKhoa, $cccd));
-	$soDat = (int)($rDat ? $rDat['c'] : 0);
-	$rCo = $d->rawQueryOne("select count(*) as c from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
-	$soCo = (int)($rCo ? $rCo['c'] : 0);
+	// Lý thuyết: nâng hạng (C/CE) cần 4 môn check; còn lại cần 7 môn.
+	$monSet = dt_mon_lythuyet_for_hang($hv['hang']);
+	$tongMon = count($monSet);
+	$ltRows = $d->rawQuery("select mon, dat from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+	$ltByMon = array();
+	foreach($ltRows as $rw) $ltByMon[$rw['mon']] = (int)$rw['dat'];
+	$soDat = 0; $soCo = 0;
+	foreach($monSet as $mk => $lbl)
+	{
+		if(isset($ltByMon[$mk])) { $soCo++; if($ltByMon[$mk] === 1) $soDat++; }
+	}
 	$lyThuyetDat = ($soDat >= $tongMon) ? 1 : 0;
 
-	// Cabin
+	// Cabin — nâng hạng (C = B lên C, CE) mặc định không yêu cầu học cabin.
+	$cabinYeuCau = dt_is_nang_hang($hv['hang']) ? 0 : 1;
 	$cabin = $d->rawQueryOne("select dat from #_dt_cabin_kq where id_khoa = ? and ma_hv = ? limit 0,1", array($idKhoa, $maHv));
 	$cabinDat = ($cabin && (int)$cabin['dat'] === 1) ? 1 : 0;
 	$cabinCo = $cabin ? 1 : 0;
@@ -290,15 +311,12 @@ function dt_student_summary($hv)
 	// DAT
 	$agg = function_exists('dt_dat_aggregate') ? dt_dat_aggregate($cccd, $idKhoa) : array('a'=>0,'b'=>0,'c'=>0,'d'=>0,'e'=>0);
 	list($datDat, $datThieu) = dt_dat_danhgia($hv['hang'], $agg);
+	if(dt_dat_override_get($idKhoa, $cccd) === 1) { $datDat = 1; $datThieu = array(); }
 
-	$mophong = $d->rawQueryOne("select tien_do, dat from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
-	$mophongDat = ($mophong && (int)$mophong['dat'] === 1) ? 1 : 0;
-	$duDieuKien = ($lyThuyetDat && $mophongDat && $cabinDat && $hinhDat && $datDat) ? 1 : 0;
-
+	$duDieuKien = ($lyThuyetDat && ($cabinDat || !$cabinYeuCau) && $hinhDat && $datDat) ? 1 : 0;
 	return array(
 		'ly_thuyet' => array('dat' => $lyThuyetDat, 'so_dat' => $soDat, 'so_co' => $soCo, 'tong' => $tongMon),
-		'mophong' => array('dat' => $mophongDat, 'tien_do' => $mophong ? (float)$mophong['tien_do'] : null, 'co' => $mophong ? 1 : 0),
-		'cabin' => array('dat' => $cabinDat, 'co' => $cabinCo),
+		'cabin' => array('dat' => $cabinDat, 'co' => $cabinCo, 'yeu_cau' => $cabinYeuCau),
 		'hinh' => array('dat' => $hinhDat, 'gio' => $hinh ? (float)$hinh['gio'] : 0, 'km' => $hinh ? (float)$hinh['km'] : 0),
 		'dat' => array('dat' => $datDat, 'agg' => $agg, 'thieu' => $datThieu),
 		'du_dieu_kien' => $duDieuKien,
@@ -324,7 +342,7 @@ function dt_is_admin()
 	return !$func->check_permission();
 }
 
-/* Thông tin hết hạn theo ngày (dd/mm/yyyy hoặc Y-m-d). Cảnh báo khi còn <= 30 ngày.
+/* Thông tin hết hạn theo ngày (dd/mm/yyyy hoặc Y-m-d). Cảnh báo khi còn dưới 30 ngày.
  * @return array|null [status: con_han|sap_het|het_han, days: số ngày (âm nếu đã hết hạn), ts]. */
 function dt_expiry_info($dateStr, $warnDays = 30)
 {
@@ -336,7 +354,7 @@ function dt_expiry_info($dateStr, $warnDays = 30)
 	if($ts === false || $ts === -1) return null;
 	$today = mktime(0, 0, 0, (int)date('n'), (int)date('j'), (int)date('Y'));
 	$days = (int)floor(($ts - $today) / 86400);
-	$status = $days < 0 ? 'het_han' : ($days <= $warnDays ? 'sap_het' : 'con_han');
+	$status = $days < 0 ? 'het_han' : ($days < $warnDays ? 'sap_het' : 'con_han');
 	return array('status' => $status, 'days' => $days, 'ts' => $ts);
 }
 

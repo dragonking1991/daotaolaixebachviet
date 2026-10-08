@@ -153,6 +153,16 @@ function dt_ensure_tables()
 		KEY idx_dt_dat_ngay (ngay_hoc)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_dat_override (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		id_khoa INT NOT NULL DEFAULT 0,
+		cccd VARCHAR(20) DEFAULT '',
+		dat TINYINT NOT NULL DEFAULT 1,
+		nguoi_nhap VARCHAR(100) DEFAULT '',
+		ngaytao INT DEFAULT 0,
+		UNIQUE KEY uq_dt_dat_override (id_khoa, cccd)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_thuchanh_hinh (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		id_khoa INT NOT NULL DEFAULT 0,
@@ -173,6 +183,80 @@ function dt_ensure_tables()
 		so_loi INT DEFAULT 0,
 		user VARCHAR(255) DEFAULT '',
 		ngaytao INT DEFAULT 0
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_ky_thi (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		ten VARCHAR(255) DEFAULT '',
+		ngay_kt DATE NULL DEFAULT NULL,
+		ghi_chu VARCHAR(500) DEFAULT '',
+		user_tao VARCHAR(255) DEFAULT '',
+		ngaytao INT DEFAULT 0,
+		KEY idx_dt_kythi_ngay (ngay_kt)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_ky_thi_hv (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		id_ky INT NOT NULL DEFAULT 0,
+		id_khoa INT NOT NULL DEFAULT 0,
+		cccd VARCHAR(20) DEFAULT '',
+		ma_hv VARCHAR(100) DEFAULT '',
+		hoten VARCHAR(255) DEFAULT '',
+		nam_sinh VARCHAR(20) DEFAULT '',
+		hang VARCHAR(20) DEFAULT '',
+		ma_khoa VARCHAR(100) DEFAULT '',
+		ten_khoa VARCHAR(255) DEFAULT '',
+		giaovien VARCHAR(255) DEFAULT '',
+		diem_lt VARCHAR(20) DEFAULT '',
+		lt VARCHAR(20) DEFAULT '',
+		diem_mp VARCHAR(20) DEFAULT '',
+		mp VARCHAR(20) DEFAULT '',
+		ket_qua_tong VARCHAR(30) DEFAULT '',
+		diem_hinh VARCHAR(20) DEFAULT '',
+		hinh VARCHAR(20) DEFAULT '',
+		diem_duong VARCHAR(20) DEFAULT '',
+		duong VARCHAR(20) DEFAULT '',
+		chu_chi VARCHAR(20) DEFAULT '',
+		diem_chu_chi VARCHAR(20) DEFAULT '',
+		ket_luan VARCHAR(30) DEFAULT '',
+		co_ket_qua TINYINT DEFAULT 0,
+		ngaytao INT DEFAULT 0,
+		UNIQUE KEY uq_dt_kythi_hv (id_ky, cccd),
+		KEY idx_dt_kythi_hv_cccd (cccd)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_htkh (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		id_khoa INT NOT NULL DEFAULT 0,
+		cccd VARCHAR(20) DEFAULT '',
+		ma_hv VARCHAR(100) DEFAULT '',
+		so_giay VARCHAR(100) DEFAULT '',
+		ngay_cap VARCHAR(20) DEFAULT '',
+		ghi_chu VARCHAR(255) DEFAULT '',
+		nguoi_nhap VARCHAR(255) DEFAULT '',
+		ngaytao INT DEFAULT 0,
+		UNIQUE KEY uq_dt_htkh (id_khoa, cccd),
+		KEY idx_dt_htkh_cccd (cccd)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_sat_hach (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		id_khoa INT NOT NULL DEFAULT 0,
+		cccd VARCHAR(20) DEFAULT '',
+		ma_hv VARCHAR(100) DEFAULT '',
+		hoten VARCHAR(255) DEFAULT '',
+		nam_sinh VARCHAR(20) DEFAULT '',
+		hang VARCHAR(20) DEFAULT '',
+		ma_khoa VARCHAR(100) DEFAULT '',
+		ten_khoa VARCHAR(255) DEFAULT '',
+		ngay_sh VARCHAR(20) DEFAULT '',
+		so_gplx VARCHAR(50) DEFAULT '',
+		ket_qua VARCHAR(30) DEFAULT '',
+		ghi_chu VARCHAR(255) DEFAULT '',
+		nguoi_nhap VARCHAR(255) DEFAULT '',
+		ngaytao INT DEFAULT 0,
+		UNIQUE KEY uq_dt_sat_hach (id_khoa, cccd),
+		KEY idx_dt_sat_hach_cccd (cccd)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_audit (

@@ -969,6 +969,14 @@
 	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-upload" value="daotao_upload" <?=(isset($ds_quyen) && in_array('daotao_upload', $ds_quyen))?'checked':'';?>>
 	                        <label for="quyen-daotao-upload" class="custom-control-label font-weight-normal">Import file</label>
 	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-tracuu" value="daotao_tracuu" <?=(isset($ds_quyen) && in_array('daotao_tracuu', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-daotao-tracuu" class="custom-control-label font-weight-normal">Chỉ tra cứu</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-import" value="daotao_import" <?=(isset($ds_quyen) && in_array('daotao_import', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-daotao-import" class="custom-control-label font-weight-normal">Tra cứu &amp; import</label>
+	                    </div>
 	                </div>
 	            </div>
 	        </div>

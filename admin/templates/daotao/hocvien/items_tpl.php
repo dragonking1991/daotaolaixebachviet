@@ -44,8 +44,8 @@
 				<thead><tr><th>Học viên</th><th>Thông tin đào tạo</th><th>Tiến độ</th><th class="text-center">Điều kiện dự thi</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $s=isset($it['sum'])?$it['sum']:null;
-						$done=0; if($s){ $done=($s['ly_thuyet']['dat']?1:0)+($s['mophong']['dat']?1:0)+($s['cabin']['dat']?1:0)+($s['hinh']['dat']?1:0)+($s['dat']['dat']?1:0); }
-						$pct=$s?round($done/5*100):0; ?>
+						$done=0; if($s){ $done=($s['ly_thuyet']['dat']?1:0)+(dt_cabin_pass($s['cabin'])?1:0)+($s['hinh']['dat']?1:0)+($s['dat']['dat']?1:0); }
+						$pct=$s?round($done/4*100):0; ?>
 					<tr>
 						<td>
 							<div class="dt-title"><?=htmlspecialchars($it['hoten'])?></div>
@@ -60,11 +60,10 @@
 							<div class="dt-sub"><i class="fas fa-chalkboard-teacher"></i>GV: <?=htmlspecialchars($it['gv_hoten'] ?: '—')?></div>
 						</td>
 						<td>
-							<div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pct?>%"></span></div><span class="dt-prog-num"><?=$done?>/5</span></div>
+								<div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pct?>%"></span></div><span class="dt-prog-num"><?=$done?>/4</span></div>
 							<?php if($s): $__kq = ($it['id_khoa']?'&id_khoa='.(int)$it['id_khoa']:'').'&keyword='.urlencode($it['cccd'] ?: $it['ma_hv']); ?><div class="dt-sub mt-1">
 								<a href="index.php?com=daotao&act=lythuyet<?=$__kq?>" class="badge badge-<?=$s['ly_thuyet']['dat']?'success':'secondary'?>" title="Xem lý thuyết">LT</a>
-								<a href="index.php?com=daotao&act=mophong<?=$__kq?>" class="badge badge-<?=$s['mophong']['dat']?'success':'secondary'?>" title="Xem mô phỏng">MP</a>
-								<a href="index.php?com=daotao&act=cabinkq<?=$__kq?>" class="badge badge-<?=$s['cabin']['dat']?'success':'secondary'?>" title="Xem cabin">Cabin</a>
+								<a href="index.php?com=daotao&act=cabinkq<?=$__kq?>" class="badge badge-<?=$s['cabin']['dat']?'success':(empty($s['cabin']['yeu_cau'])?'info':'secondary')?>" title="<?=empty($s['cabin']['yeu_cau'])?'Nâng hạng — không yêu cầu cabin':'Xem cabin'?>">Cabin</a>
 								<a href="index.php?com=daotao&act=hinh<?=$__kq?>" class="badge badge-<?=$s['hinh']['dat']?'success':'secondary'?>" title="Xem thực hành hình">Hình</a>
 								<a href="index.php?com=daotao&act=dat<?=$__kq?>" class="badge badge-<?=$s['dat']['dat']?'success':'secondary'?>" title="Xem DAT">DAT</a>
 							</div><?php endif; ?>

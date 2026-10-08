@@ -69,11 +69,13 @@ function dt_dat_list()
 		$idKhoaHv = (int)$hv['id_khoa'];
 		$agg = dt_dat_aggregate($hv['cccd'], $idKhoaHv);
 		list($dat, $thieu) = dt_dat_danhgia($hv['hang'], $agg);
+		$override = dt_dat_override_get($idKhoaHv, $hv['cccd']) === 1;
+		if($override) { $dat = 1; $thieu = array(); }
 		if($tt === 'dat' && !$dat) continue;
 		if($tt === 'chua' && $dat) continue;
 		$rPhien = $d->rawQueryOne("select count(*) as c from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($idKhoaHv, $hv['cccd']));
 		$soPhien = (int)($rPhien ? $rPhien['c'] : 0);
-		$items[] = array('hv' => $hv, 'agg' => $agg, 'dat' => $dat, 'thieu' => $thieu, 'so_phien' => $soPhien);
+		$items[] = array('hv' => $hv, 'agg' => $agg, 'dat' => $dat, 'thieu' => $thieu, 'so_phien' => $soPhien, 'override' => $override);
 	}
 	$total_items = count($items);
 }
@@ -182,4 +184,39 @@ function dt_dat_upload_excel()
 	$msg = "Import DAT: thêm $them phiên mới, bỏ qua $trung phiên đã có".($err ? ", $err phiên lỗi (HV chưa có)" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
 	dt_import_notice($msg, "index.php?com=daotao&act=dat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($them > 0 || $err === 0));
+}
+
+/* Đánh dấu DAT Đạt (override) toàn bộ học viên trong khóa. */
+function dt_dat_dat_all()
+{
+	global $d, $func;
+
+	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$back = "index.php?com=daotao&act=dat".($idKhoa ? "&id_khoa=".$idKhoa : "");
+	if(!$idKhoa) dt_import_notice("Thiếu khóa học", $back, false);
+
+	$hvs = $d->rawQuery("select cccd from #_dt_hocvien where id_khoa = ?", array($idKhoa));
+	dt_backup_tables(array('dt_dat_override'), 'dat_datall');
+	$d->startTransaction();
+	foreach($hvs as $hv)
+	{
+		$data = array('id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'dat' => 1, 'nguoi_nhap' => dt_username());
+		$exist = $d->rawQueryOne("select id from #_dt_dat_override where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $hv['cccd']));
+		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_dat_override', $data); }
+		else { $data['ngaytao'] = time(); $d->insert('dt_dat_override', $data); }
+	}
+	$d->commit();
+	dt_audit('update', 'dat_dat_all', count($hvs), 'id_khoa='.$idKhoa);
+	dt_import_notice("Đã đánh dấu Đạt DAT cho ".count($hvs)." học viên", $back, true);
+}
+
+/* Bỏ override Đạt DAT cho 1 học viên. */
+function dt_dat_override_clear()
+{
+	global $d, $func;
+	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$cccd = isset($_REQUEST['cccd']) ? dt_normalize_cccd($_REQUEST['cccd']) : '';
+	$back = "index.php?com=daotao&act=dat".($idKhoa ? "&id_khoa=".$idKhoa : "");
+	if($idKhoa && $cccd !== '') $d->rawQuery("delete from #_dt_dat_override where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+	$func->transfer("Đã bỏ xác nhận Đạt DAT", $back);
 }

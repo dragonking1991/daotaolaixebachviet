@@ -29,7 +29,7 @@ function dt_export_link($act, $keys)
 
 /* Xuất mảng dòng (mỗi dòng là mảng ô) ra file .xlsx rồi kết thúc.
  * $textCols: danh sách chỉ số cột (0-based) ép kiểu chuỗi để giữ số 0 đầu (CCCD, biển số...). */
-function dt_xlsx_simple($title, $filename, $headers, $rows, $textCols = array())
+function dt_xlsx_simple($title, $filename, $headers, $rows, $textCols = array(), $redCells = array())
 {
 	require_once LIBRARIES.'PHPExcel.php';
 	$objPHPExcel = new PHPExcel();
@@ -59,6 +59,22 @@ function dt_xlsx_simple($title, $filename, $headers, $rows, $textCols = array())
 				$sheet->setCellValue($letter.$r, $val);
 		}
 		$r++;
+	}
+
+	// Tô đỏ các ô "chưa đạt": $redCells chứa key "dataRowIndex,colIndex" (0-based theo $rows & cột).
+	if(!empty($redCells))
+	{
+		foreach($rows as $ri => $row)
+		{
+			for($c = 0; $c < $colCount; $c++)
+			{
+				if(empty($redCells[$ri.','.$c])) continue;
+				$letter = PHPExcel_Cell::stringFromColumnIndex($c);
+				$cell = $letter.($ri + 2);
+				$sheet->getStyle($cell)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('F8D7DA');
+				$sheet->getStyle($cell)->getFont()->getColor()->setRGB('C0392B');
+			}
+		}
 	}
 
 	for($c = 0; $c < $colCount; $c++)
@@ -127,10 +143,14 @@ function dt_xe_where()
 	if(dt_req('hang') !== '') { $where .= " and hang_xe = ?"; $params[] = dt_norm_hang(dt_req('hang')); }
 	if(dt_req('loai_xe') !== '') { $where .= " and loai_xe like ?"; $params[] = '%'.dt_req('loai_xe').'%'; }
 	if(dt_req('nhan_hieu') !== '') { $where .= " and nhan_hieu like ?"; $params[] = '%'.dt_req('nhan_hieu').'%'; }
-	// Mặc định ẩn xe đã thanh lý; show_thanh_ly=1 để xem, =chi để chỉ xem đã thanh lý.
-	$tl = dt_req('show_thanh_ly');
-	if($tl === 'chi') $where .= " and thanh_ly = 1";
-	elseif($tl !== '1') $where .= " and (thanh_ly is null or thanh_ly = 0)";
+	// Mặc định hiển thị tất cả (kể cả đã thanh lý). Lọc theo trạng thái: hoat_dong / da_thanh_ly.
+	$tl = dt_req('tt_tl');
+	if($tl === 'da_thanh_ly') $where .= " and thanh_ly = 1";
+	elseif($tl === 'hoat_dong') $where .= " and (thanh_ly is null or thanh_ly = 0)";
+	$expiry = dt_req('expiry');
+	$dateExpr = "coalesce(str_to_date(nullif(ngay_hethan,''),'%d/%m/%Y'),str_to_date(nullif(ngay_hethan,''),'%Y-%m-%d'))";
+	if($expiry === 'sap_het') $where .= " and $dateExpr >= curdate() and $dateExpr < date_add(curdate(), interval 30 day)";
+	elseif($expiry === 'het_han') $where .= " and $dateExpr < curdate()";
 	return array($where, $params);
 }
 
@@ -148,10 +168,14 @@ function dt_giaovien_where()
 	if(dt_req('gioitinh') !== '') { $where .= " and gioitinh = ?"; $params[] = dt_req('gioitinh'); }
 	if(dt_req('hang_gplx') !== '') { $where .= " and hang_gplx like ?"; $params[] = '%'.dt_req('hang_gplx').'%'; }
 	if(dt_req('hang') !== '') { $where .= " and hang_daotao_phep like ?"; $params[] = '%'.dt_req('hang').'%'; }
-	// Mặc định ẩn giáo viên đã thanh lý (nghỉ việc).
-	$tl = dt_req('show_thanh_ly');
-	if($tl === 'chi') $where .= " and thanh_ly = 1";
-	elseif($tl !== '1') $where .= " and (thanh_ly is null or thanh_ly = 0)";
+	// Mặc định hiển thị tất cả (kể cả đã thanh lý). Lọc theo trạng thái: hoat_dong / da_thanh_ly.
+	$tl = dt_req('tt_tl');
+	if($tl === 'da_thanh_ly') $where .= " and thanh_ly = 1";
+	elseif($tl === 'hoat_dong') $where .= " and (thanh_ly is null or thanh_ly = 0)";
+	$expiry = dt_req('expiry');
+	$dateExpr = "coalesce(str_to_date(nullif(ngay_hh_gplx,''),'%d/%m/%Y'),str_to_date(nullif(ngay_hh_gplx,''),'%Y-%m-%d'))";
+	if($expiry === 'sap_het') $where .= " and $dateExpr >= curdate() and $dateExpr < date_add(curdate(), interval 30 day)";
+	elseif($expiry === 'het_han') $where .= " and $dateExpr < curdate()";
 	return array($where, $params);
 }
 
@@ -205,21 +229,11 @@ function dt_xe_export()
 	global $d;
 	list($where, $params) = dt_xe_where();
 	$rows = $d->rawQuery("select * from #_dt_xe where 1 $where order by bien_so asc", $params);
-	$headers = array('STT','Biển số','Hạng xe','Hạng đào tạo','Số đăng ký','Số khung','Số máy','Loại xe','Nhãn hiệu','Giáo viên','Ngày HH GPLX tập lái','Cam kết GV (năm)','Cam kết còn lại','Trạng thái','Ngày thanh lý');
-	$gvCache = array();
+	$headers = array('STT','Biển số','Hạng xe','Hạng đào tạo','Số đăng ký','Số khung','Số máy','Loại xe','Nhãn hiệu','Giáo viên','Ngày HH GPLX tập lái','Trạng thái','Ngày thanh lý');
 	$out = array(); $stt = 1;
 	foreach($rows as $x)
 	{
-		$key = isset($x['gv_key']) ? $x['gv_key'] : '';
-		$ck = null;
-		if($key !== '')
-		{
-			if(!array_key_exists($key, $gvCache))
-				$gvCache[$key] = $d->rawQueryOne("select cam_ket_nam, cam_ket_tu_ngay from #_dt_giaovien where gv_key = ? order by thanh_ly asc limit 0,1", array($key));
-			$gv = $gvCache[$key];
-			if($gv) $ck = dt_cam_ket_info(isset($gv['cam_ket_nam'])?$gv['cam_ket_nam']:0, isset($gv['cam_ket_tu_ngay'])?$gv['cam_ket_tu_ngay']:'');
-		}
-		$out[] = array($stt++, $x['bien_so'], $x['hang_xe'], $x['hang_dt'], $x['so_dangky'], $x['so_khung'], $x['so_may'], $x['loai_xe'], $x['nhan_hieu'], $x['gv_hoten'], isset($x['ngay_hethan'])?$x['ngay_hethan']:'', $ck?(int)$ck['nam']:'', $ck?($ck['con_hieu_luc']?$ck['con_text']:'Hết cam kết'):'', !empty($x['thanh_ly'])?'Đã thanh lý':'Đang hoạt động', isset($x['ngay_thanh_ly'])?$x['ngay_thanh_ly']:'');
+		$out[] = array($stt++, $x['bien_so'], $x['hang_xe'], $x['hang_dt'], $x['so_dangky'], $x['so_khung'], $x['so_may'], $x['loai_xe'], $x['nhan_hieu'], $x['gv_hoten'], isset($x['ngay_hethan'])?$x['ngay_hethan']:'', !empty($x['thanh_ly'])?'Đã thanh lý':'Đang hoạt động', isset($x['ngay_thanh_ly'])?$x['ngay_thanh_ly']:'');
 	}
 	dt_xlsx_simple('Xe tap lai', 'xe-tap-lai-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 4, 5, 6));
 }
@@ -256,7 +270,8 @@ function dt_lythuyet_export()
 	global $d;
 	$idKhoa = (int)dt_req('id_khoa', 0);
 	if(!$idKhoa) $GLOBALS['func']->transfer('Vui lòng chọn khóa để xuất lý thuyết', 'index.php?com=daotao&act=lythuyet', false);
-	$dsMon = dt_mon_lythuyet();
+	$rk = $d->rawQueryOne("select hang from #_dt_khoa where id = ?", array($idKhoa));
+	$dsMon = dt_mon_lythuyet_for_hang($rk ? $rk['hang'] : '');
 	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by hoten asc", array($idKhoa));
 	$rows = $d->rawQuery("select cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($idKhoa));
 	$byCccd = array();
@@ -270,28 +285,38 @@ function dt_lythuyet_export()
 	foreach($dsMon as $label) $headers = array_merge($headers, array($label.' - Tiến độ', $label.' - Điểm kiểm tra', $label.' - Kết quả'));
 	$headers[] = 'Kết luận LT';
 	$textCols = array(1, 3);
-	$out = array(); $stt = 1;
+	$out = array(); $stt = 1; $redCells = array();
+	$baseCols = 5; // STT, Mã HV, Họ tên, CCCD, Hạng
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
 		$monData = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : array();
 		if($duLieu === 'co' && empty($monData)) continue;
 		if($duLieu === 'chua' && !empty($monData)) continue;
-		$soDat = 0; $cells = array();
+		$soDat = 0; $cells = array(); $redRel = array();
+		$mi = 0;
 		foreach($dsMon as $mk => $lbl)
 		{
 			$m = isset($monData[$mk]) ? $monData[$mk] : null;
-			if($m && (int)$m['dat'] === 1) $soDat++;
+			$datMon = ($m && (int)$m['dat'] === 1);
+			if($datMon) $soDat++;
 			$cells[] = $m ? (float)$m['tien_do'] : '';
 			$cells[] = $m ? (float)$m['diem_kt'] : '';
-			$cells[] = !$m ? 'Chưa có dữ liệu' : ((int)$m['dat'] === 1 ? 'Đạt' : 'Chưa đạt');
+			$cells[] = !$m ? 'Chưa có dữ liệu' : ($datMon ? 'Đạt' : 'Chưa đạt');
+			if(!$datMon) $redRel[] = $baseCols + $mi * 3 + 2; // cột "Kết quả" của môn
+			$mi++;
 		}
-		$ketLuan = ($soDat >= count($dsMon)) ? 'Đạt' : 'Chưa đủ ('.$soDat.'/'.count($dsMon).')';
-		if($tt === 'dat' && $soDat < count($dsMon)) continue;
-		if($tt === 'chua' && $soDat >= count($dsMon)) continue;
+		$tongMon = count($dsMon);
+		$datLT = ($soDat >= $tongMon);
+		$ketLuan = $datLT ? 'Đạt' : 'Chưa đủ ('.$soDat.'/'.$tongMon.')';
+		if($tt === 'dat' && !$datLT) continue;
+		if($tt === 'chua' && $datLT) continue;
 		$out[] = array_merge(array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang']), $cells, array($ketLuan));
+		$ri = count($out) - 1;
+		foreach($redRel as $cidx) $redCells[$ri.','.$cidx] = true;
+		if(!$datLT) $redCells[$ri.','.($baseCols + $tongMon * 3)] = true; // cột Kết luận LT
 	}
-	dt_xlsx_simple('Ly thuyet', 'ly-thuyet-'.date('Ymd_His').'.xlsx', $headers, $out, $textCols);
+	dt_xlsx_simple('Ly thuyet', 'ly-thuyet-'.date('Ymd_His').'.xlsx', $headers, $out, $textCols, $redCells);
 }
 
 function dt_hinh_export()
@@ -332,6 +357,7 @@ function dt_dat_export()
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
 		$agg = dt_dat_aggregate($hv['cccd'], $idKhoa);
 		list($dat, $thieu) = dt_dat_danhgia($hv['hang'], $agg);
+		if(dt_dat_override_get($idKhoa, $hv['cccd']) === 1) { $dat = 1; $thieu = array(); }
 		if($tt === 'dat' && !$dat) continue;
 		if($tt === 'chua' && $dat) continue;
 		$rPhien = $d->rawQueryOne("select count(*) as c from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($idKhoa, $hv['cccd']));

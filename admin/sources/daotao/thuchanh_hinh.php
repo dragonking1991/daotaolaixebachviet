@@ -63,3 +63,27 @@ function dt_hinh_save()
 
 	$func->transfer("Đã lưu thực hành trong hình cho ".$hv['hoten'], $back);
 }
+
+/* Đánh dấu Đạt (override) toàn bộ học viên trong khóa. */
+function dt_hinh_dat_all()
+{
+	global $d, $func;
+
+	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$back = "index.php?com=daotao&act=hinh&id_khoa=".$idKhoa;
+	if(!$idKhoa) $func->transfer("Thiếu khóa học", $back, false);
+
+	$hvs = $d->rawQuery("select cccd from #_dt_hocvien where id_khoa = ?", array($idKhoa));
+	dt_backup_tables(array('dt_thuchanh_hinh'), 'hinh_datall');
+	$d->startTransaction();
+	foreach($hvs as $hv)
+	{
+		$data = array('dat_override' => 1, 'nguoi_nhap' => dt_username());
+		$exist = $d->rawQueryOne("select id from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $hv['cccd']));
+		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_thuchanh_hinh', $data); }
+		else { $ins = array('id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'gio' => 0, 'km' => 0, 'dat_override' => 1, 'nguoi_nhap' => dt_username(), 'ngaytao' => time()); $d->insert('dt_thuchanh_hinh', $ins); }
+	}
+	$d->commit();
+	dt_audit('update', 'hinh_dat_all', count($hvs), 'id_khoa='.$idKhoa);
+	$func->transfer("Đã đánh dấu Đạt thực hành hình cho ".count($hvs)." học viên", $back);
+}

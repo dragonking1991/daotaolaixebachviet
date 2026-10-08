@@ -9,7 +9,7 @@ function dt_gv_hash($plain)
 
 function dt_giaovien_list()
 {
-	global $d, $func, $curPage, $items, $paging, $total_items;
+	global $d, $func, $curPage, $items, $paging, $total_items, $gv_expiry_stats;
 
 	list($where, $params) = dt_giaovien_where();
 
@@ -19,25 +19,33 @@ function dt_giaovien_list()
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_giaovien where 1 $where", $params);
 	$total_items = (int)$count['num'];
 	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=giaovien");
+	$gv_expiry_stats = dt_giaovien_expiry_stats();
 }
 
-/* Thanh lý / hủy thanh lý giáo viên (nghỉ việc). Mặc định ẩn khỏi danh sách.
- * Ràng buộc: nếu cam kết gắn bó còn hiệu lực thì người phụ trách không được thanh lý; chỉ admin bỏ qua. */
+function dt_giaovien_expiry_stats()
+{
+	global $d;
+	$rows = $d->rawQuery("select ngay_hh_gplx from #_dt_giaovien where (thanh_ly is null or thanh_ly = 0)");
+	$stats = array('tong' => count($rows), 'sap_het' => 0, 'het_han' => 0, 'chua_ngay' => 0);
+	foreach($rows as $row)
+	{
+		$info = dt_expiry_info(isset($row['ngay_hh_gplx']) ? $row['ngay_hh_gplx'] : '', 30);
+		if($info === null) $stats['chua_ngay']++;
+		elseif($info['status'] === 'sap_het') $stats['sap_het']++;
+		elseif($info['status'] === 'het_han') $stats['het_han']++;
+	}
+	return $stats;
+}
+
+/* Thanh lý / hủy thanh lý giáo viên (nghỉ việc). Vẫn hiển thị trong danh sách, không tính vào lưu lượng. */
 function dt_giaovien_thanh_ly()
 {
 	global $d, $func;
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 	$huy = isset($_GET['huy']) && $_GET['huy'] == '1';
 	if(!$id) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=giaovien", false);
-	$gv = $d->rawQueryOne("select id, hoten, cam_ket_nam, cam_ket_tu_ngay from #_dt_giaovien where id = ? limit 0,1", array($id));
+	$gv = $d->rawQueryOne("select id, hoten from #_dt_giaovien where id = ? limit 0,1", array($id));
 	if(!$gv) $func->transfer("Giáo viên không tồn tại", "index.php?com=daotao&act=giaovien", false);
-
-	if(!$huy)
-	{
-		$ck = dt_cam_ket_info(isset($gv['cam_ket_nam'])?$gv['cam_ket_nam']:0, isset($gv['cam_ket_tu_ngay'])?$gv['cam_ket_tu_ngay']:'');
-		if($ck && $ck['con_hieu_luc'] && !dt_is_admin())
-			$func->transfer("Giáo viên còn cam kết gắn bó (còn ".$ck['con_text'].", đến ".$ck['den_ngay']."). Không thể thanh lý. Chỉ admin mới được bỏ qua.", "index.php?com=daotao&act=giaovien", false);
-	}
 
 	$d->where('id', $id);
 	$d->update('dt_giaovien', array('thanh_ly' => $huy ? 0 : 1, 'ngay_thanh_ly' => $huy ? '' : date('d/m/Y')));

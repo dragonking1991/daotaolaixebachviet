@@ -6,6 +6,7 @@
 		'phan_2' => array('phan2', 'phapluat2'),
 		'phan_3' => array('phan3', 'phapluat3'),
 		'dao_duc' => array('daoduc'),
+		'mophong' => array('mophong'),
 	);
 	$monMeta = array();
 	foreach($ds_mon as $mk => $lbl) $monMeta[] = array('v' => $mk, 'l' => $lbl, 'kw' => isset($monKw[$mk]) ? $monKw[$mk] : array());
@@ -25,7 +26,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import kết quả lý thuyết (tự nhận môn theo tên file)</strong></h3></div>
 			<div class="card-body">
-				<div class="alert alert-warning">Đọc theo tên cột: <strong>Mã đăng nhập (CCCD), Tiến độ hoàn thành, Điểm kiểm tra</strong>. Đạt khi tiến độ &gt; 70 và điểm kiểm tra &gt; 5.<br>Môn học được <strong>tự nhận theo tên file</strong> (ví dụ "Cấu tạo", "Kỹ thuật lái", "Phần 1 - Pháp luật", "Đạo đức"…) — có thể chọn lại tay cho từng file.</div>
+				<div class="alert alert-warning">Sáu môn lý thuyết đọc cột <strong>Mã đăng nhập (CCCD), Tiến độ hoàn thành, Điểm kiểm tra</strong>; đạt khi tiến độ &gt; 70 và điểm kiểm tra &gt; 5. File <strong>Mô phỏng</strong> được chọn ở cùng danh sách nhưng lưu kết quả riêng, đạt khi tiến độ &gt; 70. Môn được tự nhận theo tên file hoặc chọn lại cho từng file.</div>
 				<div class="row">
 					<div class="col-md-6 form-group">
 						<label>Khóa <span class="text-muted">(tùy chọn)</span></label>

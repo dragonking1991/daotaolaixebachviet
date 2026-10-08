@@ -70,7 +70,7 @@
 					<td style="padding:8px;border:1px solid #e0e0e0;"><?=htmlspecialchars($hv['hoten'])?><br><span style="color:#888;font-size:12px;">CCCD: <?=htmlspecialchars($hv['cccd'])?> • Hạng <?=htmlspecialchars($hv['hang'])?></span></td>
 					<td style="padding:8px;border:1px solid #e0e0e0;text-align:center;"><?=htmlspecialchars($hv['ma_khoa'])?></td>
 					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['ly_thuyet']['dat'])?></td>
-					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['cabin']['dat'])?></td>
+					<td class="dt-gv-status-cell"><?php if(empty($s['cabin']['yeu_cau']) && empty($s['cabin']['dat'])): ?><span class="dt-gv-badge is-pass" style="opacity:.7;">Không YC</span><?php else: ?><?=dt_gv_badge($s['cabin']['dat'])?><?php endif; ?></td>
 					<td class="dt-gv-hinh-cell">
 						<div class="dt-gv-measures"><span>Giờ <strong><?=htmlspecialchars((string)$s['hinh']['gio'])?></strong></span><span>Km <strong><?=htmlspecialchars((string)$s['hinh']['km'])?></strong></span></div>
 						<?=dt_gv_badge($s['hinh']['dat'])?>

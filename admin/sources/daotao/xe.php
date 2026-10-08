@@ -10,19 +10,6 @@ function dt_xe_list()
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$items = $d->rawQuery("select * from #_dt_xe where 1 $where order by bien_so asc limit $startpoint,$per_page", $params);
-	// Gắn cam kết còn lại của giáo viên đang đứng xe (theo gv_key).
-	$gvCache = array();
-	foreach($items as &$__it)
-	{
-		$__it['gv_cam_ket'] = null;
-		$key = isset($__it['gv_key']) ? $__it['gv_key'] : '';
-		if($key === '') continue;
-		if(!array_key_exists($key, $gvCache))
-			$gvCache[$key] = $d->rawQueryOne("select cam_ket_nam, cam_ket_tu_ngay, thanh_ly from #_dt_giaovien where gv_key = ? order by thanh_ly asc limit 0,1", array($key));
-		$gv = $gvCache[$key];
-		if($gv) $__it['gv_cam_ket'] = dt_cam_ket_info(isset($gv['cam_ket_nam'])?$gv['cam_ket_nam']:0, isset($gv['cam_ket_tu_ngay'])?$gv['cam_ket_tu_ngay']:'');
-	}
-	unset($__it);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_xe where 1 $where", $params);
 	$total_items = (int)$count['num'];
 	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=xe");
@@ -34,17 +21,26 @@ function dt_xe_expiry_stats()
 {
 	global $d;
 	$rows = $d->rawQuery("select hang_xe, ngay_hethan from #_dt_xe where (thanh_ly is null or thanh_ly = 0)");
-	$stats = array();
+	$stats = array(
+		'tong' => count($rows), 'sap_het' => 0, 'het_han' => 0, 'con_han' => 0, 'chua_ngay' => 0,
+		'hang' => array(),
+	);
 	foreach($rows as $row)
 	{
 		$hang = dt_norm_hang($row['hang_xe']) ?: 'Khác';
-		if(!isset($stats[$hang])) $stats[$hang] = array('het_han' => 0, 'sap_het' => 0, 'con_han' => 0, 'tong' => 0);
-		$stats[$hang]['tong']++;
-		$info = dt_expiry_info($row['ngay_hethan']);
-		if($info === null) { $stats[$hang]['con_han']++; continue; }
-		$stats[$hang][$info['status']]++;
+		if(!isset($stats['hang'][$hang])) $stats['hang'][$hang] = array('het_han' => 0, 'sap_het' => 0, 'con_han' => 0, 'chua_ngay' => 0, 'tong' => 0);
+		$stats['hang'][$hang]['tong']++;
+		$info = dt_expiry_info(isset($row['ngay_hethan']) ? $row['ngay_hethan'] : '', 30);
+		if($info === null)
+		{
+			$stats['chua_ngay']++;
+			$stats['hang'][$hang]['chua_ngay']++;
+			continue;
+		}
+		$stats[$info['status']]++;
+		$stats['hang'][$hang][$info['status']]++;
 	}
-	ksort($stats);
+	ksort($stats['hang']);
 	return $stats;
 }
 

@@ -136,6 +136,8 @@
 						{
 							$quyen_aliases[] = 'daotao_man';
 							$quyen_aliases[] = 'daotao_upload';
+							$quyen_aliases[] = 'daotao_import';
+							$quyen_aliases[] = 'daotao_tracuu';
 							$quyen_aliases[] = 'product_man_cabin';
 						}
 
