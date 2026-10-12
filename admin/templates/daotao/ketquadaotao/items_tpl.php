@@ -31,11 +31,11 @@
 					<tr>
 						<th rowspan="2">Học viên</th><th rowspan="2">Hạng</th><th rowspan="2">Khóa</th><th rowspan="2">Giáo viên</th>
 						<th colspan="2" class="text-center">Thực hành hình</th><th colspan="2" class="text-center">DAT</th>
-						<th colspan="6" class="text-center">Kết quả kiểm tra</th>
+						<th colspan="5" class="text-center">Kết quả kiểm tra</th>
 					</tr>
 					<tr>
 						<th>Giờ</th><th>Km</th><th>Giờ</th><th>Km</th>
-						<th>LT</th><th>MP</th><th>Hình</th><th>Đường</th><th>Chữ chi</th><th>Kết luận</th>
+						<th>LT</th><th>Hình</th><th>Đường</th><th>Chữ chi</th><th>Kết luận</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -50,14 +50,13 @@
 						<td><?=htmlspecialchars($agg['a'])?></td>
 						<td><?=htmlspecialchars($agg['e'])?></td>
 						<td><?=$ex?htmlspecialchars($ex['diem_lt'].' / '.$ex['lt']):'—'?></td>
-						<td><?=$ex?htmlspecialchars($ex['diem_mp'].' / '.$ex['mp']):'—'?></td>
 						<td><?=$ex?htmlspecialchars($ex['diem_hinh'].' / '.$ex['hinh']):'—'?></td>
 						<td><?=$ex?htmlspecialchars($ex['diem_duong'].' / '.$ex['duong']):'—'?></td>
 						<td><?=$ex?htmlspecialchars($ex['chu_chi']):'—'?></td>
 						<td><?php if($ex && $ex['ket_luan']!==''): ?><span class="badge badge-<?=($ex['ket_luan']==='Đạt')?'success':'danger'?>"><?=htmlspecialchars($ex['ket_luan'])?></span><?php else: ?>—<?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="14" class="text-center text-muted p-3">Chọn khóa hoặc nhập điều kiện để xem kết quả đào tạo kết hợp kết quả kiểm tra.</td></tr>
+					<tr><td colspan="13" class="text-center text-muted p-3">Chọn khóa hoặc nhập điều kiện để xem kết quả đào tạo kết hợp kết quả kiểm tra.</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

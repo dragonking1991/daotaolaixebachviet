@@ -13,7 +13,15 @@
 		<div class="card-header">
 			<h3 class="card-title"><strong><?=htmlspecialchars($ky['ten'] ?: '(Không tên)')?></strong> — <?=htmlspecialchars($ky['ngay_kt'] ?: '—')?> <span class="dt-count"><?=number_format((int)$total_items)?> HV</span></h3>
 			<div class="card-tools">
-				<a href="index.php?com=daotao&act=exportKythi&id=<?=$ky['id']?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-file-excel mr-1"></i>Xuất mẫu TTSH</a>
+				<div class="btn-group">
+					<button type="button" class="btn btn-sm bg-gradient-success dropdown-toggle" data-toggle="dropdown"><i class="fas fa-file-excel mr-1"></i>Xuất Excel TTSH</button>
+					<div class="dropdown-menu dropdown-menu-right">
+						<a class="dropdown-item" href="index.php?com=daotao&act=exportKythi&id=<?=$ky['id']?>&dk=all">Tất cả học viên</a>
+						<a class="dropdown-item" href="index.php?com=daotao&act=exportKythi&id=<?=$ky['id']?>&dk=du">Chỉ đủ điều kiện</a>
+						<a class="dropdown-item" href="index.php?com=daotao&act=exportKythi&id=<?=$ky['id']?>&dk=chua">Chỉ chưa đủ điều kiện</a>
+					</div>
+				</div>
+				<a href="index.php?com=daotao&act=kythiRoster&id=<?=$ky['id']?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-import mr-1"></i>Import danh sách</a>
 				<a href="index.php?com=daotao&act=kythiUpload&id=<?=$ky['id']?>" class="btn btn-sm bg-gradient-warning"><i class="fas fa-upload mr-1"></i>Import kết quả</a>
 			</div>
 		</div>
@@ -28,7 +36,8 @@
 							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=(isset($_REQUEST['id_khoa'])&&$_REQUEST['id_khoa']==$k['id'])?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
 						</select>
 						<button class="btn btn-sm bg-gradient-secondary">Lọc</button>
-						<?php if(!empty($_REQUEST['id_khoa'])): ?><a href="index.php?com=daotao&act=kythiAddEligible&id=<?=$ky['id']?>&id_khoa=<?=(int)$_REQUEST['id_khoa']?>" onclick="return confirm('Thêm TẤT CẢ học viên đủ điều kiện của khóa này vào kỳ?')" class="btn btn-sm bg-gradient-primary ml-2"><i class="fas fa-user-plus mr-1"></i>Thêm toàn bộ đủ ĐK</a><?php endif; ?>
+						<?php if(!empty($_REQUEST['id_khoa'])): ?><a href="index.php?com=daotao&act=kythiAddEligible&id=<?=$ky['id']?>&id_khoa=<?=(int)$_REQUEST['id_khoa']?>" onclick="return confirm('Thêm TẤT CẢ học viên đủ điều kiện của khóa này vào kỳ?')" class="btn btn-sm bg-gradient-primary ml-2"><i class="fas fa-user-plus mr-1"></i>Thêm đủ ĐK</a>
+						<a href="index.php?com=daotao&act=kythiAddEligible&id=<?=$ky['id']?>&id_khoa=<?=(int)$_REQUEST['id_khoa']?>&all=1" onclick="return confirm('Thêm TẤT CẢ học viên của khóa này (gồm cả chưa đủ điều kiện) vào kỳ?')" class="btn btn-sm bg-gradient-secondary ml-1" title="Gồm cả học viên chưa đủ điều kiện"><i class="fas fa-users mr-1"></i>Thêm cả khóa</a><?php endif; ?>
 					</form>
 				</div>
 				<div class="col-md-6">
@@ -57,6 +66,22 @@
 					<?php endif; ?>
 				</div>
 			</div>
+			<form method="post" action="index.php?com=daotao&act=kythiAddManual&id=<?=$ky['id']?>" class="p-2 mb-0" style="background:#fff8e1;border:1px solid #ffe08a;border-radius:4px;">
+				<strong class="mr-2"><i class="fas fa-keyboard mr-1"></i>Nhập thủ công (khóa cũ chưa có dữ liệu):</strong>
+				<div class="form-row mt-2">
+					<div class="col-md-3 mb-1"><input type="text" name="hoten" class="form-control form-control-sm" placeholder="Họ và tên *" required></div>
+					<div class="col-md-2 mb-1"><input type="text" name="cccd" class="form-control form-control-sm" placeholder="CCCD *" required></div>
+					<div class="col-md-2 mb-1"><input type="text" name="nam_sinh" class="form-control form-control-sm" placeholder="Năm sinh"></div>
+					<div class="col-md-1 mb-1"><input type="text" name="hang" class="form-control form-control-sm" placeholder="Hạng"></div>
+					<div class="col-md-2 mb-1"><input type="text" name="ma_hv" class="form-control form-control-sm" placeholder="Mã HV"></div>
+					<div class="col-md-2 mb-1"><input type="text" name="ma_khoa" class="form-control form-control-sm" placeholder="Mã khóa"></div>
+				</div>
+				<div class="form-row">
+					<div class="col-md-5 mb-1"><input type="text" name="ten_khoa" class="form-control form-control-sm" placeholder="Tên khóa"></div>
+					<div class="col-md-5 mb-1"><input type="text" name="giaovien" class="form-control form-control-sm" placeholder="Giáo viên"></div>
+					<div class="col-md-2 mb-1"><button class="btn btn-sm bg-gradient-primary btn-block"><i class="fas fa-plus mr-1"></i>Thêm vào kỳ</button></div>
+				</div>
+			</form>
 			<hr>
 			<div class="table-responsive">
 			<table class="table dt-list table-hover mb-0">

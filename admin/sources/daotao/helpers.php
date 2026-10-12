@@ -274,6 +274,56 @@ function dt_cabin_pass($cabin)
 }
 
 /**
+ * Trạng thái từng môn lý thuyết của học viên (mô phỏng gộp chung trong nội dung lý thuyết).
+ * @return array mon => ['label','trang_thai'] với trang_thai ∈ dat|chua_dat|chua_kiem_tra|chua_du_lieu
+ */
+function dt_lythuyet_mon_status($hv)
+{
+	global $d;
+	$idKhoa = (int)$hv['id_khoa'];
+	$cccd = $hv['cccd'];
+	$monSet = dt_mon_lythuyet_for_hang($hv['hang']);
+	$rows = $d->rawQuery("select mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+	$by = array();
+	foreach($rows as $rw) $by[$rw['mon']] = $rw;
+	$out = array();
+	foreach($monSet as $mk => $lbl)
+	{
+		if(!isset($by[$mk])) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_du_lieu'); continue; }
+		$rw = $by[$mk];
+		if((int)$rw['dat'] === 1) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'dat'); continue; }
+		// Chưa đạt: điểm kiểm tra = 0 (và không phải mô phỏng) => chưa kiểm tra; còn lại => chưa đạt.
+		if($mk !== 'mophong' && (float)$rw['diem_kt'] <= 0) $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_kiem_tra');
+		else $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_dat');
+	}
+	return $out;
+}
+
+/* Nội dung ô "Lý thuyết" cho mô đun tổng hợp: "Đạt" hoặc liệt kê môn chưa kiểm tra / chưa đạt. */
+function dt_lythuyet_cell_text($hv, $lyThuyetDat)
+{
+	if($lyThuyetDat) return 'Đạt';
+	$parts = array();
+	foreach(dt_lythuyet_mon_status($hv) as $m)
+	{
+		if($m['trang_thai'] === 'dat') continue;
+		if($m['trang_thai'] === 'chua_kiem_tra') $tag = 'chưa kiểm tra';
+		elseif($m['trang_thai'] === 'chua_du_lieu') $tag = 'chưa có dữ liệu';
+		else $tag = 'chưa đạt';
+		$parts[] = $m['label'].': '.$tag;
+	}
+	return $parts ? implode("\n", $parts) : 'Chưa đạt';
+}
+
+/* Nội dung ô "DAT" cho mô đun tổng hợp: "Đạt" hoặc liệt kê nội dung chưa đủ. */
+function dt_dat_cell_text($sum)
+{
+	if(!empty($sum['dat']['dat'])) return 'Đạt';
+	$thieu = isset($sum['dat']['thieu']) ? $sum['dat']['thieu'] : array();
+	return $thieu ? implode("\n", $thieu) : 'Chưa đủ';
+}
+
+/**
  * Tổng hợp trạng thái 4 module của một học viên.
  * Yêu cầu dat.php đã được nạp (dùng dt_dat_aggregate).
  * @return array trạng thái từng module + kết luận đủ/chưa đủ điều kiện.

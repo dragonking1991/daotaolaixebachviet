@@ -257,11 +257,11 @@ function dt_cabin_export()
 {
 	global $d;
 	list($where, $params) = dt_cabin_where();
-	$rows = $d->rawQuery("select c.*, h.hoten, h.cccd as hv_cccd, h.ma_hv as roster_ma_hv from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $where order by h.hoten asc", $params);
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Tổng thời gian','Số nội dung','Kết quả','Ghi chú');
+	$rows = $d->rawQuery("select c.*, h.hoten, h.cccd as hv_cccd, h.ma_hv as roster_ma_hv, h.gv_hoten from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $where order by h.hoten asc", $params);
+	$headers = array('STT','Mã HV','Họ và tên','CCCD','Giáo viên','Tổng thời gian','Số nội dung','Kết quả','Ghi chú');
 	$out = array(); $stt = 1;
 	foreach($rows as $c)
-		$out[] = array($stt++, $c['roster_ma_hv'], $c['hoten'], $c['hv_cccd'], $c['tong_thoigian'], (int)$c['so_noidung'], empty($c['id']) ? 'Chưa nhập' : ((int)$c['dat'] === 1 ? 'Đạt' : 'Chưa đạt'), $c['ghi_chu']);
+		$out[] = array($stt++, $c['roster_ma_hv'], $c['hoten'], $c['hv_cccd'], $c['gv_hoten'], $c['tong_thoigian'], (int)$c['so_noidung'], empty($c['id']) ? 'Chưa nhập' : ((int)$c['dat'] === 1 ? 'Đạt' : 'Chưa đạt'), $c['ghi_chu']);
 	dt_xlsx_simple('Cabin', 'cabin-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 3));
 }
 
@@ -281,12 +281,12 @@ function dt_lythuyet_export()
 	$tt = dt_req('trang_thai');
 	$duLieu = dt_req('du_lieu', 'co');
 	if(!in_array($duLieu, array('co', 'tat_ca', 'chua'), true)) $duLieu = 'co';
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng');
+	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên');
 	foreach($dsMon as $label) $headers = array_merge($headers, array($label.' - Tiến độ', $label.' - Điểm kiểm tra', $label.' - Kết quả'));
 	$headers[] = 'Kết luận LT';
 	$textCols = array(1, 3);
 	$out = array(); $stt = 1; $redCells = array();
-	$baseCols = 5; // STT, Mã HV, Họ tên, CCCD, Hạng
+	$baseCols = 6; // STT, Mã HV, Họ tên, CCCD, Hạng, Giáo viên
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
@@ -311,7 +311,7 @@ function dt_lythuyet_export()
 		$ketLuan = $datLT ? 'Đạt' : 'Chưa đủ ('.$soDat.'/'.$tongMon.')';
 		if($tt === 'dat' && !$datLT) continue;
 		if($tt === 'chua' && $datLT) continue;
-		$out[] = array_merge(array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang']), $cells, array($ketLuan));
+		$out[] = array_merge(array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang'], $hv['gv_hoten']), $cells, array($ketLuan));
 		$ri = count($out) - 1;
 		foreach($redRel as $cidx) $redCells[$ri.','.$cidx] = true;
 		if(!$datLT) $redCells[$ri.','.($baseCols + $tongMon * 3)] = true; // cột Kết luận LT
@@ -324,12 +324,12 @@ function dt_hinh_export()
 	global $d;
 	$idKhoa = (int)dt_req('id_khoa', 0);
 	if(!$idKhoa) $GLOBALS['func']->transfer('Vui lòng chọn khóa để xuất', 'index.php?com=daotao&act=hinh', false);
-	$sql = "select h.cccd, h.hoten, h.hang, h.ma_hv, th.gio, th.km, th.dat_override from #_dt_hocvien h "
+	$sql = "select h.cccd, h.hoten, h.hang, h.ma_hv, h.gv_hoten, th.gio, th.km, th.dat_override from #_dt_hocvien h "
 		. "left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) where h.id_khoa = ? order by h.hoten asc";
 	$rows = $d->rawQuery($sql, array($idKhoa));
 	$kw = dt_mb_lower(dt_req('keyword'));
 	$tt = dt_req('trang_thai');
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giờ','Km','Kết quả');
+	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên','Giờ','Km','Kết quả');
 	$out = array(); $stt = 1;
 	foreach($rows as $rw)
 	{
@@ -337,7 +337,7 @@ function dt_hinh_export()
 		$dat = dt_hinh_dat($rw['hang'], $rw['gio'], $rw['km'], $rw['dat_override']);
 		if($tt === 'dat' && !$dat) continue;
 		if($tt === 'chua' && $dat) continue;
-		$out[] = array($stt++, $rw['ma_hv'], $rw['hoten'], $rw['cccd'], $rw['hang'], (float)$rw['gio'], (float)$rw['km'], $dat ? 'Đạt' : 'Chưa đạt');
+		$out[] = array($stt++, $rw['ma_hv'], $rw['hoten'], $rw['cccd'], $rw['hang'], $rw['gv_hoten'], (float)$rw['gio'], (float)$rw['km'], $dat ? 'Đạt' : 'Chưa đạt');
 	}
 	dt_xlsx_simple('Thuc hanh hinh', 'thuc-hanh-hinh-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 3));
 }
@@ -347,10 +347,10 @@ function dt_dat_export()
 	global $d;
 	$idKhoa = (int)dt_req('id_khoa', 0);
 	if(!$idKhoa) $GLOBALS['func']->transfer('Vui lòng chọn khóa để xuất', 'index.php?com=daotao&act=dat', false);
-	$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang from #_dt_hocvien where id_khoa = ? order by hoten asc", array($idKhoa));
+	$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, gv_hoten from #_dt_hocvien where id_khoa = ? order by hoten asc", array($idKhoa));
 	$kw = dt_mb_lower(dt_req('keyword'));
 	$tt = dt_req('trang_thai');
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Số phiên','Tổng giờ (A)','Giờ đêm (B)','Giờ tự động (C)','Giờ số sàn (D)','Km (E)','Kết quả','Nội dung thiếu');
+	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên','Số phiên','Tổng giờ (A)','Giờ đêm (B)','Giờ tự động (C)','Giờ số sàn (D)','Km (E)','Kết quả','Nội dung thiếu');
 	$out = array(); $stt = 1;
 	foreach($hvs as $hv)
 	{
@@ -361,7 +361,7 @@ function dt_dat_export()
 		if($tt === 'dat' && !$dat) continue;
 		if($tt === 'chua' && $dat) continue;
 		$rPhien = $d->rawQueryOne("select count(*) as c from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($idKhoa, $hv['cccd']));
-		$out[] = array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang'], (int)($rPhien ? $rPhien['c'] : 0),
+		$out[] = array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang'], $hv['gv_hoten'], (int)($rPhien ? $rPhien['c'] : 0),
 			$agg['a'], $agg['b'], $agg['c'], $agg['d'], $agg['e'], $dat ? 'Đủ điều kiện' : 'Chưa đủ', implode('; ', $thieu));
 	}
 	dt_xlsx_simple('DAT', 'dat-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 3));

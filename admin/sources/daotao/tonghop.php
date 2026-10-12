@@ -68,7 +68,7 @@ function dt_tonghop_export()
 	$sheet = $objPHPExcel->getActiveSheet();
 	$sheet->setTitle('Tong hop dao tao');
 
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên','Lý thuyết','Cabin','Th.hành hình','DAT',
+	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên','Lý thuyết','Cabin','Th.hành hình','DAT',
 		'Tổng giờ H','Tổng km H','Tổng giờ Đ','Tổng km Đ','A','B','C','D','Kết luận');
 	$col = 'A';
 	foreach($headers as $h)
@@ -85,26 +85,29 @@ function dt_tonghop_export()
 		$sheet->setCellValueExplicit('A'.$r, $stt, PHPExcel_Cell_DataType::TYPE_NUMERIC);
 		$sheet->setCellValueExplicit('B'.$r, $hv['ma_hv'], PHPExcel_Cell_DataType::TYPE_STRING);
 		$sheet->setCellValue('C'.$r, $hv['hoten']);
-		$sheet->setCellValueExplicit('D'.$r, $hv['cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
-		$sheet->setCellValue('E'.$r, $hv['hang']);
-		$sheet->setCellValue('F'.$r, isset($hv['ma_khoa']) ? $hv['ma_khoa'] : '');
-		$sheet->setCellValue('G'.$r, isset($hv['ten_khoa']) ? $hv['ten_khoa'] : '');
-		$sheet->setCellValue('H'.$r, isset($hv['gv_hoten']) ? $hv['gv_hoten'] : '');
-		$sheet->setCellValue('I'.$r, $s['ly_thuyet']['dat'] ? 'Đạt' : 'Chưa đạt');
-		$sheet->setCellValue('J'.$r, $s['cabin']['dat'] ? 'Đạt' : (empty($s['cabin']['yeu_cau']) ? 'Không yêu cầu' : 'Chưa đạt'));
-		$sheet->setCellValue('K'.$r, $s['hinh']['dat'] ? 'Đạt' : 'Chưa đạt');
-		$sheet->setCellValue('L'.$r, $s['dat']['dat'] ? 'Đạt' : 'Chưa đạt');
-		$sheet->setCellValue('M'.$r, $s['hinh']['gio']);
-		$sheet->setCellValue('N'.$r, $s['hinh']['km']);
-		$sheet->setCellValue('O'.$r, $agg['a']);
-		$sheet->setCellValue('P'.$r, $agg['e']);
-		$sheet->setCellValue('Q'.$r, $agg['a']);
-		$sheet->setCellValue('R'.$r, $agg['b']);
-		$sheet->setCellValue('S'.$r, $agg['c']);
-		$sheet->setCellValue('T'.$r, $agg['d']);
-		$sheet->setCellValue('U'.$r, $s['du_dieu_kien'] ? 'Đủ điều kiện' : 'Chưa đủ');
+		$sheet->setCellValueExplicit('D'.$r, isset($hv['ngaysinh']) ? $hv['ngaysinh'] : '', PHPExcel_Cell_DataType::TYPE_STRING);
+		$sheet->setCellValueExplicit('E'.$r, $hv['cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
+		$sheet->setCellValue('F'.$r, $hv['hang']);
+		$sheet->setCellValue('G'.$r, isset($hv['ma_khoa']) ? $hv['ma_khoa'] : '');
+		$sheet->setCellValue('H'.$r, isset($hv['ten_khoa']) ? $hv['ten_khoa'] : '');
+		$sheet->setCellValue('I'.$r, isset($hv['gv_hoten']) ? $hv['gv_hoten'] : '');
+		$sheet->setCellValue('J'.$r, dt_lythuyet_cell_text($hv, $s['ly_thuyet']['dat']));
+		$sheet->setCellValue('K'.$r, $s['cabin']['dat'] ? 'Đạt' : (empty($s['cabin']['yeu_cau']) ? 'Không yêu cầu' : 'Chưa đạt'));
+		$sheet->setCellValue('L'.$r, $s['hinh']['dat'] ? 'Đạt' : 'Chưa đạt');
+		$sheet->setCellValue('M'.$r, dt_dat_cell_text($s));
+		$sheet->setCellValue('N'.$r, $s['hinh']['gio']);
+		$sheet->setCellValue('O'.$r, $s['hinh']['km']);
+		$sheet->setCellValue('P'.$r, $agg['a']);
+		$sheet->setCellValue('Q'.$r, $agg['e']);
+		$sheet->setCellValue('R'.$r, $agg['a']);
+		$sheet->setCellValue('S'.$r, $agg['b']);
+		$sheet->setCellValue('T'.$r, $agg['c']);
+		$sheet->setCellValue('U'.$r, $agg['d']);
+		$sheet->setCellValue('V'.$r, $s['du_dieu_kien'] ? 'Đủ điều kiện' : 'Chưa đủ');
+		$sheet->getStyle('J'.$r)->getAlignment()->setWrapText(true);
+		$sheet->getStyle('M'.$r)->getAlignment()->setWrapText(true);
 		// Tô đỏ các ô "Chưa đạt" và cột Kết luận khi chưa đủ điều kiện.
-		$redMap = array('I' => $s['ly_thuyet']['dat'], 'J' => dt_cabin_pass($s['cabin']), 'K' => $s['hinh']['dat'], 'L' => $s['dat']['dat'], 'U' => $s['du_dieu_kien']);
+		$redMap = array('J' => $s['ly_thuyet']['dat'], 'K' => dt_cabin_pass($s['cabin']), 'L' => $s['hinh']['dat'], 'M' => $s['dat']['dat'], 'V' => $s['du_dieu_kien']);
 		foreach($redMap as $cc => $ok)
 		{
 			if($ok) continue;
@@ -114,7 +117,7 @@ function dt_tonghop_export()
 		$r++; $stt++;
 	}
 
-	foreach(range('A','U') as $c) $sheet->getColumnDimension($c)->setAutoSize(true);
+	foreach(range('A','V') as $c) $sheet->getColumnDimension($c)->setAutoSize(true);
 
 	$filename = 'tonghop-daotao-'.date('Ymd_His').'.xlsx';
 	if(ob_get_length()) ob_end_clean();

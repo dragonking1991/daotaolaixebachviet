@@ -62,18 +62,18 @@ function dt_ketqua_export()
 	$f = dt_ketqua_filters();
 	$rows = dt_ketqua_rows($f);
 
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',
+	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',
 		'Hình (giờ)','Hình (km)','DAT (giờ)','DAT (km)',
-		'Ngày KT','Điểm LT','LT','Điểm MP','MP','Điểm Hình','Hình','Điểm Đường','Đường','Chữ chi','Điểm Chữ chi','Kết luận');
+		'Ngày KT','Điểm LT','LT','Điểm Hình','Hình','Điểm Đường','Đường','Chữ chi','Điểm Chữ chi','Kết luận');
 	$out = array(); $stt = 1;
 	foreach($rows as $it)
 	{
 		$hv = $it['hv']; $s = $it['sum']; $ex = $it['exam']; $agg = $s['dat']['agg'];
-		$out[] = array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang'],
+		$out[] = array($stt++, $hv['ma_hv'], $hv['hoten'], isset($hv['ngaysinh']) ? $hv['ngaysinh'] : '', $hv['cccd'], $hv['hang'],
 			isset($hv['ma_khoa']) ? $hv['ma_khoa'] : '', isset($hv['ten_khoa']) ? $hv['ten_khoa'] : '', isset($hv['gv_hoten']) ? $hv['gv_hoten'] : '',
 			$s['hinh']['gio'], $s['hinh']['km'], $agg['a'], $agg['e'],
-			$ex ? $ex['ngay_kt'] : '', $ex ? $ex['diem_lt'] : '', $ex ? $ex['lt'] : '', $ex ? $ex['diem_mp'] : '', $ex ? $ex['mp'] : '',
+			$ex ? $ex['ngay_kt'] : '', $ex ? $ex['diem_lt'] : '', $ex ? $ex['lt'] : '',
 			$ex ? $ex['diem_hinh'] : '', $ex ? $ex['hinh'] : '', $ex ? $ex['diem_duong'] : '', $ex ? $ex['duong'] : '', $ex ? $ex['chu_chi'] : '', $ex ? $ex['diem_chu_chi'] : '', $ex ? $ex['ket_luan'] : '');
 	}
-	dt_xlsx_simple('Ket qua dao tao', 'ket-qua-dao-tao-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 3));
+	dt_xlsx_simple('Ket qua dao tao', 'ket-qua-dao-tao-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 4));
 }

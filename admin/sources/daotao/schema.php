@@ -282,8 +282,17 @@ function dt_ensure_tables()
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('hinh_override_v1')) { dt_ensure_hinh_override(); dt_migration_mark('hinh_override_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_gv_lifecycle_v1')) { dt_ensure_lifecycle_cols(); dt_migration_mark('xe_gv_lifecycle_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('gv_commitment_v1')) { dt_ensure_gv_commitment_cols(); dt_migration_mark('gv_commitment_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_ghichu_v1')) { dt_ensure_xe_ghichu(); dt_migration_mark('xe_ghichu_v1'); }
 
 	$done = true;
+}
+
+/* Cột ghi chú cho xe tập lái (nhập tay trong mục chỉnh sửa). */
+function dt_ensure_xe_ghichu()
+{
+	global $d;
+	$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_xe' and column_name = 'ghi_chu' limit 0,1");
+	if(!$exist) $d->rawQuery("ALTER TABLE table_dt_xe ADD COLUMN ghi_chu VARCHAR(500) DEFAULT ''");
 }
 
 /* Cam kết gắn bó của giáo viên: số năm + ngày bắt đầu (để tính thời hạn còn lại). */

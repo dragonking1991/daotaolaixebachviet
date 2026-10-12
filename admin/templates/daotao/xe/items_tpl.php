@@ -75,7 +75,8 @@
 							<?php else: ?><span class="text-muted">—</span><?php endif; ?>
 						</td>
 						<td class="dt-sub">
-							<?php if($is_tl): ?><span class="badge badge-secondary">Đã thanh lý<?php if(!empty($it['ngay_thanh_ly'])): ?> (<?=htmlspecialchars($it['ngay_thanh_ly'])?>)<?php endif; ?></span><?php else: ?><span class="text-muted">—</span><?php endif; ?>
+							<?php if($is_tl): ?><span class="badge badge-secondary">Đã thanh lý<?php if(!empty($it['ngay_thanh_ly'])): ?> (<?=htmlspecialchars($it['ngay_thanh_ly'])?>)<?php endif; ?></span><?php endif; ?>
+							<?php if(!empty($it['ghi_chu'])): ?><div class="dt-sub"><?=nl2br(htmlspecialchars($it['ghi_chu']))?></div><?php elseif(!$is_tl): ?><span class="text-muted">—</span><?php endif; ?>
 						</td>
 						<td class="dt-actions">
 							<a href="index.php?com=daotao&act=crudEdit&entity=xe&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-info" title="Sửa"><i class="fas fa-edit"></i></a>

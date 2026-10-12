@@ -45,7 +45,7 @@
 			</form>
 			<div class="table-responsive">
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Giáo viên</th><th>GPLX &amp; chuyên môn</th><th>Đào tạo &amp; tuyển dụng</th><th>Liên hệ</th><th class="dt-actions">Hành động</th></tr></thead>
+				<thead><tr><th>Giáo viên</th><th>GPLX &amp; chuyên môn</th><th>Đào tạo &amp; tuyển dụng</th><th>Liên hệ</th><th>Ghi chú</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $exp = function_exists('dt_expiry_info') ? dt_expiry_info(isset($it['ngay_hh_gplx'])?$it['ngay_hh_gplx']:'') : null; $is_tl = !empty($it['thanh_ly']); ?>
 					<tr<?=$is_tl?' class="text-muted"':''?>>
@@ -74,10 +74,11 @@
 							<div class="dt-sub"><i class="fas fa-phone"></i><?=htmlspecialchars($it['sdt'] ?: '—')?></div>
 							<?php if(!empty($it['dia_chi'])): ?><div class="dt-sub"><i class="fas fa-map-marker-alt"></i><?=htmlspecialchars($it['dia_chi'])?></div><?php endif; ?>
 						</td>
+						<td><?php if(!empty($it['ghi_chu'])): ?><div class="dt-sub"><?=nl2br(htmlspecialchars($it['ghi_chu']))?></div><?php else: ?><span class="text-muted">—</span><?php endif; ?></td>
 						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-info" title="Sửa"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=gvResetPass&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Đặt lại mật khẩu cổng giáo viên về mặc định (= CCCD)?')" class="btn btn-xs bg-gradient-warning" title="Đặt lại mật khẩu"><i class="fas fa-key"></i></a> <?php if($is_tl): ?><a href="index.php?com=daotao&act=gvThanhLy&huy=1&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Hủy thanh lý giáo viên này?')" class="btn btn-xs bg-gradient-secondary" title="Hủy thanh lý"><i class="fas fa-undo"></i></a><?php else: ?><a href="index.php?com=daotao&act=gvThanhLy&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Đánh dấu giáo viên này đã thanh lý (nghỉ việc)? Vẫn hiển thị nhưng không tính vào lưu lượng.')" class="btn btn-xs bg-gradient-dark text-white" title="Thanh lý (nghỉ việc)"><i class="fas fa-user-slash"></i></a><?php endif; ?> <a href="index.php?com=daotao&act=crudDelete&entity=giaovien&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Xóa giáo viên này?')" class="btn btn-xs bg-gradient-danger" title="Xóa"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="5" class="text-center text-muted p-3">Chưa có giáo viên</td></tr>
+					<tr><td colspan="6" class="text-center text-muted p-3">Chưa có giáo viên</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

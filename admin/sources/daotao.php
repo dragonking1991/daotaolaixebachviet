@@ -110,10 +110,13 @@ switch($act)
 	case "kythiDelete":      dt_guard($DT_MAN);  dt_kythi_delete(); break;
 	case "kythiAddEligible": dt_guard($DT_MAN);  dt_kythi_add_eligible(); break;
 	case "kythiAddOne":      dt_guard($DT_MAN);  dt_kythi_add_one(); break;
+	case "kythiAddManual":   dt_guard($DT_MAN);  dt_kythi_add_manual(); break;
 	case "kythiRemove":      dt_guard($DT_MAN);  dt_kythi_remove_hv(); break;
 	case "exportKythi":      dt_guard($DT_VIEW); dt_kythi_export(); break;
 	case "kythiUpload":      dt_guard($DT_UP);   dt_kythi_upload_form(); $template = "daotao/kythi/upload"; break;
 	case "kythiImportExcel": dt_guard($DT_UP);   dt_kythi_import_excel(); break;
+	case "kythiRoster":      dt_guard($DT_UP);   dt_kythi_roster_form(); $template = "daotao/kythi/roster"; break;
+	case "kythiImportRoster":dt_guard($DT_UP);   dt_kythi_import_roster(); break;
 	case "kythiTracuu":      dt_guard($DT_VIEW); dt_kythi_tracuu(); $template = "daotao/kythi/tracuu"; break;
 
 	/* ---------- Thông tin kết quả đào tạo ---------- */
