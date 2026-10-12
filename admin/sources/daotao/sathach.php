@@ -53,6 +53,7 @@ function dt_sathach_upload_excel()
 		'hang' => array('hang'),
 		'ma_khoa' => array('makhoa'),
 		'ten_khoa' => array('tenkhoa'),
+		'giaovien' => array('giaovien','gv'),
 		'ngay_sh' => array('ngaysathach','ngaysh','ngaythi','ngaykiemtra'),
 		'so_gplx' => array('sogplx','sogiaypheplaixe','soglpx','sogplxduoccap'),
 		'ket_qua' => array('ketqua','ketluan'),
@@ -88,6 +89,7 @@ function dt_sathach_upload_excel()
 			'hang' => dt_val($row, $map, 'hang') ?: ($hv ? $hv['hang'] : ''),
 			'ma_khoa' => dt_val($row, $map, 'ma_khoa'),
 			'ten_khoa' => dt_val($row, $map, 'ten_khoa'),
+			'giaovien' => dt_val($row, $map, 'giaovien') ?: ($hv ? $hv['gv_hoten'] : ''),
 			'ngay_sh' => dt_val($row, $map, 'ngay_sh'),
 			'so_gplx' => dt_val($row, $map, 'so_gplx'),
 			'ket_qua' => dt_val($row, $map, 'ket_qua'),
@@ -118,10 +120,10 @@ function dt_sathach_export()
 		$like = '%'.$kw.'%';
 		$rows = $d->rawQuery("select * from #_dt_sat_hach where (hoten like ? or cccd like ? or ma_hv like ? or so_gplx like ?) order by hoten asc", array($like, $like, $like, $like));
 	}
-	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Ngày sát hạch','Số GPLX','Kết quả','Ghi chú');
+	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Giáo viên','Ngày sát hạch','Số GPLX','Kết quả','Ghi chú');
 	$out = array(); $stt = 1;
 	foreach($rows as $r)
-		$out[] = array($stt++, $r['ma_hv'], $r['hoten'], $r['nam_sinh'], $r['cccd'], $r['hang'], $r['ma_khoa'], $r['ngay_sh'], $r['so_gplx'], $r['ket_qua'], $r['ghi_chu']);
+		$out[] = array($stt++, $r['ma_hv'], $r['hoten'], $r['nam_sinh'], $r['cccd'], $r['hang'], $r['ma_khoa'], isset($r['giaovien']) ? $r['giaovien'] : '', $r['ngay_sh'], $r['so_gplx'], $r['ket_qua'], $r['ghi_chu']);
 	dt_xlsx_simple('Ket qua sat hach', 'ket-qua-sat-hach-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 4));
 }
 

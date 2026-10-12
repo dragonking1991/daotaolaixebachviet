@@ -51,6 +51,91 @@
 				</div>
             </div>
         </div>
+        <?php
+            $dt_perm_sections = array(
+                'khoa'     => array('Khóa đào tạo', true),
+                'hocvien'  => array('Học viên', true),
+                'xe'       => array('Xe tập lái', true),
+                'giaovien' => array('Giáo viên', true),
+                'lythuyet' => array('Lý thuyết & Mô phỏng', true),
+                'cabinkq'  => array('Cabin (kết quả)', true),
+                'hinh'     => array('Thực hành hình', false),
+                'dat'      => array('DAT (trên đường)', true),
+                'tonghop'  => array('Tổng hợp', false),
+                'kythi'    => array('Ngày kiểm tra', true),
+                'ketqua'   => array('Kết quả đào tạo', false),
+                'htkh'     => array('Số giấy HTKH', true),
+                'sathach'  => array('Kết quả sát hạch', true),
+            );
+        ?>
+        <div class="card card-permission card-primary card-outline text-sm" id="card-daotao-perm">
+            <div class="card-header">
+                <h3 class="card-title">Quản lý Đào Tạo</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center mb-3" style="gap:.5rem;">
+                    <div class="input-group input-group-sm" style="max-width:280px;">
+                        <div class="input-group-prepend"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
+                        <input type="text" class="form-control" id="dt-perm-search" placeholder="Tìm nhanh mục đào tạo...">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="dt-perm-all"><i class="fas fa-check-double mr-1"></i>Chọn tất cả</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="dt-perm-none"><i class="fas fa-eraser mr-1"></i>Bỏ chọn tất cả</button>
+                    <button type="button" class="btn btn-sm btn-outline-info" id="dt-perm-view-all"><i class="far fa-eye mr-1"></i>Cho xem tất cả</button>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="dt-perm-import-all"><i class="fas fa-file-import mr-1"></i>Cho import tất cả</button>
+                </div>
+
+                <div class="form-group row dt-perm-row" data-dt-key="toan quyen nhanh tat ca import tra cuu">
+                    <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3 font-weight-bold">Quyền nhanh (áp cho toàn bộ):</label>
+                    <div class="col-md-9">
+                        <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+                            <input type="checkbox" class="custom-control-input dt-perm-cb" name="dataQuyen[]" id="quyen-daotao-man" value="daotao_man" <?=(isset($ds_quyen) && in_array('daotao_man', $ds_quyen))?'checked':'';?>>
+                            <label for="quyen-daotao-man" class="custom-control-label font-weight-normal">Toàn quyền (xem &amp; quản lý mọi mục)</label>
+                        </div>
+                        <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+                            <input type="checkbox" class="custom-control-input dt-perm-cb" name="dataQuyen[]" id="quyen-daotao-upload" value="daotao_upload" <?=(isset($ds_quyen) && in_array('daotao_upload', $ds_quyen))?'checked':'';?>>
+                            <label for="quyen-daotao-upload" class="custom-control-label font-weight-normal">Import mọi mục</label>
+                        </div>
+                        <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+                            <input type="checkbox" class="custom-control-input dt-perm-cb" name="dataQuyen[]" id="quyen-daotao-tracuu" value="daotao_tracuu" <?=(isset($ds_quyen) && in_array('daotao_tracuu', $ds_quyen))?'checked':'';?>>
+                            <label for="quyen-daotao-tracuu" class="custom-control-label font-weight-normal">Chỉ tra cứu mọi mục</label>
+                        </div>
+                        <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+                            <input type="checkbox" class="custom-control-input dt-perm-cb" name="dataQuyen[]" id="quyen-daotao-import" value="daotao_import" <?=(isset($ds_quyen) && in_array('daotao_import', $ds_quyen))?'checked':'';?>>
+                            <label for="quyen-daotao-import" class="custom-control-label font-weight-normal">Tra cứu &amp; import mọi mục</label>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-2">
+                <p class="text-muted mb-2"><i class="fas fa-info-circle mr-1"></i>Phân quyền chi tiết theo từng mục (gồm cả import). Có thể gõ tên mục vào ô tìm nhanh phía trên.</p>
+
+                <?php foreach($dt_perm_sections as $secKey => $secInfo):
+                    $secLabel = $secInfo[0]; $secHasImport = $secInfo[1];
+                    $secSearch = function_exists('dt_strip_diacritics') ? dt_strip_diacritics($secLabel) : strtolower($secLabel);
+                ?>
+                <div class="form-group row dt-perm-row" data-dt-key="<?=htmlspecialchars($secSearch.' '.$secKey)?>">
+                    <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3"><?=$secLabel?>:</label>
+                    <div class="col-md-9">
+                        <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+                            <input type="checkbox" class="custom-control-input dt-perm-cb dt-perm-view" name="dataQuyen[]" id="quyen-daotao-<?=$secKey?>-view" value="daotao_<?=$secKey?>" <?=(isset($ds_quyen) && in_array('daotao_'.$secKey, $ds_quyen))?'checked':'';?>>
+                            <label for="quyen-daotao-<?=$secKey?>-view" class="custom-control-label font-weight-normal">Xem &amp; quản lý</label>
+                        </div>
+                        <?php if($secHasImport): ?>
+                        <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+                            <input type="checkbox" class="custom-control-input dt-perm-cb dt-perm-import" name="dataQuyen[]" id="quyen-daotao-<?=$secKey?>-import" value="daotao_<?=$secKey?>_import" <?=(isset($ds_quyen) && in_array('daotao_'.$secKey.'_import', $ds_quyen))?'checked':'';?>>
+                            <label for="quyen-daotao-<?=$secKey?>-import" class="custom-control-label font-weight-normal">Import</label>
+                        </div>
+                        <?php else: ?>
+                        <span class="text-muted align-middle d-inline-block mb-2 text-md"><i class="fas fa-minus mr-1"></i>Không có import</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+                <div class="text-muted small dt-perm-empty d-none"><i class="fas fa-search mr-1"></i>Không tìm thấy mục nào khớp.</div>
+            </div>
+        </div>
         <?php if(isset($config['product'])) { ?>
 			<?php foreach($config['product'] as $key => $value) { ?>
 			    <div class="card card-permission card-primary card-outline text-sm">
@@ -950,37 +1035,8 @@
 	            </div>
 	        </div>
 	    </div>
-	    <div class="card card-permission card-primary card-outline text-sm">
-	        <div class="card-header">
-	            <h3 class="card-title">Quản lý Đào Tạo</h3>
-	            <div class="card-tools">
-	                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
-	            </div>
-	        </div>
-	        <div class="card-body">
-	            <div class="form-group row">
-	                <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3">Phân hệ đào tạo:</label>
-	                <div class="col-md-7">
-	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
-	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-man" value="daotao_man" <?=(isset($ds_quyen) && in_array('daotao_man', $ds_quyen))?'checked':'';?>>
-	                        <label for="quyen-daotao-man" class="custom-control-label font-weight-normal">Xem &amp; quản lý</label>
-	                    </div>
-	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
-	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-upload" value="daotao_upload" <?=(isset($ds_quyen) && in_array('daotao_upload', $ds_quyen))?'checked':'';?>>
-	                        <label for="quyen-daotao-upload" class="custom-control-label font-weight-normal">Import file</label>
-	                    </div>
-	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
-	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-tracuu" value="daotao_tracuu" <?=(isset($ds_quyen) && in_array('daotao_tracuu', $ds_quyen))?'checked':'';?>>
-	                        <label for="quyen-daotao-tracuu" class="custom-control-label font-weight-normal">Chỉ tra cứu</label>
-	                    </div>
-	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
-	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-daotao-import" value="daotao_import" <?=(isset($ds_quyen) && in_array('daotao_import', $ds_quyen))?'checked':'';?>>
-	                        <label for="quyen-daotao-import" class="custom-control-label font-weight-normal">Tra cứu &amp; import</label>
-	                    </div>
-	                </div>
-	            </div>
-	        </div>
-	    </div>
+
+
 	    <div class="card card-permission card-primary card-outline text-sm">
 	        <div class="card-header">
 	            <h3 class="card-title">Quản lý Kỳ Sát Hạch</h3>

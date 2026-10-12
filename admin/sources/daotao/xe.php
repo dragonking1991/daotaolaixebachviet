@@ -12,7 +12,16 @@ function dt_xe_list()
 	$items = $d->rawQuery("select * from #_dt_xe where 1 $where order by bien_so asc limit $startpoint,$per_page", $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_xe where 1 $where", $params);
 	$total_items = (int)$count['num'];
-	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=xe");
+
+	$base_url = "index.php?com=daotao&act=xe";
+	$filter_q = array();
+	foreach(array('keyword','hang','loai_xe','nhan_hieu','tt_tl','expiry') as $k)
+	{
+		if(isset($_REQUEST[$k]) && trim((string)$_REQUEST[$k]) !== '')
+			$filter_q[$k] = trim((string)$_REQUEST[$k]);
+	}
+	if(!empty($filter_q)) $base_url .= '&'.http_build_query($filter_q);
+	$paging = $func->pagination($count['num'], $per_page, $curPage, $base_url);
 	$xe_stats = dt_xe_expiry_stats();
 }
 
@@ -82,13 +91,17 @@ function dt_xe_upload_excel()
 		'loai_xe' => array('loaixe'),
 		'nhan_hieu' => array('nhanhieu'),
 		'giaovien' => array('giaovien','gv'),
-		'ngay_hethan' => array('ngayhethangiayphepxetaplai','ngayhethangplxtl','ngayhethangplx','ngayhethan','hangiayphepxetaplai','hanxetaplai'),
+		'ngay_hethan' => array(
+			'ngayhethangiayphepxetaplai','ngayhethangplxtl','ngayhethangplxtaplai','ngayhethangplxetaplai',
+			'ngayhethangplx','ngayhethan','ngayhethanggplx','ngayhetgplx','ngayhethanggiayphep','ngayhethanggiayphepxe',
+			'ngayhethanggplxtaplai','ngayhethanxetaplai','hanxetaplai','hangiayphepxetaplai'
+		),
 	);
 	$contains = array(
 		'bien_so' => array('bienso'),
 		'hang_xe' => array('hangxe','hangtaplai'),
 		'giaovien' => array('giaovien'),
-		'ngay_hethan' => array('hethan','hanxetaplai'),
+		'ngay_hethan' => array('ngayhethan','hethangplx','hethanggplx','gplx','taplai','hanxetaplai','giayphep'),
 	);
 
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains);

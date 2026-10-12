@@ -578,10 +578,25 @@
                     $menuopen_daotao = "";
                     $none_daotao = "";
                     $can_daotao = true;
-                    if(isset($kiemtra) && $kiemtra == true)
+                    $dt_kiemtra = (isset($kiemtra) && $kiemtra == true);
+                    $dt_lq = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
+                    // Có quyền xem 1 mục đào tạo: quyền mục, quyền import mục, hoặc các quyền gộp cũ.
+                    $dt_can_sec = function($section) use ($dt_lq) {
+                        $allow = array('daotao_man', 'product_man_cabin', 'daotao_tracuu', 'daotao_import', 'daotao_upload', 'daotao_'.$section, 'daotao_'.$section.'_import');
+                        foreach($allow as $p) if(in_array($p, $dt_lq)) return true;
+                        return false;
+                    };
+                    // Mục chỉ dành cho quản trị đào tạo (tổng quan, nhật ký, sao lưu).
+                    $dt_can_man = (in_array('daotao_man', $dt_lq) || in_array('product_man_cabin', $dt_lq));
+                    if($dt_kiemtra)
                     {
-                        $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
+                        $list_quyen = $dt_lq;
                         $can_daotao = in_array('daotao_man', $list_quyen) || in_array('daotao_upload', $list_quyen) || in_array('daotao_import', $list_quyen) || in_array('daotao_tracuu', $list_quyen) || in_array('product_man_cabin', $list_quyen);
+                        // Có quyền chi tiết bất kỳ mục nào cũng mở được menu đào tạo.
+                        if(!$can_daotao)
+                        {
+                            foreach($dt_lq as $p) { if(strpos($p, 'daotao_') === 0) { $can_daotao = true; break; } }
+                        }
                         if(!$can_daotao) $none_daotao = "d-none";
                     }
                     if($com=='daotao') { $active_daotao = 'active'; $menuopen_daotao = 'menu-open'; }
@@ -603,6 +618,13 @@
                         'audit' => 'Nhật ký thao tác',
                         'backup' => 'Sao lưu &amp; khôi phục',
                     );
+                    // Mục menu -> mục phân quyền ('_man' = chỉ quản trị đào tạo).
+                    $dt_menu_sec = array(
+                        'dashboard' => '_man', 'khoa' => 'khoa', 'hocvien' => 'hocvien', 'xe' => 'xe',
+                        'giaovien' => 'giaovien', 'lythuyet' => 'lythuyet', 'cabinkq' => 'cabinkq', 'hinh' => 'hinh',
+                        'dat' => 'dat', 'tonghop' => 'tonghop', 'kythi' => 'kythi', 'ketquadaotao' => 'ketqua',
+                        'htkh' => 'htkh', 'sathach' => 'sathach', 'audit' => '_man', 'backup' => '_man',
+                    );
                 ?>
                 <li class="nav-item has-treeview <?=$menuopen_daotao?> <?=$none_daotao?>">
                     <a class="nav-link <?=$active_daotao?>" href="#" title="Quản lý quá trình đào tạo">
@@ -611,6 +633,14 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <?php foreach($dt_menu as $dtAct => $dtLabel): ?>
+                        <?php
+                            if($dt_kiemtra)
+                            {
+                                $dtSec = isset($dt_menu_sec[$dtAct]) ? $dt_menu_sec[$dtAct] : '';
+                                $dtShow = ($dtSec === '_man') ? $dt_can_man : $dt_can_sec($dtSec);
+                                if(!$dtShow) continue;
+                            }
+                        ?>
                         <li class="nav-item">
                             <a class="nav-link <?=($com=='daotao' && $act==$dtAct)?'active':''?>" href="index.php?com=daotao&act=<?=$dtAct?>" title="<?=$dtLabel?>">
                                 <i class="nav-icon text-sm far fa-caret-square-right"></i><p><?=$dtLabel?></p>

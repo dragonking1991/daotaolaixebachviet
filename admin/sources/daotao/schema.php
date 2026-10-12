@@ -249,6 +249,7 @@ function dt_ensure_tables()
 		hang VARCHAR(20) DEFAULT '',
 		ma_khoa VARCHAR(100) DEFAULT '',
 		ten_khoa VARCHAR(255) DEFAULT '',
+		giaovien VARCHAR(255) DEFAULT '',
 		ngay_sh VARCHAR(20) DEFAULT '',
 		so_gplx VARCHAR(50) DEFAULT '',
 		ket_qua VARCHAR(30) DEFAULT '',
@@ -283,8 +284,17 @@ function dt_ensure_tables()
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_gv_lifecycle_v1')) { dt_ensure_lifecycle_cols(); dt_migration_mark('xe_gv_lifecycle_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('gv_commitment_v1')) { dt_ensure_gv_commitment_cols(); dt_migration_mark('gv_commitment_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_ghichu_v1')) { dt_ensure_xe_ghichu(); dt_migration_mark('xe_ghichu_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('sathach_gv_v1')) { dt_ensure_sathach_gv(); dt_migration_mark('sathach_gv_v1'); }
 
 	$done = true;
+}
+
+/* Cột giáo viên cho kết quả sát hạch (bảng cũ chưa có). */
+function dt_ensure_sathach_gv()
+{
+	global $d;
+	$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_sat_hach' and column_name = 'giaovien' limit 0,1");
+	if(!$exist) $d->rawQuery("ALTER TABLE table_dt_sat_hach ADD COLUMN giaovien VARCHAR(255) DEFAULT '' AFTER ten_khoa");
 }
 
 /* Cột ghi chú cho xe tập lái (nhập tay trong mục chỉnh sửa). */

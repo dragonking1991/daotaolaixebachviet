@@ -139,6 +139,15 @@
 							$quyen_aliases[] = 'daotao_import';
 							$quyen_aliases[] = 'daotao_tracuu';
 							$quyen_aliases[] = 'product_man_cabin';
+							// Quyền chi tiết theo từng mục (daotao_<mục> / daotao_<mục>_import): cho qua cổng tổng,
+							// việc chặn theo mục/thao tác do dt_guard() trong admin/sources/daotao.php đảm nhận.
+							if(isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen']))
+							{
+								foreach($_SESSION['list_quyen'] as $dtq)
+								{
+									if(strpos($dtq, 'daotao_') === 0) $quyen_aliases[] = $dtq;
+								}
+							}
 						}
 
 						if($quyen_user == '_'){
