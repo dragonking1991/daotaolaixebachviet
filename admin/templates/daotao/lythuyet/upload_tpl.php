@@ -26,7 +26,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import kết quả lý thuyết (tự nhận môn theo tên file)</strong></h3></div>
 			<div class="card-body">
-				<div class="alert alert-warning">Sáu môn lý thuyết đọc cột <strong>Mã đăng nhập (CCCD), Tiến độ hoàn thành, Điểm kiểm tra</strong>; đạt khi tiến độ &gt; 70 và điểm kiểm tra &gt; 5. File <strong>Mô phỏng</strong> được chọn ở cùng danh sách nhưng lưu kết quả riêng, đạt khi tiến độ &gt; 70. Môn được tự nhận theo tên file hoặc chọn lại cho từng file.</div>
+				<div class="alert alert-warning">Tổng cộng 7 môn lý thuyết, bao gồm Mô phỏng. Sáu môn lý thuyết còn lại đọc cột <strong>Mã đăng nhập (CCCD), Tiến độ hoàn thành, Điểm kiểm tra</strong>; đạt khi tiến độ &gt; 70 và điểm kiểm tra &gt; 5. Mô phỏng đạt khi tiến độ &gt; 70. Môn được tự nhận theo tên file hoặc chọn lại cho từng file.</div>
 				<div class="row">
 					<div class="col-md-6 form-group">
 						<label>Khóa <span class="text-muted">(tùy chọn)</span></label>

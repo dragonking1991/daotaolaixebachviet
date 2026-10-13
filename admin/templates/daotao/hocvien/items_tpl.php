@@ -19,7 +19,7 @@
 				<a href="index.php?com=daotao&act=crudEdit&entity=hocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a>
 				<a href="index.php?com=daotao&act=uploadHocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import học viên</a>
 				<a href="<?=dt_export_link('exportHocvien', array('id_khoa','keyword','hang','gv','he'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a>
-				<a href="index.php?com=daotao&act=crudDeleteAll&entity=hocvien" onclick="return confirm('Xóa toàn bộ học viên và kết quả đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a>
+				<?php if(dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=hocvien" onclick="return confirm('Xóa toàn bộ học viên và kết quả đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?>
 			</div>
 		</div>
 		<div class="card-body">

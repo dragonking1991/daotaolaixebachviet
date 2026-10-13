@@ -57,7 +57,7 @@
 			<thead><tr style="background:#f2f4f8;">
 				<th style="padding:8px;border:1px solid #e0e0e0;text-align:left;">Học viên</th>
 				<th style="padding:8px;border:1px solid #e0e0e0;">Khóa</th>
-				<th style="padding:8px;border:1px solid #e0e0e0;">Lý thuyết</th>
+				<th style="padding:8px;border:1px solid #e0e0e0;">Lý thuyết (7 môn)</th>
 				<th style="padding:8px;border:1px solid #e0e0e0;">Cabin</th>
 				<th style="padding:8px;border:1px solid #e0e0e0;">Thực hành trong hình</th>
 				<th style="padding:8px;border:1px solid #e0e0e0;">DAT</th>

@@ -15,7 +15,7 @@ function dt_giaovien_list()
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$items = $d->rawQuery("select * from #_dt_giaovien where 1 $where order by hoten asc limit $startpoint,$per_page", $params);
+	$items = $d->rawQuery("select g.*, (select count(*) from #_dt_hocvien h where h.gv_key = g.gv_key or (h.gv_key = '' and h.gv_hoten = g.hoten)) as so_hoc_vien from #_dt_giaovien g where 1 $where order by g.hoten asc limit $startpoint,$per_page", $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_giaovien where 1 $where", $params);
 	$total_items = (int)$count['num'];
 	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=giaovien");

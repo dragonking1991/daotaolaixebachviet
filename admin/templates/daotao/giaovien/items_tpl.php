@@ -16,7 +16,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Danh sách giáo viên</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadGiaovien" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import giáo viên</a> <a href="<?=dt_export_link('exportGiaovien', array('keyword','gioitinh','hang_gplx','hang','tt_tl','expiry'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <a href="index.php?com=daotao&act=crudDeleteAll&entity=giaovien" onclick="return confirm('Xóa toàn bộ giáo viên?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a></div>
+			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadGiaovien" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import giáo viên</a> <a href="<?=dt_export_link('exportGiaovien', array('keyword','gioitinh','hang_gplx','hang','tt_tl','expiry'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php if(dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=giaovien" onclick="return confirm('Xóa toàn bộ giáo viên?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div>
 		</div>
 		<div class="card-body">
 			<?php if(isset($gv_expiry_stats)): ?>
@@ -50,7 +50,7 @@
 					<?php if(!empty($items)): foreach($items as $it): $exp = function_exists('dt_expiry_info') ? dt_expiry_info(isset($it['ngay_hh_gplx'])?$it['ngay_hh_gplx']:'') : null; $is_tl = !empty($it['thanh_ly']); ?>
 					<tr<?=$is_tl?' class="text-muted"':''?>>
 						<td>
-							<div class="dt-title"><?=htmlspecialchars($it['hoten'] ?: '—')?> <?php if($is_tl): ?><span class="badge badge-secondary">Đã thanh lý</span><?php endif; ?></div>
+								<div class="dt-title"><?=htmlspecialchars($it['hoten'] ?: '—')?> <?php if($is_tl): ?><span class="badge badge-secondary">Đã thanh lý</span><?php endif; ?> <?php if(isset($it['so_hoc_vien'])): ?><a href="index.php?com=daotao&amp;act=hocvien&amp;gv=<?=urlencode($it['hoten'])?>" class="badge badge-light border ml-1" title="Xem danh sách học viên giáo viên phụ trách"><?=number_format((int)$it['so_hoc_vien'])?> HV</a><?php endif; ?></div>
 							<div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($it['cccd'] ?: '—')?></div>
 							<div class="dt-sub">
 								<?php if(!empty($it['ngaysinh'])): ?><i class="fas fa-birthday-cake"></i><?=htmlspecialchars($it['ngaysinh'])?><?php endif; ?>

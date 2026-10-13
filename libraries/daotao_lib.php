@@ -85,6 +85,7 @@ if(!function_exists('dt_mb_lower'))
 			'phan_2'   => 'Pháp luật - Phần 2',
 			'phan_3'   => 'Pháp luật - Phần 3',
 			'dao_duc'  => 'Đạo đức người lái xe',
+			'mophong'  => 'Mô phỏng',
 		);
 	}
 	function dt_nguong_lythuyet() { return array('tien_do' => 70, 'diem_kt' => 5); }

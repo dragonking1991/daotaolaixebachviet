@@ -72,7 +72,11 @@ function dt_read_row($sheet, $rowNum, $highestColIndex)
 			if($calculated !== null && $calculated !== '' && $calculated !== $val && strpos((string)$calculated, '#') !== 0)
 				$val = $calculated;
 			else
-				$val = '';
+			{
+				// Công thức không giải được (vd =INDEX(#REF!,...)) — dùng giá trị đã tính sẵn lưu trong file.
+				$cached = method_exists($cell, 'getOldCalculatedValue') ? $cell->getOldCalculatedValue() : null;
+				$val = ($cached !== null && $cached !== '' && strpos((string)$cached, '#') !== 0) ? $cached : '';
+			}
 		}
 		$row[$c] = ($val === null) ? '' : trim((string)$val);
 	}

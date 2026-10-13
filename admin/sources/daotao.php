@@ -71,6 +71,12 @@ function dt_guard($perms)
 	dt_ensure_tables();
 }
 
+function dt_admin_guard()
+{
+	global $func;
+	if(!dt_is_admin()) $func->transfer("Thao tác này chỉ dành cho quản trị viên", "index.php?com=daotao", false);
+}
+
 switch($act)
 {
 	/* ---------- Khóa học ---------- */
@@ -87,7 +93,7 @@ switch($act)
 	case "crudSave":   dt_guard(dt_p(dt_crud_section(),'manage')); dt_crud_save(); break;
 	case "crudDelete": dt_guard(dt_p(dt_crud_section(),'manage')); dt_crud_delete(); break;
 	case "crudUndo":   dt_guard(dt_p(dt_crud_section(),'manage')); dt_crud_undo(); break;
-	case "crudDeleteAll": dt_guard(dt_p(dt_crud_section(),'manage')); dt_crud_delete_all(); break;
+	case "crudDeleteAll": dt_guard(dt_p(dt_crud_section(),'manage')); dt_admin_guard(); dt_crud_delete_all(); break;
 
 	/* ---------- Học viên ---------- */
 	case "hocvien":            dt_guard(dt_p('hocvien','view'));   dt_hocvien_list();   $template = "daotao/hocvien/items"; break;

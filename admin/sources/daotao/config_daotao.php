@@ -3,7 +3,7 @@ if(!defined('SOURCES')) die("Error");
 
 /* ================= Cấu hình ngưỡng đào tạo (tập trung để dễ chỉnh) ================= */
 
-/* 6 môn lý thuyết: key nội bộ => nhãn hiển thị */
+/* 7 môn lý thuyết, gồm mô phỏng: key nội bộ => nhãn hiển thị */
 function dt_mon_lythuyet()
 {
 	return array(

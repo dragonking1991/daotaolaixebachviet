@@ -16,7 +16,7 @@
 				<a href="index.php?com=daotao&act=uploadKhoa" class="btn btn-sm bg-gradient-primary"><i class="fas fa-upload mr-1"></i>Import khóa</a>
 				<a href="<?=dt_export_link('exportKhoa', array('keyword','hang','he','tu_ngay','toi_ngay'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a>
 				<button type="submit" form="dt-khoa-delete-form" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa khóa đã chọn</button>
-				<a href="index.php?com=daotao&act=crudDeleteAll&entity=khoa" onclick="return confirm('Xóa toàn bộ khóa và dữ liệu đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a>
+				<?php if(dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=khoa" onclick="return confirm('Xóa toàn bộ khóa và dữ liệu đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?>
 			</div>
 		</div>
 		<div class="card-body pb-0">
