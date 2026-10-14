@@ -124,16 +124,19 @@ function xd_upload_hoadon_excel()
 
 	if(empty($rows)) $func->transfer("File không có dòng hóa đơn hợp lệ nào.", $backUrl, false);
 
-	// Chặn import đè kỳ đã tồn tại dữ liệu (nếu có nhập kỳ)
-	if($kyForm !== '')
+	// Chặn import đè kỳ đã tồn tại dữ liệu (nếu có nhập kỳ) — trừ khi chọn "Đồng bộ lại"
+	// để cập nhật cờ hợp lệ/Note 1 cho hóa đơn chưa quyết toán (dedup đảm bảo không tạo bản ghi trùng).
+	$resync = !empty($_POST['resync']);
+	if($kyForm !== '' && !$resync)
 	{
 		$existKy = $d->rawQueryOne("select count(*) as num from #_xd_hoadon where ky = ?", array($kyForm));
 		if($existKy && (int)$existKy['num'] > 0)
-			$func->transfer("Kỳ <strong>".htmlspecialchars($kyForm)."</strong> đã được import trước đó. Không thể import đè để tránh trùng dữ liệu.", $backUrl, false);
+			$func->transfer("Kỳ <strong>".htmlspecialchars($kyForm)."</strong> đã được import trước đó. Không thể import đè để tránh trùng dữ liệu. Tích \"Đồng bộ lại\" nếu muốn cập nhật cờ hợp lệ cho kỳ này.", $backUrl, false);
 	}
 
 	$username = xd_username();
 	$inserted = 0;
+	$updatedFixed = 0;
 	$skippedDup = 0;
 	$skippedLocked = 0;
 	$errors = array();
@@ -151,12 +154,19 @@ function xd_upload_hoadon_excel()
 
 		// Kiểm tra trùng (ma_hoa_don + ngay_hoa_don + gv_key)
 		$exists = $d->rawQueryOne(
-			"select id, da_quyettoan from #_xd_hoadon where ma_hoa_don = ? and (ngay_hoa_don <=> ?) and gv_key = ? limit 0,1",
+			"select id, da_quyettoan, hop_le, note_1 from #_xd_hoadon where ma_hoa_don = ? and (ngay_hoa_don <=> ?) and gv_key = ? limit 0,1",
 			array($r['ma'], $r['ngay'], $r['gvkey'])
 		);
 		if($exists && isset($exists['id']))
 		{
-			if((int)$exists['da_quyettoan'] === 1) $skippedLocked++;
+			if((int)$exists['da_quyettoan'] === 1) { $skippedLocked++; continue; }
+			// HĐ đã có nhưng chưa quyết toán: đồng bộ lại cờ "Hợp lệ" + Note 1 theo file
+			// (sửa được dữ liệu cũ bị nhận diện sai mà không tạo bản ghi trùng).
+			if((int)$exists['hop_le'] !== (int)$r['hople'] || (string)$exists['note_1'] !== (string)$r['note1'])
+			{
+				$d->rawQuery("update #_xd_hoadon set hop_le = ?, note_1 = ? where id = ?", array($r['hople'], $r['note1'], $exists['id']));
+				$updatedFixed++;
+			}
 			else $skippedDup++;
 			continue;
 		}
@@ -182,6 +192,7 @@ function xd_upload_hoadon_excel()
 	$d->commit();
 
 	$msg = "Import thành công $inserted hóa đơn.";
+	if($updatedFixed > 0) $msg .= "<br>Đã đồng bộ lại $updatedFixed hóa đơn chưa quyết toán (cập nhật cờ Hợp lệ / Note 1).";
 	if($skippedDup > 0) $msg .= "<br>Bỏ qua $skippedDup hóa đơn trùng (Mã HĐ + Ngày HĐ).";
 	if($skippedLocked > 0) $msg .= "<br>Bỏ qua $skippedLocked hóa đơn đã quyết toán (bị khóa).";
 	if($hopLeHeaderText !== null) $msg .= "<br><em>Cột \"Hợp lệ\" nhận diện từ tiêu đề: \"".htmlspecialchars($hopLeHeaderText)."\" — $hopLeCount hợp lệ, $khongHopLeCount không hợp lệ.</em>";

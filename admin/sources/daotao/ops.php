@@ -39,6 +39,45 @@ function dt_import_notice($message, $url, $success = true)
 	$func->redirect($url);
 }
 
+/* ===== Cấu hình key-value cho phân hệ đào tạo (table_dt_setting) ===== */
+
+function dt_setting_get($key, $default = null)
+{
+	global $d;
+	$row = $d->rawQueryOne("select sval from #_dt_setting where skey = ? limit 0,1", array($key));
+	return ($row && isset($row['sval'])) ? $row['sval'] : $default;
+}
+
+function dt_setting_set($key, $val)
+{
+	global $d;
+	$exist = $d->rawQueryOne("select id from #_dt_setting where skey = ? limit 0,1", array($key));
+	if($exist && $exist['id']) { $d->where('id', (int)$exist['id']); $d->update('dt_setting', array('sval' => (string)$val)); }
+	else $d->insert('dt_setting', array('skey' => (string)$key, 'sval' => (string)$val));
+}
+
+/* Cấu hình mặc định cổng giáo viên: hiển thị đủ cột, chi tiết bật, không cho GV tự nhập. */
+function dt_conggv_defaults()
+{
+	return array(
+		'show_lythuyet' => 1, 'show_cabin' => 1, 'show_hinh' => 1, 'show_dat' => 1, 'show_ketluan' => 1,
+		'show_detail' => 1, 'allow_hinh_input' => 1,
+	);
+}
+
+/* Lấy cấu hình cổng giáo viên (hợp nhất với mặc định). */
+function dt_conggv_config()
+{
+	$cfg = dt_conggv_defaults();
+	$raw = dt_setting_get('cong_gv', '');
+	if($raw !== '' && $raw !== null)
+	{
+		$saved = json_decode($raw, true);
+		if(is_array($saved)) foreach($cfg as $k => $v) if(isset($saved[$k])) $cfg[$k] = (int)$saved[$k];
+	}
+	return $cfg;
+}
+
 /* Các bảng dữ liệu đào tạo được phép sao lưu (whitelist an toàn). */
 function dt_backup_tables_list()
 {

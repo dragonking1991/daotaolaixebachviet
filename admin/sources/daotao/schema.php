@@ -279,6 +279,25 @@ function dt_ensure_tables()
 		UNIQUE KEY uq_dt_migration_key (mkey)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_setting (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		skey VARCHAR(100) NOT NULL,
+		sval MEDIUMTEXT,
+		UNIQUE KEY uq_dt_setting_key (skey)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_gv_log (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		gv_key VARCHAR(255) DEFAULT '',
+		gv_cccd VARCHAR(20) DEFAULT '',
+		hv_cccd VARCHAR(20) DEFAULT '',
+		hv_hoten VARCHAR(255) DEFAULT '',
+		noi_dung VARCHAR(500) DEFAULT '',
+		ngaytao INT DEFAULT 0,
+		KEY idx_dt_gvlog_key (gv_key),
+		KEY idx_dt_gvlog_ngay (ngaytao)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('gv_ext_cols_v1')) { dt_ensure_gv_columns(); dt_migration_mark('gv_ext_cols_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('hinh_override_v1')) { dt_ensure_hinh_override(); dt_migration_mark('hinh_override_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_gv_lifecycle_v1')) { dt_ensure_lifecycle_cols(); dt_migration_mark('xe_gv_lifecycle_v1'); }

@@ -31,6 +31,13 @@
 					<input type="text" class="form-control" name="ky" id="ky" placeholder="VD: T5, T6..." style="max-width:220px;">
 				</div>
 
+				<div class="form-group">
+					<div class="custom-control custom-checkbox">
+						<input type="checkbox" class="custom-control-input" name="resync" id="resync" value="1">
+						<label class="custom-control-label" for="resync">Đồng bộ lại kỳ đã import — cập nhật cờ "Hợp lệ" &amp; Note 1 cho hóa đơn chưa quyết toán (không tạo bản ghi trùng).</label>
+					</div>
+				</div>
+
 				<div class="form-group mb-0">
 					<div class="custom-file my-custom-file">
 						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xls,.xlsx,.xlsb" required>

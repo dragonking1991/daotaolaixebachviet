@@ -91,13 +91,62 @@ elseif($dtAct === 'changepass' && isset($_SESSION['dt_gv']))
 	elseif(strlen($new) < 4) $dtGvErr = 'Mật khẩu mới tối thiểu 4 ký tự.';
 	else { $d->where('id', (int)$gv['id']); $d->update('dt_giaovien', array('matkhau' => dt_gv_hash($new))); $dtGvMsg = 'Đã đổi mật khẩu thành công.'; }
 }
+elseif($dtAct === 'savehinh' && isset($_SESSION['dt_gv']))
+{
+	// GV tự nhập Giờ/Km thực hành trong hình — chỉ khi cấu hình cho phép và học viên thuộc GV.
+	$cfg = dt_portal_conggv();
+	if(empty($cfg['allow_hinh_input'])) $dtGvErr = 'Chức năng nhập thực hành trong hình đang bị khóa.';
+	else
+	{
+		$cccd = dt_normalize_cccd($_POST['cccd'] ?? '');
+		$idKhoa = (int)($_POST['id_khoa'] ?? 0);
+		$gioRaw = str_replace(',', '.', trim((string)($_POST['gio'] ?? '')));
+		$kmRaw = str_replace(',', '.', trim((string)($_POST['km'] ?? '')));
+		if(!is_numeric($gioRaw) || !is_numeric($kmRaw) || (float)$gioRaw < 0 || (float)$kmRaw < 0)
+		{
+			$dtGvErr = 'Giờ và Km phải là số không âm.';
+			$gioRaw = $kmRaw = '0';
+		}
+		$gio = (float)$gioRaw;
+		$km = (float)$kmRaw;
+		$gvKey = (string)($_SESSION['dt_gv']['gv_key'] ?? '');
+		$hv = $d->rawQueryOne("select id, hoten from #_dt_hocvien where cccd = ? and id_khoa = ? and gv_key = ? limit 0,1", array($cccd, $idKhoa, $gvKey));
+		if($dtGvErr === '' && !$hv) $dtGvErr = 'Học viên không thuộc danh sách của bạn.';
+		elseif($dtGvErr === '' && $hv)
+		{
+			$exist = $d->rawQueryOne("select id from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+			$data = array('id_khoa' => $idKhoa, 'cccd' => $cccd, 'gio' => $gio, 'km' => $km, 'dat_override' => null, 'nguoi_nhap' => 'GV '.(string)($_SESSION['dt_gv']['cccd'] ?? ''));
+			if($exist && $exist['id']) { $d->where('id', (int)$exist['id']); $d->update('dt_thuchanh_hinh', $data); }
+			else { $data['ngaytao'] = time(); $d->insert('dt_thuchanh_hinh', $data); }
+			dt_portal_gv_log($gvKey, (string)($_SESSION['dt_gv']['cccd'] ?? ''), $cccd, $hv['hoten'], 'Cập nhật thực hành trong hình: '.rtrim(rtrim(number_format($gio, 2, '.', ''), '0'), '.').' giờ / '.rtrim(rtrim(number_format($km, 2, '.', ''), '0'), '.').' km');
+			$dtGvMsg = 'Đã lưu thực hành trong hình cho '.$hv['hoten'].'.';
+		}
+	}
+}
 
 /* ----- Dữ liệu cho template ----- */
 $dtGv = isset($_SESSION['dt_gv']) ? $_SESSION['dt_gv'] : null;
+$dtCfg = dt_portal_conggv();
 $dtStudents = array();
+$dtKhoaList = array();
+$dtHistory = array();
+$dtFilterKhoa = isset($_REQUEST['khoa']) ? (int)$_REQUEST['khoa'] : 0;
+$dtFilterKw = isset($_REQUEST['kw']) ? trim((string)$_REQUEST['kw']) : '';
 if($dtGv)
 {
-	$rows = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where h.gv_key = ? order by h.hoten asc", array($dtGv['gv_key']));
+	// Nhật ký cập nhật của giáo viên trong 30 ngày gần đây.
+	$dtHistory = dt_portal_gv_history($dtGv['gv_key'], 30, 50);
+	// Danh sách khóa mà giáo viên phụ trách (cho bộ lọc).
+	$dtKhoaList = $d->rawQuery("select distinct k.id, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where h.gv_key = ? and k.id is not null order by k.ma_khoa asc", array($dtGv['gv_key']));
+
+	$where = "h.gv_key = ?"; $params = array($dtGv['gv_key']);
+	if($dtFilterKhoa) { $where .= " and h.id_khoa = ?"; $params[] = $dtFilterKhoa; }
+	if($dtFilterKw !== '')
+	{
+		$where .= " and (h.hoten like ? or h.cccd like ? or h.ma_hv like ?)";
+		$like = '%'.$dtFilterKw.'%'; $params[] = $like; $params[] = $like; $params[] = $like;
+	}
+	$rows = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by k.ma_khoa asc, h.hoten asc", $params);
 	foreach($rows as $hv)
 	{
 		$dtStudents[] = array('hv' => $hv, 'sum' => dt_student_summary($hv));

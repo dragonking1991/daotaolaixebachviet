@@ -136,6 +136,33 @@
                 <div class="text-muted small dt-perm-empty d-none"><i class="fas fa-search mr-1"></i>Không tìm thấy mục nào khớp.</div>
             </div>
         </div>
+        <script type="text/javascript">
+        (function(){
+            var card = document.getElementById('card-daotao-perm');
+            if(!card) return;
+            function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d'); }
+            function rows(){ return card.querySelectorAll('.dt-perm-row'); }
+            function setAll(sel, val){
+                rows().forEach(function(r){ if(r.classList.contains('d-none')) return; r.querySelectorAll(sel).forEach(function(cb){ cb.checked = val; }); });
+            }
+            var bAll = card.querySelector('#dt-perm-all'), bNone = card.querySelector('#dt-perm-none'),
+                bView = card.querySelector('#dt-perm-view-all'), bImport = card.querySelector('#dt-perm-import-all'),
+                search = card.querySelector('#dt-perm-search'), empty = card.querySelector('.dt-perm-empty');
+            // "Chọn tất cả" chỉ tick quyền chi tiết theo mục (không tick quyền thô "mọi mục") để tránh gán quá rộng.
+            if(bAll) bAll.addEventListener('click', function(){ setAll('.dt-perm-view, .dt-perm-import', true); });
+            if(bNone) bNone.addEventListener('click', function(){ setAll('.dt-perm-cb', false); });
+            if(bView) bView.addEventListener('click', function(){ setAll('.dt-perm-view', true); });
+            if(bImport) bImport.addEventListener('click', function(){ setAll('.dt-perm-import', true); });
+            if(search) search.addEventListener('input', function(){
+                var q = norm(this.value.trim()); var shown = 0;
+                rows().forEach(function(r){
+                    var hit = q === '' || norm(r.getAttribute('data-dt-key')).indexOf(q) !== -1;
+                    r.classList.toggle('d-none', !hit); if(hit) shown++;
+                });
+                if(empty) empty.classList.toggle('d-none', shown > 0);
+            });
+        })();
+        </script>
         <?php if(isset($config['product'])) { ?>
 			<?php foreach($config['product'] as $key => $value) { ?>
 			    <div class="card card-permission card-primary card-outline text-sm">

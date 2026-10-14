@@ -581,13 +581,15 @@
                     $dt_kiemtra = (isset($kiemtra) && $kiemtra == true);
                     $dt_lq = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
                     // Có quyền xem 1 mục đào tạo: quyền mục, quyền import mục, hoặc các quyền gộp cũ.
+                    // product_man_cabin (quyền Học Cabin) chỉ mở mục Cabin (kết quả), không phải toàn bộ đào tạo.
                     $dt_can_sec = function($section) use ($dt_lq) {
-                        $allow = array('daotao_man', 'product_man_cabin', 'daotao_tracuu', 'daotao_import', 'daotao_upload', 'daotao_'.$section, 'daotao_'.$section.'_import');
+                        $allow = array('daotao_man', 'daotao_tracuu', 'daotao_import', 'daotao_upload', 'daotao_'.$section, 'daotao_'.$section.'_import');
+                        if($section === 'cabinkq') $allow[] = 'product_man_cabin';
                         foreach($allow as $p) if(in_array($p, $dt_lq)) return true;
                         return false;
                     };
-                    // Mục chỉ dành cho quản trị đào tạo (tổng quan, nhật ký, sao lưu).
-                    $dt_can_man = (in_array('daotao_man', $dt_lq) || in_array('product_man_cabin', $dt_lq));
+                    // Mục chỉ dành cho quản trị đào tạo (tổng quan, nhật ký, sao lưu, cấu hình).
+                    $dt_can_man = in_array('daotao_man', $dt_lq);
                     if($dt_kiemtra)
                     {
                         $list_quyen = $dt_lq;
@@ -617,6 +619,7 @@
                         'sathach' => 'Kết quả sát hạch',
                         'audit' => 'Nhật ký thao tác',
                         'backup' => 'Sao lưu &amp; khôi phục',
+                        'congGvConfig' => 'Cấu hình cổng GV',
                     );
                     // Mục menu -> mục phân quyền ('_man' = chỉ quản trị đào tạo).
                     $dt_menu_sec = array(
@@ -624,6 +627,7 @@
                         'giaovien' => 'giaovien', 'lythuyet' => 'lythuyet', 'cabinkq' => 'cabinkq', 'hinh' => 'hinh',
                         'dat' => 'dat', 'tonghop' => 'tonghop', 'kythi' => 'kythi', 'ketquadaotao' => 'ketqua',
                         'htkh' => 'htkh', 'sathach' => 'sathach', 'audit' => '_man', 'backup' => '_man',
+                        'congGvConfig' => '_man',
                     );
                 ?>
                 <li class="nav-item has-treeview <?=$menuopen_daotao?> <?=$none_daotao?>">

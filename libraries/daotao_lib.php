@@ -228,4 +228,108 @@ if(!function_exists('dt_mb_lower'))
 	}
 
 	function dt_gv_hash($plain) { return md5('dt_gv_'.$plain.'_bachviet'); }
+
+	/* Cấu hình hiển thị cổng giáo viên (đọc table_dt_setting key 'cong_gv', hợp nhất mặc định). */
+	function dt_portal_conggv()
+	{
+		global $d;
+		$cfg = array(
+			'show_lythuyet' => 1, 'show_cabin' => 1, 'show_hinh' => 1, 'show_dat' => 1, 'show_ketluan' => 1,
+			'show_detail' => 1, 'allow_hinh_input' => 1,
+		);
+		$row = null;
+		try { $row = $d->rawQueryOne("select sval from #_dt_setting where skey = 'cong_gv' limit 0,1"); }
+		catch(Exception $e) { $row = null; }
+		if($row && isset($row['sval']) && $row['sval'] !== '')
+		{
+			$saved = json_decode($row['sval'], true);
+			if(is_array($saved)) foreach($cfg as $k => $v) if(isset($saved[$k])) $cfg[$k] = (int)$saved[$k];
+		}
+		return $cfg;
+	}
+
+	/* Trạng thái từng môn lý thuyết (gồm mô phỏng) của học viên: dat|chua_dat|chua_kiem_tra|chua_du_lieu. */
+	function dt_portal_lythuyet_mon_status($hv)
+	{
+		global $d;
+		$idKhoa = (int)$hv['id_khoa']; $cccd = $hv['cccd'];
+		$rows = $d->rawQuery("select mon, diem_kt, dat from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+		$by = array();
+		foreach($rows as $rw) $by[$rw['mon']] = $rw;
+		$out = array();
+		foreach(dt_mon_lythuyet() as $mk => $lbl)
+		{
+			if(!isset($by[$mk])) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_du_lieu'); continue; }
+			$rw = $by[$mk];
+			if((int)$rw['dat'] === 1) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'dat'); continue; }
+			if($mk !== 'mophong' && (float)$rw['diem_kt'] <= 0) $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_kiem_tra');
+			else $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_dat');
+		}
+		return $out;
+	}
+
+	/* Nội dung ô "Lý thuyết": "Đạt" hoặc liệt kê môn còn thiếu để GV biết cần dạy gì thêm. */
+	function dt_portal_lythuyet_cell($hv, $lyThuyetDat)
+	{
+		if($lyThuyetDat) return array();
+		$parts = array();
+		foreach(dt_portal_lythuyet_mon_status($hv) as $m)
+		{
+			if($m['trang_thai'] === 'dat') continue;
+			if($m['trang_thai'] === 'chua_kiem_tra') $tag = 'chưa kiểm tra';
+			elseif($m['trang_thai'] === 'chua_du_lieu') $tag = 'chưa có dữ liệu';
+			else $tag = 'chưa đạt';
+			$parts[] = $m['label'].': '.$tag;
+		}
+		return $parts;
+	}
+
+	/* Nội dung còn thiếu của Thực hành trong hình theo hạng (để GV biết cần nhập đủ bao nhiêu). */
+	function dt_portal_hinh_missing($hang, $gio, $km)
+	{
+		$ng = dt_nguong_hinh();
+		$h = dt_norm_hang($hang);
+		if(!isset($ng[$h])) return array();
+		$miss = array();
+		if((float)$gio <= $ng[$h]['gio']) $miss[] = 'Cần > '.$ng[$h]['gio'].' giờ';
+		if((float)$km < $ng[$h]['km']) $miss[] = 'Cần ≥ '.$ng[$h]['km'].' km';
+		return $miss;
+	}
+
+	/* Bảo đảm bảng nhật ký cập nhật của giáo viên tồn tại (cổng chạy độc lập với admin). */
+	function dt_portal_ensure_gv_log()
+	{
+		global $d;
+		static $done = false;
+		if($done) return;
+		try { $d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_gv_log (id INT AUTO_INCREMENT PRIMARY KEY, gv_key VARCHAR(255) DEFAULT '', gv_cccd VARCHAR(20) DEFAULT '', hv_cccd VARCHAR(20) DEFAULT '', hv_hoten VARCHAR(255) DEFAULT '', noi_dung VARCHAR(500) DEFAULT '', ngaytao INT DEFAULT 0, KEY idx_dt_gvlog_key (gv_key), KEY idx_dt_gvlog_ngay (ngaytao)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"); }
+		catch(Exception $e) {}
+		$done = true;
+	}
+
+	/* Ghi một dòng nhật ký cập nhật của giáo viên. */
+	function dt_portal_gv_log($gvKey, $gvCccd, $hvCccd, $hvHoten, $noiDung)
+	{
+		global $d;
+		dt_portal_ensure_gv_log();
+		try {
+			$d->insert('dt_gv_log', array(
+				'gv_key' => (string)$gvKey, 'gv_cccd' => (string)$gvCccd,
+				'hv_cccd' => (string)$hvCccd, 'hv_hoten' => (string)$hvHoten,
+				'noi_dung' => mb_substr((string)$noiDung, 0, 490), 'ngaytao' => time(),
+			));
+		} catch(Exception $e) {}
+	}
+
+	/* Lấy nhật ký cập nhật của giáo viên trong $days ngày gần đây. */
+	function dt_portal_gv_history($gvKey, $days = 30, $limit = 50)
+	{
+		global $d;
+		dt_portal_ensure_gv_log();
+		$since = time() - $days * 86400;
+		$rows = array();
+		try { $rows = $d->rawQuery("select hv_hoten, hv_cccd, noi_dung, ngaytao from #_dt_gv_log where gv_key = ? and ngaytao >= ? order by ngaytao desc limit ".(int)$limit, array($gvKey, $since)); }
+		catch(Exception $e) { $rows = array(); }
+		return is_array($rows) ? $rows : array();
+	}
 }

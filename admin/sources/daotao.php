@@ -22,17 +22,19 @@ require_once SOURCES.'daotao/kythi.php';
 require_once SOURCES.'daotao/ketquadaotao.php';
 require_once SOURCES.'daotao/htkh.php';
 require_once SOURCES.'daotao/sathach.php';
-
-$DT_MAN = array('daotao_man', 'product_man_cabin');
-$DT_UP  = array('daotao_upload', 'daotao_import', 'daotao_man', 'product_man_cabin');
-$DT_VIEW = array('daotao_tracuu', 'daotao_import', 'daotao_upload', 'daotao_man', 'product_man_cabin');
+require_once SOURCES.'daotao/conggv.php';
+$DT_MAN = array('daotao_man');
+$DT_UP  = array('daotao_upload', 'daotao_import', 'daotao_man');
+$DT_VIEW = array('daotao_tracuu', 'daotao_import', 'daotao_upload', 'daotao_man');
 
 /* Danh sách quyền hợp lệ cho 1 mục đào tạo theo thao tác (view|manage|import).
  * Luôn kèm các quyền gộp cũ để không phá vỡ nhóm quyền đã cấu hình trước đây. */
 function dt_p($section, $mode = 'view')
 {
 	$sec = 'daotao_'.$section;
-	$allow = array('daotao_man', 'product_man_cabin'); // toàn quyền đào tạo
+	$allow = array('daotao_man'); // daotao_man = toàn quyền đào tạo
+	// product_man_cabin (quyền "Học Cabin") CHỈ mở mục Cabin (kết quả), không phải toàn bộ đào tạo.
+	if($section === 'cabinkq') $allow[] = 'product_man_cabin';
 	if($mode === 'manage')
 	{
 		$allow[] = $sec;
@@ -186,6 +188,10 @@ switch($act)
 	case "backup":    dt_guard($DT_MAN); dt_backup_page();    $template = "daotao/backup/items"; break;
 	case "backupRestore":  dt_guard($DT_MAN); dt_backup_restore_action(); break;
 	case "backupDownload": dt_guard($DT_MAN); dt_backup_download_action(); break;
+
+	/* ---------- Cấu hình cổng giáo viên ---------- */
+	case "congGvConfig":     dt_guard($DT_MAN); dt_conggv_config_page(); $template = "daotao/conggv_config/items"; break;
+	case "congGvConfigSave": dt_guard($DT_MAN); dt_conggv_config_save(); break;
 
 	default:
 		dt_guard($DT_MAN);
