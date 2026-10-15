@@ -583,7 +583,9 @@
                     // Có quyền xem 1 mục đào tạo: quyền mục, quyền import mục, hoặc các quyền gộp cũ.
                     // product_man_cabin (quyền Học Cabin) chỉ mở mục Cabin (kết quả), không phải toàn bộ đào tạo.
                     $dt_can_sec = function($section) use ($dt_lq) {
-                        $allow = array('daotao_man', 'daotao_tracuu', 'daotao_import', 'daotao_upload', 'daotao_'.$section, 'daotao_'.$section.'_import');
+                        $allow = array('daotao_man', 'daotao_tracuu', 'daotao_import', 'daotao_upload', 'daotao_'.$section,
+                            'daotao_'.$section.'_view', 'daotao_'.$section.'_edit', 'daotao_'.$section.'_delete',
+                            'daotao_'.$section.'_import', 'daotao_'.$section.'_export');
                         if($section === 'cabinkq') $allow[] = 'product_man_cabin';
                         foreach($allow as $p) if(in_array($p, $dt_lq)) return true;
                         return false;

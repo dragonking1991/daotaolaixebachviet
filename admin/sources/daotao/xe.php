@@ -91,8 +91,17 @@ function dt_xe_upload_excel()
 		'loai_xe' => array('loaixe'),
 		'nhan_hieu' => array('nhanhieu'),
 		'giaovien' => array('giaovien','gv'),
+		'ma_csdt' => array('macsdt','macosdt'),
+		'nam_sx' => array('namsanxuat','namsx'),
+		'so_gpxtl' => array('sogiayphepxetl','sogiayphepxetaplai','sogpxtl','sogplxtl'),
+		'ngay_cap_gpxtl' => array('ngaycapgpxtl','ngaycapgplxtl','ngaycapgiayphepxetaplai'),
+		'ngay_cap_gcnkd' => array('ngaycapgcnkd','ngaycapgcn','ngaycapkiemdinh'),
+		'ngay_hethan_gcnkd' => array('ngayhethangcnkd','ngayhethangcn','ngayhethankiemdinh','ngayhhgcnkd'),
+		'so_huu' => array('sohuu','sohuuhay1','chinhchu'),
+		'so_imei' => array('soimei','imei'),
+		'so_seri' => array('soseri','seri','serino'),
 		'ngay_hethan' => array(
-			'ngayhethangiayphepxetaplai','ngayhethangplxtl','ngayhethangplxtaplai','ngayhethangplxetaplai',
+			'ngayhethangpxtl','ngayhethangiayphepxetaplai','ngayhethangplxtl','ngayhethangplxtaplai','ngayhethangplxetaplai',
 			'ngayhethangplx','ngayhethan','ngayhethanggplx','ngayhetgplx','ngayhethanggiayphep','ngayhethanggiayphepxe',
 			'ngayhethanggplxtaplai','ngayhethanxetaplai','hanxetaplai','hangiayphepxetaplai'
 		),
@@ -101,7 +110,7 @@ function dt_xe_upload_excel()
 		'bien_so' => array('bienso'),
 		'hang_xe' => array('hangxe','hangtaplai'),
 		'giaovien' => array('giaovien'),
-		'ngay_hethan' => array('ngayhethan','hethangplx','hethanggplx','gplx','taplai','hanxetaplai','giayphep'),
+		'ngay_hethan' => array('ngayhethangpxtl','ngayhethan','hethangplx','hethanggplx','gpxtl','gplx','taplai','hanxetaplai','giayphep'),
 	);
 
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains);
@@ -132,6 +141,16 @@ function dt_xe_upload_excel()
 			'gv_key' => dt_gv_key($gvHoten),
 		);
 		if(isset($map['ngay_hethan'])) $data['ngay_hethan'] = dt_gv_fmt_date(dt_val($row, $map, 'ngay_hethan'));
+		// Cột bổ sung theo mẫu mới (Update 5): chỉ ghi khi file có cột tương ứng.
+		if(isset($map['ma_csdt'])) $data['ma_csdt'] = dt_val($row, $map, 'ma_csdt');
+		if(isset($map['nam_sx'])) $data['nam_sx'] = dt_val($row, $map, 'nam_sx');
+		if(isset($map['so_gpxtl'])) $data['so_gpxtl'] = dt_val($row, $map, 'so_gpxtl');
+		if(isset($map['ngay_cap_gpxtl'])) $data['ngay_cap_gpxtl'] = dt_gv_fmt_date(dt_val($row, $map, 'ngay_cap_gpxtl'));
+		if(isset($map['ngay_cap_gcnkd'])) $data['ngay_cap_gcnkd'] = dt_gv_fmt_date(dt_val($row, $map, 'ngay_cap_gcnkd'));
+		if(isset($map['ngay_hethan_gcnkd'])) $data['ngay_hethan_gcnkd'] = dt_gv_fmt_date(dt_val($row, $map, 'ngay_hethan_gcnkd'));
+		if(isset($map['so_huu'])) $data['so_huu'] = dt_val($row, $map, 'so_huu');
+		if(isset($map['so_imei'])) $data['so_imei'] = dt_val($row, $map, 'so_imei');
+		if(isset($map['so_seri'])) $data['so_seri'] = dt_val($row, $map, 'so_seri');
 
 		$exist = $d->rawQueryOne("select id from #_dt_xe where bien_so = ? limit 0,1", array($bienSo));
 		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_xe', $data); }

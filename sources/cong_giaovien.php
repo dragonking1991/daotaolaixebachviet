@@ -110,7 +110,7 @@ elseif($dtAct === 'savehinh' && isset($_SESSION['dt_gv']))
 		$gio = (float)$gioRaw;
 		$km = (float)$kmRaw;
 		$gvKey = (string)($_SESSION['dt_gv']['gv_key'] ?? '');
-		$hv = $d->rawQueryOne("select id, hoten from #_dt_hocvien where cccd = ? and id_khoa = ? and gv_key = ? limit 0,1", array($cccd, $idKhoa, $gvKey));
+		$hv = $d->rawQueryOne("select id, hoten, hang from #_dt_hocvien where cccd = ? and id_khoa = ? and gv_key = ? limit 0,1", array($cccd, $idKhoa, $gvKey));
 		if($dtGvErr === '' && !$hv) $dtGvErr = 'Học viên không thuộc danh sách của bạn.';
 		elseif($dtGvErr === '' && $hv)
 		{
@@ -119,7 +119,8 @@ elseif($dtAct === 'savehinh' && isset($_SESSION['dt_gv']))
 			if($exist && $exist['id']) { $d->where('id', (int)$exist['id']); $d->update('dt_thuchanh_hinh', $data); }
 			else { $data['ngaytao'] = time(); $d->insert('dt_thuchanh_hinh', $data); }
 			dt_portal_gv_log($gvKey, (string)($_SESSION['dt_gv']['cccd'] ?? ''), $cccd, $hv['hoten'], 'Cập nhật thực hành trong hình: '.rtrim(rtrim(number_format($gio, 2, '.', ''), '0'), '.').' giờ / '.rtrim(rtrim(number_format($km, 2, '.', ''), '0'), '.').' km');
-			$dtGvMsg = 'Đã lưu thực hành trong hình cho '.$hv['hoten'].'.';
+			$warn = function_exists('dt_hinh_cap_warn') ? dt_hinh_cap_warn($hv['hang'], $gio, $km) : array();
+			$dtGvMsg = 'Đã lưu thực hành trong hình cho '.$hv['hoten'].'.'.($warn ? ' Cảnh báo: '.implode('; ', $warn).'.' : '');
 		}
 	}
 }

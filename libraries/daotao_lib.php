@@ -102,11 +102,11 @@ if(!function_exists('dt_mb_lower'))
 	function dt_nguong_hinh()
 	{
 		return array(
-			'B11' => array('km' => 120, 'gio' => 34),
-			'B1'  => array('km' => 120, 'gio' => 34),
-			'C1'  => array('km' => 113, 'gio' => 35),
-			'C'   => array('km' => 15,  'gio' => 7),
-			'CE'  => array('km' => 15,  'gio' => 7),
+			'B11' => array('km' => 120, 'gio' => 34, 'km_max' => 130, 'gio_max' => 36),
+			'B1'  => array('km' => 120, 'gio' => 34, 'km_max' => 130, 'gio_max' => 36),
+			'C1'  => array('km' => 115, 'gio' => 35, 'km_max' => 120, 'gio_max' => 37),
+			'C'   => array('km' => 15,  'gio' => 7,  'km_max' => 20,  'gio_max' => 8),
+			'CE'  => array('km' => 15,  'gio' => 7,  'km_max' => 20,  'gio_max' => 8),
 		);
 	}
 
@@ -294,6 +294,18 @@ if(!function_exists('dt_mb_lower'))
 		if((float)$gio <= $ng[$h]['gio']) $miss[] = 'Cần > '.$ng[$h]['gio'].' giờ';
 		if((float)$km < $ng[$h]['km']) $miss[] = 'Cần ≥ '.$ng[$h]['km'].' km';
 		return $miss;
+	}
+
+	/* Cảnh báo (không chặn) khi Giờ/Km vượt trần tối đa theo hạng. */
+	function dt_hinh_cap_warn($hang, $gio, $km)
+	{
+		$ng = dt_nguong_hinh();
+		$h = dt_norm_hang($hang);
+		if(!isset($ng[$h])) return array();
+		$w = array();
+		if(isset($ng[$h]['gio_max']) && (float)$gio > $ng[$h]['gio_max']) $w[] = 'Giờ vượt trần '.$ng[$h]['gio_max'].'h';
+		if(isset($ng[$h]['km_max']) && (float)$km > $ng[$h]['km_max']) $w[] = 'Km vượt trần '.$ng[$h]['km_max'].'km';
+		return $w;
 	}
 
 	/* Bảo đảm bảng nhật ký cập nhật của giáo viên tồn tại (cổng chạy độc lập với admin). */

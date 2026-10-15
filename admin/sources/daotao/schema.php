@@ -304,6 +304,7 @@ function dt_ensure_tables()
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('gv_commitment_v1')) { dt_ensure_gv_commitment_cols(); dt_migration_mark('gv_commitment_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_ghichu_v1')) { dt_ensure_xe_ghichu(); dt_migration_mark('xe_ghichu_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('sathach_gv_v1')) { dt_ensure_sathach_gv(); dt_migration_mark('sathach_gv_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_bosung_v1')) { dt_ensure_xe_bosung_cols(); dt_migration_mark('xe_bosung_v1'); }
 
 	$done = true;
 }
@@ -322,6 +323,28 @@ function dt_ensure_xe_ghichu()
 	global $d;
 	$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_xe' and column_name = 'ghi_chu' limit 0,1");
 	if(!$exist) $d->rawQuery("ALTER TABLE table_dt_xe ADD COLUMN ghi_chu VARCHAR(500) DEFAULT ''");
+}
+
+/* Cột bổ sung cho xe tập lái theo mẫu import mới (Update 5): GPXTL, GCNKĐ, IMEI... */
+function dt_ensure_xe_bosung_cols()
+{
+	global $d;
+	$cols = array(
+		'ma_csdt' => "VARCHAR(50) DEFAULT ''",
+		'nam_sx' => "VARCHAR(10) DEFAULT ''",
+		'so_gpxtl' => "VARCHAR(100) DEFAULT ''",
+		'ngay_cap_gpxtl' => "VARCHAR(20) DEFAULT ''",
+		'ngay_cap_gcnkd' => "VARCHAR(20) DEFAULT ''",
+		'ngay_hethan_gcnkd' => "VARCHAR(20) DEFAULT ''",
+		'so_huu' => "VARCHAR(10) DEFAULT ''",
+		'so_imei' => "VARCHAR(50) DEFAULT ''",
+		'so_seri' => "VARCHAR(50) DEFAULT ''",
+	);
+	foreach($cols as $col => $def)
+	{
+		$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_xe' and column_name = ? limit 0,1", array($col));
+		if(!$exist) $d->rawQuery("ALTER TABLE table_dt_xe ADD COLUMN `$col` $def");
+	}
 }
 
 /* Cam kết gắn bó của giáo viên: số năm + ngày bắt đầu (để tính thời hạn còn lại). */

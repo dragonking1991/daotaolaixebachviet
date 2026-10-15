@@ -16,7 +16,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Danh sách xe tập lái</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=xe" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <a href="index.php?com=daotao&act=uploadXe" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import xe</a> <a href="<?=dt_export_link('exportXe', array('keyword','hang','loai_xe','nhan_hieu','tt_tl','expiry'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php if(dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=xe" onclick="return confirm('Xóa toàn bộ xe tập lái?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div>
+			<div class="card-tools"><?php if(dt_can('xe','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=xe" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <?php endif; ?><?php if(dt_can('xe','import')): ?><a href="index.php?com=daotao&act=uploadXe" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import xe</a> <?php endif; ?><?php if(dt_can('xe','export')): ?><a href="<?=dt_export_link('exportXe', array('keyword','hang','loai_xe','nhan_hieu','tt_tl','expiry'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('xe','delete') && dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=xe" onclick="return confirm('Xóa toàn bộ xe tập lái?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div>
 		</div>
 		<div class="card-body">
 			<?php if(!empty($xe_stats)): ?>
@@ -68,11 +68,17 @@
 						</td>
 						<td class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars($it['gv_hoten'] ?: '—')?></td>
 						<td class="dt-sub">
+							<?php if(!empty($it['so_gpxtl'])): ?>Số GP: <strong><?=htmlspecialchars($it['so_gpxtl'])?></strong><br><?php endif; ?>
 							<?php if(!empty($it['ngay_hethan'])): ?>HH: <strong><?=htmlspecialchars($it['ngay_hethan'])?></strong><br>
 								<?php if($exp && $exp['status']==='het_han'): ?><span class="badge badge-danger">Hết hạn <?=abs($exp['days'])?> ngày</span>
 								<?php elseif($exp && $exp['status']==='sap_het'): ?><span class="badge badge-warning">Còn <?=$exp['days']?> ngày</span>
 								<?php else: ?><span class="badge badge-success">Còn hạn</span><?php endif; ?>
 							<?php else: ?><span class="text-muted">—</span><?php endif; ?>
+							<?php if(!empty($it['ngay_hethan_gcnkd'])): $expkd = function_exists('dt_expiry_info') ? dt_expiry_info($it['ngay_hethan_gcnkd']) : null; ?>
+								<div class="mt-1">HH kiểm định: <strong><?=htmlspecialchars($it['ngay_hethan_gcnkd'])?></strong>
+								<?php if($expkd && $expkd['status']==='het_han'): ?> <span class="badge badge-danger">Hết hạn</span>
+								<?php elseif($expkd && $expkd['status']==='sap_het'): ?> <span class="badge badge-warning">Còn <?=$expkd['days']?> ngày</span><?php endif; ?></div>
+							<?php endif; ?>
 						</td>
 						<td class="dt-sub">
 							<?php if($is_tl): ?><span class="badge badge-secondary">Đã thanh lý<?php if(!empty($it['ngay_thanh_ly'])): ?> (<?=htmlspecialchars($it['ngay_thanh_ly'])?>)<?php endif; ?></span><?php endif; ?>

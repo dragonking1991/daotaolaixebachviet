@@ -53,20 +53,21 @@
         </div>
         <?php
             $dt_perm_sections = array(
-                'khoa'     => array('Khóa đào tạo', true),
-                'hocvien'  => array('Học viên', true),
-                'xe'       => array('Xe tập lái', true),
-                'giaovien' => array('Giáo viên', true),
-                'lythuyet' => array('Lý thuyết & Mô phỏng', true),
-                'cabinkq'  => array('Cabin (kết quả)', true),
-                'hinh'     => array('Thực hành hình', false),
-                'dat'      => array('DAT (trên đường)', true),
-                'tonghop'  => array('Tổng hợp', false),
-                'kythi'    => array('Ngày kiểm tra', true),
-                'ketqua'   => array('Kết quả đào tạo', false),
-                'htkh'     => array('Số giấy HTKH', true),
-                'sathach'  => array('Kết quả sát hạch', true),
+                'khoa'     => array('label' => 'Khóa đào tạo', 'actions' => array('view','edit','import','export')),
+                'hocvien'  => array('label' => 'Học viên', 'actions' => array('view','edit','delete','import','export')),
+                'xe'       => array('label' => 'Xe tập lái', 'actions' => array('view','edit','delete','import','export')),
+                'giaovien' => array('label' => 'Giáo viên', 'actions' => array('view','edit','delete','import','export')),
+                'lythuyet' => array('label' => 'Lý thuyết & Mô phỏng', 'actions' => array('view','edit','delete','import','export')),
+                'cabinkq'  => array('label' => 'Cabin (kết quả)', 'actions' => array('view','edit','delete','import','export')),
+                'hinh'     => array('label' => 'Thực hành hình', 'actions' => array('view','edit','delete','export')),
+                'dat'      => array('label' => 'DAT (trên đường)', 'actions' => array('view','edit','delete','import','export')),
+                'tonghop'  => array('label' => 'Tổng hợp', 'actions' => array('view','export')),
+                'kythi'    => array('label' => 'Ngày kiểm tra', 'actions' => array('view','edit','delete','import','export')),
+                'ketqua'   => array('label' => 'Kết quả đào tạo', 'actions' => array('view','export')),
+                'htkh'     => array('label' => 'Số giấy HTKH', 'actions' => array('view','edit','delete','import','export')),
+                'sathach'  => array('label' => 'Kết quả sát hạch', 'actions' => array('view','edit','delete','import','export')),
             );
+            $dt_action_labels = array('view' => 'Tra cứu', 'edit' => 'Sửa', 'delete' => 'Xóa', 'import' => 'Import', 'export' => 'Xuất excel');
         ?>
         <div class="card card-permission card-primary card-outline text-sm" id="card-daotao-perm">
             <div class="card-header">
@@ -112,24 +113,22 @@
                 <p class="text-muted mb-2"><i class="fas fa-info-circle mr-1"></i>Phân quyền chi tiết theo từng mục (gồm cả import). Có thể gõ tên mục vào ô tìm nhanh phía trên.</p>
 
                 <?php foreach($dt_perm_sections as $secKey => $secInfo):
-                    $secLabel = $secInfo[0]; $secHasImport = $secInfo[1];
+                    $secLabel = $secInfo['label']; $secActions = $secInfo['actions'];
                     $secSearch = function_exists('dt_strip_diacritics') ? dt_strip_diacritics($secLabel) : strtolower($secLabel);
+                    $legacyManage = isset($ds_quyen) && in_array('daotao_'.$secKey, $ds_quyen); // quyền cũ "xem & quản lý"
                 ?>
                 <div class="form-group row dt-perm-row" data-dt-key="<?=htmlspecialchars($secSearch.' '.$secKey)?>">
                     <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3"><?=$secLabel?>:</label>
                     <div class="col-md-9">
+                        <?php foreach($secActions as $act):
+                            $permKey = 'daotao_'.$secKey.'_'.$act;
+                            $checked = (isset($ds_quyen) && in_array($permKey, $ds_quyen)) || ($legacyManage && $act !== 'import');
+                        ?>
                         <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
-                            <input type="checkbox" class="custom-control-input dt-perm-cb dt-perm-view" name="dataQuyen[]" id="quyen-daotao-<?=$secKey?>-view" value="daotao_<?=$secKey?>" <?=(isset($ds_quyen) && in_array('daotao_'.$secKey, $ds_quyen))?'checked':'';?>>
-                            <label for="quyen-daotao-<?=$secKey?>-view" class="custom-control-label font-weight-normal">Xem &amp; quản lý</label>
+                            <input type="checkbox" class="custom-control-input dt-perm-cb dt-perm-<?=$act?>" name="dataQuyen[]" id="quyen-daotao-<?=$secKey?>-<?=$act?>" value="<?=$permKey?>" <?=$checked?'checked':''?>>
+                            <label for="quyen-daotao-<?=$secKey?>-<?=$act?>" class="custom-control-label font-weight-normal"><?=$dt_action_labels[$act]?></label>
                         </div>
-                        <?php if($secHasImport): ?>
-                        <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
-                            <input type="checkbox" class="custom-control-input dt-perm-cb dt-perm-import" name="dataQuyen[]" id="quyen-daotao-<?=$secKey?>-import" value="daotao_<?=$secKey?>_import" <?=(isset($ds_quyen) && in_array('daotao_'.$secKey.'_import', $ds_quyen))?'checked':'';?>>
-                            <label for="quyen-daotao-<?=$secKey?>-import" class="custom-control-label font-weight-normal">Import</label>
-                        </div>
-                        <?php else: ?>
-                        <span class="text-muted align-middle d-inline-block mb-2 text-md"><i class="fas fa-minus mr-1"></i>Không có import</span>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -149,7 +148,7 @@
                 bView = card.querySelector('#dt-perm-view-all'), bImport = card.querySelector('#dt-perm-import-all'),
                 search = card.querySelector('#dt-perm-search'), empty = card.querySelector('.dt-perm-empty');
             // "Chọn tất cả" chỉ tick quyền chi tiết theo mục (không tick quyền thô "mọi mục") để tránh gán quá rộng.
-            if(bAll) bAll.addEventListener('click', function(){ setAll('.dt-perm-view, .dt-perm-import', true); });
+            if(bAll) bAll.addEventListener('click', function(){ setAll('.dt-perm-view, .dt-perm-edit, .dt-perm-delete, .dt-perm-import, .dt-perm-export', true); });
             if(bNone) bNone.addEventListener('click', function(){ setAll('.dt-perm-cb', false); });
             if(bView) bView.addEventListener('click', function(){ setAll('.dt-perm-view', true); });
             if(bImport) bImport.addEventListener('click', function(){ setAll('.dt-perm-import', true); });

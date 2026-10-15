@@ -9,7 +9,8 @@ function dt_crud_configs()
 			'id_khoa' => 'Khóa', 'ma_hv' => 'Mã học viên', 'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'hang' => 'Hạng', 'gv_hoten' => 'Giáo viên', 'nguoi_gioithieu' => 'Người giới thiệu', 'he_daotao' => 'Hệ đào tạo'
 		)),
 		'xe' => array('title' => 'Xe tập lái', 'table' => 'dt_xe', 'back' => 'xe', 'fields' => array(
-			'bien_so' => 'Biển số', 'hang_xe' => 'Hạng xe', 'hang_dt' => 'Hạng đào tạo', 'so_dangky' => 'Số đăng ký', 'so_khung' => 'Số khung', 'so_may' => 'Số máy', 'loai_xe' => 'Loại xe', 'nhan_hieu' => 'Nhãn hiệu', 'gv_hoten' => 'Giáo viên', 'ngay_hethan' => 'Ngày hết hạn GPLX xe tập lái', 'ghi_chu' => 'Ghi chú'
+			'bien_so' => 'Biển số', 'hang_xe' => 'Hạng xe', 'hang_dt' => 'Hạng đào tạo', 'so_dangky' => 'Số đăng ký', 'so_khung' => 'Số khung', 'so_may' => 'Số máy', 'loai_xe' => 'Loại xe', 'nhan_hieu' => 'Nhãn hiệu', 'gv_hoten' => 'Giáo viên', 'ngay_hethan' => 'Ngày hết hạn GPLX xe tập lái',
+			'ma_csdt' => 'Mã CSĐT', 'nam_sx' => 'Năm sản xuất', 'so_gpxtl' => 'Số GP xe tập lái', 'ngay_cap_gpxtl' => 'Ngày cấp GPXTL', 'ngay_cap_gcnkd' => 'Ngày cấp GCNKĐ', 'ngay_hethan_gcnkd' => 'Ngày hết hạn GCNKĐ', 'so_huu' => 'Sở hữu (1/0)', 'so_imei' => 'Số IMEI', 'so_seri' => 'Số Seri', 'ghi_chu' => 'Ghi chú'
 		)),
 		'giaovien' => array('title' => 'Giáo viên', 'table' => 'dt_giaovien', 'back' => 'giaovien', 'fields' => array(
 			'ma_csdt' => 'Mã CSĐT', 'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'gioitinh' => 'Giới tính', 'sdt' => 'Điện thoại', 'dia_chi' => 'Địa chỉ',

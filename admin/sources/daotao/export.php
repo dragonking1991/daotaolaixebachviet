@@ -229,11 +229,11 @@ function dt_xe_export()
 	global $d;
 	list($where, $params) = dt_xe_where();
 	$rows = $d->rawQuery("select * from #_dt_xe where 1 $where order by bien_so asc", $params);
-	$headers = array('STT','Biển số','Hạng xe','Hạng đào tạo','Số đăng ký','Số khung','Số máy','Loại xe','Nhãn hiệu','Giáo viên','Ngày HH GPLX tập lái','Trạng thái','Ngày thanh lý');
+	$headers = array('STT','Biển số','Hạng xe','Hạng đào tạo','Số đăng ký','Số khung','Số máy','Loại xe','Nhãn hiệu','Giáo viên','Ngày HH GPLX tập lái','Trạng thái','Ngày thanh lý','Mã CSĐT','Năm SX','Số GPXTL','Ngày cấp GPXTL','Ngày cấp GCNKĐ','Ngày HH GCNKĐ','Sở hữu','Số IMEI','Số Seri');
 	$out = array(); $stt = 1;
 	foreach($rows as $x)
 	{
-		$out[] = array($stt++, $x['bien_so'], $x['hang_xe'], $x['hang_dt'], $x['so_dangky'], $x['so_khung'], $x['so_may'], $x['loai_xe'], $x['nhan_hieu'], $x['gv_hoten'], isset($x['ngay_hethan'])?$x['ngay_hethan']:'', !empty($x['thanh_ly'])?'Đã thanh lý':'Đang hoạt động', isset($x['ngay_thanh_ly'])?$x['ngay_thanh_ly']:'');
+		$out[] = array($stt++, $x['bien_so'], $x['hang_xe'], $x['hang_dt'], $x['so_dangky'], $x['so_khung'], $x['so_may'], $x['loai_xe'], $x['nhan_hieu'], $x['gv_hoten'], isset($x['ngay_hethan'])?$x['ngay_hethan']:'', !empty($x['thanh_ly'])?'Đã thanh lý':'Đang hoạt động', isset($x['ngay_thanh_ly'])?$x['ngay_thanh_ly']:'', isset($x['ma_csdt'])?$x['ma_csdt']:'', isset($x['nam_sx'])?$x['nam_sx']:'', isset($x['so_gpxtl'])?$x['so_gpxtl']:'', isset($x['ngay_cap_gpxtl'])?$x['ngay_cap_gpxtl']:'', isset($x['ngay_cap_gcnkd'])?$x['ngay_cap_gcnkd']:'', isset($x['ngay_hethan_gcnkd'])?$x['ngay_hethan_gcnkd']:'', isset($x['so_huu'])?$x['so_huu']:'', isset($x['so_imei'])?$x['so_imei']:'', isset($x['so_seri'])?$x['so_seri']:'');
 	}
 	dt_xlsx_simple('Xe tap lai', 'xe-tap-lai-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 4, 5, 6));
 }
@@ -243,12 +243,12 @@ function dt_giaovien_export()
 	global $d;
 	list($where, $params) = dt_giaovien_where();
 	$rows = $d->rawQuery("select * from #_dt_giaovien where 1 $where order by hoten asc", $params);
-	$headers = array('STT','Mã CSĐT','Họ và tên','CCCD','Ngày sinh','Giới tính','Điện thoại','Địa chỉ','Hạng GPLX','Số GPLX','Ngày cấp GPLX','Ngày HH GPLX','Hạng ĐT được phép','Loại hình ĐT','Hình thức TD','Ngày TD','Trình độ','Chuyên môn','Sư phạm','Nơi công tác');
+	$headers = array('STT','Mã CSĐT','Họ và tên','CCCD','Ngày sinh','Giới tính','Điện thoại','Địa chỉ','Hạng GPLX','Số GPLX','Ngày cấp GPLX','Ngày HH GPLX','Hạng ĐT được phép','Loại hình ĐT','Hình thức TD','Ngày TD','Trình độ','Chuyên môn','Sư phạm','Nơi công tác','Số QĐ GCN','Ngày QĐ GCN','Nơi cấp GCN','Ghi chú');
 	$out = array(); $stt = 1;
 	foreach($rows as $g)
 	{
 		$gt = $g['gioitinh'] === 'F' ? 'Nữ' : ($g['gioitinh'] === 'M' ? 'Nam' : $g['gioitinh']);
-		$out[] = array($stt++, $g['ma_csdt'], $g['hoten'], $g['cccd'], $g['ngaysinh'], $gt, $g['sdt'], $g['dia_chi'], $g['hang_gplx'], $g['so_gplx'], $g['ngay_cap_gplx'], $g['ngay_hh_gplx'], $g['hang_daotao_phep'], $g['loai_hinh_dt'], $g['hinh_thuc_td'], $g['tuyen_dung'], $g['trinh_do'], $g['chuyen_mon'], $g['su_pham'], $g['noi_ct']);
+		$out[] = array($stt++, $g['ma_csdt'], $g['hoten'], $g['cccd'], $g['ngaysinh'], $gt, $g['sdt'], $g['dia_chi'], $g['hang_gplx'], $g['so_gplx'], $g['ngay_cap_gplx'], $g['ngay_hh_gplx'], $g['hang_daotao_phep'], $g['loai_hinh_dt'], $g['hinh_thuc_td'], $g['tuyen_dung'], $g['trinh_do'], $g['chuyen_mon'], $g['su_pham'], $g['noi_ct'], isset($g['so_qd_gcn'])?$g['so_qd_gcn']:'', isset($g['ngay_qd_gcn'])?$g['ngay_qd_gcn']:'', isset($g['noi_cap_gcn'])?$g['noi_cap_gcn']:'', isset($g['ghi_chu'])?$g['ghi_chu']:'');
 	}
 	dt_xlsx_simple('Giao vien', 'giao-vien-'.date('Ymd_His').'.xlsx', $headers, $out, array(3, 6, 9));
 }

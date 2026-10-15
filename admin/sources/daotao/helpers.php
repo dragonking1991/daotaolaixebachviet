@@ -211,6 +211,18 @@ function dt_hinh_dat($hang, $gio, $km, $override = null)
 	return ((float)$km >= $ng[$hang]['km'] && (float)$gio > $ng[$hang]['gio']) ? 1 : 0;
 }
 
+/* Cảnh báo (không chặn) khi Giờ/Km thực hành hình vượt trần tối đa theo hạng. @return array lý do. */
+function dt_hinh_cap_warn($hang, $gio, $km)
+{
+	$h = dt_norm_hang($hang);
+	$ng = dt_nguong_hinh();
+	if(!isset($ng[$h])) return array();
+	$w = array();
+	if(isset($ng[$h]['gio_max']) && (float)$gio > $ng[$h]['gio_max']) $w[] = 'Giờ ('.rtrim(rtrim(number_format((float)$gio,2,'.',''),'0'),'.').') vượt trần '.$ng[$h]['gio_max'].'h';
+	if(isset($ng[$h]['km_max']) && (float)$km > $ng[$h]['km_max']) $w[] = 'Km ('.rtrim(rtrim(number_format((float)$km,2,'.',''),'0'),'.').') vượt trần '.$ng[$h]['km_max'].'km';
+	return $w;
+}
+
 /**
  * Đánh giá DAT từ các tham số đã cộng dồn.
  * $agg: array('a','b','c','d','e') — a=tổng giờ, b=giờ đêm, c=giờ tự động, d=giờ số sàn, e=km.

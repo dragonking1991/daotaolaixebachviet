@@ -11,7 +11,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Kết quả sát hạch</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=sathachTracuu" class="btn btn-sm bg-gradient-secondary"><i class="fas fa-search mr-1"></i>Tra cứu</a> <a href="index.php?com=daotao&act=uploadSathach<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import</a> <a href="<?=dt_export_link('exportSathach', array('id_khoa','keyword'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a></div>
+			<div class="card-tools"><?php if(dt_can('sathach','view')): ?><a href="index.php?com=daotao&act=sathachTracuu" class="btn btn-sm bg-gradient-secondary"><i class="fas fa-search mr-1"></i>Tra cứu</a> <?php endif; ?><?php if(dt_can('sathach','import')): ?><a href="index.php?com=daotao&act=uploadSathach<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import</a> <?php endif; ?><?php if(dt_can('sathach','export')): ?><a href="<?=dt_export_link('exportSathach', array('id_khoa','keyword'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php endif; ?></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">

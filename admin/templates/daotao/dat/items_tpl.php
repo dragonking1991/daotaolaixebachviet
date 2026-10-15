@@ -11,7 +11,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Tổng hợp DAT</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=crudEdit&entity=dat" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm phiên</a> <a href="index.php?com=daotao&act=uploadDat<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import DAT</a> <?php if($id_khoa_sel): ?><a href="index.php?com=daotao&act=datDatAll&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Đánh dấu ĐẠT DAT cho TẤT CẢ học viên trong khóa?')" class="btn btn-sm bg-gradient-warning"><i class="fas fa-check-double mr-1"></i>Đạt toàn bộ</a> <?php endif; ?><a href="<?=dt_export_link('exportDat', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php if(dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=dat" onclick="return confirm('Xóa toàn bộ phiên DAT?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div>
+			<div class="card-tools"><?php if(dt_can('dat','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=dat" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm phiên</a> <?php endif; ?><?php if(dt_can('dat','import')): ?><a href="index.php?com=daotao&act=uploadDat<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import DAT</a> <?php endif; ?><?php if($id_khoa_sel && dt_can('dat','edit')): ?><a href="index.php?com=daotao&act=datDatAll&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Đánh dấu ĐẠT DAT cho TẤT CẢ học viên trong khóa?')" class="btn btn-sm bg-gradient-warning"><i class="fas fa-check-double mr-1"></i>Đạt toàn bộ</a> <?php endif; ?><?php if(dt_can('dat','export')): ?><a href="<?=dt_export_link('exportDat', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('dat','delete') && dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=dat" onclick="return confirm('Xóa toàn bộ phiên DAT?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">
@@ -28,31 +28,6 @@
 				</select>
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
-			<div class="mb-3">
-				<button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#dt-dat-calculation-note" aria-expanded="false" aria-controls="dt-dat-calculation-note"><i class="fas fa-calculator mr-1"></i>Cách tính các chỉ số DAT</button>
-				<div class="collapse mt-2" id="dt-dat-calculation-note">
-					<div class="alert alert-light border mb-0">
-						<strong>Cách cộng dữ liệu</strong>
-						<ul class="mb-2 pl-3">
-							<li><strong>A - Giờ thực hành:</strong> cộng thời gian thực hành của các phiên DAT. Giờ dạng thập phân: 1.15 giờ = 69 phút (1 giờ 9 phút), không phải 1 giờ 15 phút.</li>
-							<li><strong>B - Giờ đêm:</strong> cộng phần thời lượng mỗi phiên nằm trong khung 18:00–05:00; yêu cầu tối thiểu 1 giờ cho mọi hạng.</li>
-							<li><strong>C - Giờ tự động:</strong> cộng phiên có biển số khớp danh mục Xe và xe có hạng B11.</li>
-							<li><strong>D - Giờ số sàn:</strong> cộng các phiên còn lại, không được nhận diện là xe tự động.</li>
-							<li><strong>E - Quãng đường:</strong> cộng km thực hành của các phiên DAT.</li>
-						</ul>
-						<div class="small mb-2"><strong>Cách tính thiếu:</strong> ngưỡng bắt buộc của hạng trừ số thực tế, không nhỏ hơn 0. C/D chỉ áp dụng khi hạng yêu cầu. Biển số chưa khớp danh mục Xe hiện được tính vào D; nên import/cập nhật danh mục xe trước khi đối soát.</div>
-						<div class="table-responsive"><table class="table table-sm table-bordered bg-white mb-0">
-							<thead><tr><th>Hạng</th><th>A tổng giờ</th><th>B giờ đêm</th><th>C tự động</th><th>D số sàn</th><th>E quãng đường</th></tr></thead>
-							<tbody>
-								<tr><td>B11</td><td>≥ 12 giờ</td><td>≥ 1 giờ</td><td>—</td><td>—</td><td>≥ 710 km</td></tr>
-								<tr><td>B1</td><td>≥ 20 giờ</td><td>≥ 1 giờ</td><td>≥ 1 giờ</td><td>≥ 19 giờ</td><td>≥ 810 km</td></tr>
-								<tr><td>C1</td><td>≥ 24 giờ</td><td>≥ 1 giờ</td><td>≥ 1 giờ</td><td>≥ 23 giờ</td><td>≥ 825 km</td></tr>
-								<tr><td>C / CE</td><td>≥ 5 giờ</td><td>≥ 1 giờ</td><td>—</td><td>—</td><td>≥ 210 km</td></tr>
-							</tbody>
-						</table></div>
-					</div>
-				</div>
-			</div>
 			<?php if(!$id_khoa_sel && empty($items)): ?>
 			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp DAT, hoặc nhập CCCD/tên để tra cứu toàn bộ khóa.</div>
 			<?php else: ?>

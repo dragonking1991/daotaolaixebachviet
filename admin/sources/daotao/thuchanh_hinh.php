@@ -61,7 +61,10 @@ function dt_hinh_save()
 	else { $data['ngaytao'] = time(); $d->insert('dt_thuchanh_hinh', $data); }
 	dt_audit('update', 'hinh', 1, 'cccd='.$hv['cccd'].($override === 1 ? ' (xác nhận Đạt thủ công)' : ''));
 
-	$func->transfer("Đã lưu thực hành trong hình cho ".$hv['hoten'], $back);
+	$warn = dt_hinh_cap_warn($hv['hang'], $gio, $km);
+	$msg = "Đã lưu thực hành trong hình cho ".$hv['hoten'];
+	if($warn) $msg .= " — Cảnh báo: ".implode('; ', $warn);
+	$func->transfer($msg, $back);
 }
 
 /* Đánh dấu Đạt (override) toàn bộ học viên trong khóa. */

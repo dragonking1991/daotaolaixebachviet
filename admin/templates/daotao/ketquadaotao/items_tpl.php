@@ -11,7 +11,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Thông tin kết quả đào tạo</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><a href="<?=dt_export_link('exportKetqua', array('id_khoa','cccd','hoten','ma_khoa'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a></div>
+			<div class="card-tools"><?php if(dt_can('ketqua','export')): ?><a href="<?=dt_export_link('exportKetqua', array('id_khoa','cccd','hoten','ma_khoa'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php endif; ?></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-3">

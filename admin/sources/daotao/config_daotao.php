@@ -65,15 +65,15 @@ function dt_nguong_dat()
 
 /**
  * Ngưỡng thực hành trong hình theo hạng đã chuẩn hóa.
- * km: quãng đường tối thiểu (>=); gio: thời gian tối thiểu (>).
+ * km: quãng đường tối thiểu (>=); gio: thời gian tối thiểu (>). km_max/gio_max: trần tối đa (chỉ cảnh báo).
  */
 function dt_nguong_hinh()
 {
 	return array(
-		'B11' => array('km' => 120, 'gio' => 34),
-		'B1'  => array('km' => 120, 'gio' => 34),
-		'C1'  => array('km' => 113, 'gio' => 35),
-		'C'   => array('km' => 15,  'gio' => 7),
-		'CE'  => array('km' => 15,  'gio' => 7),
+		'B11' => array('km' => 120, 'gio' => 34, 'km_max' => 130, 'gio_max' => 36),
+		'B1'  => array('km' => 120, 'gio' => 34, 'km_max' => 130, 'gio_max' => 36),
+		'C1'  => array('km' => 115, 'gio' => 35, 'km_max' => 120, 'gio_max' => 37),
+		'C'   => array('km' => 15,  'gio' => 7,  'km_max' => 20,  'gio_max' => 8),
+		'CE'  => array('km' => 15,  'gio' => 7,  'km_max' => 20,  'gio_max' => 8),
 	);
 }
