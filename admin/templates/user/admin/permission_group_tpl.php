@@ -53,7 +53,7 @@
         </div>
         <?php
             $dt_perm_sections = array(
-                'khoa'     => array('label' => 'Khóa đào tạo', 'actions' => array('view','edit','import','export')),
+				'khoa'     => array('label' => 'Khóa đào tạo', 'actions' => array('view','edit','delete','import','export')),
                 'hocvien'  => array('label' => 'Học viên', 'actions' => array('view','edit','delete','import','export')),
                 'xe'       => array('label' => 'Xe tập lái', 'actions' => array('view','edit','delete','import','export')),
                 'giaovien' => array('label' => 'Giáo viên', 'actions' => array('view','edit','delete','import','export')),

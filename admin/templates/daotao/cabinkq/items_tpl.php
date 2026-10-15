@@ -1,4 +1,8 @@
-<?php if(!defined('SOURCES')) die("Error"); ?>
+<?php if(!defined('SOURCES')) die("Error");
+	$dt_ret = ''; $__q = array();
+	foreach(array('id_khoa','keyword','trang_thai','p') as $__k) if(isset($_GET[$__k]) && $_GET[$__k] !== '') $__q[$__k] = $_GET[$__k];
+	if($__q) $dt_ret = '&'.http_build_query($__q);
+?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<ol class="breadcrumb float-sm-left">
@@ -11,9 +15,10 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Kết quả cabin</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><?php if(dt_can('cabinkq','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <?php endif; ?><?php if(dt_can('cabinkq','import')): ?><a href="index.php?com=daotao&act=uploadCabin<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import cabin</a> <?php endif; ?><?php if(dt_can('cabinkq','export')): ?><a href="<?=dt_export_link('exportCabin', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('cabinkq','delete') && dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=cabinkq" onclick="return confirm('Xóa toàn bộ kết quả cabin?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div>
+			<div class="card-tools"><?php if(dt_can('cabinkq','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <?php endif; ?><?php if(dt_can('cabinkq','import')): ?><a href="index.php?com=daotao&act=uploadCabin<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import cabin</a> <?php endif; ?><?php if(dt_can('cabinkq','export')): ?><a href="<?=dt_export_link('exportCabin', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('cabinkq','delete')): ?><button type="submit" form="dt-bulk-cabinkq" class="btn btn-sm bg-gradient-danger dt-bulk-delete"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button><?php endif; ?></div>
 		</div>
 		<div class="card-body">
+			<?php if(dt_can('cabinkq','delete')): ?><form id="dt-bulk-cabinkq" method="post" action="index.php?com=daotao&act=crudDeleteSelected&entity=cabinkq<?=$dt_ret?>"></form><?php endif; ?>
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="cabinkq">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
@@ -29,10 +34,11 @@
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Học viên</th><th>Kết quả cabin</th><th class="text-center">Trạng thái</th><th class="dt-actions">Hành động</th></tr></thead>
+				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('cabinkq','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-cabinkq" title="Chọn tất cả"><?php endif; ?></th><th>Học viên</th><th>Kết quả cabin</th><th class="text-center">Trạng thái</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
+						<td class="text-center"><?php if(dt_can('cabinkq','delete') && !empty($it['id'])): ?><input type="checkbox" class="dt-bulk-item" form="dt-bulk-cabinkq" name="ids[]" value="<?=$it['id']?>"><?php endif; ?></td>
 						<td>
 							<div class="dt-title"><?=htmlspecialchars($it['hoten'] ?: $it['roster_ma_hv'])?></div>
 							<div class="dt-sub"><i class="fas fa-id-badge"></i><?=htmlspecialchars($it['roster_ma_hv'] ?: '—')?><span class="dt-sep">•</span><?=htmlspecialchars($it['hv_cccd'] ?: '—')?></div>
@@ -47,7 +53,7 @@
 						<td class="dt-actions"><?php if(!empty($it['id'])): ?><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=cabinkq&id=<?=$it['id']?>" onclick="return confirm('Xóa kết quả cabin này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a><?php else: ?><a href="index.php?com=daotao&act=crudEdit&entity=cabinkq&id_khoa=<?=(int)$id_khoa_sel?>" class="btn btn-xs bg-gradient-primary" title="Thêm kết quả cabin"><i class="fas fa-plus"></i></a><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="4" class="text-center text-muted p-3">Chưa có kết quả cabin</td></tr>
+					<tr><td colspan="5" class="text-center text-muted p-3">Chưa có kết quả cabin</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

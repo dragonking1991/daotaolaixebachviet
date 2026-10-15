@@ -34,6 +34,44 @@
 		if(selectAllKhoa) selectAllKhoa.addEventListener('change', function(){
 			Array.prototype.forEach.call(document.querySelectorAll('.dt-khoa-select'), function(box){ box.checked = selectAllKhoa.checked; });
 		});
+		var khoaDeleteForm = document.getElementById('dt-khoa-delete-form');
+		if(khoaDeleteForm) khoaDeleteForm.addEventListener('submit', function(e){
+			e.preventDefault();
+			var n = khoaDeleteForm.querySelectorAll('.dt-khoa-select:checked').length;
+			if(!n){
+				if(hasSwal) Swal.fire({icon:'info', title:'Chưa chọn khóa nào', text:'Hãy tích chọn ít nhất một khóa để xóa.'});
+				else alert('Hãy tích chọn ít nhất một khóa để xóa.');
+				return;
+			}
+			var message = 'Xóa '+n+' khóa cùng toàn bộ học viên và kết quả đào tạo liên quan? Hệ thống sẽ sao lưu trước khi xóa.';
+			if(!hasSwal){ if(confirm(message)){ showLoading(); khoaDeleteForm.submit(); } return; }
+			Swal.fire({title:'Xóa '+n+' khóa đã chọn?', text:message, icon:'warning', showCancelButton:true, confirmButtonText:'Xóa khóa', cancelButtonText:'Hủy', confirmButtonColor:'#dc2626'})
+				.then(function(r){ if(isConfirmed(r)){ showLoading(); khoaDeleteForm.submit(); } });
+		});
+
+		// Chọn nhiều để xóa (bulk select) — thay cho "Xóa toàn bộ".
+		// Checkbox gắn với form ẩn qua thuộc tính form="..." nên không bị lồng form.
+		Array.prototype.forEach.call(document.querySelectorAll('.dt-bulk-all'), function(all){
+			all.addEventListener('change', function(){
+				var fid = all.getAttribute('data-form');
+				Array.prototype.forEach.call(document.querySelectorAll('.dt-bulk-item[form="'+fid+'"]'), function(b){ b.checked = all.checked; });
+			});
+		});
+		Array.prototype.forEach.call(document.querySelectorAll('form[id^="dt-bulk-"]'), function(form){
+			form.addEventListener('submit', function(e){
+				e.preventDefault();
+				var n = document.querySelectorAll('.dt-bulk-item[form="'+form.id+'"]:checked').length;
+				if(!n){
+					if(hasSwal) Swal.fire({icon:'info', title:'Chưa chọn mục nào', text:'Hãy tích chọn ít nhất một mục để xóa.'});
+					else alert('Hãy tích chọn ít nhất một mục để xóa.');
+					return;
+				}
+				if(!hasSwal){ if(confirm('Xóa '+n+' mục đã chọn?')){ showLoading(); form.submit(); } return; }
+				Swal.fire({ title:'Xóa '+n+' mục đã chọn?', text:'Hệ thống tự sao lưu trước khi xóa.', icon:'warning',
+					showCancelButton:true, confirmButtonText:'Xóa', cancelButtonText:'Hủy', confirmButtonColor:'#dc2626' })
+					.then(function(r){ if(isConfirmed(r)){ showLoading(); form.submit(); } });
+			});
+		});
 
 		// Chặn ở pha capture để thay thế confirm() gắn sẵn trên thẻ
 		document.addEventListener('click', function(e){

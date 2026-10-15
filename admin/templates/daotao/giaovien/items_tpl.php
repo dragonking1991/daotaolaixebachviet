@@ -16,9 +16,10 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Danh sách giáo viên</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><?php if(dt_can('giaovien','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=giaovien" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <?php endif; ?><?php if(dt_can('giaovien','import')): ?><a href="index.php?com=daotao&act=uploadGiaovien" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import giáo viên</a> <?php endif; ?><?php if(dt_can('giaovien','export')): ?><a href="<?=dt_export_link('exportGiaovien', array('keyword','gioitinh','hang_gplx','hang','tt_tl','expiry'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('giaovien','delete') && dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=giaovien" onclick="return confirm('Xóa toàn bộ giáo viên?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div>
+			<div class="card-tools"><?php if(dt_can('giaovien','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=giaovien" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <?php endif; ?><?php if(dt_can('giaovien','import')): ?><a href="index.php?com=daotao&act=uploadGiaovien" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import giáo viên</a> <?php endif; ?><?php if(dt_can('giaovien','export')): ?><a href="<?=dt_export_link('exportGiaovien', array('keyword','gioitinh','hang_gplx','hang','tt_tl','expiry'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('giaovien','delete')): ?><button type="submit" form="dt-bulk-giaovien" class="btn btn-sm bg-gradient-danger dt-bulk-delete"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button><?php endif; ?></div>
 		</div>
 		<div class="card-body">
+			<?php if(dt_can('giaovien','delete')): ?><form id="dt-bulk-giaovien" method="post" action="index.php?com=daotao&act=crudDeleteSelected&entity=giaovien<?=$dt_ret?>"></form><?php endif; ?>
 			<?php if(isset($gv_expiry_stats)): ?>
 			<div class="mb-2 text-sm">
 				<a href="index.php?com=daotao&act=giaovien&expiry=sap_het" class="badge badge-light border mr-1" title="Xem giáo viên có GPLX hết hạn trong vòng chưa đủ 30 ngày"><strong>GPLX GV sắp hết hạn (&lt;30 ngày):</strong> <span class="text-warning"><?=$gv_expiry_stats['sap_het']?></span> / <?=$gv_expiry_stats['tong']?> giáo viên đang làm việc</a>
@@ -45,10 +46,11 @@
 			</form>
 			<div class="table-responsive">
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Giáo viên</th><th>GPLX &amp; chuyên môn</th><th>Đào tạo &amp; tuyển dụng</th><th>Liên hệ</th><th>Ghi chú</th><th class="dt-actions">Hành động</th></tr></thead>
+				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('giaovien','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-giaovien" title="Chọn tất cả"><?php endif; ?></th><th>Giáo viên</th><th>GPLX &amp; chuyên môn</th><th>Đào tạo &amp; tuyển dụng</th><th>Liên hệ</th><th>Ghi chú</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $exp = function_exists('dt_expiry_info') ? dt_expiry_info(isset($it['ngay_hh_gplx'])?$it['ngay_hh_gplx']:'') : null; $is_tl = !empty($it['thanh_ly']); ?>
 					<tr<?=$is_tl?' class="text-muted"':''?>>
+						<td class="text-center"><?php if(dt_can('giaovien','delete')): ?><input type="checkbox" class="dt-bulk-item" form="dt-bulk-giaovien" name="ids[]" value="<?=$it['id']?>"><?php endif; ?></td>
 						<td>
 								<div class="dt-title"><?=htmlspecialchars($it['hoten'] ?: '—')?> <?php if($is_tl): ?><span class="badge badge-secondary">Đã thanh lý</span><?php endif; ?> <?php if(isset($it['so_hoc_vien'])): ?><a href="index.php?com=daotao&amp;act=hocvien&amp;gv=<?=urlencode($it['hoten'])?>" class="badge badge-light border ml-1" title="Xem danh sách học viên giáo viên phụ trách"><?=number_format((int)$it['so_hoc_vien'])?> HV</a><?php endif; ?></div>
 							<div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($it['cccd'] ?: '—')?></div>
@@ -78,7 +80,7 @@
 						<td class="dt-actions"><a href="index.php?com=daotao&act=crudEdit&entity=giaovien&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-info" title="Sửa"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=gvResetPass&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Đặt lại mật khẩu cổng giáo viên về mặc định (= CCCD)?')" class="btn btn-xs bg-gradient-warning" title="Đặt lại mật khẩu"><i class="fas fa-key"></i></a> <?php if($is_tl): ?><a href="index.php?com=daotao&act=gvThanhLy&huy=1&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Hủy thanh lý giáo viên này?')" class="btn btn-xs bg-gradient-secondary" title="Hủy thanh lý"><i class="fas fa-undo"></i></a><?php else: ?><a href="index.php?com=daotao&act=gvThanhLy&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Đánh dấu giáo viên này đã thanh lý (nghỉ việc)? Vẫn hiển thị nhưng không tính vào lưu lượng.')" class="btn btn-xs bg-gradient-dark text-white" title="Thanh lý (nghỉ việc)"><i class="fas fa-user-slash"></i></a><?php endif; ?> <a href="index.php?com=daotao&act=crudDelete&entity=giaovien&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Xóa giáo viên này?')" class="btn btn-xs bg-gradient-danger" title="Xóa"><i class="fas fa-trash"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="6" class="text-center text-muted p-3">Chưa có giáo viên</td></tr>
+					<tr><td colspan="7" class="text-center text-muted p-3">Chưa có giáo viên</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

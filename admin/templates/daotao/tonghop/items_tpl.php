@@ -40,7 +40,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Tổng hợp Đạt / Không đạt</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><?php if(dt_can('tonghop','export')): ?><a href="index.php?<?=$qs?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=all" onclick="return confirm('Xóa toàn bộ dữ liệu trong Quản lý đào tạo? Thao tác không thể hoàn tác.')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ dữ liệu</a><?php endif; ?></div>
+			<div class="card-tools"><?php if(dt_can('tonghop','export')): ?><a href="index.php?<?=$qs?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="mb-3">

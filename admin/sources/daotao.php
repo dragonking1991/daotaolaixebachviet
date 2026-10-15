@@ -81,14 +81,15 @@ switch($act)
 	case "khoaAdd":    dt_guard(dt_p('khoa','manage')); dt_khoa_form();   $template = "daotao/khoa/item_add"; break;
 	case "khoaEdit":   dt_guard(dt_p('khoa','edit')); dt_khoa_form();   $template = "daotao/khoa/item_add"; break;
 	case "khoaSave":   dt_guard(dt_p('khoa','edit')); dt_khoa_save();   break;
-	// Xóa khóa đào tạo đã bị tắt hoàn toàn (Update 5).
-	case "khoaDelete":
-	case "khoaDeleteSelected": dt_guard(dt_p('khoa','edit')); $func->transfer("Chức năng xóa khóa đào tạo đã được tắt", "index.php?com=daotao&act=khoa", false); break;
+	// Không hỗ trợ xóa từng khóa qua link; chỉ xóa các khóa được chọn.
+	case "khoaDelete": $func->transfer("Vui lòng chọn khóa cần xóa trong danh sách", "index.php?com=daotao&act=khoa", false); break;
+	case "khoaDeleteSelected": dt_guard(dt_p('khoa','delete')); dt_khoa_delete_selected(); break;
 	case "uploadKhoa":      dt_guard(dt_p('khoa','import')); dt_khoa_upload_form(); $template = "daotao/khoa/upload"; break;
 	case "uploadKhoaExcel": dt_guard(dt_p('khoa','import')); dt_khoa_upload_excel(); break;
 	case "crudEdit":   dt_guard(dt_p(dt_crud_section(),'edit')); dt_crud_form(); $template = "daotao/crud_form"; break;
 	case "crudSave":   dt_guard(dt_p(dt_crud_section(),'edit')); dt_crud_save(); break;
 	case "crudDelete": dt_guard(dt_p(dt_crud_section(),'delete')); dt_crud_delete(); break;
+	case "crudDeleteSelected": dt_guard(dt_p(dt_crud_section(),'delete')); dt_crud_delete_selected(); break;
 	case "crudUndo":   dt_guard(dt_p(dt_crud_section(),'edit')); dt_crud_undo(); break;
 	case "crudDeleteAll": dt_guard(dt_p(dt_crud_section(),'delete')); dt_admin_guard(); if(preg_replace('/[^a-z]/','', isset($_REQUEST['entity'])?$_REQUEST['entity']:'') === 'khoa') $func->transfer("Chức năng xóa khóa đào tạo đã được tắt", "index.php?com=daotao&act=khoa", false); dt_crud_delete_all(); break;
 

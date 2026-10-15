@@ -6,7 +6,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Kết quả mô phỏng</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><a href="index.php?com=daotao&act=uploadMophong<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import</a> <a href="<?=dt_export_link('exportMophong', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php if(dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=mophong" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa kết quả</a><?php endif; ?></div>
+			<div class="card-tools"><a href="index.php?com=daotao&act=uploadMophong<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import</a> <a href="<?=dt_export_link('exportMophong', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">

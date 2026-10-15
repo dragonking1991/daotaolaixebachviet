@@ -252,3 +252,26 @@ function dt_crud_delete_all()
 	dt_audit('delete_all', $entity, $affected, 'Xóa toàn bộ '.$config['title']);
 	$func->transfer('Đã xóa toàn bộ '.$config['title'].' ('.$affected.' bản ghi)', dt_crud_back($config));
 }
+
+/* Xóa các mục đã chọn (bulk select) — thay cho "Xóa toàn bộ". */
+function dt_crud_delete_selected()
+{
+	global $d, $func;
+	$entity = preg_replace('/[^a-z]/', '', isset($_REQUEST['entity']) ? $_REQUEST['entity'] : '');
+	$config = dt_crud_context($entity);
+	if(!$config) $func->transfer('Mục đào tạo không hợp lệ', 'index.php?com=daotao&act=khoa', false);
+	if($entity === 'khoa') $func->transfer('Chức năng xóa khóa đào tạo đã được tắt', 'index.php?com=daotao&act=khoa', false);
+	$back = dt_crud_back($config, dt_crud_ret_query());
+	$ids = isset($_POST['ids']) && is_array($_POST['ids']) ? array_values(array_unique(array_filter(array_map('intval', $_POST['ids'])))) : array();
+	if(!$ids) $func->transfer('Vui lòng chọn ít nhất một mục để xóa', $back, false);
+
+	$backupTables = array_merge(array($config['table']), $entity === 'hocvien' ? array('dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh') : array());
+	if(dt_backup_tables($backupTables, 'sel_'.$entity) === '')
+		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', $back, false);
+
+	$d->startTransaction();
+	foreach($ids as $id) dt_crud_delete_id($entity, $id);
+	$d->commit();
+	dt_audit('delete_selected', $entity, count($ids), 'id: '.implode(',', $ids));
+	$func->transfer('Đã xóa '.count($ids).' mục đã chọn khỏi '.$config['title'], $back);
+}

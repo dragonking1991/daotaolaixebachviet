@@ -16,9 +16,10 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Danh sách xe tập lái</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><?php if(dt_can('xe','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=xe" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <?php endif; ?><?php if(dt_can('xe','import')): ?><a href="index.php?com=daotao&act=uploadXe" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import xe</a> <?php endif; ?><?php if(dt_can('xe','export')): ?><a href="<?=dt_export_link('exportXe', array('keyword','hang','loai_xe','nhan_hieu','tt_tl','expiry'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('xe','delete') && dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=xe" onclick="return confirm('Xóa toàn bộ xe tập lái?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div>
+			<div class="card-tools"><?php if(dt_can('xe','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=xe" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a> <?php endif; ?><?php if(dt_can('xe','import')): ?><a href="index.php?com=daotao&act=uploadXe" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import xe</a> <?php endif; ?><?php if(dt_can('xe','export')): ?><a href="<?=dt_export_link('exportXe', array('keyword','hang','loai_xe','nhan_hieu','tt_tl','expiry'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('xe','delete')): ?><button type="submit" form="dt-bulk-xe" class="btn btn-sm bg-gradient-danger dt-bulk-delete"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button><?php endif; ?></div>
 		</div>
 		<div class="card-body">
+			<?php if(dt_can('xe','delete')): ?><form id="dt-bulk-xe" method="post" action="index.php?com=daotao&act=crudDeleteSelected&entity=xe<?=$dt_ret?>"></form><?php endif; ?>
 			<?php if(!empty($xe_stats)): ?>
 			<div class="mb-2 text-sm">
 				<a href="index.php?com=daotao&act=xe&expiry=sap_het" class="badge badge-light border mr-1" title="Xem xe hết hạn trong vòng chưa đủ 30 ngày"><strong>GPLX xe sắp hết hạn (&lt;30 ngày):</strong> <span class="text-warning"><?=$xe_stats['sap_het']?></span> / <?=$xe_stats['tong']?> xe đang hoạt động</a>
@@ -54,10 +55,11 @@
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Xe tập lái</th><th>Thông số</th><th>Giáo viên</th><th>GPLX tập lái</th><th>Ghi chú</th><th class="dt-actions">Hành động</th></tr></thead>
+				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('xe','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-xe" title="Chọn tất cả"><?php endif; ?></th><th>Xe tập lái</th><th>Thông số</th><th>Giáo viên</th><th>GPLX tập lái</th><th>Ghi chú</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $exp = function_exists('dt_expiry_info') ? dt_expiry_info(isset($it['ngay_hethan'])?$it['ngay_hethan']:'') : null; $is_tl = !empty($it['thanh_ly']); ?>
 					<tr<?=$is_tl?' class="text-muted"':''?>>
+						<td class="text-center"><?php if(dt_can('xe','delete')): ?><input type="checkbox" class="dt-bulk-item" form="dt-bulk-xe" name="ids[]" value="<?=$it['id']?>"><?php endif; ?></td>
 						<td>
 							<div class="dt-title"><?=htmlspecialchars($it['bien_so'])?> <?php if($is_tl): ?><span class="badge badge-secondary">Đã thanh lý</span><?php endif; ?></div>
 							<div class="dt-sub"><i class="fas fa-car"></i><?=htmlspecialchars($it['nhan_hieu'] ?: '—')?></div>
@@ -95,7 +97,7 @@
 						</td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="6" class="text-center text-muted p-3">Chưa có xe</td></tr>
+					<tr><td colspan="7" class="text-center text-muted p-3">Chưa có xe</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

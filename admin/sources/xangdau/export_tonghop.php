@@ -293,11 +293,16 @@ function xd_xuat_tong_hop_da_duyet()
 	if($fromDate !== '') { $where .= ' and b.ngay_thanh_toan >= ?'; $params[] = $fromDate; }
 	if($toDate !== '') { $where .= ' and b.ngay_thanh_toan <= ?'; $params[] = $toDate; }
 
+	// Lọc học viên theo đúng khoảng ngày thanh toán (chỉ gồm HV trong khoảng đang lọc).
+	$joinDate = ''; $joinParams = array();
+	if($fromDate !== '') { $joinDate .= ' and h.ngay_thanh_toan >= ?'; $joinParams[] = $fromDate; }
+	if($toDate !== '') { $joinDate .= ' and h.ngay_thanh_toan <= ?'; $joinParams[] = $toDate; }
+
 	$rows = $d->rawQuery(
 		"select b.gv_key, b.gv_hoten, count(h.id) as so_hv, coalesce(sum(h.so_tien_thanh_toan), 0) as tong_chi, min(h.ngay_thanh_toan) as ngay_thanh_toan, max(h.ngay_thanh_toan) as ngay_thanh_toan_den
 		 from (select gv_key, max(gv_hoten) as gv_hoten from #_xd_hoadon b where $where group by gv_key) b
-		 left join #_xd_hocvien h on h.gv_key = b.gv_key and h.ngay_thanh_toan is not null group by b.gv_key, b.gv_hoten order by b.gv_hoten asc",
-		$params
+		 left join #_xd_hocvien h on h.gv_key = b.gv_key and h.ngay_thanh_toan is not null$joinDate group by b.gv_key, b.gv_hoten order by substring_index(b.gv_hoten, ' ', -1) asc, b.gv_hoten asc",
+		array_merge($params, $joinParams)
 	);
 	if(empty($rows)) $func->transfer("Không có giáo viên nào đã duyệt để xuất.", "index.php?com=xangdau&act=locDaThanhToan", false);
 

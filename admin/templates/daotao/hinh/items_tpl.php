@@ -1,16 +1,16 @@
-<?php if(!defined('SOURCES')) die("Error"); ?>
-<section class="content-header text-sm">
-	<div class="container-fluid">
-		<ol class="breadcrumb float-sm-left">
-			<li class="breadcrumb-item"><a href="index.php">Bảng điều khiển</a></li>
-			<li class="breadcrumb-item active">Thực hành trong hình</li>
+<?php if(!defined('SOURCES')) die("Error");
+	$dt_ret = ''; $__q = array();
+	foreach(array('id_khoa','keyword','trang_thai','p') as $__k) if(isset($_GET[$__k]) && $_GET[$__k] !== '') $__q[$__k] = $_GET[$__k];
+	if($__q) $dt_ret = '&'.http_build_query($__q);
+?>
 		</ol>
 	</div>
 </section>
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
-		<div class="card-header"><h3 class="card-title"><strong>Thực hành trong hình (nhập tay)</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3><div class="card-tools"><?php if($id_khoa_sel && dt_can('hinh','edit')): ?><a href="index.php?com=daotao&act=hinhDatAll&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Đánh dấu ĐẠT thực hành hình cho TẤT CẢ học viên trong khóa?')" class="btn btn-sm bg-gradient-warning"><i class="fas fa-check-double mr-1"></i>Đạt toàn bộ</a> <?php endif; ?><?php if(dt_can('hinh','export')): ?><a href="<?=dt_export_link('exportHinh', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('hinh','delete') && dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=hinh" onclick="return confirm('Xóa toàn bộ dữ liệu thực hành trong hình?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?></div></div>
+		<div class="card-header"><h3 class="card-title"><strong>Thực hành trong hình (nhập tay)</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3><div class="card-tools"><?php if($id_khoa_sel && dt_can('hinh','edit')): ?><a href="index.php?com=daotao&act=hinhDatAll&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Đánh dấu ĐẠT thực hành hình cho TẤT CẢ học viên trong khóa?')" class="btn btn-sm bg-gradient-warning"><i class="fas fa-check-double mr-1"></i>Đạt toàn bộ</a> <?php endif; ?><?php if(dt_can('hinh','export')): ?><a href="<?=dt_export_link('exportHinh', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('hinh','delete')): ?><button type="submit" form="dt-bulk-hinh" class="btn btn-sm bg-gradient-danger dt-bulk-delete"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button><?php endif; ?></div></div>
 		<div class="card-body">
+			<?php if(dt_can('hinh','delete')): ?><form id="dt-bulk-hinh" method="post" action="index.php?com=daotao&act=crudDeleteSelected&entity=hinh<?=$dt_ret?>"></form><?php endif; ?>
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="hinh">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
@@ -29,10 +29,11 @@
 			<div class="alert alert-info mb-0">Chọn khóa để nhập thực hành trong hình, hoặc nhập CCCD/tên để tra cứu toàn bộ khóa.</div>
 			<?php else: ?>
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Kết quả</th><th style="width:420px">Giờ / km / xác nhận</th><th>Thao tác</th></tr></thead>
+				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('hinh','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-hinh" title="Chọn tất cả"><?php endif; ?></th><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th class="text-center">Kết quả</th><th style="width:420px">Giờ / km / xác nhận</th><th>Thao tác</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
+						<td class="text-center"><?php if(dt_can('hinh','delete') && !empty($it['data_id'])): ?><input type="checkbox" class="dt-bulk-item" form="dt-bulk-hinh" name="ids[]" value="<?=$it['data_id']?>"><?php endif; ?></td>
 						<td><?=htmlspecialchars($it['hoten'])?></td>
 						<td><?=htmlspecialchars($it['cccd'])?></td>
 						<td><?=htmlspecialchars($it['hang'])?></td>
@@ -49,7 +50,7 @@
 						<td class="text-center"><?php if(!empty($it['data_id'])): ?><a href="index.php?com=daotao&act=crudEdit&entity=hinh&id=<?=$it['data_id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=hinh&id=<?=$it['data_id']?>" onclick="return confirm('Xóa dữ liệu hình này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="6" class="text-center text-muted p-3">Chưa có học viên</td></tr>
+					<tr><td colspan="7" class="text-center text-muted p-3">Chưa có học viên</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

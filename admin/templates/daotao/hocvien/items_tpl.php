@@ -19,10 +19,11 @@
 				<?php if(dt_can('hocvien','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=hocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a><?php endif; ?>
 				<?php if(dt_can('hocvien','import')): ?><a href="index.php?com=daotao&act=uploadHocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import học viên</a><?php endif; ?>
 				<?php if(dt_can('hocvien','export')): ?><a href="<?=dt_export_link('exportHocvien', array('id_khoa','keyword','hang','gv','he'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php endif; ?>
-				<?php if(dt_can('hocvien','delete') && dt_is_admin()): ?><a href="index.php?com=daotao&act=crudDeleteAll&entity=hocvien" onclick="return confirm('Xóa toàn bộ học viên và kết quả đào tạo liên quan?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa toàn bộ</a><?php endif; ?>
+				<?php if(dt_can('hocvien','delete')): ?><button type="submit" form="dt-bulk-hocvien" class="btn btn-sm bg-gradient-danger dt-bulk-delete"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button><?php endif; ?>
 			</div>
 		</div>
 		<div class="card-body">
+			<?php if(dt_can('hocvien','delete')): ?><form id="dt-bulk-hocvien" method="post" action="index.php?com=daotao&act=crudDeleteSelected&entity=hocvien<?=$dt_ret?>"></form><?php endif; ?>
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="hocvien">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
@@ -41,12 +42,13 @@
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Học viên</th><th>Thông tin đào tạo</th><th>Tiến độ</th><th class="text-center">Điều kiện dự thi</th><th class="dt-actions">Hành động</th></tr></thead>
+				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('hocvien','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-hocvien" title="Chọn tất cả"><?php endif; ?></th><th>Học viên</th><th>Thông tin đào tạo</th><th>Tiến độ</th><th class="text-center">Điều kiện dự thi</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $s=isset($it['sum'])?$it['sum']:null;
 						$done=0; if($s){ $done=($s['ly_thuyet']['dat']?1:0)+(dt_cabin_pass($s['cabin'])?1:0)+($s['hinh']['dat']?1:0)+($s['dat']['dat']?1:0); }
 						$pct=$s?round($done/4*100):0; ?>
 					<tr>
+						<td class="text-center"><?php if(dt_can('hocvien','delete')): ?><input type="checkbox" class="dt-bulk-item" form="dt-bulk-hocvien" name="ids[]" value="<?=$it['id']?>"><?php endif; ?></td>
 						<td>
 							<div class="dt-title"><?=htmlspecialchars($it['hoten'])?></div>
 							<div class="dt-sub">
@@ -72,7 +74,7 @@
 						<td class="dt-actions"><?php if(dt_can('hocvien','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=hocvien&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a><?php endif; ?> <?php if(dt_can('hocvien','delete')): ?><a href="index.php?com=daotao&act=crudDelete&entity=hocvien&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-danger dt-del" data-name="<?=htmlspecialchars($it['hoten'])?>"><i class="fas fa-trash"></i></a><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="5" class="dt-empty"><div class="dt-empty-box"><i class="fas fa-user-graduate"></i><div>Chưa có học viên trong danh sách</div><a href="index.php?com=daotao&act=uploadHocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success mt-2"><i class="fas fa-upload mr-1"></i>Import học viên</a></div></td></tr>
+					<tr><td colspan="6" class="dt-empty"><div class="dt-empty-box"><i class="fas fa-user-graduate"></i><div>Chưa có học viên trong danh sách</div><a href="index.php?com=daotao&act=uploadHocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success mt-2"><i class="fas fa-upload mr-1"></i>Import học viên</a></div></td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

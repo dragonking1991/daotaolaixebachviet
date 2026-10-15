@@ -31,9 +31,10 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 	$hvByGv = array();
 	if(!empty($hocviens)) foreach($hocviens as $h) { $hvByGv[$h['gv_key']][] = $h; if(!isset($gvTen[$h['gv_key']])) $gvTen[$h['gv_key']] = $h['gv_hoten']; }
 
-	// Danh sách GV = các GV có học viên được trích (theo thứ tự tên)
+	// Danh sách GV = các GV có học viên được trích (sắp theo TÊN — chữ cuối, kiểu Việt Nam A,B,C)
 	$gvKeys = array_keys($hvByGv);
-	usort($gvKeys, function($a, $b) use ($gvTen) { return strcmp((string)$gvTen[$a], (string)$gvTen[$b]); });
+	$xdGiven = function($name) { $name = trim(preg_replace('/\s+/', ' ', (string)$name)); if($name === '') return ''; $parts = explode(' ', $name); return end($parts); };
+	usort($gvKeys, function($a, $b) use ($gvTen, $xdGiven) { $c = strcasecmp($xdGiven($gvTen[$a]), $xdGiven($gvTen[$b])); return $c !== 0 ? $c : strcasecmp((string)$gvTen[$a], (string)$gvTen[$b]); });
 	if(empty($gvKeys)) $gvKeys = array_keys($gvTen);
 
 	$objPHPExcel = new PHPExcel();

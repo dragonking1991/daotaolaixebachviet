@@ -140,6 +140,7 @@
 					<?php endif; ?>
 					<?php if($showDat): ?>
 					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['dat']['dat'])?>
+						<?php $dagg = isset($s['dat']['agg']) ? $s['dat']['agg'] : null; if($dagg): ?><div class="dt-gv-dat-agg">A <?=$dagg['a']?>h · B <?=$dagg['b']?>h · C <?=$dagg['c']?>h · D <?=$dagg['d']?>h · E <?=$dagg['e']?> km</div><?php endif; ?>
 						<?php if(!empty($datMiss)): ?><div class="dt-gv-miss"><?php foreach($datMiss as $m): ?><span><?=htmlspecialchars($m)?></span><?php endforeach; ?></div><?php endif; ?>
 					</td>
 					<?php endif; ?>
@@ -169,6 +170,7 @@
 .dt-gv-hinh-cell { min-width: 170px; padding: 10px !important; border: 1px solid #e0e0e0; text-align: center; vertical-align: middle; }
 .dt-gv-miss { margin-top: 7px; display: flex; flex-direction: column; gap: 3px; text-align: left; }
 .dt-gv-miss span { display: block; font-size: 12px; line-height: 1.35; color: #9a3412; background: #fff5f1; border-left: 2px solid #ef9a76; border-radius: 3px; padding: 4px 6px; }
+.dt-gv-dat-agg { margin-top: 6px; font-size: 12px; line-height: 1.4; color: #475569; }
 .dt-gv-edit { margin-top: 8px; }
 .dt-gv-edit summary { display: inline-flex; align-items: center; gap: 5px; color: #3155d9; font-size: 12px; font-weight: 600; cursor: pointer; list-style: none; }
 .dt-gv-edit summary::-webkit-details-marker { display: none; }
