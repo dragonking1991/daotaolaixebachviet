@@ -102,7 +102,8 @@
 				<?php
 				if(!empty($dtStudents)): foreach($dtStudents as $it): $hv=$it['hv']; $s=$it['sum'];
 					$ltMiss = $showDetail && $showLt ? dt_portal_lythuyet_cell($hv, $s['ly_thuyet']['dat']) : array();
-					$datMiss = $showDetail && $showDat && empty($s['dat']['dat']) && !empty($s['dat']['thieu']) ? $s['dat']['thieu'] : array();
+					// DAT: luôn hiển thị nội dung còn thiếu (giống cột DAT ở màn Tổng hợp admin), không phụ thuộc show_detail.
+					$datMiss = $showDat && empty($s['dat']['dat']) && !empty($s['dat']['thieu']) ? $s['dat']['thieu'] : array();
 					$hinhMiss = $showDetail && $showHinh && empty($s['hinh']['dat']) ? dt_portal_hinh_missing($hv['hang'], $s['hinh']['gio'], $s['hinh']['km']) : array();
 				?>
 				<tr>
@@ -141,7 +142,7 @@
 					<?php if($showDat): ?>
 					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['dat']['dat'])?>
 						<?php $dagg = isset($s['dat']['agg']) ? $s['dat']['agg'] : null; if($dagg): ?><div class="dt-gv-dat-agg">A <?=$dagg['a']?>h · B <?=$dagg['b']?>h · C <?=$dagg['c']?>h · D <?=$dagg['d']?>h · E <?=$dagg['e']?> km</div><?php endif; ?>
-						<?php if(!empty($datMiss)): ?><div class="dt-gv-miss"><?php foreach($datMiss as $m): ?><span><?=htmlspecialchars($m)?></span><?php endforeach; ?></div><?php endif; ?>
+						<?php if(!empty($datMiss)): ?><div class="dt-gv-dat-missing"><?=htmlspecialchars(implode(' · ', $datMiss))?></div><?php endif; ?>
 					</td>
 					<?php endif; ?>
 					<?php if($showKl): ?><td class="dt-gv-conclusion-cell"><span class="dt-gv-conclusion <?=$s['du_dieu_kien']?'is-ready':'is-not-ready'?>"><?=$s['du_dieu_kien']?'Đủ ĐK':'Chưa đủ'?></span></td><?php endif; ?>
@@ -214,6 +215,7 @@
 .dt-gv-conclusion.is-not-ready { background: #fff0e8; color: #a9441b; }
 .dt-gv-miss { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; text-align: left; }
 .dt-gv-miss span { font-size: 11.5px; line-height: 1.3; color: #a9441b; background: #fff4f2; border-radius: 4px; padding: 2px 6px; }
+.dt-gv-dat-missing { margin-top: 6px; color: #9f2525; font-size: 12px; line-height: 1.45; text-align: left; }
 .dt-gv-hinh-form { margin-top: 8px; display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
 .dt-gv-hinh-form input { height: 30px; padding: 0 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 12px; }
 .dt-gv-hinh-form button { height: 30px; padding: 0 10px; border: none; border-radius: 5px; background: #1e9e4a; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }

@@ -281,20 +281,19 @@ function dt_lythuyet_export()
 	$tt = dt_req('trang_thai');
 	$duLieu = dt_req('du_lieu', 'co');
 	if(!in_array($duLieu, array('co', 'tat_ca', 'chua'), true)) $duLieu = 'co';
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên');
-	foreach($dsMon as $label) $headers = array_merge($headers, array($label.' - Tiến độ', $label.' - Điểm kiểm tra', $label.' - Kết quả'));
-	$headers[] = 'Kết luận LT';
-	$textCols = array(1, 3);
-	$out = array(); $stt = 1; $redCells = array();
+
 	$baseCols = 6; // STT, Mã HV, Họ tên, CCCD, Hạng, Giáo viên
+	$tongMon = count($dsMon);
+	$ketLuanCol = $baseCols + $tongMon * 3; // cột Kết luận LT
+
+	$out = array(); $stt = 1; $redCells = array();
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
 		$monData = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : array();
 		if($duLieu === 'co' && empty($monData)) continue;
 		if($duLieu === 'chua' && !empty($monData)) continue;
-		$soDat = 0; $cells = array(); $redRel = array();
-		$mi = 0;
+		$soDat = 0; $cells = array(); $redRel = array(); $mi = 0;
 		foreach($dsMon as $mk => $lbl)
 		{
 			$m = isset($monData[$mk]) ? $monData[$mk] : null;
@@ -303,10 +302,9 @@ function dt_lythuyet_export()
 			$cells[] = $m ? (float)$m['tien_do'] : '';
 			$cells[] = $m ? (float)$m['diem_kt'] : '';
 			$cells[] = !$m ? 'Chưa có dữ liệu' : ($datMon ? 'Đạt' : 'Chưa đạt');
-			if(!$datMon) $redRel[] = $baseCols + $mi * 3 + 2; // cột "Kết quả" của môn
+			if(!$datMon) $redRel[] = $baseCols + $mi * 3 + 2;
 			$mi++;
 		}
-		$tongMon = count($dsMon);
 		$datLT = ($soDat >= $tongMon);
 		$ketLuan = $datLT ? 'Đạt' : 'Chưa đủ ('.$soDat.'/'.$tongMon.')';
 		if($tt === 'dat' && !$datLT) continue;
@@ -314,9 +312,82 @@ function dt_lythuyet_export()
 		$out[] = array_merge(array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang'], $hv['gv_hoten']), $cells, array($ketLuan));
 		$ri = count($out) - 1;
 		foreach($redRel as $cidx) $redCells[$ri.','.$cidx] = true;
-		if(!$datLT) $redCells[$ri.','.($baseCols + $tongMon * 3)] = true; // cột Kết luận LT
+		if(!$datLT) $redCells[$ri.','.$ketLuanCol] = true;
 	}
-	dt_xlsx_simple('Ly thuyet', 'ly-thuyet-'.date('Ymd_His').'.xlsx', $headers, $out, $textCols, $redCells);
+
+	// Header 2 tầng: tên môn gộp (merge) + 3 cột con Tiến độ / Kiểm tra / Kết quả.
+	require_once LIBRARIES.'PHPExcel.php';
+	$objPHPExcel = new PHPExcel();
+	$sheet = $objPHPExcel->getActiveSheet();
+	$sheet->setTitle('Ly thuyet');
+	$colLetter = function($c) { return PHPExcel_Cell::stringFromColumnIndex($c); };
+	$headStyle = function($range) use ($sheet) {
+		$sheet->getStyle($range)->getFont()->setBold(true);
+		$sheet->getStyle($range)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('EEF2F9');
+		$sheet->getStyle($range)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER)->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER)->setWrapText(true);
+	};
+
+	$fixed = array('STT', 'Mã HV', 'Họ và tên', 'CCCD', 'Hạng', 'Giáo viên');
+	foreach($fixed as $c => $label)
+	{
+		$L = $colLetter($c);
+		$sheet->setCellValue($L.'1', $label);
+		$sheet->mergeCells($L.'1:'.$L.'2');
+		$headStyle($L.'1:'.$L.'2');
+	}
+	$mi = 0;
+	foreach($dsMon as $lbl)
+	{
+		$c0 = $baseCols + $mi * 3;
+		$L0 = $colLetter($c0); $L2 = $colLetter($c0 + 2);
+		$sheet->setCellValue($L0.'1', $lbl);
+		$sheet->mergeCells($L0.'1:'.$L2.'1');
+		$headStyle($L0.'1:'.$L2.'1');
+		$sheet->setCellValue($L0.'2', 'Tiến độ');
+		$sheet->setCellValue($colLetter($c0 + 1).'2', 'Kiểm tra');
+		$sheet->setCellValue($L2.'2', 'Kết quả');
+		$headStyle($L0.'2:'.$L2.'2');
+		$mi++;
+	}
+	$LK = $colLetter($ketLuanCol);
+	$sheet->setCellValue($LK.'1', 'Kết luận LT');
+	$sheet->mergeCells($LK.'1:'.$LK.'2');
+	$headStyle($LK.'1:'.$LK.'2');
+
+	$colCount = $ketLuanCol + 1;
+	$textCols = array(1 => true, 3 => true); // Mã HV, CCCD
+	$r = 3;
+	foreach($out as $row)
+	{
+		for($c = 0; $c < $colCount; $c++)
+		{
+			$L = $colLetter($c);
+			$val = isset($row[$c]) ? $row[$c] : '';
+			if(isset($textCols[$c])) $sheet->setCellValueExplicit($L.$r, (string)$val, PHPExcel_Cell_DataType::TYPE_STRING);
+			else $sheet->setCellValue($L.$r, $val);
+		}
+		$r++;
+	}
+	foreach($out as $ri => $row)
+	{
+		for($c = 0; $c < $colCount; $c++)
+		{
+			if(empty($redCells[$ri.','.$c])) continue;
+			$cell = $colLetter($c).($ri + 3);
+			$sheet->getStyle($cell)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('F8D7DA');
+			$sheet->getStyle($cell)->getFont()->getColor()->setRGB('C0392B');
+		}
+	}
+	for($c = 0; $c < $colCount; $c++) $sheet->getColumnDimension($colLetter($c))->setAutoSize(true);
+	$sheet->freezePane('A3');
+
+	if(ob_get_length()) ob_end_clean();
+	header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+	header('Content-Disposition: attachment;filename="ly-thuyet-'.date('Ymd_His').'.xlsx"');
+	header('Cache-Control: max-age=0');
+	$writer = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+	$writer->save('php://output');
+	exit();
 }
 
 function dt_hinh_export()

@@ -167,6 +167,8 @@ switch($act)
 	/* ---------- Số giấy HTKH ---------- */
 	case "htkh":            dt_guard(dt_p('htkh','view')); dt_htkh_list();   $template = "daotao/htkh/items"; break;
 	case "saveHtkh":        dt_guard(dt_p('htkh','edit'));  dt_htkh_save(); break;
+	case "htkhCapGiay":     dt_guard(dt_p('htkh','edit'));  dt_htkh_cap_giay(); break;
+	case "htkhPrint":       dt_guard(dt_p('htkh','view'));  dt_htkh_print(); break;
 	case "uploadHtkh":      dt_guard(dt_p('htkh','import'));   dt_htkh_upload_form(); $template = "daotao/htkh/upload"; break;
 	case "uploadHtkhExcel": dt_guard(dt_p('htkh','import'));   dt_htkh_upload_excel(); break;
 	case "exportHtkh":      dt_guard(dt_p('htkh','export')); dt_htkh_export(); break;

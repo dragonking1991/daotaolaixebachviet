@@ -3,6 +3,11 @@
 	foreach(array('id_khoa','keyword','trang_thai','p') as $__k) if(isset($_GET[$__k]) && $_GET[$__k] !== '') $__q[$__k] = $_GET[$__k];
 	if($__q) $dt_ret = '&'.http_build_query($__q);
 ?>
+<section class="content-header text-sm">
+	<div class="container-fluid">
+		<ol class="breadcrumb float-sm-left">
+			<li class="breadcrumb-item"><a href="index.php">Bảng điều khiển</a></li>
+			<li class="breadcrumb-item active">Thực hành trong hình</li>
 		</ol>
 	</div>
 </section>

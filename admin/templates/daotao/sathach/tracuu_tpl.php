@@ -21,8 +21,17 @@
 				<button class="btn btn-sm bg-gradient-primary">Tra cứu</button>
 			</form>
 			<div class="table-responsive">
+			<?php $shB = function($diem, $kq) {
+				$kq = trim((string)$kq); $diem = trim((string)$diem);
+				$out = $diem !== '' ? htmlspecialchars($diem) : '';
+				if($kq !== '') {
+					$ok = ($kq === 'Đ') || (mb_stripos($kq, 'đạt') !== false && mb_stripos($kq, 'không') === false);
+					$out .= ($out !== '' ? ' ' : '').'<span class="badge badge-'.($ok ? 'success' : 'danger').'">'.htmlspecialchars($kq).'</span>';
+				}
+				return $out !== '' ? $out : '—';
+			}; ?>
 			<table class="table dt-list table-hover table-bordered mb-0" style="white-space:nowrap;">
-				<thead><tr><th>Họ tên</th><th>CCCD</th><th>Hạng</th><th>Mã khóa</th><th>Ngày SH</th><th>Số GPLX</th><th>Kết quả</th><th>Ghi chú</th></tr></thead>
+				<thead><tr><th>Họ tên</th><th>CCCD</th><th>Hạng</th><th>Mã khóa</th><th>Ngày SH</th><th>LT</th><th>MP</th><th>Hình</th><th>Đường</th><th>Kết luận</th><th>Số GPLX</th><th>Ghi chú</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): ?>
 					<tr>
@@ -31,12 +40,16 @@
 						<td><?=htmlspecialchars($it['hang'])?></td>
 						<td><?=htmlspecialchars($it['ma_khoa'])?></td>
 						<td><?=htmlspecialchars($it['ngay_sh'])?></td>
+						<td><?=$shB(isset($it['diem_lt'])?$it['diem_lt']:'', isset($it['lt'])?$it['lt']:'')?></td>
+						<td><?=$shB(isset($it['diem_mp'])?$it['diem_mp']:'', isset($it['mp'])?$it['mp']:'')?></td>
+						<td><?=$shB(isset($it['diem_hinh'])?$it['diem_hinh']:'', isset($it['hinh'])?$it['hinh']:'')?></td>
+						<td><?=$shB(isset($it['diem_duong'])?$it['diem_duong']:'', isset($it['duong'])?$it['duong']:'')?></td>
+						<td><?php $kl = ($it['ket_luan']!=='')?$it['ket_luan']:$it['ket_qua']; if($kl!==''): $okl=(mb_stripos($kl,'đạt')!==false && mb_stripos($kl,'không')===false); ?><span class="badge badge-<?=$okl?'success':'danger'?>"><?=htmlspecialchars($kl)?></span><?php else: ?>—<?php endif; ?></td>
 						<td><?=htmlspecialchars($it['so_gplx'])?></td>
-						<td><?php if($it['ket_qua']!==''): ?><span class="badge badge-<?=($it['ket_qua']==='Đạt')?'success':'danger'?>"><?=htmlspecialchars($it['ket_qua'])?></span><?php else: ?>—<?php endif; ?></td>
 						<td><?=htmlspecialchars($it['ghi_chu'])?></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="8" class="text-center text-muted p-3">Nhập điều kiện để tra cứu kết quả sát hạch.</td></tr>
+					<tr><td colspan="12" class="text-center text-muted p-3">Nhập điều kiện để tra cứu kết quả sát hạch.</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

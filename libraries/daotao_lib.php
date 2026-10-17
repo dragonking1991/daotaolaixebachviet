@@ -129,11 +129,12 @@ if(!function_exists('dt_mb_lower'))
 		$ng = dt_nguong_dat();
 		if(!isset($ng[$hang])) return array(0, array('Hạng không xác định'));
 		$r = $ng[$hang]; $thieu = array();
-		if($agg['a'] < $r['a']) $thieu[] = 'Giờ (A) < '.$r['a'];
-		if($r['dem'] > 0 && $agg['b'] < $r['dem']) $thieu[] = 'Giờ đêm (B) < '.$r['dem'];
-		if($r['c'] > 0 && $agg['c'] < $r['c']) $thieu[] = 'Giờ tự động (C) < '.$r['c'];
-		if($r['d'] > 0 && $agg['d'] < $r['d']) $thieu[] = 'Giờ số sàn (D) < '.$r['d'];
-		if($agg['e'] < $r['km']) $thieu[] = 'Quãng đường (E) < '.$r['km'].' km';
+		$f = function($v) { return rtrim(rtrim(number_format((float)$v, 2, '.', ''), '0'), '.'); };
+		if($agg['a'] < $r['a']) $thieu[] = 'Thiếu '.$f($r['a'] - $agg['a']).' giờ tổng (A)';
+		if($r['dem'] > 0 && $agg['b'] < $r['dem']) $thieu[] = 'Thiếu '.$f($r['dem'] - $agg['b']).' giờ đêm (B)';
+		if($r['c'] > 0 && $agg['c'] < $r['c']) $thieu[] = 'Thiếu '.$f($r['c'] - $agg['c']).' giờ tự động (C)';
+		if($r['d'] > 0 && $agg['d'] < $r['d']) $thieu[] = 'Thiếu '.$f($r['d'] - $agg['d']).' giờ số sàn (D)';
+		if($agg['e'] < $r['km']) $thieu[] = 'Thiếu '.$f($r['km'] - $agg['e']).' km (E)';
 		return array(empty($thieu) ? 1 : 0, $thieu);
 	}
 

@@ -50,6 +50,7 @@ function dt_khoa_save()
 		'hang' => dt_norm_hang($p['hang'] ?? ''),
 		'ngay_khaigiang' => trim($p['ngay_khaigiang'] ?? ''),
 		'ngay_manhoa' => trim($p['ngay_manhoa'] ?? ''),
+		'thoi_gian_hoc' => trim(htmlspecialchars($p['thoi_gian_hoc'] ?? '')),
 		'he_daotao' => trim(htmlspecialchars($p['he_daotao'] ?? '')),
 	);
 	if($data['ngay_khaigiang'] === '') $data['ngay_khaigiang'] = null;

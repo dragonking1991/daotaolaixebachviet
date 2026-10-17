@@ -41,6 +41,10 @@
 					</div>
 				</div>
 				<div class="form-group">
+					<label>Thời gian học</label>
+					<input type="text" class="form-control form-control-sm" name="data[thoi_gian_hoc]" placeholder="VD: 03 tháng (01/06/2026 - 31/08/2026)" value="<?=$isEdit ? htmlspecialchars(isset($item['thoi_gian_hoc'])?$item['thoi_gian_hoc']:'') : ''?>">
+				</div>
+				<div class="form-group">
 					<label>Hệ đào tạo</label>
 					<input type="text" class="form-control form-control-sm" name="data[he_daotao]" value="<?=$isEdit ? htmlspecialchars($item['he_daotao']) : ''?>">
 				</div>

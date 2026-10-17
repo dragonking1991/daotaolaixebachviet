@@ -15,6 +15,7 @@ function dt_ensure_tables()
 		hang VARCHAR(20) DEFAULT '',
 		ngay_khaigiang DATE NULL DEFAULT NULL,
 		ngay_manhoa DATE NULL DEFAULT NULL,
+		thoi_gian_hoc VARCHAR(255) DEFAULT '',
 		he_daotao VARCHAR(100) DEFAULT '',
 		ngaytao INT DEFAULT 0,
 		user_tao VARCHAR(255) DEFAULT '',
@@ -232,6 +233,9 @@ function dt_ensure_tables()
 		ma_hv VARCHAR(100) DEFAULT '',
 		so_giay VARCHAR(100) DEFAULT '',
 		ngay_cap VARCHAR(20) DEFAULT '',
+		hang_giay VARCHAR(20) DEFAULT '',
+		nguoi_ky VARCHAR(255) DEFAULT '',
+		ngay_ky VARCHAR(20) DEFAULT '',
 		ghi_chu VARCHAR(255) DEFAULT '',
 		nguoi_nhap VARCHAR(255) DEFAULT '',
 		ngaytao INT DEFAULT 0,
@@ -252,6 +256,18 @@ function dt_ensure_tables()
 		giaovien VARCHAR(255) DEFAULT '',
 		ngay_sh VARCHAR(20) DEFAULT '',
 		so_gplx VARCHAR(50) DEFAULT '',
+		diem_lt VARCHAR(30) DEFAULT '',
+		lt VARCHAR(30) DEFAULT '',
+		diem_mp VARCHAR(30) DEFAULT '',
+		mp VARCHAR(30) DEFAULT '',
+		ket_qua_tong VARCHAR(30) DEFAULT '',
+		diem_hinh VARCHAR(30) DEFAULT '',
+		hinh VARCHAR(30) DEFAULT '',
+		diem_duong VARCHAR(30) DEFAULT '',
+		duong VARCHAR(30) DEFAULT '',
+		chu_chi VARCHAR(30) DEFAULT '',
+		diem_chu_chi VARCHAR(30) DEFAULT '',
+		ket_luan VARCHAR(30) DEFAULT '',
 		ket_qua VARCHAR(30) DEFAULT '',
 		ghi_chu VARCHAR(255) DEFAULT '',
 		nguoi_nhap VARCHAR(255) DEFAULT '',
@@ -305,8 +321,24 @@ function dt_ensure_tables()
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_ghichu_v1')) { dt_ensure_xe_ghichu(); dt_migration_mark('xe_ghichu_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('sathach_gv_v1')) { dt_ensure_sathach_gv(); dt_migration_mark('sathach_gv_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_bosung_v1')) { dt_ensure_xe_bosung_cols(); dt_migration_mark('xe_bosung_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_capgiay_v1')) { dt_ensure_htkh_capgiay_cols(); dt_migration_mark('htkh_capgiay_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('sathach_noidung_v1')) { dt_ensure_sathach_noidung_cols(); dt_migration_mark('sathach_noidung_v1'); }
 
 	$done = true;
+}
+
+/* Cột bổ sung cho khóa (thời gian học) và giấy HTKH (người ký, ngày ký, hạng giấy) — Update 6. */
+function dt_ensure_htkh_capgiay_cols()
+{
+	global $d;
+	$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_khoa' and column_name = 'thoi_gian_hoc' limit 0,1");
+	if(!$exist) $d->rawQuery("ALTER TABLE table_dt_khoa ADD COLUMN thoi_gian_hoc VARCHAR(255) DEFAULT '' AFTER ngay_manhoa");
+	$cols = array('hang_giay' => "VARCHAR(20) DEFAULT ''", 'nguoi_ky' => "VARCHAR(255) DEFAULT ''", 'ngay_ky' => "VARCHAR(20) DEFAULT ''");
+	foreach($cols as $col => $def)
+	{
+		$ex = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_htkh' and column_name = ? limit 0,1", array($col));
+		if(!$ex) $d->rawQuery("ALTER TABLE table_dt_htkh ADD COLUMN `$col` $def");
+	}
 }
 
 /* Cột giáo viên cho kết quả sát hạch (bảng cũ chưa có). */
@@ -315,6 +347,18 @@ function dt_ensure_sathach_gv()
 	global $d;
 	$exist = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_sat_hach' and column_name = 'giaovien' limit 0,1");
 	if(!$exist) $d->rawQuery("ALTER TABLE table_dt_sat_hach ADD COLUMN giaovien VARCHAR(255) DEFAULT '' AFTER ten_khoa");
+}
+
+/* Cột nội dung sát hạch (điểm + kết quả từng nội dung) — Update 6. */
+function dt_ensure_sathach_noidung_cols()
+{
+	global $d;
+	$cols = array('diem_lt','lt','diem_mp','mp','ket_qua_tong','diem_hinh','hinh','diem_duong','duong','chu_chi','diem_chu_chi','ket_luan');
+	foreach($cols as $col)
+	{
+		$ex = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_sat_hach' and column_name = ? limit 0,1", array($col));
+		if(!$ex) $d->rawQuery("ALTER TABLE table_dt_sat_hach ADD COLUMN `$col` VARCHAR(30) DEFAULT ''");
+	}
 }
 
 /* Cột ghi chú cho xe tập lái (nhập tay trong mục chỉnh sửa). */

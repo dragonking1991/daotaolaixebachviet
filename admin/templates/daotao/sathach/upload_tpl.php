@@ -13,13 +13,19 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import kết quả sát hạch</strong></h3></div>
 			<div class="card-body">
-				<div class="alert alert-warning">File cần có cột <strong>CCCD</strong>; các cột tùy chọn: Họ tên, Hạng, Mã khóa, Ngày sát hạch, Số GPLX, Kết quả, Ghi chú. Ghép theo CCCD.</div>
-				<div class="form-group">
-					<label>Khóa <span class="text-muted">(tùy chọn)</span></label>
-					<select name="id_khoa" class="form-control form-control-sm">
-						<option value="">— Tất cả khóa (tự nhận theo học viên) —</option>
-						<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
-					</select>
+				<div class="alert alert-warning">File theo mẫu: <strong>CCCD</strong> (bắt buộc) + Mã HV, Họ tên, Hạng, Mã khóa, Tên khóa, Giáo viên, và các nội dung sát hạch <strong>Điểm LT / LT / Điểm MP / MP / Điểm Hình / Hình / Điểm Đường / Đường / Chữ chi / Điểm Chữ chi / Kết luận</strong>. Ghép theo CCCD.</div>
+				<div class="row">
+					<div class="col-md-6 form-group">
+						<label>Khóa <span class="text-muted">(tùy chọn)</span></label>
+						<select name="id_khoa" class="form-control form-control-sm">
+							<option value="">— Tất cả khóa (tự nhận theo học viên) —</option>
+							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
+						</select>
+					</div>
+					<div class="col-md-6 form-group">
+						<label>Ngày sát hạch <span class="text-muted">(áp dụng chung nếu file không có cột ngày)</span></label>
+						<input type="text" name="ngay_sh_chung" class="form-control form-control-sm" placeholder="dd/mm/yyyy">
+					</div>
 				</div>
 				<div class="form-group">
 					<label>File Excel (.xlsx, .xls)</label>
