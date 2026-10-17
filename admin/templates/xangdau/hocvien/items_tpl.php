@@ -2,6 +2,15 @@
 	$linkMan = "index.php?com=xangdau&act=hocvien";
 	$linkUpload = "index.php?com=xangdau&act=uploadHocvien";
 	$nhomBadge = array('BT' => 'badge-primary', 'CK' => 'badge-info', 'DAT' => 'badge-warning');
+	$xd_ret_q = array('com' => 'xangdau', 'act' => 'hocvien');
+	if($xd_filter_keyword !== '') $xd_ret_q['keyword'] = $xd_filter_keyword;
+	if($xd_filter_nhom !== '') $xd_ret_q['nhom'] = $xd_filter_nhom;
+	if($xd_filter_trangthai !== '') $xd_ret_q['trangthai'] = $xd_filter_trangthai;
+	if($xd_filter_tt_from !== '') $xd_ret_q['tt_from'] = $xd_filter_tt_from;
+	if($xd_filter_tt_to !== '') $xd_ret_q['tt_to'] = $xd_filter_tt_to;
+	$xd_ret_q['p'] = (int)$curPage;
+	$xd_ret = rawurlencode('index.php?'.http_build_query($xd_ret_q));
+	$xd_can_edit_info = (function_exists('xd_can_import') && xd_can_import()) || (function_exists('xd_can_kiem_tra') && xd_can_kiem_tra());
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -122,6 +131,18 @@
 							<?php } ?>
 						</td>
 						<td class="text-right">
+								<?php if($xd_can_edit_info && $it['ngay_thanh_toan'] === null) { ?>
+								<details class="d-inline-block text-left" style="position:relative;">
+									<summary class="btn btn-xs btn-outline-primary" style="list-style:none;cursor:pointer;"><i class="fas fa-user-edit"></i></summary>
+									<form method="post" action="index.php?com=xangdau&act=updateHocvienInfo" class="p-2 border rounded shadow-sm bg-white" style="position:absolute;right:0;z-index:20;min-width:240px;">
+										<input type="hidden" name="id" value="<?=(int)$it['id']?>">
+										<input type="hidden" name="ret" value="<?=$xd_ret?>">
+										<div class="form-group mb-1"><label class="small mb-0">Nhóm</label><select name="nhom" class="form-control form-control-sm"><?php foreach(array('BT','CK','DAT') as $n) { ?><option value="<?=$n?>" <?=$it['nhom']===$n?'selected':''?>><?=$n?></option><?php } ?></select></div>
+										<div class="form-group mb-1"><label class="small mb-0">Giáo viên</label><input type="text" name="gv_hoten" class="form-control form-control-sm" value="<?=htmlspecialchars($it['gv_hoten'], ENT_QUOTES, 'UTF-8')?>"></div>
+										<button class="btn btn-xs btn-success"><i class="fas fa-save mr-1"></i>Lưu</button>
+									</form>
+								</details>
+								<?php } ?>
 								<?php if(xd_can_xoa()) { ?>
 								<a class="btn btn-xs btn-danger" href="index.php?com=xangdau&act=deleteHocvien&id=<?=(int)$it['id']?>&p=<?=$curPage?>" onclick="return confirm('Xóa học viên này?');"><i class="far fa-trash-alt"></i></a>
 							<?php } ?>

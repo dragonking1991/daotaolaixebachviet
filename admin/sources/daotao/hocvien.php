@@ -17,7 +17,7 @@ function dt_hocvien_list()
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by h.id desc limit $startpoint,$per_page";
+	$sql = "select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit $startpoint,$per_page";
 	$items = $d->rawQuery($sql, $params);
 	foreach($items as &$__it) $__it['sum'] = dt_student_summary($__it);
 	unset($__it);

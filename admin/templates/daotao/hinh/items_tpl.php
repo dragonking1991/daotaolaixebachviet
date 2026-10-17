@@ -2,6 +2,8 @@
 	$dt_ret = ''; $__q = array();
 	foreach(array('id_khoa','keyword','trang_thai','p') as $__k) if(isset($_GET[$__k]) && $_GET[$__k] !== '') $__q[$__k] = $_GET[$__k];
 	if($__q) $dt_ret = '&'.http_build_query($__q);
+	$__inc = isset($_GET['ret']) ? rawurldecode((string)$_GET['ret']) : '';
+	$hinh_ret = (strpos($__inc, 'index.php?com=daotao') === 0) ? rawurlencode($__inc) : rawurlencode('index.php?com=daotao&act=hinh'.$dt_ret);
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -52,7 +54,7 @@
 								<button class="btn btn-xs bg-gradient-success"><i class="fas fa-save mr-1"></i>Lưu</button>
 							</form>
 						</td>
-						<td class="text-center"><?php if(!empty($it['data_id'])): ?><a href="index.php?com=daotao&act=crudEdit&entity=hinh&id=<?=$it['data_id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=hinh&id=<?=$it['data_id']?>" onclick="return confirm('Xóa dữ liệu hình này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a><?php endif; ?></td>
+						<td class="text-center"><?php if(!empty($it['data_id'])): ?><a href="index.php?com=daotao&act=crudEdit&entity=hinh&id=<?=$it['data_id']?>&ret=<?=$hinh_ret?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a> <a href="index.php?com=daotao&act=crudDelete&entity=hinh&id=<?=$it['data_id']?>&ret=<?=$hinh_ret?>" onclick="return confirm('Xóa dữ liệu hình này?')" class="btn btn-xs bg-gradient-danger"><i class="fas fa-trash"></i></a><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
 					<tr><td colspan="7" class="text-center text-muted p-3">Chưa có học viên</td></tr>

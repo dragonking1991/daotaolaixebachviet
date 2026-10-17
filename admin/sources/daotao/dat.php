@@ -55,12 +55,12 @@ function dt_dat_list()
 	if($id_khoa_sel)
 	{
 		$phien = $d->rawQuery("select * from #_dt_dat_phien where id_khoa = ? order by id desc", array($id_khoa_sel));
-		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
+		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id_khoa_sel));
 	}
 	else
 	{
 		$like = '%'.dt_req('keyword').'%';
-		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where (hoten like ? or cccd like ? or ma_hv like ?) order by hoten asc limit 0,200", array($like, $like, $like));
+		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where (hoten like ? or cccd like ? or ma_hv like ?) order by substring_index(hoten, ' ', -1) asc, hoten asc limit 0,200", array($like, $like, $like));
 	}
 	$tt = dt_req('trang_thai');
 	foreach($hvs as $hv)

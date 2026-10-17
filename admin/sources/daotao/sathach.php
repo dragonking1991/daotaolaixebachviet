@@ -17,11 +17,11 @@ function dt_sathach_list()
 	if(!$id_khoa_sel && $kw === '') return;
 
 	if($id_khoa_sel)
-		$items = $d->rawQuery("select * from #_dt_sat_hach where id_khoa = ? order by hoten asc", array($id_khoa_sel));
+		$items = $d->rawQuery("select * from #_dt_sat_hach where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id_khoa_sel));
 	else
 	{
 		$like = '%'.dt_req('keyword').'%';
-		$items = $d->rawQuery("select * from #_dt_sat_hach where (hoten like ? or cccd like ? or ma_hv like ? or so_gplx like ?) order by hoten asc limit 0,300", array($like, $like, $like, $like));
+		$items = $d->rawQuery("select * from #_dt_sat_hach where (hoten like ? or cccd like ? or ma_hv like ? or so_gplx like ?) order by substring_index(hoten, ' ', -1) asc, hoten asc limit 0,300", array($like, $like, $like, $like));
 	}
 	$total_items = count($items);
 }
@@ -140,11 +140,11 @@ function dt_sathach_export()
 	$kw = dt_req('keyword');
 	if(!$idKhoa && $kw === '') $func->transfer('Chọn khóa hoặc nhập từ khóa để xuất', 'index.php?com=daotao&act=sathach', false);
 	if($idKhoa)
-		$rows = $d->rawQuery("select * from #_dt_sat_hach where id_khoa = ? order by hoten asc", array($idKhoa));
+		$rows = $d->rawQuery("select * from #_dt_sat_hach where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($idKhoa));
 	else
 	{
 		$like = '%'.$kw.'%';
-		$rows = $d->rawQuery("select * from #_dt_sat_hach where (hoten like ? or cccd like ? or ma_hv like ? or so_gplx like ?) order by hoten asc", array($like, $like, $like, $like));
+		$rows = $d->rawQuery("select * from #_dt_sat_hach where (hoten like ? or cccd like ? or ma_hv like ? or so_gplx like ?) order by substring_index(hoten, ' ', -1) asc, hoten asc", array($like, $like, $like, $like));
 	}
 	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Giáo viên','Ngày sát hạch','Điểm LT','LT','Điểm MP','MP','Điểm Hình','Hình','Điểm Đường','Đường','Chữ chi','Điểm Chữ chi','Kết luận','Số GPLX','Ghi chú');
 	$out = array(); $stt = 1;
@@ -174,6 +174,6 @@ function dt_sathach_tracuu()
 	if($tc_filters['hoten'] !== '') { $where .= " and hoten like ?"; $params[] = '%'.$tc_filters['hoten'].'%'; }
 	if($tc_filters['so_gplx'] !== '') { $where .= " and so_gplx like ?"; $params[] = '%'.$tc_filters['so_gplx'].'%'; }
 	if($tc_filters['ma_khoa'] !== '') { $where .= " and ma_khoa like ?"; $params[] = '%'.$tc_filters['ma_khoa'].'%'; }
-	$items = $d->rawQuery("select * from #_dt_sat_hach where $where order by hoten asc limit 0,500", $params);
+	$items = $d->rawQuery("select * from #_dt_sat_hach where $where order by substring_index(hoten, ' ', -1) asc, hoten asc limit 0,500", $params);
 	$total_items = count($items);
 }

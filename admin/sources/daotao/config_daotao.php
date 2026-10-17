@@ -17,6 +17,13 @@ function dt_mon_lythuyet()
 	);
 }
 
+/* Mẫu số tính tiến độ từng môn: tiến độ = (Xem giáo trình + Ôn luyện + Kiểm tra) / mẫu số * 100 (Note LT). */
+function dt_lythuyet_denom($mon)
+{
+	$m = array('cau_tao' => 8, 'dao_duc' => 14, 'ky_thuat' => 20, 'phan_1' => 25, 'phan_2' => 40, 'phan_3' => 25, 'mophong' => 4);
+	return isset($m[$mon]) ? $m[$mon] : 0;
+}
+
 /* 4 môn lý thuyết cho khóa nâng hạng (C = B lên C, CE): học trực tiếp, chỉ check Đạt. */
 function dt_mon_lythuyet_nang_hang()
 {

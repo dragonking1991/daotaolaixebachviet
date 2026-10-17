@@ -16,7 +16,7 @@ function xd_get_config()
 	}
 	if(isset($_GET['danh_sach_dieu_chinh']) && $_GET['danh_sach_dieu_chinh'] === '1')
 	{
-		$xd_config_hocvien_dieu_chinh = $d->rawQuery("select ho_ten, cccd, khoa, nhom, gv_hoten, so_tien_thanh_toan from #_xd_hocvien where (da_dieu_chinh_tt = 1 or dinh_muc_ca_nhan <> 0) and nhom in ('CK', 'DAT') order by ho_ten asc", array());
+		$xd_config_hocvien_dieu_chinh = $d->rawQuery("select ho_ten, cccd, khoa, nhom, gv_hoten, so_tien_thanh_toan from #_xd_hocvien where (da_dieu_chinh_tt = 1 or dinh_muc_ca_nhan <> 0) and nhom in ('CK', 'DAT') order by substring_index(ho_ten, ' ', -1) asc, ho_ten asc", array());
 	}
 }
 

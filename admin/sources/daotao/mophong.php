@@ -35,7 +35,7 @@ function dt_mophong_list()
 
 	$perPage = 30;
 	$start = ($curPage * $perPage) - $perPage;
-	$sql = "select h.ma_hv,h.cccd,h.hoten,h.hang,m.id,m.tien_do,m.dat from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where order by h.hoten asc limit $start,$perPage";
+	$sql = "select h.ma_hv,h.cccd,h.hoten,h.hang,m.id,m.tien_do,m.dat from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit $start,$perPage";
 	$items = $d->rawQuery($sql, $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where", $params);
 	$total_items = (int)($count ? $count['num'] : 0);
@@ -129,7 +129,7 @@ function dt_mophong_export()
 	$idKhoa = (int)dt_req('id_khoa', 0);
 	if(!$idKhoa) $func->transfer('Vui lòng chọn khóa để xuất mô phỏng', 'index.php?com=daotao&act=mophong', false);
 	list($where, $params) = dt_mophong_where($idKhoa);
-	$rows = $d->rawQuery("select h.ma_hv,h.hoten,h.cccd,h.gv_hoten,m.tien_do,m.dat from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where order by h.hoten asc", $params);
+	$rows = $d->rawQuery("select h.ma_hv,h.hoten,h.cccd,h.gv_hoten,m.tien_do,m.dat from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", $params);
 	$out = array(); $stt = 1;
 	foreach($rows as $row) $out[] = array($stt++, $row['ma_hv'], $row['hoten'], $row['cccd'], $row['gv_hoten'], $row['tien_do'], empty($row['dat']) ? (isset($row['tien_do']) ? 'Chưa đạt' : 'Chưa nhập') : 'Đạt');
 	dt_xlsx_simple('Mo phong', 'mo-phong-'.date('Ymd_His').'.xlsx', array('STT','Mã HV','Họ và tên','CCCD','Giáo viên','Tiến độ hoàn thành (%)','Kết quả'), $out, array(1, 3));

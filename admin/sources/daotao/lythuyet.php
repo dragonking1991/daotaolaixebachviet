@@ -36,13 +36,13 @@ function dt_lythuyet_list()
 			$ds_mon = dt_mon_lythuyet_nang_hang();
 			$lt_mode = 'check';
 		}
-		$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by hoten asc", array($id_khoa_sel));
+		$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id_khoa_sel));
 		$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
 	}
 	else
 	{
 		$like = '%'.dt_req('keyword').'%';
-		$hvs = $d->rawQuery("select * from #_dt_hocvien where (hoten like ? or cccd like ? or ma_hv like ?) order by hoten asc limit 0,200", array($like, $like, $like));
+		$hvs = $d->rawQuery("select * from #_dt_hocvien where (hoten like ? or cccd like ? or ma_hv like ?) order by substring_index(hoten, ' ', -1) asc, hoten asc limit 0,200", array($like, $like, $like));
 		$ids = array();
 		foreach($hvs as $hv) $ids[(int)$hv['id_khoa']] = true;
 		$rows = array();
@@ -109,22 +109,29 @@ function dt_lythuyet_upload_excel()
 	$aliases = array(
 		'cccd' => array('madangnhap','madangky','cccd'),
 		'tien_do' => array('tiendohoanthanh'),
-		'diem_kt' => array('diemkiemtra','diem','diemmophong'),
+		'diem_kt' => array('diemkiemtra','diemmophong'),
+		'xem_giao_trinh' => array(),
+		'on_luyen' => array(),
+		'kiem_tra_gio' => array(),
 	);
 	$contains = array(
 		'cccd' => array('madangnhap','madangky'),
-		'tien_do' => array('tiendohoanthanh','tiendo'),
+		'tien_do' => array('tiendohoanthanh'),
 		'diem_kt' => array('diemkiemtra'),
+		'xem_giao_trinh' => array('xemgiaotrinh'),
+		'on_luyen' => array('onluyen'),
+		'kiem_tra_gio' => array('kiemtra'),
 	);
 	list($map, $score) = dt_detect_header($merged, $aliases, $contains);
-	// Mô phỏng chỉ cần CCCD + tiến độ (điểm thang /4, không bắt buộc); 6 môn còn lại cần đủ 3 cột.
+	// Tiến độ = (Xem giáo trình + Ôn luyện + Kiểm tra) / mẫu số * 100 (Note LT); nếu thiếu 3 cột thì đọc cột 'Tiến độ hoàn thành'.
+	$have3 = isset($map['xem_giao_trinh']) && isset($map['on_luyen']) && isset($map['kiem_tra_gio']);
 	if($mon === 'mophong')
 	{
-		if(!isset($map['cccd']) || !isset($map['tien_do']))
-			dt_import_notice("Không nhận diện được cột 'Mã đăng nhập' và 'Tiến độ hoàn thành' trong file mô phỏng.", $back, false);
+		if(!isset($map['cccd']) || (!isset($map['on_luyen']) && !isset($map['tien_do'])))
+			dt_import_notice("Không nhận diện được cột 'Mã đăng nhập' và tiến độ (Ôn luyện / Tiến độ hoàn thành) trong file mô phỏng.", $back, false);
 	}
-	elseif(!isset($map['cccd']) || !isset($map['tien_do']) || !isset($map['diem_kt']))
-		dt_import_notice("Không nhận diện đủ các cột 'Mã đăng nhập', 'Tiến độ hoàn thành', 'Điểm kiểm tra'.", $back, false);
+	elseif(!isset($map['cccd']) || (!$have3 && !isset($map['tien_do'])) || !isset($map['diem_kt']))
+		dt_import_notice("Không nhận diện đủ cột: 'Mã đăng nhập', tiến độ (3 cột giờ hoặc 'Tiến độ hoàn thành') và 'Điểm kiểm tra'.", $back, false);
 
 	dt_backup_tables(array('dt_lythuyet'), 'imp_lythuyet');
 	$d->startTransaction();
@@ -150,7 +157,15 @@ function dt_lythuyet_upload_excel()
 		}
 		$idKhoa = (int)$hv['id_khoa'];
 
-		$tienDo = dt_parse_number(dt_val($row, $map, 'tien_do'));
+		$denom = dt_lythuyet_denom($mon);
+		if($mon === 'mophong')
+			$tienDo = (isset($map['on_luyen']) && $denom > 0) ? round(dt_parse_number(dt_val($row, $map, 'on_luyen')) / $denom * 100, 2) : dt_parse_number(dt_val($row, $map, 'tien_do'));
+		elseif($have3 && $denom > 0)
+		{
+			$sum = dt_parse_number(dt_val($row, $map, 'xem_giao_trinh')) + dt_parse_number(dt_val($row, $map, 'on_luyen')) + dt_parse_number(dt_val($row, $map, 'kiem_tra_gio'));
+			$tienDo = round($sum / $denom * 100, 2);
+		}
+		else $tienDo = dt_parse_number(dt_val($row, $map, 'tien_do'));
 		$diemKt = dt_parse_number(dt_val($row, $map, 'diem_kt'));
 		$dat = dt_lythuyet_dat($tienDo, $diemKt, $mon);
 

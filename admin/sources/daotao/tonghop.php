@@ -37,7 +37,7 @@ function dt_tonghop_rows($f)
 		if($f['toi_ngay'] !== '') $params[] = $f['toi_ngay'];
 	}
 
-	$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by h.hoten asc", $params);
+	$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", $params);
 	$out = array();
 	foreach($hvs as $hv)
 	{

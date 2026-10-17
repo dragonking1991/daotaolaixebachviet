@@ -145,7 +145,7 @@ function xd_xuat_da_kiem_tra_giao_vien()
 				from #_xd_hocvien h left join #_xd_hoadon checked on checked.gv_key = h.gv_key and checked.da_quyettoan = 0 and checked.ke_toan_kiem_tra = 1
 				where h.gv_key <> '' and h.ngay_thanh_toan is null and h.ke_toan_kiem_tra = 1
 				and not exists (select 1 from #_xd_hoadon paid where paid.gv_key = h.gv_key and paid.da_quyettoan = 1) group by h.gv_key
-			) g group by g.gv_key order by gv_hoten asc"
+			) g group by g.gv_key order by substring_index(gv_hoten, ' ', -1) asc, gv_hoten asc"
 		);
 		$config = getXdConfig($d);
 		foreach($rows as &$row)
@@ -168,7 +168,7 @@ function xd_xuat_da_kiem_tra_giao_vien()
 		if($keyword !== '') { $where .= ' and (h.gv_hoten like ? or h.gv_key like ?)'; $params[] = '%'.$keyword.'%'; $params[] = '%'.$keyword.'%'; }
 		if($fromDate !== '') { $where .= ' and h.ngay_kiem_tra >= ?'; $params[] = $fromDate; }
 		if($toDate !== '') { $where .= ' and h.ngay_kiem_tra <= ?'; $params[] = $toDate; }
-		$rows = $d->rawQuery("select h.gv_key, max(h.gv_hoten) as gv_hoten, count(distinct h.id) as so_hd, sum(h.tong_tien) as tong_tien, max(h.ngay_kiem_tra) as ngay_kiem_tra from #_xd_hoadon h where $where group by h.gv_key order by h.gv_hoten asc", $params);
+		$rows = $d->rawQuery("select h.gv_key, max(h.gv_hoten) as gv_hoten, count(distinct h.id) as so_hd, sum(h.tong_tien) as tong_tien, max(h.ngay_kiem_tra) as ngay_kiem_tra from #_xd_hoadon h where $where group by h.gv_key order by substring_index(h.gv_hoten, ' ', -1) asc, h.gv_hoten asc", $params);
 	}
 
 	if(empty($rows)) $func->transfer("Không có giáo viên nào đã kiểm toán.", "index.php?com=xangdau&act=".($isPendingApproval ? 'locDuyet' : 'locDaThanhToan'), false);

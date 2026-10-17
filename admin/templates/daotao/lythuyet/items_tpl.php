@@ -1,5 +1,6 @@
 <?php if(!defined('SOURCES')) die("Error"); ?>
 <?php $is_check = (isset($lt_mode) && $lt_mode === 'check'); ?>
+<?php $lt_ret_q = array('com'=>'daotao','act'=>'lythuyet'); foreach(array('id_khoa','keyword','trang_thai','du_lieu','p') as $__k) if(isset($_REQUEST[$__k]) && $_REQUEST[$__k] !== '') $lt_ret_q[$__k] = $_REQUEST[$__k]; $__inc = isset($_GET['ret']) ? rawurldecode((string)$_GET['ret']) : ''; $lt_ret = (strpos($__inc, 'index.php?com=daotao') === 0) ? rawurlencode($__inc) : rawurlencode('index.php?'.http_build_query($lt_ret_q)); ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<ol class="breadcrumb float-sm-left">
@@ -67,11 +68,11 @@
 								<div class="dt-ly-module<?=(!$m || (int)$m['dat']!==1)?' is-chuadat':''?>">
 									<span class="dt-ly-label"><?=htmlspecialchars($lbl)?></span>
 									<?php if(!$m): ?>
-										<a class="dt-ly-add text-danger" href="index.php?com=daotao&amp;act=crudEdit&amp;entity=lythuyet&amp;id_khoa=<?=(int)$hv['id_khoa']?>&amp;cccd=<?=urlencode($hv['cccd'])?>&amp;mon=<?=urlencode($mk)?>" title="Chưa có dữ liệu — bấm để thêm"><i class="fas fa-plus"></i> Chưa có</a>
+										<a class="dt-ly-add text-danger" href="index.php?com=daotao&amp;act=crudEdit&amp;entity=lythuyet&amp;id_khoa=<?=(int)$hv['id_khoa']?>&amp;cccd=<?=urlencode($hv['cccd'])?>&amp;mon=<?=urlencode($mk)?>&amp;ret=<?=$lt_ret?>" title="Chưa có dữ liệu — bấm để thêm"><i class="fas fa-plus"></i> Chưa có</a>
 									<?php else: ?>
 										<span class="dt-ly-val">
-											<a href="index.php?com=daotao&act=crudEdit&entity=lythuyet&id=<?=$m['id']?>" title="TĐ <?=htmlspecialchars($m['tien_do'])?><?=$mk==='mophong'?'%':''?> / Điểm <?=htmlspecialchars($m['diem_kt'])?> — bấm để sửa"><span class="badge badge-<?=$m['dat']?'success':'danger'?>"><?=$m['dat']?'Đạt':'Chưa đạt'?></span></a>
-											<a href="index.php?com=daotao&act=crudDelete&entity=lythuyet&id=<?=$m['id']?>" onclick="return confirm('Xóa kết quả môn này?')" class="text-danger dt-ly-del" title="Xóa"><i class="fas fa-times"></i></a>
+											<a href="index.php?com=daotao&act=crudEdit&entity=lythuyet&id=<?=$m['id']?>&ret=<?=$lt_ret?>" title="TĐ <?=htmlspecialchars($m['tien_do'])?><?=$mk==='mophong'?'%':''?> / Điểm <?=htmlspecialchars($m['diem_kt'])?> — bấm để sửa"><span class="badge badge-<?=$m['dat']?'success':'danger'?>"><?=$m['dat']?'Đạt':'Chưa đạt'?></span></a>
+											<a href="index.php?com=daotao&act=crudDelete&entity=lythuyet&id=<?=$m['id']?>&ret=<?=$lt_ret?>" onclick="return confirm('Xóa kết quả môn này?')" class="text-danger dt-ly-del" title="Xóa"><i class="fas fa-times"></i></a>
 										</span>
 									<?php endif; ?>
 								</div>

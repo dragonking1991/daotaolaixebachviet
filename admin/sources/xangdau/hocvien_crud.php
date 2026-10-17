@@ -40,7 +40,7 @@ function xd_get_hocvien()
 	list($where, $params) = xd_hocvien_where_and_params($scope, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_tt_from, $xd_filter_tt_to);
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select * from #_xd_hocvien where $where order by id asc limit ".$startpoint.",".$per_page;
+	$sql = "select * from #_xd_hocvien where $where order by substring_index(ho_ten, ' ', -1) asc, ho_ten asc limit ".$startpoint.",".$per_page;
 	$items = $d->rawQuery($sql, $params);
 
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien where $where", $params);
@@ -49,7 +49,7 @@ function xd_get_hocvien()
 		"select gv_key, max(gv_hoten) as gv_hoten,
 			 sum(case when ngay_thanh_toan is null and id_bangke = 0 then 1 else 0 end) as can_delete,
 			 sum(case when ngay_thanh_toan is not null or id_bangke > 0 then 1 else 0 end) as protected_count
-		 from #_xd_hocvien where gv_key <> '' group by gv_key order by max(gv_hoten) asc",
+		 from #_xd_hocvien where gv_key <> '' group by gv_key order by substring_index(max(gv_hoten), ' ', -1) asc, max(gv_hoten) asc",
 		array()
 	);
 
@@ -172,6 +172,29 @@ function xd_update_hocvien_status()
 
 	if($ok === false) $func->transfer("Không thể cập nhật trạng thái học viên", $redirect, false);
 	$func->transfer($message, $redirect);
+}
+
+/* Sửa giáo viên / nhóm cho 1 học viên XD (chỉ khi chưa thanh toán); quay về màn trước (giữ bộ lọc). */
+function xd_update_hocvien_info()
+{
+	global $d, $func, $curPage;
+	$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+	$nhom = isset($_POST['nhom']) ? trim((string)$_POST['nhom']) : '';
+	$gv = isset($_POST['gv_hoten']) ? trim((string)$_POST['gv_hoten']) : '';
+	$ret = isset($_POST['ret']) ? rawurldecode(trim((string)$_POST['ret'])) : '';
+	if($ret === '' || strpos($ret, 'index.php?com=xangdau') !== 0 || strpos($ret, "\n") !== false || strpos($ret, "\r") !== false)
+		$ret = "index.php?com=xangdau&act=hocvien&p=".(int)$curPage;
+
+	if($id <= 0) $func->transfer("Học viên không hợp lệ", $ret, false);
+	if(!in_array($nhom, array('BT', 'CK', 'DAT'), true)) $func->transfer("Nhóm không hợp lệ (BT/CK/DAT)", $ret, false);
+	$row = $d->rawQueryOne("select id, ngay_thanh_toan from #_xd_hocvien where id = ? limit 0,1", array($id));
+	if(empty($row)) $func->transfer("Không tìm thấy học viên", $ret, false);
+	if($row['ngay_thanh_toan'] !== null) $func->transfer("Học viên đã thanh toán — không thể sửa giáo viên/nhóm.", $ret, false);
+
+	$data = array('nhom' => $nhom, 'gv_hoten' => htmlspecialchars($gv, ENT_QUOTES, 'UTF-8'), 'gv_key' => xd_gv_key($gv));
+	$d->where('id', $id);
+	$ok = $d->update('xd_hocvien', $data);
+	$func->transfer($ok !== false ? "Đã cập nhật giáo viên / nhóm học viên" : "Không thể cập nhật học viên", $ret);
 }
 
 function xd_delete_all_hocvien()

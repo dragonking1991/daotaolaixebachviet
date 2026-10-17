@@ -62,7 +62,7 @@ function dt_kythi_detail()
 	if(!$ky || !$ky['id']) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
 
 	$ds_khoa = dt_khoa_options();
-	$items = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by hoten asc", array($id));
+	$items = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id));
 	$total_items = count($items);
 
 	// Tra cứu học viên đủ điều kiện (chưa thuộc kỳ) để thêm lẻ.
@@ -70,7 +70,7 @@ function dt_kythi_detail()
 	if($tracuu_kw !== '')
 	{
 		$like = '%'.$tracuu_kw.'%';
-		$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where (h.cccd like ? or h.hoten like ? or h.ma_hv like ?) order by h.hoten asc limit 0,50", array($like, $like, $like));
+		$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where (h.cccd like ? or h.hoten like ? or h.ma_hv like ?) order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit 0,50", array($like, $like, $like));
 		$da = array();
 		foreach($d->rawQuery("select cccd from #_dt_ky_thi_hv where id_ky = ?", array($id)) as $r) $da[$r['cccd']] = true;
 		foreach($hvs as $hv)
@@ -97,7 +97,7 @@ function dt_kythi_add_eligible()
 	$ky = $d->rawQueryOne("select id from #_dt_ky_thi where id = ? limit 0,1", array($id));
 	if(!$ky) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
 
-	$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where h.id_khoa = ? order by h.hoten asc", array($idKhoa));
+	$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", array($idKhoa));
 	$them = 0; $boQua = 0;
 	foreach($hvs as $hv)
 	{
@@ -288,7 +288,7 @@ function dt_kythi_export()
 	$dk = dt_req('dk'); // '', 'du', 'chua', 'all'
 	$ky = $d->rawQueryOne("select * from #_dt_ky_thi where id = ? limit 0,1", array($id));
 	if(!$ky) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
-	$rows = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by hoten asc", array($id));
+	$rows = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id));
 
 	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',
 		'Lý thuyết','Cabin','Th.hành hình','DAT','Tổng giờ H','Tổng km H','Tổng giờ Đ','Tổng km Đ','A','B','C','D','Kết luận');
@@ -471,6 +471,6 @@ function dt_kythi_tracuu()
 	if($tc_filters['cccd'] !== '') { $where .= " and h.cccd like ?"; $params[] = '%'.dt_normalize_cccd($tc_filters['cccd']).'%'; }
 	if($tc_filters['hoten'] !== '') { $where .= " and h.hoten like ?"; $params[] = '%'.$tc_filters['hoten'].'%'; }
 	if($tc_filters['ma_khoa'] !== '') { $where .= " and h.ma_khoa like ?"; $params[] = '%'.$tc_filters['ma_khoa'].'%'; }
-	$items = $d->rawQuery("select h.*, ky.ten as ten_ky, ky.ngay_kt from #_dt_ky_thi_hv h left join #_dt_ky_thi ky on ky.id = h.id_ky where $where order by ky.ngay_kt desc, h.hoten asc limit 0,500", $params);
+	$items = $d->rawQuery("select h.*, ky.ten as ten_ky, ky.ngay_kt from #_dt_ky_thi_hv h left join #_dt_ky_thi ky on ky.id = h.id_ky where $where order by ky.ngay_kt desc, substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit 0,500", $params);
 	$total_items = count($items);
 }

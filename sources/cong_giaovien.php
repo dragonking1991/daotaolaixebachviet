@@ -147,7 +147,7 @@ if($dtGv)
 		$where .= " and (h.hoten like ? or h.cccd like ? or h.ma_hv like ?)";
 		$like = '%'.$dtFilterKw.'%'; $params[] = $like; $params[] = $like; $params[] = $like;
 	}
-	$rows = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by k.ma_khoa asc, h.hoten asc", $params);
+	$rows = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by k.ma_khoa asc, substring_index(h.hoten, ' ', -1) asc, h.hoten asc", $params);
 	foreach($rows as $hv)
 	{
 		$dtStudents[] = array('hv' => $hv, 'sum' => dt_student_summary($hv));

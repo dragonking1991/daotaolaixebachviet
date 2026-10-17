@@ -16,7 +16,7 @@ function dt_hinh_list()
 	{
 		$sql = "select h.id, h.cccd, h.hoten, h.hang, h.id_khoa, th.id as data_id, th.gio, th.km, th.dat_override "
 			. "from #_dt_hocvien h left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) "
-			. "where h.id_khoa = ? order by h.hoten asc";
+			. "where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc";
 		$rows = $d->rawQuery($sql, array($id_khoa_sel));
 	}
 	else
@@ -24,7 +24,7 @@ function dt_hinh_list()
 		$like = '%'.dt_req('keyword').'%';
 		$sql = "select h.id, h.cccd, h.hoten, h.hang, h.id_khoa, th.id as data_id, th.gio, th.km, th.dat_override "
 			. "from #_dt_hocvien h left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) "
-			. "where (h.hoten like ? or h.cccd like ? or h.ma_hv like ?) order by h.hoten asc limit 0,200";
+			. "where (h.hoten like ? or h.cccd like ? or h.ma_hv like ?) order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit 0,200";
 		$rows = $d->rawQuery($sql, array($like, $like, $like));
 	}
 	$tt = dt_req('trang_thai');

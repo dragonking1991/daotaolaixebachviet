@@ -1,4 +1,4 @@
-<?php if(!defined('SOURCES')) die("Error"); ?>
+<?php if(!defined('SOURCES')) die("Error"); $dt_ret_url = function_exists('dt_crud_ret_url') ? dt_crud_ret_url() : ''; $dt_cancel_url = $dt_ret_url !== '' ? $dt_ret_url : 'index.php?com=daotao&act='.$dt_crud_config['back']; ?>
 <section class="content-header text-sm">
 	<div class="container-fluid"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="index.php">Bảng điều khiển</a></li><li class="breadcrumb-item"><a href="index.php?com=daotao&act=<?=$dt_crud_config['back']?>"><?=$dt_crud_config['title']?></a></li><li class="breadcrumb-item active"><?=$item ? 'Sửa' : 'Thêm'?></li></ol></div>
 </section>
@@ -6,7 +6,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header"><h3 class="card-title"><strong><?=$item ? 'Sửa' : 'Thêm'?> <?=$dt_crud_config['title']?></strong></h3></div>
 		<form method="post" action="index.php?com=daotao&act=crudSave">
-			<input type="hidden" name="entity" value="<?=$dt_crud_entity?>"><input type="hidden" name="id" value="<?=isset($item['id'])?(int)$item['id']:0?>">
+			<input type="hidden" name="entity" value="<?=$dt_crud_entity?>"><input type="hidden" name="id" value="<?=isset($item['id'])?(int)$item['id']:0?>"><?php if($dt_ret_url !== ''): ?><input type="hidden" name="ret" value="<?=htmlspecialchars($dt_ret_url)?>"><?php endif; ?>
 			<div class="card-body"><div class="row">
 			<?php foreach($dt_crud_config['fields'] as $field => $label): $value=isset($item[$field])?$item[$field]:''; ?>
 				<div class="col-md-6 form-group"><label><?=$label?></label>
@@ -18,7 +18,7 @@
 				<?php endif; ?></div>
 			<?php endforeach; ?>
 			</div></div>
-			<div class="card-footer"><button class="btn btn-sm bg-gradient-primary"><i class="fas fa-save mr-1"></i>Lưu</button> <a href="index.php?com=daotao&act=<?=$dt_crud_config['back']?>" class="btn btn-sm btn-secondary">Hủy</a></div>
+			<div class="card-footer"><button class="btn btn-sm bg-gradient-primary"><i class="fas fa-save mr-1"></i>Lưu</button> <a href="<?=htmlspecialchars($dt_cancel_url)?>" class="btn btn-sm btn-secondary">Hủy</a></div>
 		</form>
 	</div>
 </section>

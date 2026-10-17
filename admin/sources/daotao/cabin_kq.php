@@ -19,7 +19,7 @@ function dt_cabin_list()
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select c.*, h.ma_hv as roster_ma_hv, h.hoten, h.cccd as hv_cccd, h.hang, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by h.hoten asc limit $startpoint,$per_page";
+	$sql = "select c.*, h.ma_hv as roster_ma_hv, h.hoten, h.cccd as hv_cccd, h.hang, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit $startpoint,$per_page";
 	$items = $d->rawQuery($sql, $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $where", $params);
 	$total_items = (int)$count['num'];

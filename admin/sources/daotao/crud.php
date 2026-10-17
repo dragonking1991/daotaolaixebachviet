@@ -46,6 +46,17 @@ function dt_crud_back($config, $query = '')
 	return 'index.php?com=daotao&act='.$config['back'].$query;
 }
 
+/* URL quay lại an toàn (nội bộ module đào tạo) từ tham số ret — để sửa/hủy/xóa trở về đúng màn trước. */
+function dt_crud_ret_url()
+{
+	$ret = isset($_REQUEST['ret']) ? trim((string)$_REQUEST['ret']) : '';
+	if($ret === '') return '';
+	$ret = rawurldecode($ret);
+	if(strpos($ret, "\n") !== false || strpos($ret, "\r") !== false) return '';
+	if(strpos($ret, 'index.php?com=daotao') !== 0) return '';
+	return $ret;
+}
+
 function dt_crud_form()
 {
 	global $d, $func, $item, $ds_khoa, $dt_crud_entity, $dt_crud_config;
@@ -118,7 +129,7 @@ function dt_crud_save()
 		$ok = $d->insert($config['table'], $data);
 		$msg = 'Thêm '.$config['title'].' '.($ok ? 'thành công' : 'bị lỗi');
 	}
-	$func->transfer($msg, dt_crud_back($config), (bool)$ok);
+	$func->transfer($msg, dt_crud_ret_url() ?: dt_crud_back($config), (bool)$ok);
 }
 
 function dt_crud_delete()
@@ -138,7 +149,9 @@ function dt_crud_delete()
 	}
 	dt_crud_delete_id($entity, $id);
 	dt_audit('delete', $entity, 1, 'id='.$id);
-	$back = dt_crud_back($config, dt_crud_ret_query().($cascade ? '' : '&undo=1'));
+	$ret = dt_crud_ret_url();
+	if($ret !== '') $back = $ret.($cascade ? '' : (strpos($ret, '?') !== false ? '&' : '?').'undo=1');
+	else $back = dt_crud_back($config, dt_crud_ret_query().($cascade ? '' : '&undo=1'));
 	$func->transfer('Đã xóa '.$config['title'], $back);
 }
 

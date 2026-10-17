@@ -216,7 +216,7 @@ function dt_hocvien_export()
 {
 	global $d;
 	list($where, $params) = dt_hocvien_where();
-	$rows = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by h.id desc", $params);
+	$rows = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", $params);
 	$headers = array('STT','Mã HV','Họ và tên','CCCD','Ngày sinh','Hạng','Khóa','Giáo viên','Người giới thiệu','Hệ đào tạo');
 	$out = array(); $stt = 1;
 	foreach($rows as $h)
@@ -242,7 +242,7 @@ function dt_giaovien_export()
 {
 	global $d;
 	list($where, $params) = dt_giaovien_where();
-	$rows = $d->rawQuery("select * from #_dt_giaovien where 1 $where order by hoten asc", $params);
+	$rows = $d->rawQuery("select * from #_dt_giaovien where 1 $where order by substring_index(hoten, ' ', -1) asc, hoten asc", $params);
 	$headers = array('STT','Mã CSĐT','Họ và tên','CCCD','Ngày sinh','Giới tính','Điện thoại','Địa chỉ','Hạng GPLX','Số GPLX','Ngày cấp GPLX','Ngày HH GPLX','Hạng ĐT được phép','Loại hình ĐT','Hình thức TD','Ngày TD','Trình độ','Chuyên môn','Sư phạm','Nơi công tác','Số QĐ GCN','Ngày QĐ GCN','Nơi cấp GCN','Ghi chú');
 	$out = array(); $stt = 1;
 	foreach($rows as $g)
@@ -257,7 +257,7 @@ function dt_cabin_export()
 {
 	global $d;
 	list($where, $params) = dt_cabin_where();
-	$rows = $d->rawQuery("select c.*, h.hoten, h.cccd as hv_cccd, h.ma_hv as roster_ma_hv, h.gv_hoten from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $where order by h.hoten asc", $params);
+	$rows = $d->rawQuery("select c.*, h.hoten, h.cccd as hv_cccd, h.ma_hv as roster_ma_hv, h.gv_hoten from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", $params);
 	$headers = array('STT','Mã HV','Họ và tên','CCCD','Giáo viên','Tổng thời gian','Số nội dung','Kết quả','Ghi chú');
 	$out = array(); $stt = 1;
 	foreach($rows as $c)
@@ -272,7 +272,7 @@ function dt_lythuyet_export()
 	if(!$idKhoa) $GLOBALS['func']->transfer('Vui lòng chọn khóa để xuất lý thuyết', 'index.php?com=daotao&act=lythuyet', false);
 	$rk = $d->rawQueryOne("select hang from #_dt_khoa where id = ?", array($idKhoa));
 	$dsMon = dt_mon_lythuyet_for_hang($rk ? $rk['hang'] : '');
-	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by hoten asc", array($idKhoa));
+	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($idKhoa));
 	$rows = $d->rawQuery("select cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($idKhoa));
 	$byCccd = array();
 	foreach($rows as $rw) $byCccd[$rw['cccd']][$rw['mon']] = $rw;
@@ -396,7 +396,7 @@ function dt_hinh_export()
 	$idKhoa = (int)dt_req('id_khoa', 0);
 	if(!$idKhoa) $GLOBALS['func']->transfer('Vui lòng chọn khóa để xuất', 'index.php?com=daotao&act=hinh', false);
 	$sql = "select h.cccd, h.hoten, h.hang, h.ma_hv, h.gv_hoten, th.gio, th.km, th.dat_override from #_dt_hocvien h "
-		. "left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) where h.id_khoa = ? order by h.hoten asc";
+		. "left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc";
 	$rows = $d->rawQuery($sql, array($idKhoa));
 	$kw = dt_mb_lower(dt_req('keyword'));
 	$tt = dt_req('trang_thai');
@@ -418,7 +418,7 @@ function dt_dat_export()
 	global $d;
 	$idKhoa = (int)dt_req('id_khoa', 0);
 	if(!$idKhoa) $GLOBALS['func']->transfer('Vui lòng chọn khóa để xuất', 'index.php?com=daotao&act=dat', false);
-	$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, gv_hoten from #_dt_hocvien where id_khoa = ? order by hoten asc", array($idKhoa));
+	$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, gv_hoten from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($idKhoa));
 	$kw = dt_mb_lower(dt_req('keyword'));
 	$tt = dt_req('trang_thai');
 	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên','Số phiên','Tổng giờ (A)','Giờ đêm (B)','Giờ tự động (C)','Giờ số sàn (D)','Km (E)','Kết quả','Nội dung thiếu');

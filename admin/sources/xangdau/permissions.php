@@ -88,6 +88,7 @@ function xd_act_denied($act)
 	if(in_array($act, $duyetActs, true)) return !xd_can_duyet();
 	if(in_array($act, $exportActs, true)) return !(xd_can_duyet() || xd_can_kiem_tra());
 	if($act === 'updateHocvienStatus') return !(xd_can_import() || xd_can_kiem_tra());
+	if($act === 'updateHocvienInfo') return !(xd_can_import() || xd_can_kiem_tra());
 	if(in_array($act, $viewActs, true)) return false; // đã qua kiểm tra hasAny ở trên, cho xem tự do
 
 	return false; // hành động chưa liệt kê: không chặn thêm

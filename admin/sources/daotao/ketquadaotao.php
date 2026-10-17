@@ -34,7 +34,7 @@ function dt_ketqua_rows($f)
 	if($f['hoten'] !== '') { $where .= " and h.hoten like ?"; $params[] = '%'.$f['hoten'].'%'; }
 	if($f['ma_khoa'] !== '') { $where .= " and k.ma_khoa like ?"; $params[] = '%'.$f['ma_khoa'].'%'; }
 
-	$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by h.hoten asc limit 0,1000", $params);
+	$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit 0,1000", $params);
 	$out = array();
 	foreach($hvs as $hv)
 	{

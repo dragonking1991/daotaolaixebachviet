@@ -39,11 +39,11 @@ function dt_htkh_list()
 	if(!$id_khoa_sel && $kw === '') return;
 
 	if($id_khoa_sel)
-		$hvs = $d->rawQuery("select h.id, h.cccd, h.ma_hv, h.hoten, h.hang, h.id_khoa, h.gv_hoten from #_dt_hocvien h where h.id_khoa = ? order by h.hoten asc", array($id_khoa_sel));
+		$hvs = $d->rawQuery("select h.id, h.cccd, h.ma_hv, h.hoten, h.hang, h.id_khoa, h.gv_hoten from #_dt_hocvien h where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", array($id_khoa_sel));
 	else
 	{
 		$like = '%'.dt_req('keyword').'%';
-		$hvs = $d->rawQuery("select h.id, h.cccd, h.ma_hv, h.hoten, h.hang, h.id_khoa, h.gv_hoten from #_dt_hocvien h where (h.hoten like ? or h.cccd like ? or h.ma_hv like ?) order by h.hoten asc limit 0,200", array($like, $like, $like));
+		$hvs = $d->rawQuery("select h.id, h.cccd, h.ma_hv, h.hoten, h.hang, h.id_khoa, h.gv_hoten from #_dt_hocvien h where (h.hoten like ? or h.cccd like ? or h.ma_hv like ?) order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit 0,200", array($like, $like, $like));
 	}
 	$ids = array();
 	foreach($hvs as $hv) $ids[(int)$hv['id_khoa']] = true;
@@ -102,7 +102,7 @@ function dt_htkh_cap_giay()
 	$ngayKy = trim($_POST['ngay_ky'] ?? '');
 	if($ngayKy === '') $ngayKy = date('d/m/Y');
 	$chiDat = empty($_POST['tat_ca']);
-	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by hoten asc", array($idKhoa));
+	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($idKhoa));
 	$existing = array();
 	foreach($d->rawQuery("select cccd, so_giay from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $existing[$r['cccd']] = $r;
 	$d->startTransaction();
@@ -207,7 +207,7 @@ function dt_htkh_export()
 	global $d, $func;
 	$idKhoa = (int)dt_req('id_khoa', 0);
 	if(!$idKhoa) $func->transfer('Vui lòng chọn khóa để xuất', 'index.php?com=daotao&act=htkh', false);
-	$hvs = $d->rawQuery("select h.cccd, h.ma_hv, h.hoten, h.hang, h.gv_hoten from #_dt_hocvien h where h.id_khoa = ? order by h.hoten asc", array($idKhoa));
+	$hvs = $d->rawQuery("select h.cccd, h.ma_hv, h.hoten, h.hang, h.gv_hoten from #_dt_hocvien h where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", array($idKhoa));
 	$byCccd = array();
 	foreach($d->rawQuery("select cccd, so_giay, ngay_cap, ghi_chu from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $byCccd[$r['cccd']] = $r;
 	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên','Số giấy HTKH','Ngày cấp','Ghi chú');
@@ -229,7 +229,7 @@ function dt_htkh_print()
 	if(!$idKhoa) $func->transfer('Vui lòng chọn khóa để in giấy', 'index.php?com=daotao&act=htkh', false);
 	$khoa = $d->rawQueryOne("select * from #_dt_khoa where id = ? limit 0,1", array($idKhoa));
 	if(!$khoa) $func->transfer('Khóa không tồn tại', 'index.php?com=daotao&act=htkh', false);
-	$hvs = $d->rawQuery("select h.cccd, h.ma_hv, h.hoten, h.hang, h.ngaysinh from #_dt_hocvien h where h.id_khoa = ? order by h.hoten asc", array($idKhoa));
+	$hvs = $d->rawQuery("select h.cccd, h.ma_hv, h.hoten, h.hang, h.ngaysinh from #_dt_hocvien h where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", array($idKhoa));
 	$byCccd = array();
 	foreach($d->rawQuery("select cccd, so_giay, hang_giay, ngay_ky, nguoi_ky, ngay_cap from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $byCccd[$r['cccd']] = $r;
 
