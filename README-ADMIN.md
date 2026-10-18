@@ -59,6 +59,25 @@ Request → admin/index.php
 
 ---
 
+### Giấy xác nhận hoàn thành khóa học (HTKH)
+
+Trong **Đào tạo → Số giấy HTKH**, phần **Cấp giấy HTKH theo ngày kiểm tra**:
+
+1. Chọn ngày/kỳ kiểm tra, sau đó chọn **Khóa trong kỳ** hoặc **Tất cả khóa trong kỳ**. Bộ lọc hỗ trợ cả khóa của dữ liệu cũ nhập tay.
+2. Kiểm tra danh sách học viên thi đạt hiển thị bên dưới.
+3. Nhập **Người ký**, **Ngày ký** đúng định dạng `dd/mm/yyyy`, chức danh và kiểu nâng hạng CE nếu cần; bấm **Tạo giấy xác nhận**.
+4. Bấm **Xuất giấy Excel** (`.xlsx`), **Xuất giấy Word** (`.docx`) hoặc **In giấy / Lưu PDF**. Mỗi học viên một trang A4; nội dung và thông tin ký lấy từ giấy đã lưu, không phải các ô đang nhập chưa lưu.
+
+Việc tạo giấy chỉ áp dụng cho học viên có kết quả đạt thuộc bộ lọc hiện tại và giữ lại số giấy đã có. Xuất/in chỉ lấy học viên đã được cấp giấy; nếu chưa có giấy, hệ thống thông báo cần tạo giấy trước. Khi đổi ngày kiểm tra, bộ lọc khóa được đặt lại. Sau khi tạo giấy, ngày/kỳ và khóa đã chọn vẫn được giữ nguyên.
+
+Quyền **sửa HTKH** dùng để tạo/cập nhật giấy, quyền **xuất HTKH** dùng để tải Excel/Word, quyền **xem HTKH** dùng để xem và in. Chức năng nhập số giấy và xuất danh sách Excel theo khóa ở phần bên dưới vẫn được giữ nguyên.
+
+Kiểm tra hồi quy (dùng dữ liệu giả lập, không ghi cơ sở dữ liệu):
+
+```bash
+docker compose exec -T web php scripts/regression_htkh.php
+```
+
 ## 2. Đăng nhập & Bảo mật
 
 ### Đăng nhập

@@ -234,8 +234,10 @@ function dt_ensure_tables()
 		so_giay VARCHAR(100) DEFAULT '',
 		ngay_cap VARCHAR(20) DEFAULT '',
 		hang_giay VARCHAR(20) DEFAULT '',
+		hang_ce VARCHAR(10) DEFAULT '',
 		nguoi_ky VARCHAR(255) DEFAULT '',
 		ngay_ky VARCHAR(20) DEFAULT '',
+		chuc_danh VARCHAR(100) DEFAULT '',
 		ghi_chu VARCHAR(255) DEFAULT '',
 		nguoi_nhap VARCHAR(255) DEFAULT '',
 		ngaytao INT DEFAULT 0,
@@ -323,8 +325,26 @@ function dt_ensure_tables()
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('xe_bosung_v1')) { dt_ensure_xe_bosung_cols(); dt_migration_mark('xe_bosung_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_capgiay_v1')) { dt_ensure_htkh_capgiay_cols(); dt_migration_mark('htkh_capgiay_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('sathach_noidung_v1')) { dt_ensure_sathach_noidung_cols(); dt_migration_mark('sathach_noidung_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_chucdanh_v1')) { dt_ensure_htkh_chucdanh(); dt_migration_mark('htkh_chucdanh_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_hangce_v1')) { dt_ensure_htkh_hangce(); dt_migration_mark('htkh_hangce_v1'); }
 
 	$done = true;
+}
+
+/* Cột kiểu nâng hạng CE (c/d/d2) trên giấy HTKH. */
+function dt_ensure_htkh_hangce()
+{
+	global $d;
+	$ex = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_htkh' and column_name = 'hang_ce' limit 0,1");
+	if(!$ex) $d->rawQuery("ALTER TABLE table_dt_htkh ADD COLUMN hang_ce VARCHAR(10) DEFAULT ''");
+}
+
+/* Cột chức danh người ký trên giấy HTKH (KT. GIÁM ĐỐC / GIÁM ĐỐC). */
+function dt_ensure_htkh_chucdanh()
+{
+	global $d;
+	$ex = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_htkh' and column_name = 'chuc_danh' limit 0,1");
+	if(!$ex) $d->rawQuery("ALTER TABLE table_dt_htkh ADD COLUMN chuc_danh VARCHAR(100) DEFAULT ''");
 }
 
 /* Cột bổ sung cho khóa (thời gian học) và giấy HTKH (người ký, ngày ký, hạng giấy) — Update 6. */

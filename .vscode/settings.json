@@ -1,0 +1,8 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "/^docker compose exec -T web php scripts/regression_htkh\\.php /tmp/htkh-verify\\.kSRHJ8; docker compose exec -T web libreoffice -env:UserInstallation=file:///tmp/htkh-verify\\.kSRHJ8/lo-profile --headless --convert-to pdf --outdir /tmp/htkh-verify\\.kSRHJ8/docx /tmp/htkh-verify\\.kSRHJ8/certificates\\.docx; docker compose exec -T web libreoffice -env:UserInstallation=file:///tmp/htkh-verify\\.kSRHJ8/lo-profile --headless --convert-to pdf --outdir /tmp/htkh-verify\\.kSRHJ8/xlsx /tmp/htkh-verify\\.kSRHJ8/certificates\\.xlsx$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}

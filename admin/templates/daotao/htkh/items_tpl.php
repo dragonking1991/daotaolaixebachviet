@@ -8,6 +8,61 @@
 	</div>
 </section>
 <section class="content">
+	<?php $__ky_sel = isset($_REQUEST['id_ky']) ? (int)$_REQUEST['id_ky'] : 0; if((dt_can('htkh','edit') || dt_can('htkh','view')) && !empty($ds_ky)): ?>
+	<div class="card card-warning card-outline text-sm">
+		<div class="card-header"><h3 class="card-title"><strong>Cấp giấy HTKH theo ngày kiểm tra</strong></h3></div>
+		<div class="card-body">
+			<p class="text-muted mb-2">Chọn ngày kiểm tra và khóa → nhập thông tin ký → tạo giấy cho học viên <strong>thi đạt</strong> → xuất Excel, Word hoặc in. Mỗi học viên một trang; các file và bản in dùng thông tin ký đã lưu khi tạo giấy.</p>
+			<form method="get" action="index.php" class="form-inline mb-3">
+				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="htkh">
+				<label class="mr-2" for="htkh-id-ky">Ngày kiểm tra</label>
+				<select id="htkh-id-ky" name="id_ky" class="form-control form-control-sm mr-2" style="max-width:100%" required onchange="this.form.elements.ky_khoa.value='';this.form.submit()">
+					<option value="">— Chọn ngày kiểm tra —</option>
+					<?php foreach($ds_ky as $k): ?><option value="<?=$k['id']?>" <?=$__ky_sel==$k['id']?'selected':''?>><?=htmlspecialchars((!empty($k['ngay_kt'])?date('d/m/Y',strtotime($k['ngay_kt'])).' ':'').$k['ten'])?> — <?=(int)$k['so_kq']?> có KQ</option><?php endforeach; ?>
+				</select>
+				<label class="mr-2" for="htkh-ky-khoa">Khóa trong kỳ</label>
+				<select id="htkh-ky-khoa" name="ky_khoa" class="form-control form-control-sm mr-2" style="max-width:100%" onchange="this.form.submit()">
+					<option value="">Tất cả khóa trong kỳ</option>
+					<?php foreach($htkh_ky_khoa as $key => $label): ?><option value="<?=htmlspecialchars($key)?>" <?=dt_req('ky_khoa')===$key?'selected':''?>><?=htmlspecialchars($label)?></option><?php endforeach; ?>
+				</select>
+				<button class="btn btn-sm bg-gradient-primary">Lọc danh sách</button>
+			</form>
+			<?php if($__ky_sel): ?>
+			<div class="mb-2"><strong><?=count($htkh_ky_passed)?> học viên thi đạt</strong> theo bộ lọc đã chọn.</div>
+			<?php if(dt_can('htkh','edit') && !empty($htkh_ky_passed)): ?>
+			<form method="post" action="index.php?com=daotao&act=htkhCapGiayKy" class="form-inline mb-3" onsubmit="return confirm('Tạo/cập nhật giấy và thông tin ký cho <?=count($htkh_ky_passed)?> học viên đạt trong bộ lọc đã chọn?');">
+				<input type="hidden" name="id_ky" value="<?=$__ky_sel?>">
+				<input type="hidden" name="ky_khoa" value="<?=htmlspecialchars(dt_req('ky_khoa'))?>">
+				<label class="mr-2" for="htkh-nguoi-ky">Người ký</label>
+				<input id="htkh-nguoi-ky" type="text" name="nguoi_ky" class="form-control form-control-sm mr-2" placeholder="Họ tên người ký" maxlength="255" required style="width:180px">
+				<label class="mr-2" for="htkh-ngay-ky">Ngày ký</label>
+				<input id="htkh-ngay-ky" type="text" name="ngay_ky" class="form-control form-control-sm mr-2" placeholder="dd/mm/yyyy" value="<?=date('d/m/Y')?>" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" maxlength="10" required style="width:140px">
+				<select name="chuc_danh" class="form-control form-control-sm mr-2" style="width:230px" title="Chức danh người ký"><option value="kt_pgd">KT. GIÁM ĐỐC / PHÓ GIÁM ĐỐC</option><option value="gd">GIÁM ĐỐC</option></select>
+				<select name="hang_ce" class="form-control form-control-sm mr-2" style="width:170px" title="Kiểu nâng hạng (chỉ áp dụng hạng CE)"><option value="">Hạng CE: C lên CE</option><option value="d">Hạng CE: D lên CE</option><option value="d2">Hạng CE: D2 lên CE</option></select>
+				<button class="btn btn-sm bg-gradient-warning"><i class="fas fa-certificate mr-1"></i>Tạo giấy xác nhận</button>
+			</form>
+			<?php endif; ?>
+			<?php if(!empty($htkh_ky_passed)): ?>
+			<div class="mb-3">
+				<?php if(dt_can('htkh','export')): ?>
+				<a href="<?=dt_export_link('htkhExcelKy', array('id_ky','ky_khoa'))?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-file-excel mr-1"></i>Xuất giấy Excel</a>
+				<a href="<?=dt_export_link('htkhWordKy', array('id_ky','ky_khoa'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-word mr-1"></i>Xuất giấy Word</a>
+				<?php endif; ?>
+				<a href="<?=dt_export_link('htkhPrintKy', array('id_ky','ky_khoa'))?>" target="_blank" rel="noopener" class="btn btn-sm bg-gradient-secondary"><i class="fas fa-print mr-1"></i>In giấy / Lưu PDF</a>
+			</div>
+			<div class="table-responsive">
+				<table class="table table-sm table-bordered">
+					<thead><tr><th>STT</th><th>Họ và tên</th><th>Mã HV</th><th>Khóa</th><th>Hạng</th><th>Kết quả</th></tr></thead>
+					<tbody><?php foreach($htkh_ky_passed as $index => $hv): ?>
+						<tr><td><?=$index+1?></td><td><?=htmlspecialchars($hv['hoten'])?></td><td><?=htmlspecialchars($hv['ma_hv'])?></td><td><?=htmlspecialchars($htkh_ky_khoa[dt_htkh_khoa_key($hv)])?></td><td><?=htmlspecialchars($hv['hang'])?></td><td><?=htmlspecialchars($hv['ket_luan'])?></td></tr>
+					<?php endforeach; ?></tbody>
+				</table>
+			</div>
+			<?php else: ?><div class="alert alert-info mb-0">Không có học viên thi đạt trong bộ lọc này.</div><?php endif; ?>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php endif; ?>
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Số giấy chứng nhận HTKH</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
@@ -27,12 +82,48 @@
 			<div class="alert alert-info mb-0">Chọn khóa để nhập/cập nhật số giấy HTKH, hoặc nhập CCCD/tên để tra cứu.</div>
 			<?php else: ?>
 			<?php if($id_khoa_sel && dt_can('htkh','edit')): ?>
-			<form method="post" action="index.php?com=daotao&act=htkhCapGiay&id_khoa=<?=$id_khoa_sel?>" class="form-inline mb-2 p-2" style="background:#f1f5f9;border-radius:6px;" onsubmit="return confirm('Cấp giấy HTKH (sinh số giấy + ghi người/ngày ký) cho học viên trong khóa?');">
-				<span class="mr-2"><strong>Cấp giấy hàng loạt:</strong></span>
-				<input type="text" name="nguoi_ky" class="form-control form-control-sm mr-2" placeholder="Người ký" style="width:200px">
-				<input type="text" name="ngay_ky" class="form-control form-control-sm mr-2" placeholder="Ngày ký (dd/mm/yyyy)" style="width:160px">
-				<label class="mr-2 mb-0"><input type="checkbox" name="tat_ca" value="1"> Cấp cho tất cả (bỏ qua điều kiện)</label>
-				<button class="btn btn-sm bg-gradient-warning"><i class="fas fa-certificate mr-1"></i>Cấp giấy cho HV đủ điều kiện</button>
+			<form method="post" action="index.php?com=daotao&act=htkhCapGiay&id_khoa=<?=$id_khoa_sel?>" class="border rounded mb-3" onsubmit="return confirm(this.elements.tat_ca.checked ? 'Cấp giấy cho tất cả học viên trong khóa, kể cả học viên chưa đủ điều kiện?' : 'Cấp giấy HTKH cho học viên đủ điều kiện trong khóa?');">
+				<div class="p-3">
+					<h4 class="h6 font-weight-bold mb-1">Cấp giấy hàng loạt</h4>
+					<p class="text-muted mb-3">Thiết lập thông tin ký cho giấy xác nhận của khóa đang chọn.</p>
+					<div class="form-row">
+						<div class="form-group col-md-6 col-xl-3 mb-3 mb-xl-0">
+							<label for="htkh-khoa-nguoi-ky">Người ký</label>
+							<input id="htkh-khoa-nguoi-ky" type="text" name="nguoi_ky" class="form-control form-control-sm" placeholder="Nhập họ tên người ký">
+						</div>
+						<div class="form-group col-md-6 col-xl-2 mb-3 mb-xl-0">
+							<label for="htkh-khoa-ngay-ky">Ngày ký</label>
+							<input id="htkh-khoa-ngay-ky" type="text" name="ngay_ky" class="form-control form-control-sm" placeholder="dd/mm/yyyy" aria-describedby="htkh-khoa-ngay-ky-hint">
+							<small id="htkh-khoa-ngay-ky-hint" class="form-text text-muted">Để trống: dùng ngày hôm nay.</small>
+						</div>
+						<div class="form-group col-md-6 col-xl-4 mb-3 mb-md-0">
+							<label for="htkh-khoa-chuc-danh">Chức danh người ký</label>
+							<select id="htkh-khoa-chuc-danh" name="chuc_danh" class="form-control form-control-sm">
+								<option value="kt_pgd">KT. GIÁM ĐỐC / PHÓ GIÁM ĐỐC</option>
+								<option value="gd">GIÁM ĐỐC</option>
+							</select>
+						</div>
+						<div class="form-group col-md-6 col-xl-3 mb-0">
+							<label for="htkh-khoa-hang-ce">Kiểu nâng hạng CE</label>
+							<select id="htkh-khoa-hang-ce" name="hang_ce" class="form-control form-control-sm" aria-describedby="htkh-khoa-hang-ce-hint">
+								<option value="">C lên CE</option>
+								<option value="d">D lên CE</option>
+								<option value="d2">D2 lên CE</option>
+							</select>
+							<small id="htkh-khoa-hang-ce-hint" class="form-text text-muted">Chỉ áp dụng cho học viên hạng CE.</small>
+						</div>
+					</div>
+				</div>
+				<div class="border-top bg-light p-3 rounded-bottom d-flex flex-column flex-lg-row align-items-lg-center justify-content-between">
+					<div class="mb-3 mb-lg-0 mr-lg-3">
+						<div class="custom-control custom-checkbox">
+							<input id="htkh-khoa-tat-ca" type="checkbox" name="tat_ca" value="1" class="custom-control-input" aria-describedby="htkh-khoa-pham-vi">
+							<label class="custom-control-label" for="htkh-khoa-tat-ca">Cấp cho tất cả học viên trong khóa</label>
+						</div>
+						<small id="htkh-khoa-pham-vi" class="form-text text-muted">Mặc định chỉ cấp cho học viên đủ điều kiện. Chọn để bỏ qua điều kiện.</small>
+					</div>
+					<button type="submit" class="btn btn-sm bg-gradient-warning flex-shrink-0"><i class="fas fa-certificate mr-1" aria-hidden="true"></i>Cấp giấy hàng loạt</button>
+				</div>
 			</form>
 			<?php endif; ?>
 			<table class="table dt-list table-hover mb-0">

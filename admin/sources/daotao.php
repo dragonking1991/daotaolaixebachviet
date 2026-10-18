@@ -168,7 +168,11 @@ switch($act)
 	case "htkh":            dt_guard(dt_p('htkh','view')); dt_htkh_list();   $template = "daotao/htkh/items"; break;
 	case "saveHtkh":        dt_guard(dt_p('htkh','edit'));  dt_htkh_save(); break;
 	case "htkhCapGiay":     dt_guard(dt_p('htkh','edit'));  dt_htkh_cap_giay(); break;
+	case "htkhCapGiayKy":   dt_guard(dt_p('htkh','edit'));  dt_htkh_cap_giay_ky(); break;
 	case "htkhPrint":       dt_guard(dt_p('htkh','view'));  dt_htkh_print(); break;
+	case "htkhPrintKy":     dt_guard(dt_p('htkh','view'));  dt_htkh_print_ky(); break;
+	case "htkhExcelKy":     dt_guard(dt_p('htkh','export')); dt_htkh_export_ky('xlsx'); break;
+	case "htkhWordKy":      dt_guard(dt_p('htkh','export')); dt_htkh_export_ky('docx'); break;
 	case "uploadHtkh":      dt_guard(dt_p('htkh','import'));   dt_htkh_upload_form(); $template = "daotao/htkh/upload"; break;
 	case "uploadHtkhExcel": dt_guard(dt_p('htkh','import'));   dt_htkh_upload_excel(); break;
 	case "exportHtkh":      dt_guard(dt_p('htkh','export')); dt_htkh_export(); break;
