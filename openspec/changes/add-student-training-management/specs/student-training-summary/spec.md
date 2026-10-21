@@ -27,3 +27,11 @@ Hệ thống SHALL cho phép admin xuất Excel danh sách học viên Đạt v�
 #### Scenario: Xuất Excel tổng hợp
 - **WHEN** admin chọn xuất Excel theo bộ lọc hiện tại
 - **THEN** hệ thống SHALL tạo file `.xlsx` gồm mã học viên, tên, hạng, khóa, trạng thái từng module và chi tiết tham số (tổng giờ H, tổng quãng đường H, tổng giờ Đ, tổng quãng đường Đ, A, B, C, D)
+
+### Requirement: Thống kê đạt/chưa đạt theo module
+
+Trang tổng hợp SHALL hiển thị số học viên đạt/chưa đạt cho Lý thuyết, Cabin, Thực hành trong hình và DAT theo danh sách lọc hiện tại. Kết quả mô phỏng SHALL được tính một lần trong Lý thuyết; học viên ở khóa không yêu cầu Cabin SHALL không bị tính là chưa đạt Cabin.
+
+#### Scenario: Thống kê trên danh sách tổng hợp đã lọc
+- **WHEN** admin lọc danh sách tổng hợp theo khóa, học viên, hạng, giáo viên hoặc ngày DAT
+- **THEN** hệ thống SHALL cập nhật số đạt/chưa đạt của từng module theo đúng danh sách kết quả lọc

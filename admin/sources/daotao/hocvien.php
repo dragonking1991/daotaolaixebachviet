@@ -79,6 +79,7 @@ function dt_hocvien_upload_excel()
 
 	$preview = !empty($_REQUEST['preview']);
 	$previewRows = array(); $insCnt = 0; $updCnt = 0;
+	$syncKhoaIds = array();
 	if(!$preview) { dt_backup_tables(array('dt_hocvien','dt_khoa'), 'imp_hocvien'); $d->startTransaction(); }
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
@@ -145,6 +146,7 @@ function dt_hocvien_upload_excel()
 		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_hocvien', $data); }
 		else { $data['ngaytao'] = time(); $d->insert('dt_hocvien', $data); }
 		$ok++;
+		$syncKhoaIds[(int)$idKhoa] = (int)$idKhoa;
 	}
 
 	if($preview)
@@ -162,10 +164,21 @@ function dt_hocvien_upload_excel()
 	}
 
 	$d->commit();
+	$syncTotals = array('xd_added' => 0, 'ce_added' => 0, 'existing' => 0);
+	$syncErrors = array();
+	foreach($syncKhoaIds as $syncKhoaId)
+	{
+		$syncResult = xd_sync_training_students($syncKhoaId);
+		foreach($syncTotals as $key => $count) $syncTotals[$key] += (int)($syncResult[$key] ?? 0);
+		if(empty($syncResult['ok'])) $syncErrors = array_merge($syncErrors, $syncResult['errors'] ?? array($syncResult['error'] ?? 'Không thể đồng bộ học viên.'));
+	}
 	dt_audit('import', 'hocvien', $ok, $file['name'].($hasKhoaCol ? ' (khóa theo file)' : ' (khóa '.$idKhoaSel.')'));
 	dt_log_import('hocvien', $file['name'], $ok, $err);
 
 	$msg = "Import học viên: $ok dòng thành công".($err ? ", $err dòng lỗi" : "");
+	if(!empty($syncKhoaIds))
+		$msg .= " Đồng bộ sang XD: thêm ".$syncTotals['xd_added']." học viên nhóm DAT và ".$syncTotals['ce_added']." học viên CE riêng; giữ nguyên ".$syncTotals['existing']." hồ sơ đã có.";
+	if(!empty($syncErrors)) $msg .= " Có lỗi đồng bộ: ".implode('; ', $syncErrors);
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	dt_import_notice($msg, "index.php?com=daotao&act=hocvien".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($ok > 0 || $err === 0));
+	dt_import_notice($msg, "index.php?com=daotao&act=hocvien".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($ok > 0 || $err === 0) && empty($syncErrors));
 }

@@ -74,12 +74,12 @@ function xd_is_ketoan_only()
 function xd_act_denied($act)
 {
 	$configActs = array('config', 'saveConfig', 'xoaDieuChinhHocVien');
-	$deleteActs = array('deleteHoadon', 'deleteAllHoadon', 'deleteHocvien', 'deleteHocvienByGv', 'deleteAllHocvien');
-	$importActs = array('uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel');
+	$deleteActs = array('deleteHoadon', 'deleteAllHoadon', 'deleteHocvien', 'deleteHocvienByGv', 'deleteAllHocvien', 'ceInvoiceDelete');
+	$importActs = array('uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel', 'syncTrainingDat', 'ceInvoiceSave', 'ceInvoiceUpload');
 	$kiemtraActs = array('kiemTraGiaoVien', 'huyKiemTraGiaoVien', 'toggleKiemTraHoadon', 'toggleHopLeHoadon');
 	$duyetActs = array('duyetGiaoVien', 'duyetTatCaGiaoVien', 'huyDuyetGiaoVien');
 	$exportActs = array('xuatBangKeGiaoVien', 'xuatBangKeDaDuyetGiaoVien', 'xuatTongHopGiaoVien', 'xuatTongHopDaDuyet', 'xuatDaKiemTraGiaoVien', 'xuatTatCaBangKe', 'xuatToanBoDanhSachHocVien', 'xuatBangKe', 'xuatHoadonExcel', 'xuatHocvienExcel');
-	$viewActs = array('loc', 'xemGiaoVien', 'locKiemTra', 'locDuyet', 'locDaThanhToan', 'hoadon', 'hocvien');
+	$viewActs = array('loc', 'xemGiaoVien', 'locKiemTra', 'locDuyet', 'locDaThanhToan', 'hoadon', 'hocvien', 'ce', 'ceInvoiceTemplate');
 
 	if(in_array($act, $configActs, true)) return !xd_can_config();
 	if(in_array($act, $deleteActs, true)) return !xd_can_xoa();
@@ -144,4 +144,3 @@ function xd_can_config()
 	if(!$func->check_permission()) return true; // super admin
 	return xd_has_full_manage() || xd_has_ketoan_permission() || xd_has_perm('xangdau_config');
 }
-

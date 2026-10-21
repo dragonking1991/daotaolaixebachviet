@@ -39,3 +39,19 @@ Hệ thống SHALL tổng hợp kết quả 6 môn của một học viên và x
 #### Scenario: Tra cứu tổng hợp lý thuyết
 - **WHEN** admin tra cứu theo học viên/CCCD/khóa
 - **THEN** hệ thống SHALL hiển thị trạng thái từng môn và kết luận đạt/chưa đạt lý thuyết, nêu rõ môn nào chưa hoàn thành hoặc chưa kiểm tra
+
+### Requirement: Thao tác hàng loạt và thống kê lý thuyết
+
+Hệ thống SHALL cho phép admin chọn nhiều học viên để đánh dấu đạt hoặc xóa kết quả lý thuyết; thao tác đánh dấu đạt SHALL áp dụng cho toàn bộ môn bắt buộc theo hạng của từng học viên. Trang lý thuyết SHALL thống kê số đạt/chưa đạt cho từng môn và tổng kết lý thuyết theo danh sách lọc.
+
+#### Scenario: Đánh dấu đạt nhiều học viên
+- **WHEN** admin chọn học viên và xác nhận đánh dấu đạt
+- **THEN** hệ thống SHALL cập nhật trạng thái tất cả môn bắt buộc theo hạng, đồng thời đồng bộ trạng thái mô phỏng giữa dữ liệu lý thuyết và module mô phỏng riêng
+
+#### Scenario: Xóa kết quả lý thuyết đã chọn
+- **WHEN** admin chọn học viên và xác nhận xóa kết quả lý thuyết
+- **THEN** hệ thống SHALL xóa kết quả lý thuyết và mô phỏng của những học viên đã chọn, không tác động học viên khác
+
+#### Scenario: Theo dõi số đạt/chưa đạt
+- **WHEN** admin xem trang lý thuyết với bộ lọc hiện tại
+- **THEN** hệ thống SHALL hiển thị số học viên đạt/chưa đạt tổng kết và từng môn, không để bộ lọc trạng thái làm mất số liệu đối chiếu

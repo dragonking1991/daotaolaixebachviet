@@ -3,9 +3,20 @@
 	$qs = http_build_query(array_filter(array('com'=>'daotao','act'=>'exportTonghop','id_khoa'=>$filters['id_khoa'],'tu_ngay'=>$filters['tu_ngay'],'toi_ngay'=>$filters['toi_ngay'],'cccd'=>$filters['cccd'],'hoten'=>$filters['hoten'],'hang'=>$filters['hang'],'gv'=>$filters['gv'])));
 	$tong_hv = is_array($items) ? count($items) : 0;
 	$so_du = 0; $so_dat_lt = 0;
+	$module_counts = array(
+		'ly_thuyet' => array('label' => 'Lý thuyết (gồm mô phỏng)', 'dat' => 0, 'chua' => 0),
+		'cabin' => array('label' => 'Cabin', 'dat' => 0, 'chua' => 0),
+		'hinh' => array('label' => 'Thực hành trong hình', 'dat' => 0, 'chua' => 0),
+		'dat' => array('label' => 'DAT', 'dat' => 0, 'chua' => 0),
+	);
 	if(!empty($items)) foreach($items as $__it){
 		if(!empty($__it['sum']['du_dieu_kien'])) $so_du++;
 		if(!empty($__it['sum']['ly_thuyet']['dat'])) $so_dat_lt++;
+		$module_counts['ly_thuyet'][!empty($__it['sum']['ly_thuyet']['dat']) ? 'dat' : 'chua']++;
+		if(!empty($__it['sum']['cabin']['yeu_cau']))
+			$module_counts['cabin'][dt_cabin_pass($__it['sum']['cabin']) ? 'dat' : 'chua']++;
+		$module_counts['hinh'][!empty($__it['sum']['hinh']['dat']) ? 'dat' : 'chua']++;
+		$module_counts['dat'][!empty($__it['sum']['dat']['dat']) ? 'dat' : 'chua']++;
 	}
 	$so_chua = $tong_hv - $so_du;
 	$ty_le = $tong_hv > 0 ? round($so_du / $tong_hv * 100) : 0;
@@ -39,6 +50,9 @@
 		<div class="dt-stat is-green"><div class="dt-stat-label">Đủ điều kiện dự thi</div><div class="dt-stat-num"><?=$so_du?></div><div class="dt-stat-sub">Đã đạt tất cả nội dung</div></div>
 		<div class="dt-stat is-amber"><div class="dt-stat-label">Đạt lý thuyết</div><div class="dt-stat-num"><?=$so_dat_lt?></div><div class="dt-stat-sub">Hoàn thành phần lý thuyết</div></div>
 		<div class="dt-stat is-red"><div class="dt-stat-label">Chưa đủ điều kiện</div><div class="dt-stat-num"><?=$so_chua?></div><div class="dt-stat-sub">Còn thiếu nội dung</div></div>
+		<?php foreach($module_counts as $__key => $__count): ?>
+		<div class="dt-stat is-blue"><div class="dt-stat-label"><?=htmlspecialchars($__count['label'])?></div><div class="dt-stat-num"><?=(int)$__count['dat']?> <small class="text-muted">Đạt</small> / <?=(int)$__count['chua']?> <small class="text-muted">Chưa đạt</small></div><div class="dt-stat-sub">Trong danh sách lọc<?=$__key==='cabin'?' (không tính khóa không yêu cầu)':''?></div></div>
+		<?php endforeach; ?>
 	</div>
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">

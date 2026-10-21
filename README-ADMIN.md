@@ -59,6 +59,24 @@ Request → admin/index.php
 
 ---
 
+### Thực hành trong hình — cổng giáo viên và admin
+
+Giờ/km do giáo viên nhập được dùng trực tiếp để tự xét kết quả ở **Thực hành trong hình** và **Tổng hợp**. Chỉ `dat_override = 1` là xác nhận Đạt thủ công; `NULL` hoặc `0` đều xét tự động theo hạng (lớp PDODb hiện lưu `NULL` ở trường này thành `0`). Dữ liệu cũ đã đủ giờ/km được tính lại khi tải trang, không cần nhập lại hay chạy cập nhật dữ liệu.
+
+Giữ nguyên ngưỡng tự động Đạt: B11/B1 **trên 34 giờ, từ 120 km**; C1 **trên 35 giờ, từ 115 km**; C/CE **trên 7 giờ, từ 15 km**. Cổng giáo viên và cả form nhập nhanh/sửa chi tiết admin **chặn lưu khi vượt trần**: B11/B1 tối đa **36 giờ / 130 km**; C1 tối đa **37 giờ / 120 km**; C/CE tối đa **8 giờ / 20 km**. Được lưu tiến độ chưa đủ tối thiểu, nhưng chưa tự động Đạt. Đúng mức tối đa vẫn được lưu. Admin vẫn có thể xác nhận Đạt thủ công khi chưa đủ giờ/km, nhưng không được nhập số liệu vượt trần. Dữ liệu cũ vượt trần không bị tự sửa; quy tắc chặn áp dụng khi lưu.
+
+Kiểm tra hồi quy bằng dữ liệu giả lập, không ghi cơ sở dữ liệu:
+
+```bash
+docker compose exec -T web php scripts/regression_hinh.php admin
+docker compose exec -T web php scripts/regression_hinh.php portal
+docker compose exec -T web php scripts/regression_hinh.php portal 35 121 update
+```
+
+### Dữ liệu giáo viên trong các bảng đào tạo
+
+Các bảng **Lý thuyết**, **Cabin**, **Thực hành trong hình** và **DAT** đều hiển thị giáo viên phụ trách của học viên (`gv_hoten`). Ba bảng Lý thuyết/Cabin/Thực hành hình có thêm ô lọc **Giáo viên** (khớp theo `gv_key`, bỏ dấu) để tra cứu nhanh; bộ lọc này được giữ trong link xuất Excel và URL quay lại.
+
 ### Giấy xác nhận hoàn thành khóa học (HTKH)
 
 Trong **Đào tạo → Số giấy HTKH**, phần **Cấp giấy HTKH theo ngày kiểm tra**:
@@ -70,12 +88,41 @@ Trong **Đào tạo → Số giấy HTKH**, phần **Cấp giấy HTKH theo ngà
 
 Việc tạo giấy chỉ áp dụng cho học viên có kết quả đạt thuộc bộ lọc hiện tại và giữ lại số giấy đã có. Xuất/in chỉ lấy học viên đã được cấp giấy; nếu chưa có giấy, hệ thống thông báo cần tạo giấy trước. Khi đổi ngày kiểm tra, bộ lọc khóa được đặt lại. Sau khi tạo giấy, ngày/kỳ và khóa đã chọn vẫn được giữ nguyên.
 
+**Bố cục giấy xác nhận** (dùng chung cho in, Word, Excel) theo đúng mẫu quy định, nhãn các trường là cố định: Quốc hiệu → logo Bách Việt (căn giữa) → tiêu ngữ → tiêu đề → số giấy → tên trung tâm → `Xác nhận cho Ông (Bà) :` → `Ngày tháng năm sinh :` → `Đã hoàn thành chương trình đào tạo lái xe hạng :` → `Khóa :` kèm `Thời gian học :` → `Từ ngày … đến ngày …` → `Tại Trung tâm Giáo dục nghề nghiệp Bách Việt.` → khối ký bên phải (`Tp.Hồ Chí Minh, ngày … tháng … năm …`, chức danh, người ký). Trong đó:
+- **Số giấy** tự sinh theo mẫu `"<Mã HV>-<hạng quy đổi>"`, nối liền bằng dấu `-` không khoảng trắng (vd `79044-20260805-000014-CE`). Hạng quy đổi: B11/B1→B, C1→C1, C→C, CE→CE. Số giấy đã lưu trước đó được giữ nguyên, không bị đổi định dạng.
+- **Thời gian học** là số ngày học, tự tính từ **ngày khai giảng → ngày mãn khóa** của khóa (tính cả hai đầu); để trống nếu khóa thiếu ngày.
+- **Từ ngày … đến ngày …** lấy từ ngày khai giảng và ngày mãn khóa của khóa.
+- **Ngày ký** hiển thị dạng `ngày … tháng … năm …`; địa điểm cố định `Tp.Hồ Chí Minh`.
+- Nền hoa văn trống đồng phủ kín trang A4 trong bản in, Word và Excel; lề nội dung vẫn được giữ riêng. Logo và nền được nhúng sẵn (ảnh ở `admin/assets/images/htkh-logo.png`, `htkh-watermark.png`, và bản mờ `htkh-watermark-faint.png` dùng cho nền sau chữ trong Excel). Nhớ triển khai kèm các ảnh này. Khi in giấy, cần máy in hỗ trợ in không viền để phủ nền sát mép giấy.
+
 Quyền **sửa HTKH** dùng để tạo/cập nhật giấy, quyền **xuất HTKH** dùng để tải Excel/Word, quyền **xem HTKH** dùng để xem và in. Chức năng nhập số giấy và xuất danh sách Excel theo khóa ở phần bên dưới vẫn được giữ nguyên.
 
 Kiểm tra hồi quy (dùng dữ liệu giả lập, không ghi cơ sở dữ liệu):
 
 ```bash
 docker compose exec -T web php scripts/regression_htkh.php
+```
+
+### Xăng dầu — thứ tự học viên và hủy duyệt theo ngày
+
+Danh sách học viên, thứ tự xét khi quyết toán, danh sách xuất Excel và danh sách học viên trong bảng kê dùng cùng thứ tự: khóa A–Z (bỏ khoảng trắng đầu/cuối, không phân biệt hoa-thường), lần import từ cũ đến mới, rồi thứ tự dòng trong file Excel. Mỗi lượt import được gán số thứ tự riêng để các file được xử lý nối tiếp, không đảo thứ tự các dòng. Ở trang **Đã thanh toán**, mỗi dòng tương ứng một giáo viên trong một ngày thanh toán; nút **Hủy ngày này** chỉ hoàn tác các hóa đơn/học viên đã duyệt của đúng giáo viên và ngày đó. Các ngày khác được giữ nguyên; nếu một bảng kê có dữ liệu của giáo viên khác, hệ thống giữ lại và cập nhật tổng bảng kê.
+
+Kiểm tra hồi quy phần hủy theo ngày bằng dữ liệu giả lập, không ghi cơ sở dữ liệu:
+
+```bash
+docker compose exec -T web php scripts/regression_xangdau_ngay_thanh_toan.php
+```
+
+### Xăng dầu — hóa đơn CE riêng theo khóa
+
+Tại **Xăng dầu → Quản lý CE**, hóa đơn CE được nhập thủ công hoặc import Excel theo khóa CE; danh sách này tách khỏi quyết toán Xăng dầu chung. File import dùng các cột: `Mã khóa CE`, `Số hóa đơn`, `Ngày hóa đơn`, `Số tiền`, `Giáo viên`, `Kỳ`. Hệ thống kiểm tra toàn bộ file và từ chối cả lượt import nếu có dòng sai hoặc trùng hóa đơn; định danh trùng là khóa + số hóa đơn + ngày. Có thể tải mẫu Excel ngay tại trang. Trong file Excel, ô số thuần nhỏ hơn 100.000 được hiểu theo đơn vị nghìn theo quy ước import hiện tại (ví dụ ô số 608,75 tương ứng 608.750đ); chuỗi như `1.000.000` được hiểu theo giá trị đầy đủ.
+
+Nhập/xóa hóa đơn cần quyền import/xóa Xăng dầu tương ứng. Danh sách học viên CE tiếp tục được đồng bộ từ DAT và lưu riêng theo từng khóa.
+
+Kiểm tra import CE bằng dữ liệu giả lập, không ghi cơ sở dữ liệu:
+
+```bash
+docker compose exec -T web php scripts/regression_xangdau_ce.php
 ```
 
 ## 2. Đăng nhập & Bảo mật

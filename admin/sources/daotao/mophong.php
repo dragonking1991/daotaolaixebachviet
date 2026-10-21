@@ -13,11 +13,12 @@ function dt_mophong_dat($tienDo)
 
 function dt_mophong_list()
 {
-	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $total_items, $paging, $curPage;
+	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $total_items, $paging, $curPage, $module_stats;
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array();
 	$total_items = 0;
+	$module_stats = array('dat' => 0, 'chua' => 0);
 	$keyword = dt_req('keyword');
 	if(!$id_khoa_sel && $keyword === '') return;
 
@@ -29,13 +30,16 @@ function dt_mophong_list()
 		$like = '%'.$keyword.'%';
 		$params[] = $like; $params[] = $like; $params[] = $like;
 	}
+	$stats = $d->rawQueryOne("select count(*) as tong, sum(case when m.id is not null and m.dat = 1 then 1 else 0 end) as dat from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where", $params);
+	$module_stats['dat'] = (int)($stats && $stats['dat'] ? $stats['dat'] : 0);
+	$module_stats['chua'] = max(0, (int)($stats ? $stats['tong'] : 0) - $module_stats['dat']);
 	$status = dt_req('trang_thai');
 	if($status === 'dat') $where .= ' and m.dat = 1';
 	elseif($status === 'chua') $where .= ' and (m.id is null or m.dat = 0)';
 
 	$perPage = 30;
 	$start = ($curPage * $perPage) - $perPage;
-	$sql = "select h.ma_hv,h.cccd,h.hoten,h.hang,m.id,m.tien_do,m.dat from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit $start,$perPage";
+	$sql = "select h.id as hv_id,h.id_khoa,h.ma_hv,h.cccd,h.hoten,h.hang,m.id,m.tien_do,m.dat from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit $start,$perPage";
 	$items = $d->rawQuery($sql, $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_hocvien h left join #_dt_mophong m on (m.id_khoa=h.id_khoa and m.cccd=h.cccd) where $where", $params);
 	$total_items = (int)($count ? $count['num'] : 0);
@@ -74,7 +78,7 @@ function dt_mophong_upload_excel()
 	if(!isset($map['cccd']) || !isset($map['tien_do']))
 		dt_import_notice("Không nhận diện được cột CCCD/Mã đăng nhập và Tiến độ hoàn thành trong file mô phỏng.", $back, false);
 
-	dt_backup_tables(array('dt_mophong'), 'imp_mophong');
+	dt_backup_tables(array('dt_mophong', 'dt_lythuyet'), 'imp_mophong');
 	$d->startTransaction();
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
@@ -104,6 +108,7 @@ function dt_mophong_upload_excel()
 		$exist = $d->rawQueryOne('select id from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1', array($data['id_khoa'], $data['cccd']));
 		if($exist && $exist['id']) { $d->where('id', (int)$exist['id']); $d->update('dt_mophong', $data); }
 		else { $data['ngaytao'] = time(); $d->insert('dt_mophong', $data); }
+		$d->rawQuery("insert into #_dt_lythuyet (id_khoa, cccd, mon, tien_do, diem_kt, dat, ngaytao) values (?, ?, 'mophong', ?, 0, ?, ?) on duplicate key update tien_do = values(tien_do), diem_kt = 0, dat = values(dat)", array($data['id_khoa'], $data['cccd'], $progress, $data['dat'], time()));
 		$ok++;
 	}
 	$d->commit();

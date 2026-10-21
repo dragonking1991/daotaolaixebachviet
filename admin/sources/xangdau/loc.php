@@ -21,9 +21,9 @@ function xd_get_giao_vien_detail()
 	$row = $d->rawQueryOne("select max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key = ?", array($gvKey));
 	if($row && $row['gv_hoten'] !== '') $xd_detail_gv['gv_hoten'] = $row['gv_hoten'];
 	$xd_detail_hoadons_da_thanh_toan = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 1 order by ngay_hoa_don desc, id desc", array($gvKey));
-	$xd_detail_hocviens_da_thanh_toan = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null order by lan_import desc, thu_tu_file asc, id asc", array($gvKey));
+	$xd_detail_hocviens_da_thanh_toan = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null order by ".xd_hocvien_order_clause(), array($gvKey));
 	$xd_detail_hoadons = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 order by ngay_hoa_don desc, id desc", array($gvKey));
-	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by lan_import desc, thu_tu_file asc, id asc", array($gvKey));
+	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by ".xd_hocvien_order_clause(), array($gvKey));
 	if($xd_detail_da_thanh_toan) return;
 	$chuaKiemTraHoaDon = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and ke_toan_kiem_tra = 0", array($gvKey));
 	$chuaKiemTraHocVien = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
@@ -117,33 +117,76 @@ function xd_duyet_tat_ca_giao_vien()
 }
 
 /**
- * Hủy duyệt (hoàn tác quyết toán) cho một giáo viên: đưa hóa đơn & học viên đã duyệt của giáo viên
- * về trạng thái chưa quyết toán/chưa thanh toán và xóa các đợt bảng kê tương ứng.
- * Chỉ hoàn tác các bản ghi đã duyệt qua đợt (id_bangke > 0); không đụng tới thanh toán thủ công (id_bangke = 0).
+ * Hủy duyệt đúng một ngày thanh toán của giáo viên; các ngày khác và thanh toán thủ công được giữ nguyên.
  */
 function xd_huy_duyet_giao_vien()
 {
 	global $d, $func;
 	$redirect = "index.php?com=xangdau&act=locDaThanhToan";
-	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
-	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", $redirect, false);
+	$redirectParams = array();
+	foreach(array('keyword', 'paid_from', 'paid_to') as $key)
+	{
+		$value = isset($_POST[$key]) ? trim((string)$_POST[$key]) : '';
+		if($value !== '' && ($key === 'keyword' || preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)))
+			$redirectParams[$key] = $value;
+	}
+	if(!empty($redirectParams)) $redirect .= '&'.http_build_query($redirectParams);
 
-	$rows = $d->rawQuery("select distinct id_bangke from #_xd_hoadon where gv_key = ? and da_quyettoan = 1 and id_bangke > 0", array($gvKey));
+	$gvKey = isset($_POST['gv_key']) ? trim((string)$_POST['gv_key']) : '';
+	$paymentDate = (isset($_POST['payment_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['payment_date'])) ? $_POST['payment_date'] : '';
+	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", $redirect, false);
+	$dateParts = $paymentDate !== '' ? explode('-', $paymentDate) : array();
+	if(count($dateParts) !== 3 || !checkdate((int)$dateParts[1], (int)$dateParts[2], (int)$dateParts[0]))
+		$func->transfer("Vui lòng chọn ngày thanh toán hợp lệ cần hủy.", $redirect, false);
+
+	$invoiceRows = $d->rawQuery("select distinct id_bangke from #_xd_hoadon where gv_key = ? and ngay_thanh_toan = ? and da_quyettoan = 1 and id_bangke > 0", array($gvKey, $paymentDate));
+	$studentRows = $d->rawQuery("select distinct id_bangke from #_xd_hocvien where gv_key = ? and ngay_thanh_toan = ? and id_bangke > 0", array($gvKey, $paymentDate));
+	if($invoiceRows === false || $studentRows === false)
+		$func->transfer("Không tải được dữ liệu thanh toán để hủy. Vui lòng thử lại.", $redirect, false);
 	$bangkeIds = array();
-	if(!empty($rows)) foreach($rows as $row) { $id = (int)$row['id_bangke']; if($id > 0) $bangkeIds[$id] = $id; }
-	if(empty($bangkeIds)) $func->transfer("Giáo viên chưa có đợt duyệt nào để hủy.", $redirect, false);
+	foreach(array_merge(is_array($invoiceRows) ? $invoiceRows : array(), is_array($studentRows) ? $studentRows : array()) as $row)
+	{
+		$id = (int)$row['id_bangke'];
+		if($id > 0) $bangkeIds[$id] = $id;
+	}
+	if(empty($bangkeIds)) $func->transfer("Giáo viên chưa có đợt duyệt để hủy trong ngày ".date('d/m/Y', strtotime($paymentDate)).".", $redirect, false);
 
 	$placeholders = implode(',', array_fill(0, count($bangkeIds), '?'));
 	$ids = array_values($bangkeIds);
 
 	$d->startTransaction();
-	$hv = $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = null, id_bangke = 0, quan_ly_duyet = 0, so_tien_thanh_toan = 0, dinh_muc = 0 where id_bangke in ($placeholders)", $ids);
-	$hd = $d->rawQuery("update #_xd_hoadon set da_quyettoan = 0, ngay_thanh_toan = null, quan_ly_duyet = 0, id_bangke = 0 where id_bangke in ($placeholders)", $ids);
-	$bk = $d->rawQuery("delete from #_xd_bangke where id in ($placeholders)", $ids);
-	if($hv === false || $hd === false || $bk === false) { $d->rollback(); $func->transfer("Không hủy duyệt được. Vui lòng thử lại.", $redirect, false); }
+	$hv = $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = null, id_bangke = 0, quan_ly_duyet = 0, so_tien_thanh_toan = 0, dinh_muc = 0 where gv_key = ? and ngay_thanh_toan = ? and id_bangke in ($placeholders)", array_merge(array($gvKey, $paymentDate), $ids));
+	$hd = $d->rawQuery("update #_xd_hoadon set da_quyettoan = 0, ngay_thanh_toan = null, quan_ly_duyet = 0, id_bangke = 0 where gv_key = ? and ngay_thanh_toan = ? and da_quyettoan = 1 and id_bangke in ($placeholders)", array_merge(array($gvKey, $paymentDate), $ids));
+	if($hv === false || $hd === false)
+	{
+		$d->rollback();
+		$func->transfer("Không hủy duyệt được. Vui lòng thử lại.", $redirect, false);
+	}
+
+	foreach($ids as $id)
+	{
+		$remainingStudents = $d->rawQueryOne("select count(*) as total, coalesce(sum(so_tien_thanh_toan), 0) as tong_tien from #_xd_hocvien where id_bangke = ? and ngay_thanh_toan is not null", array($id));
+		$remainingInvoices = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where id_bangke = ? and da_quyettoan = 1", array($id));
+		if(!is_array($remainingStudents) || !is_array($remainingInvoices))
+		{
+			$d->rollback();
+			$func->transfer("Không thể xác minh dữ liệu còn lại của bảng kê. Vui lòng thử lại.", $redirect, false);
+		}
+		$studentCount = (int)($remainingStudents['total'] ?? 0);
+		$invoiceCount = (int)($remainingInvoices['total'] ?? 0);
+		if($studentCount === 0 && $invoiceCount === 0)
+			$bk = $d->rawQuery("delete from #_xd_bangke where id = ?", array($id));
+		else
+			$bk = $d->rawQuery("update #_xd_bangke set tong_hocvien = ?, tong_tien = ? where id = ?", array($studentCount, (float)($remainingStudents['tong_tien'] ?? 0), $id));
+		if($bk === false)
+		{
+			$d->rollback();
+			$func->transfer("Không cập nhật được bảng kê sau khi hủy duyệt. Vui lòng thử lại.", $redirect, false);
+		}
+	}
 	$d->commit();
 
-	$func->transfer("Đã hủy duyệt giáo viên và hoàn tác ".count($bangkeIds)." đợt. Hóa đơn/học viên đã trở về trạng thái chờ duyệt.", $redirect, true);
+	$func->transfer("Đã hủy duyệt ngày ".date('d/m/Y', strtotime($paymentDate))." cho giáo viên; các ngày thanh toán khác được giữ nguyên.", $redirect, true);
 }
 
 function xd_loc_preview()
@@ -234,18 +277,47 @@ function xd_loc_da_thanh_toan()
 	$xd_loc_paid_from = (isset($_REQUEST['paid_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['paid_from'])) ? $_REQUEST['paid_from'] : '';
 	$xd_loc_paid_to = (isset($_REQUEST['paid_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['paid_to'])) ? $_REQUEST['paid_to'] : '';
 	$xd_loc_paid_keyword = isset($_REQUEST['keyword']) ? trim((string)$_REQUEST['keyword']) : '';
-	$where = 'b.gv_key <> "" and b.da_quyettoan = 1';
-	$params = array();
-	if($xd_loc_paid_keyword !== '') { $where .= ' and (b.gv_hoten like ? or b.gv_key like ?)'; $params[] = '%'.$xd_loc_paid_keyword.'%'; $params[] = '%'.$xd_loc_paid_keyword.'%'; }
-	if($xd_loc_paid_from !== '') { $where .= ' and b.ngay_thanh_toan >= ?'; $params[] = $xd_loc_paid_from; }
-	if($xd_loc_paid_to !== '') { $where .= ' and b.ngay_thanh_toan <= ?'; $params[] = $xd_loc_paid_to; }
+	$invoiceWhere = 'gv_key <> "" and da_quyettoan = 1';
+	$studentWhere = 'gv_key <> "" and ngay_thanh_toan is not null';
+	$invoiceParams = array();
+	$studentParams = array();
+	if($xd_loc_paid_keyword !== '')
+	{
+		$invoiceWhere .= ' and (gv_hoten like ? or gv_key like ?)';
+		$studentWhere .= ' and (gv_hoten like ? or gv_key like ?)';
+		$invoiceParams[] = '%'.$xd_loc_paid_keyword.'%'; $invoiceParams[] = '%'.$xd_loc_paid_keyword.'%';
+		$studentParams[] = '%'.$xd_loc_paid_keyword.'%'; $studentParams[] = '%'.$xd_loc_paid_keyword.'%';
+	}
+	if($xd_loc_paid_from !== '')
+	{
+		$invoiceWhere .= ' and ngay_thanh_toan >= ?';
+		$studentWhere .= ' and ngay_thanh_toan >= ?';
+		$invoiceParams[] = $xd_loc_paid_from; $studentParams[] = $xd_loc_paid_from;
+	}
+	if($xd_loc_paid_to !== '')
+	{
+		$invoiceWhere .= ' and ngay_thanh_toan <= ?';
+		$studentWhere .= ' and ngay_thanh_toan <= ?';
+		$invoiceParams[] = $xd_loc_paid_to; $studentParams[] = $xd_loc_paid_to;
+	}
 
-	// Giáo viên có ít nhất 1 hóa đơn hoặc học viên đã quyết toán/thanh toán
+	// Hiển thị một dòng cho mỗi giáo viên/ngày; hủy duyệt từ dòng này chỉ ảnh hưởng đúng ngày đó.
 	$rows = $d->rawQuery(
-		"select b.gv_key, max(b.gv_hoten) as gv_hoten, sum(b.tong_tien) as tong_tien, count(*) as so_hd
-			, min(b.ngay_thanh_toan) as ngay_thanh_toan, max(b.ngay_thanh_toan) as ngay_thanh_toan_den
-		 from #_xd_hoadon b where $where group by b.gv_key order by gv_hoten asc",
-		$params
+		"select paid.gv_key, max(paid.gv_hoten) as gv_hoten, sum(paid.tong_tien) as tong_tien,
+			sum(paid.so_hd) as so_hd, sum(paid.so_hv) as so_hv, sum(paid.so_bangke) as so_bangke,
+			paid.ngay_thanh_toan
+		 from (
+			select gv_key, max(gv_hoten) as gv_hoten, sum(tong_tien) as tong_tien, count(*) as so_hd, 0 as so_hv,
+				sum(case when id_bangke > 0 then 1 else 0 end) as so_bangke, ngay_thanh_toan
+			from #_xd_hoadon where $invoiceWhere group by gv_key, ngay_thanh_toan
+			union all
+			select gv_key, max(gv_hoten) as gv_hoten, 0 as tong_tien, 0 as so_hd, count(*) as so_hv,
+				sum(case when id_bangke > 0 then 1 else 0 end) as so_bangke, ngay_thanh_toan
+			from #_xd_hocvien where $studentWhere group by gv_key, ngay_thanh_toan
+		 ) paid
+		 group by paid.gv_key, paid.ngay_thanh_toan
+		 order by paid.ngay_thanh_toan desc, gv_hoten asc",
+		array_merge($invoiceParams, $studentParams)
 	);
 
 	$xd_loc_dathanhtoan_data = $rows;

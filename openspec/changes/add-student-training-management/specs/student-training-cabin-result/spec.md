@@ -27,3 +27,15 @@ Hệ thống SHALL cho phép tra cứu kết quả cabin theo học viên/CCCD/k
 #### Scenario: Tra cứu cabin
 - **WHEN** admin tra cứu theo học viên/CCCD/khóa
 - **THEN** hệ thống SHALL hiển thị tổng thời gian, số nội dung và kết luận đạt/không đạt cabin
+
+### Requirement: Đánh dấu đạt, xóa đã chọn và thống kê cabin
+
+Hệ thống SHALL cho phép admin chọn nhiều học viên để đánh dấu đạt cabin hoặc xóa kết quả cabin; trang cabin SHALL hiển thị số đạt/chưa đạt theo khóa và các bộ lọc đang áp dụng, không để bộ lọc trạng thái làm sai số thống kê.
+
+#### Scenario: Đánh dấu đạt cabin cho học viên đã chọn
+- **WHEN** admin chọn học viên và xác nhận đánh dấu đạt
+- **THEN** hệ thống SHALL ghi nhận kết quả đạt cabin cho các học viên đó và giữ nguyên thời gian/số nội dung đã có
+
+#### Scenario: Xóa kết quả cabin đã chọn
+- **WHEN** admin chọn học viên và xác nhận xóa kết quả
+- **THEN** hệ thống SHALL chỉ xóa kết quả cabin của các học viên đã chọn

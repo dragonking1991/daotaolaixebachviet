@@ -7,6 +7,8 @@ require_once LIBRARIES.'xangdau_config.php';
 require_once SOURCES.'xangdau/classes.php';
 require_once SOURCES.'xangdau/permissions.php';
 require_once SOURCES.'xangdau/schema.php';
+require_once SOURCES.'xangdau/daotao_sync.php';
+require_once SOURCES.'xangdau/ce.php';
 require_once SOURCES.'xangdau/helpers.php';
 require_once SOURCES.'xangdau/excel_cell.php';
 require_once SOURCES.'xangdau/config.php';
@@ -89,6 +91,37 @@ switch($act)
 		xd_ensure_tables();
 		xd_get_hocvien();
 		$template = "xangdau/hocvien/items";
+		break;
+	case "syncTrainingDat":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		$syncResult = xd_sync_training_students();
+		$func->transfer("Đồng bộ học viên đạt DAT.".xd_sync_training_notice($syncResult), "index.php?com=xangdau&act=hocvien", !empty($syncResult['ok']));
+		break;
+	case "ce":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_get_ce_data();
+		$template = "xangdau/ce/items";
+		break;
+	case "ceInvoiceSave":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_ce_save_invoice();
+		break;
+	case "ceInvoiceUpload":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_ce_upload_invoices();
+		break;
+	case "ceInvoiceDelete":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_ce_delete_invoice();
+		break;
+	case "ceInvoiceTemplate":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_ce_invoice_template();
 		break;
 	case "uploadHocvien":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);

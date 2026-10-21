@@ -31,3 +31,19 @@ Hệ thống SHALL xác định đạt thực hành trong hình theo ngưỡng q
 #### Scenario: Chưa đủ ngưỡng
 - **WHEN** quãng đường hoặc thời gian chưa đạt ngưỡng của hạng
 - **THEN** hệ thống SHALL đánh dấu chưa đạt thực hành trong hình
+
+### Requirement: Đánh dấu đạt hoặc xóa kết quả hình đã chọn
+
+Hệ thống SHALL cho phép admin chọn nhiều học viên để xác nhận đạt thực hành trong hình hoặc xóa kết quả; xác nhận đạt SHALL giữ nguyên giờ/km hiện có và SHALL được lưu như xác nhận thủ công.
+
+#### Scenario: Xác nhận đạt thực hành hình cho học viên đã chọn
+- **WHEN** admin chọn học viên và xác nhận đánh dấu đạt
+- **THEN** hệ thống SHALL đặt xác nhận đạt cho các học viên đã chọn mà không ghi đè giờ/km
+
+#### Scenario: Xóa kết quả hình đã chọn
+- **WHEN** admin chọn học viên và xác nhận xóa kết quả
+- **THEN** hệ thống SHALL chỉ xóa dữ liệu hình của các học viên đã chọn
+
+#### Scenario: Theo dõi số đạt/chưa đạt
+- **WHEN** admin xem trang thực hành trong hình
+- **THEN** hệ thống SHALL hiển thị số học viên đạt/chưa đạt theo bộ lọc hiện tại, không để bộ lọc trạng thái làm sai số thống kê

@@ -29,6 +29,8 @@
 			<input type="hidden" name="com" value="xangdau">
 			<input type="hidden" name="act" value="hocvien">
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên</a>
+			<?php if(xd_can_import()) { ?><a class="btn btn-sm bg-gradient-info text-white mr-2" href="index.php?com=xangdau&act=syncTrainingDat" onclick="return confirm('Đồng bộ các học viên đã đạt DAT từ Đào tạo? Học viên mới thông thường vào nhóm DAT; hồ sơ đã có trong XD được giữ nguyên. CE được đưa vào danh sách CE riêng.');"><i class="fas fa-rotate mr-1"></i>Đồng bộ HV đạt DAT</a><?php } ?>
+			<a class="btn btn-sm bg-gradient-secondary text-white mr-2" href="index.php?com=xangdau&act=ce"><i class="fas fa-truck-moving mr-1"></i>Danh sách CE</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
 			<?php if(xd_can_duyet() || xd_can_kiem_tra()) { $exportBase = 'index.php?com=xangdau&act=xuatHocvienExcel'; $exportUrlAll = $exportBase.'&scope=all'; $exportUrlPaid = $exportBase.'&scope=paid'; $exportUrlUnpaid = $exportBase.'&scope=unpaid'; if($xd_filter_keyword !== '') { $exportUrlAll .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlPaid .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlUnpaid .= '&keyword='.urlencode($xd_filter_keyword); } if($xd_filter_nhom !== '') { $exportUrlAll .= '&nhom='.urlencode($xd_filter_nhom); $exportUrlPaid .= '&nhom='.urlencode($xd_filter_nhom); $exportUrlUnpaid .= '&nhom='.urlencode($xd_filter_nhom); } if($xd_filter_tt_from !== '') { $exportUrlAll .= '&tt_from='.urlencode($xd_filter_tt_from); $exportUrlPaid .= '&tt_from='.urlencode($xd_filter_tt_from); $exportUrlUnpaid .= '&tt_from='.urlencode($xd_filter_tt_from); } if($xd_filter_tt_to !== '') { $exportUrlAll .= '&tt_to='.urlencode($xd_filter_tt_to); $exportUrlPaid .= '&tt_to='.urlencode($xd_filter_tt_to); $exportUrlUnpaid .= '&tt_to='.urlencode($xd_filter_tt_to); } if($xd_filter_trangthai !== '') { $exportUrlAll .= '&trangthai='.urlencode($xd_filter_trangthai); $exportUrlPaid .= '&trangthai='.urlencode($xd_filter_trangthai); $exportUrlUnpaid .= '&trangthai='.urlencode($xd_filter_trangthai); } ?>
 			<div class="btn-group mr-3">
@@ -87,7 +89,10 @@
 	</div>
 
 	<div class="card card-primary card-outline text-sm mb-0">
-		<div class="card-header"><h3 class="card-title">Danh sách học viên xăng dầu</h3></div>
+		<div class="card-header">
+			<h3 class="card-title">Danh sách học viên xăng dầu</h3>
+			<div class="card-tools text-muted">Học viên mới đồng bộ từ Đào tạo được gán nhóm <strong>DAT</strong>; hồ sơ đã có không bị ghi đè.</div>
+		</div>
 		<div class="card-body table-responsive p-0">
 			<table class="table table-hover">
 				<thead>

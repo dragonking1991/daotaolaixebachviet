@@ -322,6 +322,10 @@ Cho phép học viên tra cứu thông tin bằng CCCD (Căn cước công dân)
 3. Query bảng `table_product` theo CCCD cho từng loại
 4. Trả về kết quả hiển thị trên trang
 
+### Cổng giáo viên — theo dõi tiến độ đào tạo
+
+Tại `/cong-giao-vien`, danh sách học viên có thể lọc theo khóa và tên/CCCD/mã học viên. Thống kê **đạt/chưa đạt** của Lý thuyết, Cabin, Thực hành trong hình và DAT được tính theo chính danh sách đang lọc; Cabin hiển thị riêng số học viên không yêu cầu. Các lý do chưa đạt được tách thành từng dòng có biểu tượng.
+
 ---
 
 ## 9. Tìm kiếm

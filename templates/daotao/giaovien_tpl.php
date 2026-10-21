@@ -87,6 +87,43 @@
 			<span style="margin-left:auto;color:#64748b;font-size:13px;">Tổng: <strong><?=count($dtStudents)?></strong> học viên</span>
 		</form>
 
+		<?php
+			$dtModuleStats = array(
+				'ly_thuyet' => array('dat' => 0, 'chua_dat' => 0),
+				'cabin' => array('dat' => 0, 'chua_dat' => 0, 'khong_yeu_cau' => 0),
+				'hinh' => array('dat' => 0, 'chua_dat' => 0),
+				'dat' => array('dat' => 0, 'chua_dat' => 0)
+			);
+			foreach($dtStudents as $it)
+			{
+				$summary = $it['sum'];
+				foreach(array('ly_thuyet', 'cabin', 'hinh', 'dat') as $module)
+				{
+					if($module === 'cabin' && empty($summary['cabin']['yeu_cau']))
+					{
+						$dtModuleStats['cabin']['khong_yeu_cau']++;
+						continue;
+					}
+					$dtModuleStats[$module][!empty($summary[$module]['dat']) ? 'dat' : 'chua_dat']++;
+				}
+			}
+		?>
+		<div class="dt-gv-module-stats" aria-label="Thống kê kết quả các mô-đun">
+			<?php foreach(array(
+				'ly_thuyet' => array($showLt, 'Lý thuyết', 'fa-book-open'),
+				'cabin' => array($showCabin, 'Cabin', 'fa-car'),
+				'hinh' => array($showHinh, 'Thực hành trong hình', 'fa-road'),
+				'dat' => array($showDat, 'DAT', 'fa-route')
+			) as $module => $meta) { if(!$meta[0]) continue; ?>
+			<div class="dt-gv-module-stat">
+				<strong><i class="fas <?=$meta[2]?>" aria-hidden="true"></i><?=$meta[1]?></strong>
+				<span class="is-pass"><?=$dtModuleStats[$module]['dat']?> đạt</span>
+				<span class="is-pending"><?=$dtModuleStats[$module]['chua_dat']?> chưa đạt</span>
+				<?php if($module === 'cabin' && $dtModuleStats['cabin']['khong_yeu_cau'] > 0): ?><span class="is-not-required"><?=$dtModuleStats['cabin']['khong_yeu_cau']?> không yêu cầu</span><?php endif; ?>
+			</div>
+			<?php } ?>
+		</div>
+
 		<div style="overflow-x:auto;">
 		<table style="width:100%;border-collapse:collapse;font-size:14px;">
 			<thead><tr style="background:#f2f4f8;">
@@ -111,18 +148,19 @@
 					<td class="dt-gv-course-cell"><?=htmlspecialchars($hv['ma_khoa'])?></td>
 					<?php if($showLt): ?>
 					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['ly_thuyet']['dat'])?>
-						<?php if(!empty($ltMiss)): ?><div class="dt-gv-miss"><?php foreach($ltMiss as $m): ?><span><?=htmlspecialchars($m)?></span><?php endforeach; ?></div><?php endif; ?>
+						<?php if(!empty($ltMiss)): ?><div class="dt-gv-miss"><?php foreach($ltMiss as $m): ?><span><i class="fas fa-circle-exclamation" aria-hidden="true"></i><?=htmlspecialchars($m)?></span><?php endforeach; ?></div><?php endif; ?>
 					</td>
 					<?php endif; ?>
 					<?php if($showCabin): ?>
-					<td class="dt-gv-status-cell"><?php if(empty($s['cabin']['yeu_cau']) && empty($s['cabin']['dat'])): ?><span class="dt-gv-badge is-pass" style="opacity:.7;">Không YC</span><?php else: ?><?=dt_gv_badge($s['cabin']['dat'])?><?php endif; ?></td>
+					<td class="dt-gv-status-cell"><?php if(empty($s['cabin']['yeu_cau'])): ?><span class="dt-gv-badge is-pass" style="opacity:.7;">Không YC</span><?php else: ?><?=dt_gv_badge($s['cabin']['dat'])?><?php endif; ?></td>
 					<?php endif; ?>
 					<?php if($showHinh): ?>
 					<td class="dt-gv-hinh-cell">
 						<div class="dt-gv-measures"><span>Giờ <strong><?=htmlspecialchars((string)$s['hinh']['gio'])?></strong></span><span>Km <strong><?=htmlspecialchars((string)$s['hinh']['km'])?></strong></span></div>
 						<?=dt_gv_badge($s['hinh']['dat'])?>
-						<?php if(!empty($hinhMiss)): ?><div class="dt-gv-miss"><?php foreach($hinhMiss as $m): ?><span><?=htmlspecialchars($m)?></span><?php endforeach; ?></div><?php endif; ?>
+						<?php if(!empty($hinhMiss)): ?><div class="dt-gv-miss"><?php foreach($hinhMiss as $m): ?><span><i class="fas fa-circle-exclamation" aria-hidden="true"></i><?=htmlspecialchars($m)?></span><?php endforeach; ?></div><?php endif; ?>
 						<?php if($allowHinh): ?>
+						<?php $hinhLimit = dt_nguong_hinh()[dt_norm_hang($hv['hang'])] ?? array(); ?>
 						<details class="dt-gv-edit">
 							<summary><i class="fas fa-pen" aria-hidden="true"></i> Cập nhật Giờ/Km</summary>
 							<form method="post" action="cong-giao-vien" class="dt-gv-hinh-form">
@@ -131,8 +169,8 @@
 								<input type="hidden" name="id_khoa" value="<?=(int)$hv['id_khoa']?>">
 								<input type="hidden" name="khoa" value="<?=(int)$dtFilterKhoa?>">
 								<input type="hidden" name="kw" value="<?=htmlspecialchars($dtFilterKw)?>">
-								<label class="dt-gv-field"><span>Giờ thực hành</span><input type="number" name="gio" min="0" step="0.1" value="<?=htmlspecialchars((string)$s['hinh']['gio'])?>" required></label>
-								<label class="dt-gv-field"><span>Quãng đường (km)</span><input type="number" name="km" min="0" step="0.1" value="<?=htmlspecialchars((string)$s['hinh']['km'])?>" required></label>
+								<label class="dt-gv-field"><span>Giờ thực hành<?=isset($hinhLimit['gio_max']) ? ' (tối đa '.$hinhLimit['gio_max'].')' : ''?></span><input type="number" name="gio" min="0" <?=isset($hinhLimit['gio_max']) ? 'max="'.$hinhLimit['gio_max'].'"' : ''?> step="0.1" value="<?=htmlspecialchars((string)$s['hinh']['gio'])?>" required></label>
+								<label class="dt-gv-field"><span>Quãng đường (km)<?=isset($hinhLimit['km_max']) ? ' (tối đa '.$hinhLimit['km_max'].')' : ''?></span><input type="number" name="km" min="0" <?=isset($hinhLimit['km_max']) ? 'max="'.$hinhLimit['km_max'].'"' : ''?> step="0.1" value="<?=htmlspecialchars((string)$s['hinh']['km'])?>" required></label>
 								<button type="submit"><i class="fas fa-save" aria-hidden="true"></i> Lưu</button>
 							</form>
 						</details>
@@ -142,7 +180,7 @@
 					<?php if($showDat): ?>
 					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['dat']['dat'])?>
 						<?php $dagg = isset($s['dat']['agg']) ? $s['dat']['agg'] : null; if($dagg): ?><div class="dt-gv-dat-agg">A <?=$dagg['a']?>h · B <?=$dagg['b']?>h · C <?=$dagg['c']?>h · D <?=$dagg['d']?>h · E <?=$dagg['e']?> km</div><?php endif; ?>
-						<?php if(!empty($datMiss)): ?><div class="dt-gv-dat-missing"><?=htmlspecialchars(implode(' · ', $datMiss))?></div><?php endif; ?>
+						<?php if(!empty($datMiss)): ?><div class="dt-gv-dat-missing"><?php foreach($datMiss as $m): ?><div class="dt-gv-dat-missing-item"><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span><?=htmlspecialchars($m)?></span></div><?php endforeach; ?></div><?php endif; ?>
 					</td>
 					<?php endif; ?>
 					<?php if($showKl): ?><td class="dt-gv-conclusion-cell"><span class="dt-gv-conclusion <?=$s['du_dieu_kien']?'is-ready':'is-not-ready'?>"><?=$s['du_dieu_kien']?'Đủ ĐK':'Chưa đủ'?></span></td><?php endif; ?>
@@ -172,6 +210,13 @@
 .dt-gv-miss { margin-top: 7px; display: flex; flex-direction: column; gap: 3px; text-align: left; }
 .dt-gv-miss span { display: block; font-size: 12px; line-height: 1.35; color: #9a3412; background: #fff5f1; border-left: 2px solid #ef9a76; border-radius: 3px; padding: 4px 6px; }
 .dt-gv-dat-agg { margin-top: 6px; font-size: 12px; line-height: 1.4; color: #475569; }
+.dt-gv-module-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: -4px 0 14px; }
+.dt-gv-module-stat { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; color: #475569; font-size: 12px; }
+.dt-gv-module-stat strong { color: #1e293b; font-size: 13px; }
+.dt-gv-module-stat strong i { margin-right: 5px; color: #3155d9; }
+.dt-gv-module-stat .is-pass { color: #176b3a; font-weight: 700; }
+.dt-gv-module-stat .is-pending { color: #a9441b; font-weight: 700; }
+.dt-gv-module-stat .is-not-required { color: #64748b; font-weight: 600; }
 .dt-gv-edit { margin-top: 8px; }
 .dt-gv-edit summary { display: inline-flex; align-items: center; gap: 5px; color: #3155d9; font-size: 12px; font-weight: 600; cursor: pointer; list-style: none; }
 .dt-gv-edit summary::-webkit-details-marker { display: none; }
@@ -215,7 +260,11 @@
 .dt-gv-conclusion.is-not-ready { background: #fff0e8; color: #a9441b; }
 .dt-gv-miss { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; text-align: left; }
 .dt-gv-miss span { font-size: 11.5px; line-height: 1.3; color: #a9441b; background: #fff4f2; border-radius: 4px; padding: 2px 6px; }
-.dt-gv-dat-missing { margin-top: 6px; color: #9f2525; font-size: 12px; line-height: 1.45; text-align: left; }
+.dt-gv-dat-missing { margin-top: 6px; display: flex !important; flex-direction: column !important; align-items: stretch; gap: 3px; color: #9f2525; font-size: 12px; line-height: 1.45; text-align: left; white-space: normal; }
+.dt-gv-dat-missing-item { display: flex !important; align-items: flex-start; gap: 6px; width: 100%; box-sizing: border-box; padding: 3px 6px; background: #fff4f2; border-radius: 4px; }
+.dt-gv-dat-missing-item i { flex: 0 0 auto; margin-top: 2px; color: #c2410c; }
+.dt-gv-dat-missing-item span { display: block; min-width: 0; }
+.dt-gv-miss i { margin-right: 5px; color: #c2410c; }
 .dt-gv-hinh-form { margin-top: 8px; display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
 .dt-gv-hinh-form input { height: 30px; padding: 0 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 12px; }
 .dt-gv-hinh-form button { height: 30px; padding: 0 10px; border: none; border-radius: 5px; background: #1e9e4a; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }

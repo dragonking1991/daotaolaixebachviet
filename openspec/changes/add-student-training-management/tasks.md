@@ -79,3 +79,10 @@
 - [x] 11.2 Lint PHP toàn bộ file mới — tất cả PASS
 - [x] 11.3 Kiểm thử logic (chuẩn hóa hạng, ngưỡng LT/hình/DAT, giờ đêm) + dò header trên tiêu đề file thật (xe, GV, mẫu2, LT, cabin, DAT) — tất cả PASS. *(Import e2e trên MySQL thật nên chạy khi deploy.)*
 - [x] 11.4 Kiểm thử cổng học viên/giáo viên + toàn bộ luồng admin trên trình duyệt (Playwright, docker compose localhost:8080) — PASS: import 6 loại file, tổng hợp, xuất Excel, cổng HV, cổng GV (đăng nhập + cập nhật). 4 bug phát hiện & sửa (cabin substring, form-in-tr, rawQueryValue array, route cổng GV).
+
+## 12. Thao tác hàng loạt & thống kê module
+
+- [x] 12.1 Chọn nhiều học viên và đánh dấu Đạt theo đúng cấu trúc từng module: môn lý thuyết theo hạng, mô phỏng, cabin, hình và DAT.
+- [x] 12.2 Xóa kết quả lý thuyết/mô phỏng, cabin, hình theo học viên đã chọn; giữ luồng xóa phiên DAT hiện có.
+- [x] 12.3 Hiển thị thống kê Đạt/Chưa đạt trên từng trang module và Tổng hợp; tính mô phỏng một lần trong Lý thuyết và bỏ qua Cabin không yêu cầu.
+- [x] 12.4 Regression cho bulk pass/delete, đồng bộ mô phỏng, ràng buộc học viên theo khóa; lint và regression đào tạo/Xăng dầu đạt.

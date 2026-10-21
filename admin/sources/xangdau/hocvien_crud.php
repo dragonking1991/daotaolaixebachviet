@@ -40,7 +40,7 @@ function xd_get_hocvien()
 	list($where, $params) = xd_hocvien_where_and_params($scope, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_tt_from, $xd_filter_tt_to);
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select * from #_xd_hocvien where $where order by substring_index(ho_ten, ' ', -1) asc, ho_ten asc limit ".$startpoint.",".$per_page;
+	$sql = "select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause()." limit ".$startpoint.",".$per_page;
 	$items = $d->rawQuery($sql, $params);
 
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien where $where", $params);

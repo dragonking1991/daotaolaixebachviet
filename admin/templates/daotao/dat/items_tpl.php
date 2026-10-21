@@ -17,9 +17,10 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Tổng hợp DAT</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><?php if(dt_can('dat','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=dat" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm phiên</a> <?php endif; ?><?php if(dt_can('dat','import')): ?><a href="index.php?com=daotao&act=uploadDat<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import DAT</a> <?php endif; ?><?php if($id_khoa_sel && dt_can('dat','edit')): ?><a href="index.php?com=daotao&act=datDatAll&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Đánh dấu ĐẠT DAT cho TẤT CẢ học viên trong khóa?')" class="btn btn-sm bg-gradient-warning"><i class="fas fa-check-double mr-1"></i>Đạt toàn bộ</a> <?php endif; ?><?php if(dt_can('dat','export')): ?><a href="<?=dt_export_link('exportDat', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?></div>
+			<div class="card-tools"><?php if(dt_can('dat','edit')): ?><button type="submit" form="dt-module-dat" onclick="return confirm('Xác nhận Đạt DAT thủ công cho học viên đã chọn?')" class="btn btn-sm bg-gradient-success"><i class="fas fa-check mr-1"></i>Đạt mục đã chọn</button> <a href="index.php?com=daotao&act=crudEdit&entity=dat" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm phiên</a> <?php endif; ?><?php if(dt_can('dat','import')): ?><a href="index.php?com=daotao&act=uploadDat<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import DAT</a> <?php endif; ?><?php if($id_khoa_sel && dt_can('dat','edit')): ?><a href="index.php?com=daotao&act=datDatAll&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Đánh dấu ĐẠT DAT cho TẤT CẢ học viên trong khóa?')" class="btn btn-sm bg-gradient-warning"><i class="fas fa-check-double mr-1"></i>Đạt toàn bộ</a> <?php endif; ?><?php if(dt_can('dat','export')): ?><a href="<?=dt_export_link('exportDat', array('id_khoa','keyword','trang_thai'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?></div>
 		</div>
 		<div class="card-body">
+			<?php if(dt_can('dat','edit')): ?><form id="dt-module-dat" method="post" action="index.php?com=daotao&act=modulePassSelected"><input type="hidden" name="entity" value="dat"><input type="hidden" name="id_khoa" value="<?=(int)$id_khoa_sel?>"><input type="hidden" name="ret" value="<?=$dat_ret?>"></form><?php endif; ?>
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="dat">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
@@ -34,12 +35,13 @@
 				</select>
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
+			<div class="dt-stats mb-2"><div class="dt-stat is-green"><div class="dt-stat-label">DAT đạt</div><div class="dt-stat-num"><?=(int)$module_stats['dat']?></div></div><div class="dt-stat is-red"><div class="dt-stat-label">DAT chưa đạt</div><div class="dt-stat-num"><?=(int)$module_stats['chua']?></div></div></div>
 			<?php if(!$id_khoa_sel && empty($items)): ?>
 			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp DAT, hoặc nhập CCCD/tên để tra cứu toàn bộ khóa.</div>
 			<?php else: ?>
 			<div class="table-responsive">
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Học viên</th><th>Tiến độ định mức</th><th>Phân bổ giờ &amp; phiên</th><th class="text-center">Điều kiện DAT</th></tr></thead>
+				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('dat','edit')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-module-dat" title="Chọn tất cả"><?php endif; ?></th><th>Học viên</th><th>Tiến độ định mức</th><th>Phân bổ giờ &amp; phiên</th><th class="text-center">Điều kiện DAT</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it):
 						$hv=$it['hv']; $a=$it['agg']; $nguong=dt_nguong_dat(); $hangDat=dt_norm_hang($hv['hang']);
@@ -49,10 +51,12 @@
 						$pctKm=$kmMucTieu>0?min(100,(int)round($a['e']/$kmMucTieu*100)):0;
 					?>
 					<tr>
+						<td class="text-center"><?php if(dt_can('dat','edit')): ?><input type="checkbox" class="dt-bulk-item" form="dt-module-dat" name="ids[]" value="<?=(int)$hv['id']?>"><?php endif; ?></td>
 						<td>
 							<div class="dt-title"><?=htmlspecialchars($hv['hoten'])?></div>
 							<div class="dt-sub"><i class="fas fa-id-badge"></i><?=htmlspecialchars($hv['ma_hv'] ?: '—')?></div>
 							<div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($hv['cccd'])?><span class="dt-sep">•</span><span class="dt-tag is-muted"><?=htmlspecialchars($hv['hang'])?></span></div>
+							<div class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars(!empty($hv['gv_hoten']) ? $hv['gv_hoten'] : '—')?></div>
 						</td>
 						<td class="dt-dat-progress">
 							<div class="dt-dat-progress-line"><span>Giờ thực hành</span><strong><?=$a['a']?><?php if($gioMucTieu): ?> / <?=$gioMucTieu?> giờ<?php else: ?> giờ<?php endif; ?></strong></div>
@@ -67,7 +71,7 @@
 						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đủ điều kiện</span><?php if(!empty($it['override'])): ?> <span class="badge badge-warning">Xác nhận tay</span> <a href="index.php?com=daotao&act=datOverrideClear&id_khoa=<?=(int)$it['hv']['id_khoa']?>&cccd=<?=urlencode($it['hv']['cccd'])?>" onclick="return confirm('Bỏ xác nhận Đạt DAT cho học viên này?')" class="text-danger" title="Bỏ xác nhận"><i class="fas fa-times"></i></a><?php endif; ?><?php else: ?><span class="badge badge-danger">Chưa đủ</span><?php if(!empty($it['thieu'])): ?><div class="dt-sub mt-1 text-danger text-left"><?php foreach($it['thieu'] as $__t): ?><div><i class="fas fa-exclamation-circle"></i> <?=htmlspecialchars($__t)?></div><?php endforeach; ?></div><?php endif; ?><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="4" class="dt-empty"><div class="dt-empty-box"><i class="fas fa-road"></i><div>Chưa có dữ liệu DAT trong khóa này</div></div></td></tr>
+					<tr><td colspan="5" class="dt-empty"><div class="dt-empty-box"><i class="fas fa-road"></i><div>Chưa có dữ liệu DAT trong khóa này</div></div></td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

@@ -13,7 +13,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 	if($idBangke > 0)
 	{
 		$hoadons = $d->rawQuery("select * from #_xd_hoadon where id_bangke = ? order by gv_hoten asc, ngay_hoa_don asc, id asc", array($idBangke));
-		$hocviens = $d->rawQuery("select * from #_xd_hocvien where id_bangke = ? order by gv_hoten asc, substring_index(ho_ten, ' ', -1) asc, ho_ten asc", array($idBangke));
+		$hocviens = $d->rawQuery("select * from #_xd_hocvien where id_bangke = ? order by gv_hoten asc, ".xd_hocvien_order_clause(), array($idBangke));
 	}
 	else
 	{
@@ -259,7 +259,7 @@ function xd_xuat_hocvien_excel()
 	$ttFrom = (isset($_REQUEST['tt_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['tt_from'])) ? $_REQUEST['tt_from'] : '';
 	$ttTo = (isset($_REQUEST['tt_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['tt_to'])) ? $_REQUEST['tt_to'] : '';
 	list($where, $params) = xd_hocvien_where_and_params($scope, $keyword, $nhom, $ttFrom, $ttTo);
-	$rows = $d->rawQuery("select * from #_xd_hocvien where $where order by substring_index(ho_ten, ' ', -1) asc, ho_ten asc", $params);
+	$rows = $d->rawQuery("select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause(), $params);
 	$labels = array('all' => 'TẤT CẢ', 'paid' => 'ĐÃ THANH TOÁN', 'unpaid' => 'CHƯA THANH TOÁN');
 	xd_xuat_danh_sach_excel('DANH SÁCH HỌC VIÊN XĂNG DẦU - '.$labels[$scope], array('STT', 'Họ tên', 'CCCD', 'Khóa', 'Ngày sinh', 'Nhóm', 'GV phụ trách', 'Số tiền TT', 'Ngày TT', 'Trạng thái'), array('A'=>6, 'B'=>28, 'C'=>18, 'D'=>14, 'E'=>14, 'F'=>10, 'G'=>26, 'H'=>18, 'I'=>14, 'J'=>20), $rows, function($row, $stt) {
 		return array($stt, $row['ho_ten'], $row['cccd'], $row['khoa'], $row['ngaysinh'], $row['nhom'], $row['gv_hoten'], (float)$row['so_tien_thanh_toan'], !empty($row['ngay_thanh_toan']) ? date('d/m/Y', strtotime($row['ngay_thanh_toan'])) : '', !empty($row['ngay_thanh_toan']) ? 'Đã thanh toán' : 'Chưa thanh toán');

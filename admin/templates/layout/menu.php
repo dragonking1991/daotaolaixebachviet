@@ -752,6 +752,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link <?=($com=='xangdau' && (strpos($act, 'ceInvoice') === 0 || $act=='ce'))?'active':''?>" href="index.php?com=xangdau&act=ce" title="Học viên và hóa đơn CE">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Quản lý CE</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link <?=($com=='xangdau' && ($act=='loc' || $act=='xuatBangKe'))?'active':''?>" href="index.php?com=xangdau&act=loc" title="Lọc thanh toán">
                                 <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Lọc thanh toán</p>
                             </a>

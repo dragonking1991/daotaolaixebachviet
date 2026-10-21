@@ -80,6 +80,51 @@ function xd_ensure_tables()
 		. ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 	);
 
+	$d->rawQuery(
+		"CREATE TABLE IF NOT EXISTS #_xd_ce_hocvien (\n"
+		. " id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,\n"
+		. " id_khoa INT(10) UNSIGNED NOT NULL DEFAULT 0,\n"
+		. " ma_khoa VARCHAR(100) NOT NULL DEFAULT '',\n"
+		. " ten_khoa VARCHAR(255) NOT NULL DEFAULT '',\n"
+		. " ma_hv VARCHAR(100) NOT NULL DEFAULT '',\n"
+		. " ho_ten VARCHAR(255) NOT NULL DEFAULT '',\n"
+		. " cccd VARCHAR(20) NOT NULL,\n"
+		. " ngaysinh VARCHAR(20) NOT NULL DEFAULT '',\n"
+		. " gv_hoten VARCHAR(255) NOT NULL DEFAULT '',\n"
+		. " gv_key VARCHAR(191) NOT NULL DEFAULT '',\n"
+		. " ngay_dat DATE NULL DEFAULT NULL,\n"
+		. " ngaytao INT(11) UNSIGNED NOT NULL DEFAULT 0,\n"
+		. " user_tao VARCHAR(100) NOT NULL DEFAULT '',\n"
+		. " PRIMARY KEY (id),\n"
+		. " UNIQUE KEY uniq_xd_ce_hv_khoa_cccd (id_khoa, cccd),\n"
+		. " KEY idx_xd_ce_hv_cccd (cccd),\n"
+		. " KEY idx_xd_ce_hv_khoa (ma_khoa)\n"
+		. ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+	);
+
+	$d->rawQuery(
+		"CREATE TABLE IF NOT EXISTS #_xd_ce_hoadon (\n"
+		. " id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,\n"
+		. " id_khoa INT(10) UNSIGNED NOT NULL DEFAULT 0,\n"
+		. " ma_khoa VARCHAR(100) NOT NULL DEFAULT '',\n"
+		. " ma_hoa_don VARCHAR(191) NOT NULL,\n"
+		. " ngay_hoa_don DATE NOT NULL,\n"
+		. " tong_tien DECIMAL(18,2) NOT NULL DEFAULT 0,\n"
+		. " gv_cccd VARCHAR(20) NOT NULL DEFAULT '',\n"
+		. " gv_hoten VARCHAR(255) NOT NULL DEFAULT '',\n"
+		. " gv_key VARCHAR(191) NOT NULL DEFAULT '',\n"
+		. " ky VARCHAR(100) NOT NULL DEFAULT '',\n"
+		. " ngaytao INT(11) UNSIGNED NOT NULL DEFAULT 0,\n"
+		. " user_tao VARCHAR(100) NOT NULL DEFAULT '',\n"
+		. " PRIMARY KEY (id),\n"
+		. " UNIQUE KEY uniq_xd_ce_hd_course_number_date (id_khoa, ma_hoa_don, ngay_hoa_don),\n"
+		. " KEY idx_xd_ce_hd_course (id_khoa),\n"
+		. " KEY idx_xd_ce_hd_teacher (gv_key),\n"
+		. " KEY idx_xd_ce_hd_date (ngay_hoa_don),\n"
+		. " KEY idx_xd_ce_hd_period (ky)\n"
+		. ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+	);
+
 	// Bổ sung cột cho mô hình dữ liệu thực tế (idempotent) — GV liên kết theo TÊN (gv_key)
 	xd_ensure_column('xd_hoadon', 'gv_key', "ADD COLUMN gv_key VARCHAR(191) NOT NULL DEFAULT '' AFTER gv_hoten");
 	xd_ensure_column('xd_hoadon', 'note_1', "ADD COLUMN note_1 VARCHAR(255) NOT NULL DEFAULT '' AFTER gv_hoten");

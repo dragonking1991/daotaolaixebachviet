@@ -116,8 +116,9 @@ if(!function_exists('dt_mb_lower'))
 		$ng = dt_nguong_lythuyet();
 		return ((float)$tienDo > $ng['tien_do'] && (float)$diemKt > $ng['diem_kt']) ? 1 : 0;
 	}
-	function dt_hinh_dat($hang, $gio, $km)
+	function dt_hinh_dat($hang, $gio, $km, $override = null)
 	{
+		if((int)$override === 1) return 1;
 		$hang = dt_norm_hang($hang);
 		$ng = dt_nguong_hinh();
 		if(!isset($ng[$hang])) return 0;
@@ -210,18 +211,19 @@ if(!function_exists('dt_mb_lower'))
 
 		$cabin = $d->rawQueryOne("select dat from #_dt_cabin_kq where id_khoa = ? and ma_hv = ? limit 0,1", array($idKhoa, $maHv));
 		$cabinDat = ($cabin && (int)$cabin['dat'] === 1) ? 1 : 0;
+		$cabinYeuCau = !in_array(dt_norm_hang($hv['hang']), array('C', 'CE'), true);
 
-		$hinh = $d->rawQueryOne("select gio, km from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
-		$hinhDat = $hinh ? dt_hinh_dat($hv['hang'], $hinh['gio'], $hinh['km']) : 0;
+		$hinh = $d->rawQueryOne("select gio, km, dat_override from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+		$hinhDat = $hinh ? dt_hinh_dat($hv['hang'], $hinh['gio'], $hinh['km'], $hinh['dat_override']) : 0;
 
 		$agg = dt_dat_aggregate($cccd, $idKhoa);
 		list($datDat, $datThieu) = dt_dat_danhgia($hv['hang'], $agg);
 
-		$duDieuKien = ($lyThuyetDat && $cabinDat && $hinhDat && $datDat) ? 1 : 0;
+		$duDieuKien = ($lyThuyetDat && ($cabinDat || !$cabinYeuCau) && $hinhDat && $datDat) ? 1 : 0;
 
 		return array(
 			'ly_thuyet' => array('dat' => $lyThuyetDat, 'so_dat' => $soDat, 'so_co' => $soCo, 'tong' => $tongMon),
-			'cabin' => array('dat' => $cabinDat, 'co' => $cabin ? 1 : 0),
+			'cabin' => array('dat' => $cabinDat, 'co' => $cabin ? 1 : 0, 'yeu_cau' => $cabinYeuCau ? 1 : 0),
 			'hinh' => array('dat' => $hinhDat, 'gio' => $hinh ? (float)$hinh['gio'] : 0, 'km' => $hinh ? (float)$hinh['km'] : 0),
 			'dat' => array('dat' => $datDat, 'agg' => $agg, 'thieu' => $datThieu),
 			'du_dieu_kien' => $duDieuKien,
@@ -297,7 +299,7 @@ if(!function_exists('dt_mb_lower'))
 		return $miss;
 	}
 
-	/* Cảnh báo (không chặn) khi Giờ/Km vượt trần tối đa theo hạng. */
+	/* Lý do vượt trần theo hạng, dùng để chặn lưu thực hành hình. */
 	function dt_hinh_cap_warn($hang, $gio, $km)
 	{
 		$ng = dt_nguong_hinh();

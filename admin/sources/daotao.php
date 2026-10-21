@@ -15,6 +15,7 @@ require_once SOURCES.'daotao/mophong.php';
 require_once SOURCES.'daotao/cabin_kq.php';
 require_once SOURCES.'daotao/thuchanh_hinh.php';
 require_once SOURCES.'daotao/dat.php';
+require_once SOURCES.'xangdau/daotao_sync.php';
 require_once SOURCES.'daotao/tonghop.php';
 require_once SOURCES.'daotao/export.php';
 require_once SOURCES.'daotao/crud.php';
@@ -90,6 +91,8 @@ switch($act)
 	case "crudSave":   dt_guard(dt_p(dt_crud_section(),'edit')); dt_crud_save(); break;
 	case "crudDelete": dt_guard(dt_p(dt_crud_section(),'delete')); dt_crud_delete(); break;
 	case "crudDeleteSelected": dt_guard(dt_p(dt_crud_section(),'delete')); dt_crud_delete_selected(); break;
+	case "modulePassSelected": dt_guard(dt_p(dt_crud_section(),'edit')); dt_module_pass_selected(); break;
+	case "moduleDeleteSelected": dt_guard(dt_p(dt_crud_section(),'delete')); dt_module_delete_selected(); break;
 	case "crudUndo":   dt_guard(dt_p(dt_crud_section(),'edit')); dt_crud_undo(); break;
 	case "crudDeleteAll": dt_guard(dt_p(dt_crud_section(),'delete')); dt_admin_guard(); if(preg_replace('/[^a-z]/','', isset($_REQUEST['entity'])?$_REQUEST['entity']:'') === 'khoa') $func->transfer("Chức năng xóa khóa đào tạo đã được tắt", "index.php?com=daotao&act=khoa", false); dt_crud_delete_all(); break;
 

@@ -153,10 +153,14 @@ htkh_check($d->rolledBack && $d->certificates === $before, 'A failed save must r
 $d->failSave = false;
 echo "[PASS] Validation, filtered issuance, signature persistence, existing numbers and rollback\n";
 
+htkh_check(dt_htkh_so_giay('79044-20260805-000014', 'CE') === '79044-20260805-000014-CE', 'Generated certificate number must follow the template format (hyphen, no spaces)');
+htkh_check(dt_htkh_so_giay('79044-20260805-000014', 'B11') === '79044-20260805-000014-B', 'Generated certificate number must use the license class suffix');
+htkh_check(dt_htkh_so_giay('', 'B11') === '', 'Missing student code yields no auto number');
+
 list($ky, $documents) = dt_htkh_ky_documents();
 htkh_check(count($documents) === 2, 'Document selection must match the course filter');
 htkh_check($documents[1]['hang'] === 'D2 lên CE', 'CE selection must reach certificate output');
-htkh_check($documents[0]['thoi_gian'] === '01/06/2026 - 16/10/2026', 'Training dates must reach certificate output');
+htkh_check($documents[0]['so_ngay'] === '138 ngày', 'Training days must come from the course start/end dates');
 htkh_check($documents[0]['nguoi_ky'] === $_POST['nguoi_ky'], 'Vietnamese signature must round-trip');
 $_REQUEST['ky_khoa'] = dt_htkh_khoa_key($d->students[6]);
 htkh_expect_transfer('dt_htkh_cap_giay_ky', true);
@@ -168,9 +172,19 @@ list($allKy, $allDocuments) = dt_htkh_ky_documents();
 htkh_check(count($allDocuments) === 3, 'All-courses output must include only issued certificates');
 $_REQUEST['ky_khoa'] = 'id:101';
 echo "[PASS] Legacy course issuance and all-courses issued-only output\n";
+
+htkh_check(preg_match('/^\d+ ngày$/u', $documents[0]['so_ngay']) === 1, 'Training days must be computed as "N ngày"');
+htkh_check(dt_htkh_so_ngay('2026-08-07', '2026-09-05') === '30 ngày', 'Training days must count both endpoints (template: 30 ngày)');
+htkh_check(dt_htkh_so_ngay('', '2026-09-05') === '' && dt_htkh_so_ngay('2026-09-05', '2026-09-01') === '', 'Missing or reversed dates yield no day count');
+htkh_check($documents[0]['tu_den'] === 'Từ ngày 01 tháng 06 năm 2026 đến ngày 16 tháng 10 năm 2026', 'Course period must read from khai giảng to mãn khóa');
+htkh_check($documents[0]['ngay_ky_text'] === 'Tp.Hồ Chí Minh, ngày 18 tháng 10 năm 2026', 'Signing line must be fixed location + ngày/tháng/năm');
 $html = dt_htkh_documents_html($documents, dt_htkh_ky_back());
 htkh_check(substr_count($html, '<div class="cert">') === 2, 'Print must contain one certificate per student');
 htkh_check(strpos($html, '&amp; &lt;A&gt;') !== false, 'HTML output must escape student text');
+foreach(array('Xác nhận cho Ông (Bà) :', 'Ngày tháng năm sinh :', 'Đã hoàn thành chương trình đào tạo lái xe hạng :', 'Khóa :', 'Thời gian học :', 'Tại Trung tâm Giáo dục nghề nghiệp Bách Việt.') as $label)
+	htkh_check(strpos($html, $label) !== false, 'Print must keep the fixed form label: '.$label);
+htkh_check(strpos($html, 'assets/images/htkh-logo.png') !== false && strpos($html, 'assets/images/htkh-watermark.png') !== false, 'Print must embed the logo and watermark');
+htkh_check(strpos($html, 'top:0;left:0;width:100%;height:100%;object-fit:cover') !== false, 'Print background must cover the entire certificate, including its padding');
 
 $providedDirectory = $argv[1] ?? '';
 $directory = $providedDirectory;
@@ -184,26 +198,47 @@ try
 {
 	$book = dt_htkh_documents_xlsx($documents);
 	$sheet = $book->getActiveSheet();
-	$rowsPerPage = count(dt_htkh_document_rows($documents[0]));
+	$rowsPerPage = count(dt_htkh_document_rows($documents[0])) + 2;
 	$pageHeight = 0;
 	foreach(dt_htkh_document_rows($documents[0]) as $row) $pageHeight += $row['height'] ?? 25;
-	htkh_check($pageHeight < (297 - 40) * 72 / 25.4, 'Certificate row heights must fit the printable height of an A4 page');
+	htkh_check($pageHeight < (297 - 28) * 72 / 25.4, 'Certificate row heights must fit the printable height of an A4 page');
 	htkh_check(count($sheet->getBreaks()) === 1, 'Excel needs one explicit page break for two students');
 	htkh_check(isset($sheet->getBreaks()['A'.$rowsPerPage]), 'Excel page break must fall between certificates');
-	htkh_check($sheet->getCell('A6')->getValue() === 'Số: 0000123 - B', 'Excel must preserve leading zeroes in certificate numbers');
-	htkh_check($sheet->getCell('A6')->getDataType() === PHPExcel_Cell_DataType::TYPE_STRING, 'Excel certificate values must be explicit strings');
+	htkh_check($sheet->getCell('B6')->getValue() === 'Số: 0000123 - B', 'Excel must preserve leading zeroes in certificate numbers');
+	htkh_check($sheet->getCell('B6')->getDataType() === PHPExcel_Cell_DataType::TYPE_STRING, 'Excel certificate values must be explicit strings');
 	htkh_check($sheet->getPageSetup()->getFitToWidth() === 1 && $sheet->getPageSetup()->getFitToHeight() === 0, 'Excel must fit each certificate horizontally, not squeeze all certificates onto one page');
+	htkh_check(count($sheet->getDrawingCollection()) === 4, 'Excel must repeat the logo and watermark on each certificate page');
+	htkh_check($sheet->getPageMargins()->getLeft() == 0 && $sheet->getPageMargins()->getRight() == 0 && $sheet->getPageMargins()->getTop() == 0 && $sheet->getPageMargins()->getBottom() == 0, 'Excel print margins must not leave white borders around the background');
+	$backgrounds = 0;
+	foreach($sheet->getDrawingCollection() as $drawing)
+	{
+		if($drawing->getName() !== 'Nen') continue;
+		htkh_check($drawing->getCoordinates() === 'A'.(1 + $backgrounds * $rowsPerPage) && $drawing->getOffsetX() === 0 && $drawing->getOffsetY() === 0, 'Excel background must start at each page origin');
+		htkh_check($drawing->getWidth() === 794 && $drawing->getHeight() === 1122, 'Excel background must fill an A4 page at 96dpi');
+		$height = 0;
+		for($r = 1 + $backgrounds * $rowsPerPage; $r <= ($backgrounds + 1) * $rowsPerPage; $r++)
+			$height += $sheet->getRowDimension($r)->getRowHeight();
+		htkh_check(abs($height - 1122 * 72 / 96) < 0.01, 'Excel page rows must match the full-page background height');
+		$backgrounds++;
+	}
+	htkh_check($backgrounds === 2, 'Excel must have one full-page background per certificate');
 	PHPExcel_IOFactory::createWriter($book, 'Excel2007')->save($directory.'/certificates.xlsx');
 	$loaded = PHPExcel_IOFactory::load($directory.'/certificates.xlsx');
-	htkh_check($loaded->getActiveSheet()->getCell('E19')->getValue() === $_POST['nguoi_ky'], 'Saved XLSX must retain Vietnamese signature');
+	htkh_check($loaded->getActiveSheet()->getCell('F19')->getValue() === $_POST['nguoi_ky'], 'Saved XLSX must retain Vietnamese signature');
 	dt_htkh_documents_docx_save($documents, $directory.'/certificates.docx');
 	$zip = new ZipArchive();
 	htkh_check($zip->open($directory.'/certificates.docx') === true, 'DOCX must be a real ZIP package');
 	$wordXml = $zip->getFromName('word/document.xml');
 	htkh_check(simplexml_load_string($wordXml) !== false, 'Word document XML must be well formed');
+	htkh_check(simplexml_load_string($zip->getFromName('word/header1.xml')) !== false, 'Word header XML must be well formed');
+	$headerXml = $zip->getFromName('word/header1.xml');
+	htkh_check(strpos($headerXml, '<wp:extent cx="7560000" cy="10692000"/>') !== false, 'Word background must span the full 210 by 297mm page');
+	htkh_check(substr_count($headerXml, '<wp:posOffset>0</wp:posOffset>') === 2 && strpos($headerXml, 'behindDoc="1"') !== false, 'Word background must start at the page origin behind the text');
+	htkh_check($zip->locateName('word/media/htkh-logo.png') !== false && $zip->locateName('word/media/htkh-watermark.png') !== false, 'Word must embed the logo and watermark');
 	htkh_check(substr_count($wordXml, '<w:br w:type="page"/>') === 1, 'Word needs exactly one page break between two certificates');
 	htkh_check(substr_count($wordXml, '<w:tbl>') === 2, 'Word must include exactly one certificate table per student');
 	htkh_check(strpos($wordXml, 'Nguyễn Văn Thử &amp; Cộng sự') !== false, 'Word must retain correct UTF-8 Vietnamese');
+	htkh_check(strpos($wordXml, 'Thời gian học :  ') !== false && strpos($wordXml, 'Tại Trung tâm Giáo dục nghề nghiệp Bách Việt.') !== false, 'Word must keep the fixed form labels');
 	htkh_check(strpos($wordXml, 'w:w="11906" w:h="16838"') !== false, 'Word paper must be A4');
 	$zip->close();
 	file_put_contents($directory.'/print.html', $html);

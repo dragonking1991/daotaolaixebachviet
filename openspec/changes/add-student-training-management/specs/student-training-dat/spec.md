@@ -63,3 +63,15 @@ Hệ thống SHALL cho phép tra cứu DAT theo ngày học, học viên, CCCD, 
 #### Scenario: Tra cứu phiên và tổng hợp DAT
 - **WHEN** admin tra cứu theo ngày/học viên/CCCD/khóa
 - **THEN** hệ thống SHALL hiển thị mã phiên, mã và tên học viên, ngày sinh, khóa, hạng, các tham số A/B/C/D và quãng đường, biển số xe, tên giáo viên
+
+### Requirement: Xác nhận đạt DAT hàng loạt và thống kê
+
+Hệ thống SHALL cho phép admin chọn nhiều học viên để xác nhận đạt DAT thủ công; xác nhận này SHALL không thay đổi dữ liệu phiên hoặc tham số A/B/C/D/E, SHALL đồng bộ trạng thái đào tạo sang Xăng dầu và SHALL được hiển thị rõ là xác nhận tay. Trang DAT SHALL thống kê số đạt/chưa đạt theo bộ lọc hiện tại, không để bộ lọc trạng thái làm sai số thống kê.
+
+#### Scenario: Xác nhận đạt DAT cho học viên đã chọn
+- **WHEN** admin chọn học viên và xác nhận đánh dấu đạt
+- **THEN** hệ thống SHALL lưu override đạt cho đúng học viên, đồng bộ học viên liên quan sang Xăng dầu và thông báo lỗi đồng bộ nếu có
+
+#### Scenario: Theo dõi số đạt/chưa đạt DAT
+- **WHEN** admin xem trang DAT
+- **THEN** hệ thống SHALL hiển thị tổng số đạt/chưa đạt theo khóa hoặc từ khóa hiện tại

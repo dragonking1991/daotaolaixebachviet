@@ -12,7 +12,7 @@ function dt_lythuyet_upload_form()
 /* Danh sách tổng hợp 6 môn theo học viên của một khóa. */
 function dt_lythuyet_list()
 {
-	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $ds_mon, $du_lieu_filter, $total_items, $lt_mode;
+	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $ds_mon, $du_lieu_filter, $total_items, $lt_mode, $module_stats;
 
 	$ds_khoa = dt_khoa_options();
 	$ds_mon = dt_mon_lythuyet();
@@ -22,6 +22,7 @@ function dt_lythuyet_list()
 	if(!in_array($du_lieu_filter, array('co', 'tat_ca', 'chua'), true)) $du_lieu_filter = 'co';
 	$items = array();
 	$total_items = 0;
+	$module_stats = array('dat' => 0, 'chua' => 0, 'mon' => array());
 	$kw = dt_mb_lower(dt_req('keyword'));
 	// Cho phép tra cứu CCCD/tên trên toàn bộ khóa khi chưa chọn khóa (nếu có từ khóa).
 	if(!$id_khoa_sel && $kw === '') return;
@@ -38,6 +39,7 @@ function dt_lythuyet_list()
 		}
 		$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id_khoa_sel));
 		$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
+		$mpRows = $d->rawQuery("select id_khoa, cccd, tien_do, dat from #_dt_mophong where id_khoa = ?", array($id_khoa_sel));
 	}
 	else
 	{
@@ -46,32 +48,51 @@ function dt_lythuyet_list()
 		$ids = array();
 		foreach($hvs as $hv) $ids[(int)$hv['id_khoa']] = true;
 		$rows = array();
+		$mpRows = array();
 		if($ids)
 		{
 			$in = implode(',', array_map('intval', array_keys($ids)));
 			$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa in ($in)");
+			$mpRows = $d->rawQuery("select id_khoa, cccd, tien_do, dat from #_dt_mophong where id_khoa in ($in)");
 		}
 	}
 	$byCccd = array();
 	foreach($rows as $rw) $byCccd[$rw['id_khoa'].'|'.$rw['cccd']][$rw['mon']] = $rw;
+	foreach($mpRows as $rw)
+	{
+		$key = $rw['id_khoa'].'|'.$rw['cccd'];
+		$mp = array('id' => 0, 'id_khoa' => $rw['id_khoa'], 'cccd' => $rw['cccd'], 'mon' => 'mophong', 'tien_do' => $rw['tien_do'], 'diem_kt' => 0, 'dat' => $rw['dat'], 'standalone' => 1);
+		if(isset($byCccd[$key]['mophong'])) $mp['id'] = $byCccd[$key]['mophong']['id'];
+		$byCccd[$key]['mophong'] = $mp;
+	}
 
 	$tt = dt_req('trang_thai');
-	$tongMon = count($ds_mon);
+	$gvFilter = dt_gv_key(dt_req('gv'));
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
+		if($gvFilter !== '' && (string)$hv['gv_key'] !== $gvFilter) continue;
 		$key = $hv['id_khoa'].'|'.$hv['cccd'];
 		$monData = isset($byCccd[$key]) ? $byCccd[$key] : array();
 		if($du_lieu_filter === 'co' && empty($monData)) continue;
 		if($du_lieu_filter === 'chua' && !empty($monData)) continue;
+		$rowMons = dt_mon_lythuyet_for_hang($hv['hang']);
+		$soDat = 0;
+		foreach($rowMons as $mk => $lbl)
+		{
+			$isDat = isset($monData[$mk]) && (int)$monData[$mk]['dat'] === 1;
+			if($isDat) $soDat++;
+			if(!isset($module_stats['mon'][$mk])) $module_stats['mon'][$mk] = array('label' => $lbl, 'dat' => 0, 'chua' => 0);
+			$module_stats['mon'][$mk][$isDat ? 'dat' : 'chua']++;
+		}
+		$tongMon = count($rowMons);
+		$module_stats[$soDat >= $tongMon ? 'dat' : 'chua']++;
 		if($tt !== '')
 		{
-			$soDat = 0;
-			foreach($ds_mon as $mk => $lbl) if(isset($monData[$mk]) && (int)$monData[$mk]['dat'] === 1) $soDat++;
 			if($tt === 'dat' && $soDat < $tongMon) continue;
 			if($tt === 'chua' && $soDat >= $tongMon) continue;
 		}
-		$items[] = array('hv' => $hv, 'mon' => $monData);
+		$items[] = array('hv' => $hv, 'mon' => $monData, 'ds_mon' => $rowMons);
 	}
 	$total_items = count($items);
 }
@@ -133,7 +154,8 @@ function dt_lythuyet_upload_excel()
 	elseif(!isset($map['cccd']) || (!$have3 && !isset($map['tien_do'])) || !isset($map['diem_kt']))
 		dt_import_notice("Không nhận diện đủ cột: 'Mã đăng nhập', tiến độ (3 cột giờ hoặc 'Tiến độ hoàn thành') và 'Điểm kiểm tra'.", $back, false);
 
-	dt_backup_tables(array('dt_lythuyet'), 'imp_lythuyet');
+	$backupTables = $mon === 'mophong' ? array('dt_lythuyet', 'dt_mophong') : array('dt_lythuyet');
+	dt_backup_tables($backupTables, 'imp_lythuyet');
 	$d->startTransaction();
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = 2; $r <= $highestRow; $r++)
@@ -175,6 +197,8 @@ function dt_lythuyet_upload_excel()
 		$exist = $d->rawQueryOne("select id from #_dt_lythuyet where id_khoa = ? and cccd = ? and mon = ? limit 0,1", array($idKhoa, $hv['cccd'], $mon));
 		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_lythuyet', $data); }
 		else { $data['ngaytao'] = time(); $d->insert('dt_lythuyet', $data); }
+		if($mon === 'mophong')
+			$d->rawQuery("insert into #_dt_mophong (id_khoa, cccd, tien_do, dat, ngaytao) values (?, ?, ?, ?, ?) on duplicate key update tien_do = values(tien_do), dat = values(dat)", array($idKhoa, $hv['cccd'], $tienDo, dt_mophong_dat($tienDo), time()));
 		$ok++;
 	}
 
@@ -204,7 +228,7 @@ function dt_lythuyet_save_check()
 	$check = isset($_POST['check']) && is_array($_POST['check']) ? $_POST['check'] : array();
 
 	$hvs = $d->rawQuery("select cccd from #_dt_hocvien where id_khoa = ?", array($idKhoa));
-	dt_backup_tables(array('dt_lythuyet'), 'imp_lythuyet');
+	dt_backup_tables(array('dt_lythuyet', 'dt_mophong'), 'imp_lythuyet');
 	$d->startTransaction();
 	$n = 0;
 	foreach($hvs as $hv)
@@ -219,6 +243,8 @@ function dt_lythuyet_save_check()
 			$exist = $d->rawQueryOne("select id from #_dt_lythuyet where id_khoa = ? and cccd = ? and mon = ? limit 0,1", array($idKhoa, $cccd, $mk));
 			if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_lythuyet', $data); }
 			else { $data['ngaytao'] = time(); $d->insert('dt_lythuyet', $data); }
+			if($mk === 'mophong')
+				$d->rawQuery("insert into #_dt_mophong (id_khoa, cccd, tien_do, dat, ngaytao) values (?, ?, ?, ?, ?) on duplicate key update tien_do = values(tien_do), dat = values(dat)", array($idKhoa, $cccd, $data['tien_do'], $dat, time()));
 			$n++;
 		}
 	}

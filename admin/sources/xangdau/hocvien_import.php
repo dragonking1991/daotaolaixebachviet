@@ -222,7 +222,9 @@ function xd_upload_hocvien_excel()
 	$paidCount = 0;
 	$failRows = array();
 	$today = date('Y-m-d');
-	$lanImport = time();
+	$lastImport = $d->rawQueryOne("select max(lan_import) as max_import from #_xd_hocvien", array());
+	if($lastImport === false) xd_hocvien_import_error("Không xác định được thứ tự import trước đó. Vui lòng thử lại.", $backUrl);
+	$lanImport = max(time(), (int)($lastImport['max_import'] ?? 0) + 1);
 	$config = getXdConfig($d);
 	$d->startTransaction();
 	foreach($rows as $r)

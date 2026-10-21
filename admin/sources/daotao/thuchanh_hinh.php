@@ -3,18 +3,19 @@ if(!defined('SOURCES')) die("Error");
 
 function dt_hinh_list()
 {
-	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $total_items;
+	global $d, $func, $items, $ds_khoa, $id_khoa_sel, $total_items, $module_stats;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array();
 	$total_items = 0;
+	$module_stats = array('dat' => 0, 'chua' => 0);
 	$kw = dt_mb_lower(dt_req('keyword'));
 	if(!$id_khoa_sel && $kw === '') return;
 
 	if($id_khoa_sel)
 	{
-		$sql = "select h.id, h.cccd, h.hoten, h.hang, h.id_khoa, th.id as data_id, th.gio, th.km, th.dat_override "
+		$sql = "select h.id, h.cccd, h.hoten, h.hang, h.id_khoa, h.gv_hoten, th.id as data_id, th.gio, th.km, th.dat_override "
 			. "from #_dt_hocvien h left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) "
 			. "where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc";
 		$rows = $d->rawQuery($sql, array($id_khoa_sel));
@@ -22,16 +23,19 @@ function dt_hinh_list()
 	else
 	{
 		$like = '%'.dt_req('keyword').'%';
-		$sql = "select h.id, h.cccd, h.hoten, h.hang, h.id_khoa, th.id as data_id, th.gio, th.km, th.dat_override "
+		$sql = "select h.id, h.cccd, h.hoten, h.hang, h.id_khoa, h.gv_hoten, th.id as data_id, th.gio, th.km, th.dat_override "
 			. "from #_dt_hocvien h left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) "
 			. "where (h.hoten like ? or h.cccd like ? or h.ma_hv like ?) order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit 0,200";
 		$rows = $d->rawQuery($sql, array($like, $like, $like));
 	}
 	$tt = dt_req('trang_thai');
+	$gvFilter = dt_gv_key(dt_req('gv'));
 	foreach($rows as $rw)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($rw['hoten'].' '.$rw['cccd']), $kw) === false) continue;
+		if($gvFilter !== '' && dt_gv_key($rw['gv_hoten']) !== $gvFilter) continue;
 		$rw['dat'] = dt_hinh_dat($rw['hang'], $rw['gio'], $rw['km'], $rw['dat_override']);
+		$module_stats[$rw['dat'] ? 'dat' : 'chua']++;
 		if($tt === 'dat' && !$rw['dat']) continue;
 		if($tt === 'chua' && $rw['dat']) continue;
 		$items[] = $rw;
@@ -53,6 +57,10 @@ function dt_hinh_save()
 
 	$gio = dt_parse_number($_POST['gio'] ?? 0);
 	$km = dt_parse_number($_POST['km'] ?? 0);
+	if(!is_finite($gio) || !is_finite($km) || $gio < 0 || $km < 0)
+		$func->transfer("Giờ và km phải là số không âm.", $back, false);
+	$errors = dt_hinh_cap_warn($hv['hang'], $gio, $km);
+	if($errors) $func->transfer("Không thể lưu thực hành trong hình: ".implode('; ', $errors), $back, false);
 
 	$override = isset($_POST['dat_override']) && (string)$_POST['dat_override'] === '1' ? 1 : null;
 	$data = array('id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'gio' => $gio, 'km' => $km, 'dat_override' => $override, 'nguoi_nhap' => dt_username());
@@ -61,9 +69,7 @@ function dt_hinh_save()
 	else { $data['ngaytao'] = time(); $d->insert('dt_thuchanh_hinh', $data); }
 	dt_audit('update', 'hinh', 1, 'cccd='.$hv['cccd'].($override === 1 ? ' (xác nhận Đạt thủ công)' : ''));
 
-	$warn = dt_hinh_cap_warn($hv['hang'], $gio, $km);
 	$msg = "Đã lưu thực hành trong hình cho ".$hv['hoten'];
-	if($warn) $msg .= " — Cảnh báo: ".implode('; ', $warn);
 	$func->transfer($msg, $back);
 }
 

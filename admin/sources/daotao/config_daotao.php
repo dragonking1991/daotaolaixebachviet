@@ -72,7 +72,7 @@ function dt_nguong_dat()
 
 /**
  * Ngưỡng thực hành trong hình theo hạng đã chuẩn hóa.
- * km: quãng đường tối thiểu (>=); gio: thời gian tối thiểu (>). km_max/gio_max: trần tối đa (chỉ cảnh báo).
+ * km: quãng đường tối thiểu (>=); gio: thời gian tối thiểu (>). km_max/gio_max: trần tối đa được phép lưu.
  */
 function dt_nguong_hinh()
 {

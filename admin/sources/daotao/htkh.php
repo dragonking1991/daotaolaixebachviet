@@ -21,12 +21,13 @@ function dt_htkh_hang_quydoi($hang)
 	return $h !== '' ? $h : (string)$hang;
 }
 
-/* Số giấy tự sinh: "Mã HV - hạng quy đổi" (cho phép sửa tay sau đó). */
+/* Số giấy tự sinh theo mẫu: "<Mã HV>-<hạng quy đổi>" (vd 79044-20260805-000014-CE).
+ * Nối liền bằng dấu "-", không khoảng trắng; cho phép sửa tay sau đó. */
 function dt_htkh_so_giay($maHv, $hang)
 {
 	$maHv = trim((string)$maHv);
 	if($maHv === '') return '';
-	return $maHv.' - '.dt_htkh_hang_quydoi($hang);
+	return $maHv.'-'.dt_htkh_hang_quydoi($hang);
 }
 
 /* Các kiểu nâng hạng lên CE (học viên có thể nâng từ C / D / D2). */
@@ -293,6 +294,57 @@ function dt_htkh_print_ky()
 	exit();
 }
 
+/* Đổi ngày (Y-m-d hoặc d/m/Y) sang "ngày DD tháng MM năm YYYY"; rỗng nếu không hợp lệ. */
+function dt_htkh_ngay_text($value)
+{
+	$t = dt_htkh_parse_date($value);
+	return $t === null ? '' : 'ngày '.date('d', $t).' tháng '.date('m', $t).' năm '.date('Y', $t);
+}
+
+/* Phân tích ngày từ Y-m-d hoặc d/m/Y (loại 0000-00-00); trả timestamp hoặc null. */
+function dt_htkh_parse_date($value)
+{
+	$value = trim((string)$value);
+	if($value === '' || strpos($value, '0000-00-00') === 0) return null;
+	foreach(array('Y-m-d', 'd/m/Y') as $fmt)
+	{
+		$dt = DateTime::createFromFormat('!'.$fmt, $value);
+		if($dt && $dt->format($fmt) === $value) return $dt->getTimestamp();
+	}
+	$ts = strtotime($value);
+	return $ts === false ? null : $ts;
+}
+
+/* Số ngày học tính từ khai giảng đến mãn khóa (tính cả hai đầu); rỗng nếu thiếu ngày. */
+function dt_htkh_so_ngay($ngayKhaiGiang, $ngayManHoa)
+{
+	$a = dt_htkh_parse_date($ngayKhaiGiang);
+	$b = dt_htkh_parse_date($ngayManHoa);
+	if($a === null || $b === null || $b < $a) return '';
+	return (string)(int)(floor(($b - $a) / 86400) + 1).' ngày';
+}
+
+/* Gom dữ liệu 1 giấy xác nhận theo đúng các trường cố định của mẫu (thông tư). */
+function dt_htkh_build_document($so_giay, $hoten, $ngaysinh, $hang, $hang_ce, $khoa, $ngay_khaigiang, $ngay_manhoa, $ngay_ky, $nguoi_ky, $chuc_danh)
+{
+	$tuNgay = dt_htkh_ngay_text($ngay_khaigiang);
+	$denNgay = dt_htkh_ngay_text($ngay_manhoa);
+	$tuDen = ($tuNgay !== '' && $denNgay !== '') ? 'Từ '.$tuNgay.' đến '.$denNgay : '';
+	$ngayKyText = dt_htkh_ngay_text($ngay_ky);
+	return array(
+		'so_giay' => (string)$so_giay,
+		'hoten' => (string)$hoten,
+		'ngaysinh' => (string)$ngaysinh,
+		'hang' => dt_htkh_hang_text($hang, $hang_ce),
+		'khoa' => (string)$khoa,
+		'so_ngay' => dt_htkh_so_ngay($ngay_khaigiang, $ngay_manhoa),
+		'tu_den' => $tuDen,
+		'ngay_ky_text' => 'Tp.Hồ Chí Minh, '.($ngayKyText !== '' ? $ngayKyText : 'ngày ... tháng ... năm ...'),
+		'nguoi_ky' => html_entity_decode((string)$nguoi_ky, ENT_QUOTES, 'UTF-8'),
+		'chuc_danh' => dt_htkh_chucdanh_text($chuc_danh),
+	);
+}
+
 function dt_htkh_ky_documents()
 {
 	global $d, $func;
@@ -304,27 +356,20 @@ function dt_htkh_ky_documents()
 		$idKhoa = (int)$r['id_khoa'];
 		$h = $d->rawQueryOne("select so_giay, hang_giay, hang_ce, ngay_ky, nguoi_ky, ngay_cap, chuc_danh from #_dt_htkh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $r['cccd']));
 		if(!$h || trim((string)$h['so_giay']) === '') continue; // chỉ in HV đã cấp giấy
-		$thoiGian = ''; $tenKhoa = trim((string)($r['ten_khoa'] !== '' ? $r['ten_khoa'] : $r['ma_khoa']));
+		$tenKhoa = trim((string)($r['ten_khoa'] !== '' ? $r['ten_khoa'] : $r['ma_khoa']));
+		$ngayKhaiGiang = ''; $ngayManHoa = '';
 		if($idKhoa > 0)
 		{
-			if(!isset($khoaCache[$idKhoa])) $khoaCache[$idKhoa] = $d->rawQueryOne("select ma_khoa, ten_khoa, thoi_gian_hoc, ngay_khaigiang, ngay_manhoa from #_dt_khoa where id = ? limit 0,1", array($idKhoa));
+			if(!isset($khoaCache[$idKhoa])) $khoaCache[$idKhoa] = $d->rawQueryOne("select ma_khoa, ten_khoa, ngay_khaigiang, ngay_manhoa from #_dt_khoa where id = ? limit 0,1", array($idKhoa));
 			$k = $khoaCache[$idKhoa];
 			if($k)
 			{
 				if($tenKhoa === '') $tenKhoa = trim((string)($k['ten_khoa'] !== '' ? $k['ten_khoa'] : $k['ma_khoa']));
-				$thoiGian = trim((string)(isset($k['thoi_gian_hoc']) ? $k['thoi_gian_hoc'] : ''));
-				if($thoiGian === '' && !empty($k['ngay_khaigiang']) && !empty($k['ngay_manhoa']))
-					$thoiGian = date('d/m/Y', strtotime($k['ngay_khaigiang'])).' - '.date('d/m/Y', strtotime($k['ngay_manhoa']));
+				$ngayKhaiGiang = $k['ngay_khaigiang']; $ngayManHoa = $k['ngay_manhoa'];
 			}
 		}
 		$ngayKy = trim((string)$h['ngay_ky']) !== '' ? $h['ngay_ky'] : $h['ngay_cap'];
-		$documents[] = array(
-			'hoten' => $r['hoten'], 'ngaysinh' => $r['nam_sinh'], 'so_giay' => $h['so_giay'],
-			'hang' => dt_htkh_hang_text($r['hang'], $h['hang_ce']),
-			'khoa' => $tenKhoa, 'thoi_gian' => $thoiGian, 'ngay_ky' => $ngayKy,
-			'nguoi_ky' => html_entity_decode($h['nguoi_ky'], ENT_QUOTES, 'UTF-8'),
-			'chuc_danh' => dt_htkh_chucdanh_text($h['chuc_danh']),
-		);
+		$documents[] = dt_htkh_build_document($h['so_giay'], $r['hoten'], $r['nam_sinh'], $r['hang'], $h['hang_ce'], $tenKhoa, $ngayKhaiGiang, $ngayManHoa, $ngayKy, $h['nguoi_ky'], $h['chuc_danh']);
 	}
 	if(!$documents) $func->transfer('Bộ lọc này chưa có học viên đạt được cấp giấy. Hãy tạo giấy trước khi xuất hoặc in.', dt_htkh_ky_back(), false);
 	return array($ky, $documents);
@@ -455,69 +500,19 @@ function dt_htkh_print()
 	$byCccd = array();
 	foreach($d->rawQuery("select cccd, so_giay, hang_giay, hang_ce, ngay_ky, nguoi_ky, ngay_cap, chuc_danh from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $byCccd[$r['cccd']] = $r;
 
-	$thoiGian = trim((string)(isset($khoa['thoi_gian_hoc']) ? $khoa['thoi_gian_hoc'] : ''));
-	if($thoiGian === '' && !empty($khoa['ngay_khaigiang']) && !empty($khoa['ngay_manhoa']))
-		$thoiGian = date('d/m/Y', strtotime($khoa['ngay_khaigiang'])).' - '.date('d/m/Y', strtotime($khoa['ngay_manhoa']));
 	$tenKhoa = trim((string)($khoa['ten_khoa'] !== '' ? $khoa['ten_khoa'] : $khoa['ma_khoa']));
-	$e = function($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); };
-
-	if(ob_get_length()) ob_end_clean();
-	header('Content-Type: text/html; charset=utf-8');
-	echo '<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Giấy xác nhận HTKH — '.$e($tenKhoa).'</title>';
-	echo '<style>
-		*{box-sizing:border-box} body{font-family:"Times New Roman",serif;margin:0;color:#111}
-		.toolbar{position:sticky;top:0;background:#f1f5f9;border-bottom:1px solid #cbd5e1;padding:10px 16px;text-align:center}
-		.toolbar button,.toolbar a{font-size:14px;padding:6px 14px;border:1px solid #2563eb;background:#2563eb;color:#fff;border-radius:4px;cursor:pointer;text-decoration:none;margin:0 4px}
-		.toolbar a.sec{background:#fff;color:#2563eb}
-		.cert{width:210mm;min-height:148mm;margin:10px auto;padding:18mm 20mm;background:#fff;page-break-after:always}
-		.c-top{display:flex;justify-content:space-between;font-size:13px;text-align:center}
-		.c-top .b{font-weight:700}
-		.c-title{text-align:center;margin:22px 0 6px}
-		.c-title h1{font-size:20px;margin:0;letter-spacing:.5px}
-		.c-title .sub{font-size:14px;margin-top:4px}
-		.c-no{text-align:center;font-style:italic;margin-bottom:18px}
-		.c-body{font-size:15px;line-height:2}
-		.c-body .lbl{display:inline-block;min-width:150px}
-		.c-sign{margin-top:26px;display:flex;justify-content:flex-end}
-		.c-sign .box{text-align:center;min-width:240px}
-		.c-sign .role{font-weight:700}
-		.c-sign .hint{font-style:italic;font-size:13px}
-		@media print{.toolbar{display:none}.cert{margin:0;box-shadow:none}}
-	</style></head><body>';
-	echo '<div class="toolbar"><button onclick="window.print()">In / Lưu PDF</button> <a class="sec" href="index.php?com=daotao&act=htkh&id_khoa='.(int)$idKhoa.'">Quay lại</a></div>';
-
-	$count = 0;
+	$documents = array();
 	foreach($hvs as $hv)
 	{
 		$h = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : null;
 		if(!$h || trim((string)$h['so_giay']) === '') continue;
-		$count++;
-		$ns = !empty($hv['ngaysinh']) ? $hv['ngaysinh'] : '';
-		$hangGiay = trim((string)$h['hang_giay']) !== '' ? $h['hang_giay'] : dt_htkh_hang_quydoi($hv['hang']);
 		$ngayKy = trim((string)$h['ngay_ky']) !== '' ? $h['ngay_ky'] : $h['ngay_cap'];
-		echo '<div class="cert">
-			<div class="c-top">
-				<div><div>SỞ GIAO THÔNG VẬN TẢI</div><div class="b">TRUNG TÂM GDNN BÁCH VIỆT</div></div>
-				<div><div class="b">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div><div>Độc lập - Tự do - Hạnh phúc</div></div>
-			</div>
-			<div class="c-title"><h1>GIẤY XÁC NHẬN</h1><div class="sub">HOÀN THÀNH KHÓA ĐÀO TẠO</div></div>
-			<div class="c-no">Số: '.$e($h['so_giay']).'</div>
-			<div class="c-body">
-				<div><span class="lbl">Họ và tên:</span> <strong>'.$e($hv['hoten']).'</strong></div>
-				<div><span class="lbl">Ngày sinh:</span> '.$e($ns).'</div>
-				<div>Đã hoàn thành chương trình đào tạo lái xe hạng: <strong>'.$e(dt_htkh_hang_text($hv['hang'], isset($h['hang_ce']) ? $h['hang_ce'] : '')).'</strong></div>
-				<div><span class="lbl">Khóa:</span> '.$e($tenKhoa).'</div>
-				<div><span class="lbl">Thời gian học:</span> '.$e($thoiGian).'</div>
-			</div>
-			<div class="c-sign"><div class="box">
-				<div class="hint">'.($ngayKy !== '' ? '....., '.$e($ngayKy) : '....., ngày ... tháng ... năm ...').'</div>
-				<div class="role">'.nl2br($e(dt_htkh_chucdanh_text(isset($h['chuc_danh']) ? $h['chuc_danh'] : ''))).'</div>
-				<div style="height:56px"></div>
-				<div><strong>'.$e($h['nguoi_ky']).'</strong></div>
-			</div></div>
-		</div>';
+		$documents[] = dt_htkh_build_document($h['so_giay'], $hv['hoten'], $hv['ngaysinh'], $hv['hang'], $h['hang_ce'], $tenKhoa, $khoa['ngay_khaigiang'], $khoa['ngay_manhoa'], $ngayKy, $h['nguoi_ky'], $h['chuc_danh']);
 	}
-	if($count === 0) echo '<div style="text-align:center;padding:40px;color:#64748b">Chưa có học viên nào được cấp giấy. Hãy bấm "Cấp giấy" trước khi in.</div>';
-	echo '</body></html>';
+	if(!$documents) $func->transfer('Chưa có học viên nào được cấp giấy. Hãy bấm "Cấp giấy" trước khi in.', 'index.php?com=daotao&act=htkh&id_khoa='.$idKhoa, false);
+
+	if(ob_get_length()) ob_end_clean();
+	header('Content-Type: text/html; charset=utf-8');
+	echo dt_htkh_documents_html($documents, 'index.php?com=daotao&act=htkh&id_khoa='.(int)$idKhoa);
 	exit();
 }

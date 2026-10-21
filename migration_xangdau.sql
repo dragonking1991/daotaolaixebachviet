@@ -78,6 +78,48 @@ CREATE TABLE IF NOT EXISTS `table_xd_hocvien` (
   KEY `idx_xd_hocvien_nhom` (`nhom`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 5) Danh sách học viên CE và hóa đơn lưu riêng theo khóa (không dùng bảng quyết toán XD chung)
+CREATE TABLE IF NOT EXISTS `table_xd_ce_hocvien` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_khoa` INT(10) UNSIGNED NOT NULL DEFAULT 0,
+  `ma_khoa` VARCHAR(100) NOT NULL DEFAULT '',
+  `ten_khoa` VARCHAR(255) NOT NULL DEFAULT '',
+  `ma_hv` VARCHAR(100) NOT NULL DEFAULT '',
+  `ho_ten` VARCHAR(255) NOT NULL DEFAULT '',
+  `cccd` VARCHAR(20) NOT NULL,
+  `ngaysinh` VARCHAR(20) NOT NULL DEFAULT '',
+  `gv_hoten` VARCHAR(255) NOT NULL DEFAULT '',
+  `gv_key` VARCHAR(191) NOT NULL DEFAULT '',
+  `ngay_dat` DATE NULL DEFAULT NULL,
+  `ngaytao` INT(11) UNSIGNED NOT NULL DEFAULT 0,
+  `user_tao` VARCHAR(100) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_xd_ce_hv_khoa_cccd` (`id_khoa`, `cccd`),
+  KEY `idx_xd_ce_hv_cccd` (`cccd`),
+  KEY `idx_xd_ce_hv_khoa` (`ma_khoa`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `table_xd_ce_hoadon` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_khoa` INT(10) UNSIGNED NOT NULL DEFAULT 0,
+  `ma_khoa` VARCHAR(100) NOT NULL DEFAULT '',
+  `ma_hoa_don` VARCHAR(191) NOT NULL,
+  `ngay_hoa_don` DATE NOT NULL,
+  `tong_tien` DECIMAL(18,2) NOT NULL DEFAULT 0,
+  `gv_cccd` VARCHAR(20) NOT NULL DEFAULT '',
+  `gv_hoten` VARCHAR(255) NOT NULL DEFAULT '',
+  `gv_key` VARCHAR(191) NOT NULL DEFAULT '',
+  `ky` VARCHAR(100) NOT NULL DEFAULT '',
+  `ngaytao` INT(11) UNSIGNED NOT NULL DEFAULT 0,
+  `user_tao` VARCHAR(100) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_xd_ce_hd_course_number_date` (`id_khoa`, `ma_hoa_don`, `ngay_hoa_don`),
+  KEY `idx_xd_ce_hd_course` (`id_khoa`),
+  KEY `idx_xd_ce_hd_teacher` (`gv_key`),
+  KEY `idx_xd_ce_hd_date` (`ngay_hoa_don`),
+  KEY `idx_xd_ce_hd_period` (`ky`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Giá trị định mức mặc định (chỉ chèn nếu chưa có)
 INSERT INTO `table_xd_config` (`config_key`, `config_value`)
 SELECT * FROM (SELECT 'xd_dinh_muc' AS k, '3500000' AS v) AS tmp

@@ -179,7 +179,7 @@ function dt_giaovien_where()
 	return array($where, $params);
 }
 
-function dt_cabin_where()
+function dt_cabin_where($includeStatus = true)
 {
 	global $d;
 	$where = ""; $params = array();
@@ -192,9 +192,10 @@ function dt_cabin_where()
 		$like = '%'.$kw.'%';
 		$params[] = $like; $params[] = $like; $params[] = $like;
 	}
-	$tt = dt_req('trang_thai');
+	$tt = $includeStatus ? dt_req('trang_thai') : '';
 	if($tt === 'dat') { $where .= " and c.dat = 1"; }
 	elseif($tt === 'chua') { $where .= " and (c.id is null or c.dat = 0)"; }
+	if(dt_req('gv') !== '') { $where .= " and h.gv_key = ?"; $params[] = dt_gv_key(dt_req('gv')); }
 	return array($where, $params);
 }
 
@@ -279,6 +280,7 @@ function dt_lythuyet_export()
 
 	$kw = dt_mb_lower(dt_req('keyword'));
 	$tt = dt_req('trang_thai');
+	$gvFilter = dt_gv_key(dt_req('gv'));
 	$duLieu = dt_req('du_lieu', 'co');
 	if(!in_array($duLieu, array('co', 'tat_ca', 'chua'), true)) $duLieu = 'co';
 
@@ -290,6 +292,7 @@ function dt_lythuyet_export()
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
+		if($gvFilter !== '' && (string)$hv['gv_key'] !== $gvFilter) continue;
 		$monData = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : array();
 		if($duLieu === 'co' && empty($monData)) continue;
 		if($duLieu === 'chua' && !empty($monData)) continue;
@@ -400,11 +403,13 @@ function dt_hinh_export()
 	$rows = $d->rawQuery($sql, array($idKhoa));
 	$kw = dt_mb_lower(dt_req('keyword'));
 	$tt = dt_req('trang_thai');
+	$gvFilter = dt_gv_key(dt_req('gv'));
 	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên','Giờ','Km','Kết quả');
 	$out = array(); $stt = 1;
 	foreach($rows as $rw)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($rw['hoten'].' '.$rw['cccd'].' '.$rw['ma_hv']), $kw) === false) continue;
+		if($gvFilter !== '' && dt_gv_key($rw['gv_hoten']) !== $gvFilter) continue;
 		$dat = dt_hinh_dat($rw['hang'], $rw['gio'], $rw['km'], $rw['dat_override']);
 		if($tt === 'dat' && !$dat) continue;
 		if($tt === 'chua' && $dat) continue;

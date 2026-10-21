@@ -44,23 +44,24 @@ function dt_dat_upload_form()
 /* Tra cứu tổng hợp DAT theo khóa (mỗi học viên 1 dòng, có tham số A/B/C/D/E). */
 function dt_dat_list()
 {
-	global $d, $func, $items, $phien, $ds_khoa, $id_khoa_sel, $total_items;
+	global $d, $func, $items, $phien, $ds_khoa, $id_khoa_sel, $total_items, $module_stats;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array(); $phien = array();
 	$total_items = 0;
+	$module_stats = array('dat' => 0, 'chua' => 0);
 	$kw = dt_mb_lower(dt_req('keyword'));
 	if(!$id_khoa_sel && $kw === '') return;
 	if($id_khoa_sel)
 	{
 		$phien = $d->rawQuery("select * from #_dt_dat_phien where id_khoa = ? order by id desc", array($id_khoa_sel));
-		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id_khoa_sel));
+		$hvs = $d->rawQuery("select id, cccd, ma_hv, hoten, hang, id_khoa, gv_hoten from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id_khoa_sel));
 	}
 	else
 	{
 		$like = '%'.dt_req('keyword').'%';
-		$hvs = $d->rawQuery("select cccd, ma_hv, hoten, hang, id_khoa from #_dt_hocvien where (hoten like ? or cccd like ? or ma_hv like ?) order by substring_index(hoten, ' ', -1) asc, hoten asc limit 0,200", array($like, $like, $like));
+		$hvs = $d->rawQuery("select id, cccd, ma_hv, hoten, hang, id_khoa, gv_hoten from #_dt_hocvien where (hoten like ? or cccd like ? or ma_hv like ?) order by substring_index(hoten, ' ', -1) asc, hoten asc limit 0,200", array($like, $like, $like));
 	}
 	$tt = dt_req('trang_thai');
 	foreach($hvs as $hv)
@@ -71,6 +72,7 @@ function dt_dat_list()
 		list($dat, $thieu) = dt_dat_danhgia($hv['hang'], $agg);
 		$override = dt_dat_override_get($idKhoaHv, $hv['cccd']) === 1;
 		if($override) { $dat = 1; $thieu = array(); }
+		$module_stats[$dat ? 'dat' : 'chua']++;
 		if($tt === 'dat' && !$dat) continue;
 		if($tt === 'chua' && $dat) continue;
 		$rPhien = $d->rawQueryOne("select count(*) as c from #_dt_dat_phien where id_khoa = ? and cccd = ?", array($idKhoaHv, $hv['cccd']));
@@ -125,6 +127,7 @@ function dt_dat_upload_excel()
 	dt_backup_tables(array('dt_dat_phien'), 'imp_dat');
 	$d->startTransaction();
 	$them = 0; $trung = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
+	$syncKhoaIds = array();
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
 		$row = dt_read_row($sheet, $r, $highestCol);
@@ -175,15 +178,30 @@ function dt_dat_upload_excel()
 			'ngay_hoc' => $tgBatdau ? substr($tgBatdau, 0, 10) : null,
 			'ngaytao' => time(),
 		);
-		if($d->insert('dt_dat_phien', $data)) $them++;
+		if($d->insert('dt_dat_phien', $data))
+		{
+			$them++;
+			$syncKhoaIds[$idKhoa] = $idKhoa;
+		}
 	}
 
 	$d->commit();
+	$syncTotals = array('xd_added' => 0, 'ce_added' => 0, 'existing' => 0);
+	$syncErrors = array();
+	foreach($syncKhoaIds as $syncKhoaId)
+	{
+		$syncResult = xd_sync_training_students($syncKhoaId);
+		foreach($syncTotals as $key => $count) $syncTotals[$key] += (int)($syncResult[$key] ?? 0);
+		if(empty($syncResult['ok'])) $syncErrors = array_merge($syncErrors, $syncResult['errors'] ?? array($syncResult['error'] ?? 'Không thể đồng bộ học viên.'));
+	}
 	dt_audit('import', 'dat', $them, $file['name']);
 	dt_log_import('dat', $file['name'], $them, $err);
 	$msg = "Import DAT: thêm $them phiên mới, bỏ qua $trung phiên đã có".($err ? ", $err phiên lỗi (HV chưa có)" : "");
+	if(!empty($syncKhoaIds))
+		$msg .= " Đồng bộ sang XD: thêm ".$syncTotals['xd_added']." học viên nhóm DAT và ".$syncTotals['ce_added']." học viên CE riêng; giữ nguyên ".$syncTotals['existing']." hồ sơ đã có.";
+	if(!empty($syncErrors)) $msg .= " Có lỗi đồng bộ: ".implode('; ', $syncErrors);
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
-	dt_import_notice($msg, "index.php?com=daotao&act=dat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($them > 0 || $err === 0));
+	dt_import_notice($msg, "index.php?com=daotao&act=dat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($them > 0 || $err === 0) && empty($syncErrors));
 }
 
 /* Đánh dấu DAT Đạt (override) toàn bộ học viên trong khóa. */
@@ -207,7 +225,9 @@ function dt_dat_dat_all()
 	}
 	$d->commit();
 	dt_audit('update', 'dat_dat_all', count($hvs), 'id_khoa='.$idKhoa);
-	dt_import_notice("Đã đánh dấu Đạt DAT cho ".count($hvs)." học viên", $back, true);
+	$syncResult = xd_sync_training_students($idKhoa);
+	$msg = "Đã đánh dấu Đạt DAT cho ".count($hvs)." học viên.".xd_sync_training_notice($syncResult);
+	dt_import_notice($msg, $back, !empty($syncResult['ok']));
 }
 
 /* Bỏ override Đạt DAT cho 1 học viên. */

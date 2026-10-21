@@ -10,16 +10,19 @@ function dt_cabin_upload_form()
 
 function dt_cabin_list()
 {
-	global $d, $func, $curPage, $items, $paging, $ds_khoa, $id_khoa_sel, $total_items;
+	global $d, $func, $curPage, $items, $paging, $ds_khoa, $id_khoa_sel, $total_items, $module_stats;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 
+	list($statsWhere, $statsParams) = dt_cabin_where(false);
+	$stats = $d->rawQueryOne("select count(*) as tong, sum(case when c.dat = 1 then 1 else 0 end) as dat from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $statsWhere", $statsParams);
+	$module_stats = array('dat' => (int)($stats && $stats['dat'] ? $stats['dat'] : 0), 'chua' => max(0, (int)($stats ? $stats['tong'] : 0) - (int)($stats && $stats['dat'] ? $stats['dat'] : 0)));
 	list($where, $params) = dt_cabin_where();
 
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select c.*, h.ma_hv as roster_ma_hv, h.hoten, h.cccd as hv_cccd, h.hang, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit $startpoint,$per_page";
+	$sql = "select c.*, h.id as hv_id, h.ma_hv as roster_ma_hv, h.hoten, h.cccd as hv_cccd, h.hang, h.gv_hoten, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit $startpoint,$per_page";
 	$items = $d->rawQuery($sql, $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_hocvien h left join #_dt_cabin_kq c on (c.id_khoa = h.id_khoa and c.ma_hv = h.ma_hv) where 1 $where", $params);
 	$total_items = (int)$count['num'];

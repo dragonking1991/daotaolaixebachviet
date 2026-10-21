@@ -17,6 +17,7 @@
 - [x] 2.4 `admin/sources/xangdau/permissions.php`: map `huyDuyetGiaoVien` → `!xd_can_duyet()` trong `xd_act_denied()`
 - [x] 2.5 `admin/templates/xangdau/loc/items_dathanhtoan_tpl.php`: nút "Hủy duyệt" theo GV (confirm), chỉ hiện khi `xd_can_duyet()`
 - [ ] 2.6 (Tùy chọn) Mở rộng lọc theo tên GV + liệt kê từng đợt riêng để hủy duyệt theo từng đợt thay vì toàn bộ GV
+- [x] 2.7 Tách danh sách đã thanh toán theo giáo viên/ngày và chỉ hủy các hóa đơn, học viên thuộc đúng ngày được chọn; giữ nguyên ngày khác và cập nhật/xóa bảng kê an toàn khi có nhiều giáo viên chung đợt
 
 ## 3. Export "Tổng hợp GV đã duyệt"
 
@@ -57,3 +58,4 @@
 - [ ] 6.5 Test export HĐ/HV theo 3 scope khớp bộ lọc đang xem
 - [ ] 6.6 Test toggle hợp lệ (chặn khi đã quyết toán), xóa từng dòng, import bổ sung giữ dữ liệu cũ
 - [ ] 6.7 Xác minh route/menu/quyền cho các act mới (không 403 nhầm; kế toán vs admin đúng phạm vi)
+- [x] 6.8 Đồng bộ thứ tự danh sách, quyết toán và Excel học viên XD theo khóa, lần import và thứ tự dòng trong file

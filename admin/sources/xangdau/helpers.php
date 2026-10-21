@@ -54,6 +54,11 @@ function xd_cccd_variants($cccd)
 	return array_values(array_unique(array_filter($variants, function($v){ return $v !== ''; })));
 }
 
+function xd_hocvien_order_clause()
+{
+	return "lower(trim(khoa)) asc, lan_import asc, thu_tu_file asc, id asc";
+}
+
 function xd_username()
 {
 	global $login_admin;

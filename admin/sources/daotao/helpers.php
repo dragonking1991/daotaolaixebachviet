@@ -201,17 +201,17 @@ function dt_lythuyet_dat($tienDo, $diemKt, $mon = '')
 	return ((float)$tienDo >= $ng['tien_do'] && (float)$diemKt >= $ng['diem_kt']) ? 1 : 0;
 }
 
-/* Đạt thực hành trong hình theo hạng. */
+/* Chỉ override = 1 xác nhận Đạt; NULL/0 đều tự xét (PDODb lưu NULL thành 0). */
 function dt_hinh_dat($hang, $gio, $km, $override = null)
 {
-	if($override !== null && $override !== '') return (int)$override === 1 ? 1 : 0;
+	if((int)$override === 1) return 1;
 	$hang = dt_norm_hang($hang);
 	$ng = dt_nguong_hinh();
 	if(!isset($ng[$hang])) return 0;
 	return ((float)$km >= $ng[$hang]['km'] && (float)$gio > $ng[$hang]['gio']) ? 1 : 0;
 }
 
-/* Cảnh báo (không chặn) khi Giờ/Km thực hành hình vượt trần tối đa theo hạng. @return array lý do. */
+/* Lý do vượt trần theo hạng, dùng để chặn lưu thực hành hình. */
 function dt_hinh_cap_warn($hang, $gio, $km)
 {
 	$h = dt_norm_hang($hang);
@@ -298,6 +298,8 @@ function dt_lythuyet_mon_status($hv)
 	$rows = $d->rawQuery("select mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
 	$by = array();
 	foreach($rows as $rw) $by[$rw['mon']] = $rw;
+	$mophong = $d->rawQueryOne("select tien_do, dat from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+	if($mophong) $by['mophong'] = array('tien_do' => $mophong['tien_do'], 'diem_kt' => 0, 'dat' => $mophong['dat']);
 	$out = array();
 	foreach($monSet as $mk => $lbl)
 	{
@@ -353,6 +355,8 @@ function dt_student_summary($hv)
 	$ltRows = $d->rawQuery("select mon, dat from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
 	$ltByMon = array();
 	foreach($ltRows as $rw) $ltByMon[$rw['mon']] = (int)$rw['dat'];
+	$mophong = $d->rawQueryOne("select dat from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+	if($mophong) $ltByMon['mophong'] = (int)$mophong['dat'];
 	$soDat = 0; $soCo = 0;
 	foreach($monSet as $mk => $lbl)
 	{
