@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_hoadon()
 {
-	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_from, $xd_filter_to, $xd_filter_ky, $xd_filter_kt_from, $xd_filter_kt_to;
+	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_from, $xd_filter_to, $xd_filter_ky, $xd_filter_kt_from, $xd_filter_kt_to, $xd_filter_gv, $xd_hoadon_teachers, $xd_hoadon_kys;
 
 	$where = "";
 	$params = array();
@@ -15,6 +15,7 @@ function xd_get_hoadon()
 	$xd_filter_ky = '';
 	$xd_filter_kt_from = '';
 	$xd_filter_kt_to = '';
+	$xd_filter_gv = isset($_REQUEST['gv']) ? trim((string)$_REQUEST['gv']) : '';
 
 	if(isset($_REQUEST['keyword']) && trim($_REQUEST['keyword']) !== '')
 	{
@@ -41,7 +42,7 @@ function xd_get_hoadon()
 		$xd_filter_kt_to = $_REQUEST['kt_to'];
 	}
 
-	list($where, $params) = xd_hoadon_where_and_params('all', $xd_filter_keyword, $xd_filter_from, $xd_filter_to, $xd_filter_ky, $xd_filter_kt_from, $xd_filter_kt_to);
+	list($where, $params) = xd_hoadon_where_and_params('all', $xd_filter_keyword, $xd_filter_from, $xd_filter_to, $xd_filter_ky, $xd_filter_kt_from, $xd_filter_kt_to, $xd_filter_gv);
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$sql = "select * from #_xd_hoadon where $where order by ngay_hoa_don desc, id desc limit ".$startpoint.",".$per_page;
@@ -49,9 +50,12 @@ function xd_get_hoadon()
 
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hoadon where $where", $params);
 	$total = isset($count['num']) ? (int)$count['num'] : 0;
+	$xd_hoadon_teachers = $d->rawQuery("select gv_key, max(gv_hoten) as gv_hoten, count(*) as so from #_xd_hoadon where gv_key <> '' group by gv_key order by substring_index(max(gv_hoten), ' ', -1) asc, max(gv_hoten) asc", array());
+	$xd_hoadon_kys = $d->rawQuery("select ky, count(*) as so from #_xd_hoadon where ky <> '' group by ky order by ky asc", array());
 
 	$url = "index.php?com=xangdau&act=hoadon";
 	if($xd_filter_keyword !== '') $url .= '&keyword='.urlencode($xd_filter_keyword);
+	if($xd_filter_gv !== '') $url .= '&gv='.urlencode($xd_filter_gv);
 	if($xd_filter_from !== '') $url .= '&from_date='.urlencode($xd_filter_from);
 	if($xd_filter_to !== '') $url .= '&to_date='.urlencode($xd_filter_to);
 	if($xd_filter_ky !== '') $url .= '&ky='.urlencode($xd_filter_ky);
@@ -60,7 +64,7 @@ function xd_get_hoadon()
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
 }
 
-function xd_hoadon_where_and_params($scope = 'all', $keyword = '', $fromDate = '', $toDate = '', $ky = '', $ktFrom = '', $ktTo = '')
+function xd_hoadon_where_and_params($scope = 'all', $keyword = '', $fromDate = '', $toDate = '', $ky = '', $ktFrom = '', $ktTo = '', $gvKey = '')
 {
 	$where = 'id > 0';
 	$params = array();
@@ -68,6 +72,7 @@ function xd_hoadon_where_and_params($scope = 'all', $keyword = '', $fromDate = '
 	if($scope === 'paid') { $where .= ' and da_quyettoan = 1'; }
 	elseif($scope === 'unpaid') { $where .= ' and da_quyettoan = 0'; }
 	if($keyword !== '') { $where .= ' and (ma_hoa_don like ? or gv_hoten like ?)'; $params[] = '%'.$keyword.'%'; $params[] = '%'.$keyword.'%'; }
+	if($gvKey !== '') { $where .= ' and gv_key = ?'; $params[] = $gvKey; }
 	if($fromDate !== '') { $where .= ' and ngay_hoa_don >= ?'; $params[] = $fromDate; }
 	if($toDate !== '') { $where .= ' and ngay_hoa_don <= ?'; $params[] = $toDate; }
 	if($ky !== '') { $where .= ' and ky = ?'; $params[] = $ky; }
@@ -119,6 +124,27 @@ function xd_delete_hoadon()
 		$func->transfer("Xóa hóa đơn thành công (bỏ qua hóa đơn đã quyết toán)", $redirect);
 	}
 	else $func->transfer("Không nhận được dữ liệu", $redirect, false);
+}
+
+/* Xóa các hóa đơn đã chọn; bỏ qua hóa đơn đã quyết toán. */
+function xd_delete_hoadon_selected()
+{
+	global $d, $func;
+	$ret = xd_safe_ret($_POST['ret'] ?? '', 'index.php?com=xangdau&act=hoadon');
+	$ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? array()))));
+	if(!$ids) $func->transfer("Chưa chọn hóa đơn nào để xóa.", $ret, false);
+
+	$in = implode(',', array_fill(0, count($ids), '?'));
+	$row = $d->rawQueryOne("select sum(case when da_quyettoan = 0 then 1 else 0 end) as can_delete, count(*) as total from #_xd_hoadon where id in ($in)", $ids);
+	$canDelete = (int)($row['can_delete'] ?? 0);
+	$kept = (int)($row['total'] ?? 0) - $canDelete;
+	if($canDelete === 0) $func->transfer("Các hóa đơn đã chọn đều đã quyết toán, không thể xóa.", $ret, false);
+
+	$ok = $d->rawQuery("delete from #_xd_hoadon where id in ($in) and da_quyettoan = 0", $ids);
+	if($ok === false) $func->transfer("Không thể xóa hóa đơn đã chọn.", $ret, false);
+	$msg = "Đã xóa $canDelete hóa đơn.";
+	if($kept > 0) $msg .= " Giữ lại $kept hóa đơn đã quyết toán.";
+	$func->transfer($msg, $ret);
 }
 
 function xd_delete_all_hoadon()

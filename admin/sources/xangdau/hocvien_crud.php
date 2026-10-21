@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_hocvien()
 {
-	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers;
+	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers, $xd_filter_khoa, $xd_filter_gv, $xd_hocvien_khoas;
 
 	$where = "";
 	$params = array();
@@ -14,6 +14,8 @@ function xd_get_hocvien()
 	$xd_filter_trangthai = '';
 	$xd_filter_tt_from = '';
 	$xd_filter_tt_to = '';
+	$xd_filter_khoa = isset($_REQUEST['khoa']) ? trim((string)$_REQUEST['khoa']) : '';
+	$xd_filter_gv = isset($_REQUEST['gv']) ? trim((string)$_REQUEST['gv']) : '';
 
 	if(isset($_REQUEST['keyword']) && trim($_REQUEST['keyword']) !== '')
 	{
@@ -37,7 +39,7 @@ function xd_get_hocvien()
 	}
 
 	$scope = ($xd_filter_trangthai === 'da') ? 'paid' : (($xd_filter_trangthai === 'chua') ? 'unpaid' : 'all');
-	list($where, $params) = xd_hocvien_where_and_params($scope, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_tt_from, $xd_filter_tt_to);
+	list($where, $params) = xd_hocvien_where_and_params($scope, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_tt_from, $xd_filter_tt_to, $xd_filter_khoa, $xd_filter_gv);
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$sql = "select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause()." limit ".$startpoint.",".$per_page;
@@ -52,9 +54,12 @@ function xd_get_hocvien()
 		 from #_xd_hocvien where gv_key <> '' group by gv_key order by substring_index(max(gv_hoten), ' ', -1) asc, max(gv_hoten) asc",
 		array()
 	);
+	$xd_hocvien_khoas = $d->rawQuery("select khoa, count(*) as so from #_xd_hocvien where khoa <> '' group by khoa order by khoa asc", array());
 
 	$url = "index.php?com=xangdau&act=hocvien";
 	if($xd_filter_keyword !== '') $url .= '&keyword='.urlencode($xd_filter_keyword);
+	if($xd_filter_khoa !== '') $url .= '&khoa='.urlencode($xd_filter_khoa);
+	if($xd_filter_gv !== '') $url .= '&gv='.urlencode($xd_filter_gv);
 	if($xd_filter_nhom !== '') $url .= '&nhom='.urlencode($xd_filter_nhom);
 	if($xd_filter_trangthai !== '') $url .= '&trangthai='.urlencode($xd_filter_trangthai);
 	if($xd_filter_tt_from !== '') $url .= '&tt_from='.urlencode($xd_filter_tt_from);
@@ -62,7 +67,7 @@ function xd_get_hocvien()
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
 }
 
-function xd_hocvien_where_and_params($scope = 'all', $keyword = '', $nhom = '', $ttFrom = '', $ttTo = '')
+function xd_hocvien_where_and_params($scope = 'all', $keyword = '', $nhom = '', $ttFrom = '', $ttTo = '', $khoa = '', $gvKey = '')
 {
 	$where = 'id > 0';
 	$params = array();
@@ -70,6 +75,8 @@ function xd_hocvien_where_and_params($scope = 'all', $keyword = '', $nhom = '', 
 	elseif($scope === 'unpaid') { $where .= ' and ngay_thanh_toan is null'; }
 	if($keyword !== '') { $where .= ' and (ho_ten like ? or cccd like ? or gv_hoten like ?)'; $params[] = '%'.$keyword.'%'; $params[] = '%'.$keyword.'%'; $params[] = '%'.$keyword.'%'; }
 	if($nhom !== '') { $where .= ' and nhom = ?'; $params[] = $nhom; }
+	if($khoa !== '') { $where .= ' and khoa = ?'; $params[] = $khoa; }
+	if($gvKey !== '') { $where .= ' and gv_key = ?'; $params[] = $gvKey; }
 	if($ttFrom !== '') { $where .= ' and ngay_thanh_toan >= ?'; $params[] = $ttFrom; }
 	if($ttTo !== '') { $where .= ' and ngay_thanh_toan <= ?'; $params[] = $ttTo; }
 	return array($where, $params);
@@ -98,6 +105,34 @@ function xd_delete_hocvien()
 		$func->transfer("Xóa học viên thành công", $redirect);
 	}
 	else $func->transfer("Không nhận được dữ liệu", $redirect, false);
+}
+
+/* Xóa các học viên đã chọn; giữ lại học viên đã thanh toán hoặc thuộc bảng kê. */
+function xd_delete_hocvien_selected()
+{
+	global $d, $func;
+	$ret = xd_safe_ret($_POST['ret'] ?? '', 'index.php?com=xangdau&act=hocvien');
+	$ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? array()))));
+	if(!$ids) $func->transfer("Chưa chọn học viên nào để xóa.", $ret, false);
+
+	$in = implode(',', array_fill(0, count($ids), '?'));
+	$row = $d->rawQueryOne("select sum(case when ngay_thanh_toan is null and id_bangke = 0 then 1 else 0 end) as can_delete, count(*) as total from #_xd_hocvien where id in ($in)", $ids);
+	$canDelete = (int)($row['can_delete'] ?? 0);
+	$kept = (int)($row['total'] ?? 0) - $canDelete;
+	if($canDelete === 0) $func->transfer("Các học viên đã chọn đều đã thanh toán hoặc thuộc bảng kê, không thể xóa.", $ret, false);
+
+	$ok = $d->rawQuery("delete from #_xd_hocvien where id in ($in) and ngay_thanh_toan is null and id_bangke = 0", $ids);
+	if($ok === false) $func->transfer("Không thể xóa học viên đã chọn.", $ret, false);
+	$msg = "Đã xóa $canDelete học viên.";
+	if($kept > 0) $msg .= " Giữ lại $kept học viên đã thanh toán hoặc thuộc bảng kê.";
+	$func->transfer($msg, $ret);
+}
+
+function xd_safe_ret($raw, $default)
+{
+	$ret = rawurldecode(trim((string)$raw));
+	if($ret === '' || strpos($ret, 'index.php?com=xangdau') !== 0 || strpos($ret, "\n") !== false || strpos($ret, "\r") !== false) return $default;
+	return $ret;
 }
 
 function xd_delete_hocvien_by_gv()

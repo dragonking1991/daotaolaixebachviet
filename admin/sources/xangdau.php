@@ -69,6 +69,11 @@ switch($act)
 		xd_ensure_tables();
 		xd_delete_hoadon();
 		break;
+	case "deleteHoadonSelected":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_delete_hoadon_selected();
+		break;
 	case "deleteAllHoadon":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
@@ -137,6 +142,11 @@ switch($act)
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
 		xd_delete_hocvien();
+		break;
+	case "deleteHocvienSelected":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_delete_hocvien_selected();
 		break;
 	case "deleteHocvienByGv":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);

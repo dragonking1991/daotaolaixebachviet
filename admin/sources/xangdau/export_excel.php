@@ -242,7 +242,8 @@ function xd_xuat_hoadon_excel()
 	$ky = isset($_REQUEST['ky']) ? trim((string)$_REQUEST['ky']) : '';
 	$ktFrom = (isset($_REQUEST['kt_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['kt_from'])) ? $_REQUEST['kt_from'] : '';
 	$ktTo = (isset($_REQUEST['kt_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['kt_to'])) ? $_REQUEST['kt_to'] : '';
-	list($where, $params) = xd_hoadon_where_and_params($scope, $keyword, $fromDate, $toDate, $ky, $ktFrom, $ktTo);
+	$gv = isset($_REQUEST['gv']) ? trim((string)$_REQUEST['gv']) : '';
+	list($where, $params) = xd_hoadon_where_and_params($scope, $keyword, $fromDate, $toDate, $ky, $ktFrom, $ktTo, $gv);
 	$rows = $d->rawQuery("select * from #_xd_hoadon where $where order by ngay_hoa_don desc, id desc", $params);
 	$labels = array('all' => 'TẤT CẢ', 'paid' => 'ĐÃ QUYẾT TOÁN', 'unpaid' => 'CHƯA QUYẾT TOÁN');
 	xd_xuat_danh_sach_excel('DANH SÁCH HÓA ĐƠN XĂNG DẦU - '.$labels[$scope], array('STT', 'Số HĐ', 'Ngày HĐ', 'Giáo viên', 'Biển số', 'Kỳ', 'Tổng tiền', 'Trạng thái'), array('A'=>6, 'B'=>18, 'C'=>14, 'D'=>28, 'E'=>15, 'F'=>14, 'G'=>18, 'H'=>20), $rows, function($row, $stt) {
@@ -258,7 +259,9 @@ function xd_xuat_hocvien_excel()
 	$nhom = isset($_REQUEST['nhom']) && in_array($_REQUEST['nhom'], array('BT', 'CK', 'DAT'), true) ? $_REQUEST['nhom'] : '';
 	$ttFrom = (isset($_REQUEST['tt_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['tt_from'])) ? $_REQUEST['tt_from'] : '';
 	$ttTo = (isset($_REQUEST['tt_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['tt_to'])) ? $_REQUEST['tt_to'] : '';
-	list($where, $params) = xd_hocvien_where_and_params($scope, $keyword, $nhom, $ttFrom, $ttTo);
+	$khoa = isset($_REQUEST['khoa']) ? trim((string)$_REQUEST['khoa']) : '';
+	$gv = isset($_REQUEST['gv']) ? trim((string)$_REQUEST['gv']) : '';
+	list($where, $params) = xd_hocvien_where_and_params($scope, $keyword, $nhom, $ttFrom, $ttTo, $khoa, $gv);
 	$rows = $d->rawQuery("select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause(), $params);
 	$labels = array('all' => 'TẤT CẢ', 'paid' => 'ĐÃ THANH TOÁN', 'unpaid' => 'CHƯA THANH TOÁN');
 	xd_xuat_danh_sach_excel('DANH SÁCH HỌC VIÊN XĂNG DẦU - '.$labels[$scope], array('STT', 'Họ tên', 'CCCD', 'Khóa', 'Ngày sinh', 'Nhóm', 'GV phụ trách', 'Số tiền TT', 'Ngày TT', 'Trạng thái'), array('A'=>6, 'B'=>28, 'C'=>18, 'D'=>14, 'E'=>14, 'F'=>10, 'G'=>26, 'H'=>18, 'I'=>14, 'J'=>20), $rows, function($row, $stt) {

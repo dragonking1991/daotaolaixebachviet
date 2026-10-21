@@ -1,6 +1,10 @@
 <?php
 	$linkMan = "index.php?com=xangdau&act=hoadon";
 	$linkUpload = "index.php?com=xangdau&act=uploadHoadon";
+	$xd_ret_q = array('com' => 'xangdau', 'act' => 'hoadon');
+	foreach(array('keyword' => $xd_filter_keyword, 'gv' => $xd_filter_gv, 'from_date' => $xd_filter_from, 'to_date' => $xd_filter_to, 'ky' => $xd_filter_ky, 'kt_from' => $xd_filter_kt_from, 'kt_to' => $xd_filter_kt_to) as $__k => $__v) if($__v !== '') $xd_ret_q[$__k] = $__v;
+	$xd_ret_q['p'] = (int)$curPage;
+	$xd_ret = rawurlencode('index.php?'.http_build_query($xd_ret_q));
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -21,6 +25,7 @@
 			<a class="btn btn-sm bg-gradient-success text-white mr-2" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import hóa đơn</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
 			<?php if(xd_can_duyet() || xd_can_kiem_tra()) { $exportBase = 'index.php?com=xangdau&act=xuatHoadonExcel'; $exportUrlAll = $exportBase.'&scope=all'; $exportUrlPaid = $exportBase.'&scope=paid'; $exportUrlUnpaid = $exportBase.'&scope=unpaid'; if($xd_filter_keyword !== '') { $exportUrlAll .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlPaid .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlUnpaid .= '&keyword='.urlencode($xd_filter_keyword); } if($xd_filter_from !== '') { $exportUrlAll .= '&from_date='.urlencode($xd_filter_from); $exportUrlPaid .= '&from_date='.urlencode($xd_filter_from); $exportUrlUnpaid .= '&from_date='.urlencode($xd_filter_from); } if($xd_filter_to !== '') { $exportUrlAll .= '&to_date='.urlencode($xd_filter_to); $exportUrlPaid .= '&to_date='.urlencode($xd_filter_to); $exportUrlUnpaid .= '&to_date='.urlencode($xd_filter_to); } if($xd_filter_ky !== '') { $exportUrlAll .= '&ky='.urlencode($xd_filter_ky); $exportUrlPaid .= '&ky='.urlencode($xd_filter_ky); $exportUrlUnpaid .= '&ky='.urlencode($xd_filter_ky); } if($xd_filter_kt_from !== '') { $exportUrlAll .= '&kt_from='.urlencode($xd_filter_kt_from); $exportUrlPaid .= '&kt_from='.urlencode($xd_filter_kt_from); $exportUrlUnpaid .= '&kt_from='.urlencode($xd_filter_kt_from); } if($xd_filter_kt_to !== '') { $exportUrlAll .= '&kt_to='.urlencode($xd_filter_kt_to); $exportUrlPaid .= '&kt_to='.urlencode($xd_filter_kt_to); $exportUrlUnpaid .= '&kt_to='.urlencode($xd_filter_kt_to); } ?>
+			<?php if($xd_filter_gv !== '') { $exportUrlAll .= '&gv='.urlencode($xd_filter_gv); $exportUrlPaid .= '&gv='.urlencode($xd_filter_gv); $exportUrlUnpaid .= '&gv='.urlencode($xd_filter_gv); } ?>
 			<div class="btn-group mr-3">
 				<button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</button>
 				<div class="dropdown-menu">
@@ -37,6 +42,15 @@
 				<input class="form-control form-control-sm text-sm" style="min-width:200px;" type="search" name="keyword" placeholder="Mã HĐ / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">
 			</div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Giáo viên</label>
+				<select class="form-control form-control-sm text-sm" name="gv" style="min-width:200px;">
+					<option value="">Tất cả giáo viên</option>
+					<?php foreach(($xd_hoadon_teachers ?? array()) as $teacher) { ?>
+					<option value="<?=htmlspecialchars($teacher['gv_key'], ENT_QUOTES, 'UTF-8')?>" <?=($xd_filter_gv === (string)$teacher['gv_key'])?'selected':''?>><?=htmlspecialchars($teacher['gv_hoten'] !== '' ? $teacher['gv_hoten'] : $teacher['gv_key'])?> (<?=(int)$teacher['so']?>)</option>
+					<?php } ?>
+				</select>
+			</div>
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
 				<label class="mb-1 small text-muted">Ngày HĐ từ</label>
 				<input class="form-control form-control-sm text-sm" type="date" name="from_date" value="<?=htmlspecialchars($xd_filter_from)?>">
 			</div>
@@ -46,7 +60,12 @@
 			</div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start">
 				<label class="mb-1 small text-muted">Kỳ</label>
-				<input class="form-control form-control-sm text-sm" type="text" name="ky" placeholder="Kỳ (VD: T5)" value="<?=htmlspecialchars($xd_filter_ky)?>" style="max-width:120px;">
+				<select class="form-control form-control-sm text-sm" name="ky" style="min-width:120px;">
+					<option value="">Tất cả kỳ</option>
+					<?php foreach(($xd_hoadon_kys ?? array()) as $k) { ?>
+					<option value="<?=htmlspecialchars($k['ky'], ENT_QUOTES, 'UTF-8')?>" <?=($xd_filter_ky === (string)$k['ky'])?'selected':''?>><?=htmlspecialchars($k['ky'])?> (<?=(int)$k['so']?>)</option>
+					<?php } ?>
+				</select>
 			</div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start"><label class="mb-1 small text-muted">KT kế toán từ</label><input class="form-control form-control-sm text-sm" type="date" name="kt_from" value="<?=htmlspecialchars($xd_filter_kt_from)?>"></div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start"><label class="mb-1 small text-muted">KT kế toán đến</label><input class="form-control form-control-sm text-sm" type="date" name="kt_to" value="<?=htmlspecialchars($xd_filter_kt_to)?>"></div>
@@ -56,11 +75,15 @@
 	</div>
 
 	<div class="card card-primary card-outline text-sm mb-0">
-		<div class="card-header"><h3 class="card-title">Danh sách hóa đơn xăng dầu</h3></div>
+		<div class="card-header"><h3 class="card-title">Danh sách hóa đơn xăng dầu</h3><?php if(xd_can_xoa()) { ?><div class="card-tools">
+			<form id="xd-bulk-hoadon" method="post" action="index.php?com=xangdau&act=deleteHoadonSelected" class="d-inline"><input type="hidden" name="ret" value="<?=$xd_ret?>"></form>
+			<button type="submit" form="xd-bulk-hoadon" class="btn btn-sm btn-danger xd-bulk-delete" data-label="hóa đơn" data-note="Hóa đơn đã quyết toán sẽ được giữ lại."><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button>
+		</div><?php } ?></div>
 		<div class="card-body table-responsive p-0">
 			<table class="table table-hover">
 				<thead>
 					<tr>
+						<th class="text-center" style="width:34px"><?php if(xd_can_xoa()) { ?><input type="checkbox" class="xd-bulk-all" data-form="xd-bulk-hoadon" title="Chọn tất cả"><?php } ?></th>
 						<th>STT</th>
 						<th>Mã HĐ</th>
 						<th>Ngày HĐ</th>
@@ -81,6 +104,7 @@
 				<tbody>
 					<?php if(!empty($items)) { $i = 0; foreach($items as $it) { $i++; ?>
 					<tr>
+						<td class="text-center"><?php if(xd_can_xoa() && (int)$it['da_quyettoan'] === 0) { ?><input type="checkbox" class="xd-bulk-item" form="xd-bulk-hoadon" name="ids[]" value="<?=(int)$it['id']?>"><?php } ?></td>
 						<td><?=$i?></td>
 						<td><?=htmlspecialchars($it['ma_hoa_don'])?></td>
 						<td><?=($it['ngay_hoa_don'] ? date('d/m/Y', strtotime($it['ngay_hoa_don'])) : '-')?></td>
@@ -131,9 +155,9 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="15" class="text-center text-muted py-4">
+					<tr><td colspan="16" class="text-center text-muted py-4">
 						<div style="font-size:34px;line-height:1;color:#c8ccd4;margin-bottom:8px;"><i class="fas fa-file-invoice-dollar"></i></div>
-						<div class="mb-2"><?=($xd_filter_keyword!==''||$xd_filter_from!==''||$xd_filter_to!=='') ? 'Không có hóa đơn khớp bộ lọc.' : 'Chưa có hóa đơn xăng dầu nào.'?></div>
+						<div class="mb-2"><?=($xd_filter_keyword!==''||$xd_filter_gv!==''||$xd_filter_ky!==''||$xd_filter_from!==''||$xd_filter_to!=='') ? 'Không có hóa đơn khớp bộ lọc.' : 'Chưa có hóa đơn xăng dầu nào.'?></div>
 						<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import hóa đơn ngay</a>
 					</td></tr>
 					<?php } ?>
@@ -143,3 +167,4 @@
 		<div class="card-footer text-sm"><?=isset($paging) ? $paging : ''?></div>
 	</div>
 </section>
+<script src="assets/js/xangdau-bulk.js"></script>

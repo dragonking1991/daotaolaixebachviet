@@ -5,6 +5,8 @@
 	$xd_ret_q = array('com' => 'xangdau', 'act' => 'hocvien');
 	if($xd_filter_keyword !== '') $xd_ret_q['keyword'] = $xd_filter_keyword;
 	if($xd_filter_nhom !== '') $xd_ret_q['nhom'] = $xd_filter_nhom;
+	if($xd_filter_khoa !== '') $xd_ret_q['khoa'] = $xd_filter_khoa;
+	if($xd_filter_gv !== '') $xd_ret_q['gv'] = $xd_filter_gv;
 	if($xd_filter_trangthai !== '') $xd_ret_q['trangthai'] = $xd_filter_trangthai;
 	if($xd_filter_tt_from !== '') $xd_ret_q['tt_from'] = $xd_filter_tt_from;
 	if($xd_filter_tt_to !== '') $xd_ret_q['tt_to'] = $xd_filter_tt_to;
@@ -33,6 +35,7 @@
 			<a class="btn btn-sm bg-gradient-secondary text-white mr-2" href="index.php?com=xangdau&act=ce"><i class="fas fa-truck-moving mr-1"></i>Danh sách CE</a>
 			<a class="btn btn-sm bg-gradient-primary text-white mr-2" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
 			<?php if(xd_can_duyet() || xd_can_kiem_tra()) { $exportBase = 'index.php?com=xangdau&act=xuatHocvienExcel'; $exportUrlAll = $exportBase.'&scope=all'; $exportUrlPaid = $exportBase.'&scope=paid'; $exportUrlUnpaid = $exportBase.'&scope=unpaid'; if($xd_filter_keyword !== '') { $exportUrlAll .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlPaid .= '&keyword='.urlencode($xd_filter_keyword); $exportUrlUnpaid .= '&keyword='.urlencode($xd_filter_keyword); } if($xd_filter_nhom !== '') { $exportUrlAll .= '&nhom='.urlencode($xd_filter_nhom); $exportUrlPaid .= '&nhom='.urlencode($xd_filter_nhom); $exportUrlUnpaid .= '&nhom='.urlencode($xd_filter_nhom); } if($xd_filter_tt_from !== '') { $exportUrlAll .= '&tt_from='.urlencode($xd_filter_tt_from); $exportUrlPaid .= '&tt_from='.urlencode($xd_filter_tt_from); $exportUrlUnpaid .= '&tt_from='.urlencode($xd_filter_tt_from); } if($xd_filter_tt_to !== '') { $exportUrlAll .= '&tt_to='.urlencode($xd_filter_tt_to); $exportUrlPaid .= '&tt_to='.urlencode($xd_filter_tt_to); $exportUrlUnpaid .= '&tt_to='.urlencode($xd_filter_tt_to); } if($xd_filter_trangthai !== '') { $exportUrlAll .= '&trangthai='.urlencode($xd_filter_trangthai); $exportUrlPaid .= '&trangthai='.urlencode($xd_filter_trangthai); $exportUrlUnpaid .= '&trangthai='.urlencode($xd_filter_trangthai); } ?>
+			<?php $xdExtra = ($xd_filter_khoa !== '' ? '&khoa='.urlencode($xd_filter_khoa) : '').($xd_filter_gv !== '' ? '&gv='.urlencode($xd_filter_gv) : ''); $exportUrlAll .= $xdExtra; $exportUrlPaid .= $xdExtra; $exportUrlUnpaid .= $xdExtra; ?>
 			<div class="btn-group mr-3">
 				<button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</button>
 				<div class="dropdown-menu">
@@ -74,6 +77,24 @@
 				</select>
 			</div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Khóa</label>
+				<select class="form-control form-control-sm text-sm" name="khoa" style="min-width:140px;">
+					<option value="">Tất cả khóa</option>
+					<?php foreach(($xd_hocvien_khoas ?? array()) as $k) { ?>
+					<option value="<?=htmlspecialchars($k['khoa'], ENT_QUOTES, 'UTF-8')?>" <?=($xd_filter_khoa === (string)$k['khoa'])?'selected':''?>><?=htmlspecialchars($k['khoa'])?> (<?=(int)$k['so']?>)</option>
+					<?php } ?>
+				</select>
+			</div>
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
+				<label class="mb-1 small text-muted">Giáo viên</label>
+				<select class="form-control form-control-sm text-sm" name="gv" style="min-width:200px;">
+					<option value="">Tất cả giáo viên</option>
+					<?php foreach(($xd_hocvien_teachers ?? array()) as $teacher) { ?>
+					<option value="<?=htmlspecialchars($teacher['gv_key'], ENT_QUOTES, 'UTF-8')?>" <?=($xd_filter_gv === (string)$teacher['gv_key'])?'selected':''?>><?=htmlspecialchars($teacher['gv_hoten'] !== '' ? $teacher['gv_hoten'] : $teacher['gv_key'])?></option>
+					<?php } ?>
+				</select>
+			</div>
+			<div class="form-group mb-0 d-flex flex-column align-items-start">
 				<label class="mb-1 small text-muted">Trạng thái</label>
 				<select class="form-control form-control-sm text-sm" name="trangthai">
 					<option value="">Tất cả trạng thái</option>
@@ -91,12 +112,16 @@
 	<div class="card card-primary card-outline text-sm mb-0">
 		<div class="card-header">
 			<h3 class="card-title">Danh sách học viên xăng dầu</h3>
-			<div class="card-tools text-muted">Học viên mới đồng bộ từ Đào tạo được gán nhóm <strong>DAT</strong>; hồ sơ đã có không bị ghi đè.</div>
+			<div class="card-tools text-muted">Học viên mới đồng bộ từ Đào tạo được gán nhóm <strong>DAT</strong>; hồ sơ đã có không bị ghi đè.<?php if(xd_can_xoa()) { ?>
+				<form id="xd-bulk-hocvien" method="post" action="index.php?com=xangdau&act=deleteHocvienSelected" class="d-inline"><input type="hidden" name="ret" value="<?=$xd_ret?>"></form>
+				<button type="submit" form="xd-bulk-hocvien" class="btn btn-sm btn-danger ml-2 xd-bulk-delete" data-label="học viên" data-note="Học viên đã thanh toán hoặc thuộc bảng kê sẽ được giữ lại."><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button>
+				<?php } ?></div>
 		</div>
 		<div class="card-body table-responsive p-0">
 			<table class="table table-hover">
 				<thead>
 					<tr>
+						<th class="text-center" style="width:34px"><?php if(xd_can_xoa()) { ?><input type="checkbox" class="xd-bulk-all" data-form="xd-bulk-hocvien" title="Chọn tất cả"><?php } ?></th>
 						<th>STT</th>
 						<th>Họ tên</th>
 						<th>CCCD</th>
@@ -113,6 +138,7 @@
 				<tbody>
 					<?php if(!empty($items)) { $i = 0; foreach($items as $it) { $i++; $badge = isset($nhomBadge[$it['nhom']]) ? $nhomBadge[$it['nhom']] : 'badge-secondary'; ?>
 					<tr>
+						<td class="text-center"><?php if(xd_can_xoa()) { ?><input type="checkbox" class="xd-bulk-item" form="xd-bulk-hocvien" name="ids[]" value="<?=(int)$it['id']?>"><?php } ?></td>
 						<td><?=$i?></td>
 						<td><?=htmlspecialchars($it['ho_ten'])?></td>
 						<td><?=htmlspecialchars($it['cccd'])?></td>
@@ -154,7 +180,7 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="11" class="text-center text-muted py-4">
+					<tr><td colspan="12" class="text-center text-muted py-4">
 						<div style="font-size:34px;line-height:1;color:#c8ccd4;margin-bottom:8px;"><i class="fas fa-users"></i></div>
 						<div class="mb-2">Chưa có học viên xăng dầu nào.</div>
 						<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên ngay</a>
@@ -166,6 +192,7 @@
 		<div class="card-footer text-sm"><?=isset($paging) ? $paging : ''?></div>
 	</div>
 </section>
+<script src="assets/js/xangdau-bulk.js"></script>
 <?php if(xd_can_xoa()) { ?>
 <script>
 	(function() {
