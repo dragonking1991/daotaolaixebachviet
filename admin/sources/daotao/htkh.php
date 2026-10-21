@@ -27,7 +27,7 @@ function dt_htkh_so_giay($maHv, $hang)
 {
 	$maHv = trim((string)$maHv);
 	if($maHv === '') return '';
-	return $maHv.'-'.dt_htkh_hang_quydoi($hang);
+	return dt_htkh_norm_so_giay($maHv.'-'.dt_htkh_hang_quydoi($hang));
 }
 
 /* Các kiểu nâng hạng lên CE (học viên có thể nâng từ C / D / D2). */
@@ -131,7 +131,7 @@ function dt_htkh_save()
 	$hv = dt_find_hocvien_by_cccd($cccd, $idKhoa);
 	if(!$hv) $func->transfer("Học viên không thuộc khóa", $back, false);
 
-	$soGiay = trim($_POST['so_giay'] ?? '');
+	$soGiay = dt_htkh_norm_so_giay($_POST['so_giay'] ?? '');
 	if($soGiay === '') $soGiay = dt_htkh_so_giay($hv['ma_hv'], $hv['hang']);
 	$data = array(
 		'id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'ma_hv' => $hv['ma_hv'],
@@ -438,7 +438,7 @@ function dt_htkh_upload_excel()
 		$row = dt_read_row($sheet, $r, $highestCol);
 		$cccd = dt_normalize_cccd(dt_val($row, $map, 'cccd'));
 		$maHv = dt_val($row, $map, 'ma_hv');
-		$soGiay = dt_val($row, $map, 'so_giay');
+		$soGiay = dt_htkh_norm_so_giay(dt_val($row, $map, 'so_giay'));
 		if($cccd === '' && $maHv === '') { if(++$emptyStreak >= 30) break; continue; }
 		$emptyStreak = 0;
 		if($soGiay === '') continue;

@@ -1,6 +1,12 @@
 <?php
 if(!defined('SOURCES')) die("Error");
 
+/* Bỏ khoảng trắng (kể cả NBSP) quanh dấu gạch: "...000014 - CE" → "...000014-CE". */
+function dt_htkh_norm_so_giay($so)
+{
+	return trim(preg_replace('/[\s\x{00A0}\x{2007}\x{202F}]*[-\x{2010}-\x{2015}][\s\x{00A0}\x{2007}\x{202F}]*/u', '-', (string)$so));
+}
+
 /* Logo in trên giấy xác nhận (in lên phôi có sẵn hoa văn nên không chèn nền). */
 function dt_htkh_assets()
 {
@@ -23,11 +29,11 @@ function dt_htkh_document_rows($doc)
 		array('text' => 'Độc lập - Tự do - Hạnh phúc', 'align' => 'center', 'bold' => true, 'underline' => true, 'size' => 13, 'height' => 22, 'nowrap' => true),
 		array('image' => true, 'height' => 90),
 		array('text' => 'GIẤY XÁC NHẬN HOÀN THÀNH KHÓA ĐÀO TẠO LÁI XE', 'align' => 'center', 'bold' => true, 'size' => 14, 'height' => 26, 'nowrap' => true),
-		array('text' => 'Số: '.$g('so_giay'), 'align' => 'center', 'bold' => true, 'size' => 13, 'height' => 22, 'nowrap' => true),
+		array('text' => 'Số: '.dt_htkh_norm_so_giay(html_entity_decode($g('so_giay'), ENT_QUOTES, 'UTF-8')), 'align' => 'center', 'bold' => true, 'size' => 13, 'height' => 22, 'nowrap' => true),
 		array('text' => '', 'height' => 24),
 		array('text' => 'TRUNG TÂM GIÁO DỤC NGHỀ NGHIỆP BÁCH VIỆT', 'align' => 'center', 'bold' => true, 'color' => 'C00000', 'size' => 14, 'height' => 26, 'nowrap' => true),
 		array('text' => '', 'height' => 26),
-		array('text' => 'Xác nhận cho Ông (Bà) :  '.$g('hoten'), 'size' => 14, 'height' => 28),
+		array('text' => 'Xác nhận cho Ông (Bà) :  '.mb_strtoupper($g('hoten'), 'UTF-8'), 'size' => 14, 'height' => 28),
 		array('text' => 'Ngày tháng năm sinh :  '.$g('ngaysinh'), 'size' => 14, 'height' => 28),
 		array('text' => 'Đã hoàn thành chương trình đào tạo lái xe hạng :  '.$g('hang'), 'size' => 14, 'height' => 28),
 		array('left' => 'Khóa :  '.$g('khoa'), 'right' => 'Thời gian học :  '.$g('so_ngay'), 'split' => 30, 'lalign' => 'left', 'ralign' => 'left', 'size' => 14, 'height' => 28, 'nowrap' => true),
@@ -72,7 +78,7 @@ function dt_htkh_documents_html($documents, $back)
 	.toolbar{text-align:center;padding:12px}
 	.toolbar button,.toolbar a{margin:0 6px;font-size:14px;padding:6px 14px;border:1px solid #2563eb;border-radius:4px;background:#2563eb;color:#fff;text-decoration:none;cursor:pointer}
 	.toolbar a{background:#fff;color:#2563eb}
-	.cert{position:relative;width:210mm;min-height:297mm;margin:10px auto;padding:15mm 20mm;background:#fff;overflow:hidden;page-break-after:always}
+	.cert{position:relative;width:210mm;min-height:297mm;margin:10px auto;padding:35mm 20mm 15mm;background:#fff;overflow:hidden;page-break-after:always}
 	.cert:last-child{page-break-after:auto}
 	.cert .r{display:flex;align-items:center}
 	.cert .r>div{white-space:pre-line;overflow-wrap:anywhere}
@@ -141,7 +147,7 @@ function dt_htkh_documents_xlsx($documents)
 	foreach($documents as $index => $doc)
 	{
 		if($index > 0) $sheet->setBreak('A'.($number - 1), PHPExcel_Worksheet::BREAK_ROW);
-		$sheet->getRowDimension($number++)->setRowHeight(15 * 72 / 25.4);
+		$sheet->getRowDimension($number++)->setRowHeight(35 * 72 / 25.4);
 		foreach(dt_htkh_document_rows($doc) as $row)
 		{
 			$sheet->getRowDimension($number)->setRowHeight($row['height'] ?? 24);
@@ -250,7 +256,7 @@ function dt_htkh_documents_docx_body($documents, $logoRid)
 		}
 		$body .= '</w:tbl>';
 	}
-	$sectPr = '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="850" w:right="1134" w:bottom="850" w:left="1134" w:header="454" w:footer="454" w:gutter="0"/></w:sectPr>';
+	$sectPr = '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1984" w:right="1134" w:bottom="850" w:left="1134" w:header="454" w:footer="454" w:gutter="0"/></w:sectPr>';
 	$ns = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
 	return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document '.$ns.'><w:body>'.$body.$sectPr.'</w:body></w:document>';
 }
