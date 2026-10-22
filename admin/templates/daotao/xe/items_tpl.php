@@ -22,17 +22,18 @@
 			<?php if(dt_can('xe','delete')): ?><form id="dt-bulk-xe" method="post" action="index.php?com=daotao&act=crudDeleteSelected&entity=xe<?=$dt_ret?>"></form><?php endif; ?>
 			<?php if(!empty($xe_stats)): ?>
 			<div class="mb-2 text-sm">
-				<a href="index.php?com=daotao&act=xe&expiry=sap_het" class="badge badge-light border mr-1" title="Xem xe hết hạn trong vòng chưa đủ 30 ngày"><strong>GPLX xe sắp hết hạn (&lt;30 ngày):</strong> <span class="text-warning"><?=$xe_stats['sap_het']?></span> / <?=$xe_stats['tong']?> xe đang hoạt động</a>
-				<?php if($xe_stats['het_han']): ?><a href="index.php?com=daotao&act=xe&expiry=het_han" class="badge badge-light border text-danger mr-1" title="Xem xe đã hết hạn">Đã hết hạn: <?=$xe_stats['het_han']?></a><?php endif; ?>
+				<a href="index.php?com=daotao&act=xe&tt_tl=hoat_dong&expiry=sap_het" class="badge badge-light border mr-1" title="Xem xe hết hạn trong vòng chưa đủ 30 ngày"><strong>GPLX xe sắp hết hạn (&lt;30 ngày):</strong> <span class="text-warning"><?=$xe_stats['sap_het']?></span> / <?=$xe_stats['tong']?> xe đang hoạt động</a>
+				<a href="index.php?com=daotao&act=xe&tt_tl=hoat_dong&expiry=con_han" class="badge badge-light border text-success mr-1" title="Xem xe còn hạn từ 30 ngày trở lên">Còn hạn: <?=$xe_stats['con_han']?></a>
+				<?php if($xe_stats['het_han']): ?><a href="index.php?com=daotao&act=xe&tt_tl=hoat_dong&expiry=het_han" class="badge badge-light border text-danger mr-1" title="Xem xe đã hết hạn">Đã hết hạn: <?=$xe_stats['het_han']?></a><?php endif; ?>
 				<?php if($xe_stats['chua_ngay']): ?><span class="badge badge-light border text-muted mr-1">Chưa có ngày hết hạn: <?=$xe_stats['chua_ngay']?></span><?php endif; ?>
 			</div>
 			<div class="mb-2 text-sm">
 				<?php foreach($xe_stats['hang'] as $hang => $st): ?>
 				<span class="badge badge-light border mr-1" title="Hạng <?=htmlspecialchars($hang)?>: <?=$st['con_han']?> còn hạn / <?=$st['sap_het']?> sắp hết / <?=$st['het_han']?> hết hạn / <?=$st['chua_ngay']?> thiếu ngày">
 					<strong><?=htmlspecialchars($hang)?></strong>:
-					<span class="text-success"><?=$st['con_han']?> còn hạn</span>
-					<?php if($st['sap_het']): ?><a class="text-warning" href="index.php?com=daotao&act=xe&hang=<?=urlencode($hang)?>&expiry=sap_het" title="Xem xe hạng <?=htmlspecialchars($hang)?> sắp hết hạn">• <?=$st['sap_het']?> sắp hết</a><?php endif; ?>
-					<?php if($st['het_han']): ?><a class="text-danger" href="index.php?com=daotao&act=xe&hang=<?=urlencode($hang)?>&expiry=het_han" title="Xem xe hạng <?=htmlspecialchars($hang)?> đã hết hạn">• <?=$st['het_han']?> hết hạn</a><?php endif; ?>
+					<a class="text-success" href="index.php?com=daotao&act=xe&hang=<?=urlencode($hang)?>&tt_tl=hoat_dong&expiry=con_han" title="Xem xe hạng <?=htmlspecialchars($hang)?> còn hạn"> <?=$st['con_han']?> còn hạn</a>
+					<?php if($st['sap_het']): ?><a class="text-warning" href="index.php?com=daotao&act=xe&hang=<?=urlencode($hang)?>&tt_tl=hoat_dong&expiry=sap_het" title="Xem xe hạng <?=htmlspecialchars($hang)?> sắp hết hạn">• <?=$st['sap_het']?> sắp hết</a><?php endif; ?>
+					<?php if($st['het_han']): ?><a class="text-danger" href="index.php?com=daotao&act=xe&hang=<?=urlencode($hang)?>&tt_tl=hoat_dong&expiry=het_han" title="Xem xe hạng <?=htmlspecialchars($hang)?> đã hết hạn">• <?=$st['het_han']?> hết hạn</a><?php endif; ?>
 					<?php if($st['chua_ngay']): ?><span class="text-muted">• <?=$st['chua_ngay']?> thiếu ngày</span><?php endif; ?>
 				</span>
 				<?php endforeach; ?>
@@ -40,10 +41,11 @@
 			<?php endif; ?>
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="xe">
+				<?php if(isset($_REQUEST['expiry']) && $_REQUEST['expiry'] !== ''): ?><input type="hidden" name="expiry" value="<?=htmlspecialchars($_REQUEST['expiry'])?>"><?php endif; ?>
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Biển số / Giáo viên" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
 				<select name="hang" class="form-control form-control-sm mr-2">
 					<option value="">— Hạng —</option>
-					<?php foreach(array('B11','B1','C1','C','CE') as $h): ?><option value="<?=$h?>" <?=(isset($_REQUEST['hang'])&&$_REQUEST['hang']==$h)?'selected':''?>><?=$h?></option><?php endforeach; ?>
+					<?php foreach(array('B11','B1','C1','C','CE') as $h): ?><option value="<?=$h?>" <?=(isset($_REQUEST['hang'])&&dt_norm_hang($_REQUEST['hang'])===$h)?'selected':''?>><?=$h?></option><?php endforeach; ?>
 				</select>
 				<input type="text" name="loai_xe" class="form-control form-control-sm mr-2" placeholder="Loại xe" value="<?=isset($_REQUEST['loai_xe'])?htmlspecialchars($_REQUEST['loai_xe']):''?>">
 				<input type="text" name="nhan_hieu" class="form-control form-control-sm mr-2" placeholder="Nhãn hiệu" value="<?=isset($_REQUEST['nhan_hieu'])?htmlspecialchars($_REQUEST['nhan_hieu']):''?>">
@@ -65,7 +67,7 @@
 							<div class="dt-sub"><i class="fas fa-car"></i><?=htmlspecialchars($it['nhan_hieu'] ?: '—')?></div>
 						</td>
 						<td>
-							<div><?php if(!empty($it['hang_xe'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang_xe'])?></span><?php endif; ?> <?php if(!empty($it['loai_xe'])): ?><span class="dt-tag is-muted">Loại <?=htmlspecialchars($it['loai_xe'])?></span><?php endif; ?></div>
+							<div><?php if(!empty($it['hang_xe'])): ?><span class="dt-tag"><?=htmlspecialchars(dt_norm_hang($it['hang_xe']))?></span><?php endif; ?> <?php if(!empty($it['loai_xe'])): ?><span class="dt-tag is-muted">Loại <?=htmlspecialchars($it['loai_xe'])?></span><?php endif; ?></div>
 							<div class="dt-sub"><i class="fas fa-hashtag"></i>Số khung: <strong><?=htmlspecialchars($it['so_khung'] ?: '—')?></strong></div>
 						</td>
 						<td class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars($it['gv_hoten'] ?: '—')?></td>

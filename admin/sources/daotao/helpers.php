@@ -79,6 +79,7 @@ function dt_norm_hang($raw)
 	if($compact === 'b1') return 'B1';
 	if($compact === 'c1') return 'C1';
 	if($compact === 'ce') return 'CE';
+	if($compact === 'fc') return 'CE';
 
 	// Diễn giải bằng lời
 	if(strpos($h, 'tu dong') !== false && (strpos($h, 'b') !== false)) return 'B11';

@@ -93,7 +93,7 @@ Việc tạo giấy chỉ áp dụng cho học viên có kết quả đạt thu�
 - **Thời gian học** là số ngày học, tự tính từ **ngày khai giảng → ngày mãn khóa** của khóa (tính cả hai đầu); để trống nếu khóa thiếu ngày.
 - **Từ ngày … đến ngày …** lấy từ ngày khai giảng và ngày mãn khóa của khóa.
 - **Ngày ký** hiển thị dạng `ngày … tháng … năm …`; địa điểm cố định `Tp.Hồ Chí Minh`.
-- Nền hoa văn trống đồng phủ kín trang A4 trong bản in, Word và Excel; lề nội dung vẫn được giữ riêng. Logo và nền được nhúng sẵn (ảnh ở `admin/assets/images/htkh-logo.png`, `htkh-watermark.png`, và bản mờ `htkh-watermark-faint.png` dùng cho nền sau chữ trong Excel). Nhớ triển khai kèm các ảnh này. Khi in giấy, cần máy in hỗ trợ in không viền để phủ nền sát mép giấy.
+- Giấy chỉ in **nội dung + logo** (không nền trống đồng) để in lên phôi có sẵn; lề trên 3,5 cm. Họ tên in hoa, tên trung tâm màu đỏ, dòng ngày ký luôn 1 dòng. Số giấy in liền, tự bỏ dấu cách quanh `-`. Logo nhúng từ `admin/assets/images/htkh-logo.png`.
 
 Quyền **sửa HTKH** dùng để tạo/cập nhật giấy, quyền **xuất HTKH** dùng để tải Excel/Word, quyền **xem HTKH** dùng để xem và in. Chức năng nhập số giấy và xuất danh sách Excel theo khóa ở phần bên dưới vẫn được giữ nguyên.
 

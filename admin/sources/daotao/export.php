@@ -140,7 +140,12 @@ function dt_xe_where()
 		$like = '%'.$kw.'%';
 		$params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
 	}
-	if(dt_req('hang') !== '') { $where .= " and hang_xe = ?"; $params[] = dt_norm_hang(dt_req('hang')); }
+	if(dt_req('hang') !== '')
+	{
+		$hang = dt_norm_hang(dt_req('hang'));
+		if($hang === 'CE') $where .= " and hang_xe in ('CE','FC')";
+		else { $where .= " and hang_xe = ?"; $params[] = $hang; }
+	}
 	if(dt_req('loai_xe') !== '') { $where .= " and loai_xe like ?"; $params[] = '%'.dt_req('loai_xe').'%'; }
 	if(dt_req('nhan_hieu') !== '') { $where .= " and nhan_hieu like ?"; $params[] = '%'.dt_req('nhan_hieu').'%'; }
 	// Mặc định hiển thị tất cả (kể cả đã thanh lý). Lọc theo trạng thái: hoat_dong / da_thanh_ly.
@@ -151,6 +156,7 @@ function dt_xe_where()
 	$dateExpr = "coalesce(str_to_date(nullif(ngay_hethan,''),'%d/%m/%Y'),str_to_date(nullif(ngay_hethan,''),'%Y-%m-%d'))";
 	if($expiry === 'sap_het') $where .= " and $dateExpr >= curdate() and $dateExpr < date_add(curdate(), interval 30 day)";
 	elseif($expiry === 'het_han') $where .= " and $dateExpr < curdate()";
+	elseif($expiry === 'con_han') $where .= " and $dateExpr >= date_add(curdate(), interval 30 day)";
 	return array($where, $params);
 }
 
@@ -234,7 +240,7 @@ function dt_xe_export()
 	$out = array(); $stt = 1;
 	foreach($rows as $x)
 	{
-		$out[] = array($stt++, $x['bien_so'], $x['hang_xe'], $x['hang_dt'], $x['so_dangky'], $x['so_khung'], $x['so_may'], $x['loai_xe'], $x['nhan_hieu'], $x['gv_hoten'], isset($x['ngay_hethan'])?$x['ngay_hethan']:'', !empty($x['thanh_ly'])?'Đã thanh lý':'Đang hoạt động', isset($x['ngay_thanh_ly'])?$x['ngay_thanh_ly']:'', isset($x['ma_csdt'])?$x['ma_csdt']:'', isset($x['nam_sx'])?$x['nam_sx']:'', isset($x['so_gpxtl'])?$x['so_gpxtl']:'', isset($x['ngay_cap_gpxtl'])?$x['ngay_cap_gpxtl']:'', isset($x['ngay_cap_gcnkd'])?$x['ngay_cap_gcnkd']:'', isset($x['ngay_hethan_gcnkd'])?$x['ngay_hethan_gcnkd']:'', isset($x['so_huu'])?$x['so_huu']:'', isset($x['so_imei'])?$x['so_imei']:'', isset($x['so_seri'])?$x['so_seri']:'');
+		$out[] = array($stt++, $x['bien_so'], dt_norm_hang($x['hang_xe']), $x['hang_dt'], $x['so_dangky'], $x['so_khung'], $x['so_may'], $x['loai_xe'], $x['nhan_hieu'], $x['gv_hoten'], isset($x['ngay_hethan'])?$x['ngay_hethan']:'', !empty($x['thanh_ly'])?'Đã thanh lý':'Đang hoạt động', isset($x['ngay_thanh_ly'])?$x['ngay_thanh_ly']:'', isset($x['ma_csdt'])?$x['ma_csdt']:'', isset($x['nam_sx'])?$x['nam_sx']:'', isset($x['so_gpxtl'])?$x['so_gpxtl']:'', isset($x['ngay_cap_gpxtl'])?$x['ngay_cap_gpxtl']:'', isset($x['ngay_cap_gcnkd'])?$x['ngay_cap_gcnkd']:'', isset($x['ngay_hethan_gcnkd'])?$x['ngay_hethan_gcnkd']:'', isset($x['so_huu'])?$x['so_huu']:'', isset($x['so_imei'])?$x['so_imei']:'', isset($x['so_seri'])?$x['so_seri']:'');
 	}
 	dt_xlsx_simple('Xe tap lai', 'xe-tap-lai-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 4, 5, 6));
 }
