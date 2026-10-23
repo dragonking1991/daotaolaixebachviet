@@ -306,7 +306,7 @@ function dt_lythuyet_export()
 		foreach($dsMon as $mk => $lbl)
 		{
 			$m = isset($monData[$mk]) ? $monData[$mk] : null;
-			$datMon = ($m && (int)$m['dat'] === 1);
+			$datMon = ($m && dt_lythuyet_dat($m['tien_do'], $m['diem_kt'], $mk));
 			if($datMon) $soDat++;
 			$cells[] = $m ? (float)$m['tien_do'] : '';
 			$cells[] = $m ? (float)$m['diem_kt'] : '';

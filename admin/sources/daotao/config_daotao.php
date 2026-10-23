@@ -51,7 +51,7 @@ function dt_mon_lythuyet_for_hang($hang)
 /* Ngưỡng đạt lý thuyết mỗi môn. */
 function dt_nguong_lythuyet()
 {
-	return array('tien_do' => 70, 'diem_kt' => 5); // >= 70 và >= 5
+	return array('tien_do' => 70, 'diem_kt' => 5);
 }
 
 /**

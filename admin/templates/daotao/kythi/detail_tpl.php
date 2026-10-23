@@ -13,6 +13,10 @@
 		<div class="card-header">
 			<h3 class="card-title"><strong><?=htmlspecialchars($ky['ten'] ?: '(Không tên)')?></strong> — <?=htmlspecialchars($ky['ngay_kt'] ?: '—')?> <span class="dt-count"><?=number_format((int)$total_items)?> HV</span></h3>
 			<div class="card-tools">
+				<?php if(dt_can('kythi','delete')): ?>
+				<button type="submit" form="dt-bulk-kythi-roster" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button>
+				<button type="submit" form="dt-kythi-roster-clear" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ danh sách</button>
+				<?php endif; ?>
 				<div class="btn-group">
 					<button type="button" class="btn btn-sm bg-gradient-success dropdown-toggle" data-toggle="dropdown"><i class="fas fa-file-excel mr-1"></i>Xuất Excel TTSH</button>
 					<div class="dropdown-menu dropdown-menu-right">
@@ -26,6 +30,10 @@
 			</div>
 		</div>
 		<div class="card-body">
+			<?php if(dt_can('kythi','delete')): ?>
+			<form id="dt-bulk-kythi-roster" method="post" action="index.php?com=daotao&act=kythiRemoveSelected"><input type="hidden" name="id" value="<?=(int)$ky['id']?>"></form>
+			<form id="dt-kythi-roster-clear" method="post" action="index.php?com=daotao&act=kythiRemoveSelected" onsubmit="return confirm('Xóa TOÀN BỘ danh sách học viên và kết quả trong kỳ này?')"><input type="hidden" name="id" value="<?=(int)$ky['id']?>"><input type="hidden" name="delete_all" value="1"></form>
+			<?php endif; ?>
 			<div class="row">
 				<div class="col-md-6">
 					<form method="get" class="form-inline mb-2 p-2" style="background:#f4f6f9;border-radius:4px;">
@@ -85,10 +93,11 @@
 			<hr>
 			<div class="table-responsive">
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>STT</th><th>Học viên</th><th>Hạng</th><th>Khóa</th><th>Giáo viên</th><th class="text-center">Kết quả</th><th class="dt-actions"></th></tr></thead>
+				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('kythi','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-kythi-roster" title="Chọn tất cả"><?php endif; ?></th><th>STT</th><th>Học viên</th><th>Hạng</th><th>Khóa</th><th>Giáo viên</th><th class="text-center">Kết quả</th><th class="dt-actions"></th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): $i=1; foreach($items as $it): ?>
 					<tr>
+						<td class="text-center"><?php if(dt_can('kythi','delete')): ?><input type="checkbox" class="dt-bulk-item" form="dt-bulk-kythi-roster" name="ids[]" value="<?=(int)$it['id']?>"><?php endif; ?></td>
 						<td><?=$i++?></td>
 						<td><div class="dt-title"><?=htmlspecialchars($it['hoten'])?></div><div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($it['cccd'])?></div></td>
 						<td><?=htmlspecialchars($it['hang'])?></td>
@@ -98,7 +107,7 @@
 						<td class="dt-actions"><a href="index.php?com=daotao&act=kythiRemove&id=<?=$ky['id']?>&hvid=<?=$it['id']?>" onclick="return confirm('Xóa học viên khỏi kỳ?')" class="btn btn-xs bg-gradient-danger" title="Xóa khỏi kỳ"><i class="fas fa-times"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="7" class="text-center text-muted p-3">Chưa có học viên trong kỳ. Dùng bộ lọc phía trên để thêm.</td></tr>
+					<tr><td colspan="8" class="text-center text-muted p-3">Chưa có học viên trong kỳ. Dùng bộ lọc phía trên để thêm.</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>

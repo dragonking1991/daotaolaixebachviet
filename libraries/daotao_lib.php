@@ -114,7 +114,7 @@ if(!function_exists('dt_mb_lower'))
 	function dt_lythuyet_dat($tienDo, $diemKt)
 	{
 		$ng = dt_nguong_lythuyet();
-		return ((float)$tienDo > $ng['tien_do'] && (float)$diemKt > $ng['diem_kt']) ? 1 : 0;
+		return ((float)$tienDo >= $ng['tien_do']) ? 1 : 0;
 	}
 	function dt_hinh_dat($hang, $gio, $km, $override = null)
 	{
@@ -202,11 +202,16 @@ if(!function_exists('dt_mb_lower'))
 		$cccd = $hv['cccd'];
 		$maHv = $hv['ma_hv'];
 
-		$tongMon = count(dt_mon_lythuyet());
-		$rDat = $d->rawQueryOne("select count(*) as c from #_dt_lythuyet where id_khoa = ? and cccd = ? and dat = 1", array($idKhoa, $cccd));
-		$soDat = (int)($rDat ? $rDat['c'] : 0);
-		$rCo = $d->rawQueryOne("select count(*) as c from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
-		$soCo = (int)($rCo ? $rCo['c'] : 0);
+		$monSet = dt_mon_lythuyet();
+		$tongMon = count($monSet);
+		$by = array();
+		$rows = $d->rawQuery("select mon, tien_do, diem_kt from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+		foreach($rows as $row) $by[$row['mon']] = dt_lythuyet_dat($row['tien_do'], $row['diem_kt']);
+		$mophong = $d->rawQueryOne("select tien_do from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+		if($mophong) $by['mophong'] = dt_lythuyet_dat($mophong['tien_do'], 0);
+		$soDat = 0; $soCo = 0;
+		foreach($monSet as $mon => $label)
+			if(isset($by[$mon])) { $soCo++; $soDat += $by[$mon]; }
 		$lyThuyetDat = ($soDat >= $tongMon) ? 1 : 0;
 
 		$cabin = $d->rawQueryOne("select dat from #_dt_cabin_kq where id_khoa = ? and ma_hv = ? limit 0,1", array($idKhoa, $maHv));
@@ -256,15 +261,17 @@ if(!function_exists('dt_mb_lower'))
 	{
 		global $d;
 		$idKhoa = (int)$hv['id_khoa']; $cccd = $hv['cccd'];
-		$rows = $d->rawQuery("select mon, diem_kt, dat from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+		$rows = $d->rawQuery("select mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
 		$by = array();
 		foreach($rows as $rw) $by[$rw['mon']] = $rw;
+		$mophong = $d->rawQueryOne("select tien_do from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+		if($mophong) $by['mophong'] = array('tien_do' => $mophong['tien_do'], 'diem_kt' => 0);
 		$out = array();
 		foreach(dt_mon_lythuyet() as $mk => $lbl)
 		{
 			if(!isset($by[$mk])) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_du_lieu'); continue; }
 			$rw = $by[$mk];
-			if((int)$rw['dat'] === 1) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'dat'); continue; }
+			if(dt_lythuyet_dat($rw['tien_do'], $rw['diem_kt'])) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'dat'); continue; }
 			if($mk !== 'mophong' && (float)$rw['diem_kt'] <= 0) $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_kiem_tra');
 			else $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_dat');
 		}

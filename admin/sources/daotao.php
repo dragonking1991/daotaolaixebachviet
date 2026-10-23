@@ -134,6 +134,7 @@ switch($act)
 	case "hinh":     dt_guard(dt_p('hinh','view'));   dt_hinh_list(); $template = "daotao/hinh/items"; break;
 	case "exportHinh": dt_guard(dt_p('hinh','export')); dt_hinh_export(); break;
 	case "saveHinh": dt_guard(dt_p('hinh','edit')); dt_hinh_save(); break;
+	case "saveHinhSelected": dt_guard(dt_p('hinh','edit')); dt_hinh_save_selected(); break;
 	case "hinhDatAll": dt_guard(dt_p('hinh','edit')); dt_hinh_dat_all(); break;
 	/* ---------- DAT ---------- */
 	case "dat":            dt_guard(dt_p('dat','view'));   dt_dat_list();  $template = "daotao/dat/items"; break;
@@ -156,6 +157,7 @@ switch($act)
 	case "kythiAddOne":      dt_guard(dt_p('kythi','edit'));  dt_kythi_add_one(); break;
 	case "kythiAddManual":   dt_guard(dt_p('kythi','edit'));  dt_kythi_add_manual(); break;
 	case "kythiRemove":      dt_guard(dt_p('kythi','edit'));  dt_kythi_remove_hv(); break;
+	case "kythiRemoveSelected": dt_guard(dt_p('kythi','delete')); dt_kythi_remove_selected(); break;
 	case "exportKythi":      dt_guard(dt_p('kythi','export')); dt_kythi_export(); break;
 	case "kythiUpload":      dt_guard(dt_p('kythi','import'));   dt_kythi_upload_form(); $template = "daotao/kythi/upload"; break;
 	case "kythiImportExcel": dt_guard(dt_p('kythi','import'));   dt_kythi_import_excel(); break;

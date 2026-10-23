@@ -60,7 +60,7 @@
 		Array.prototype.forEach.call(document.querySelectorAll('form[id^="dt-bulk-"]'), function(form){
 			form.addEventListener('submit', function(e){
 				e.preventDefault();
-				var n = document.querySelectorAll('.dt-bulk-item[form="'+form.id+'"]:checked').length;
+				var n = document.querySelectorAll('.dt-bulk-item[form="'+form.getAttribute('id')+'"]:checked').length;
 				if(!n){
 					if(hasSwal) Swal.fire({icon:'info', title:'Chưa chọn mục nào', text:'Hãy tích chọn ít nhất một mục để xóa.'});
 					else alert('Hãy tích chọn ít nhất một mục để xóa.');
@@ -71,6 +71,28 @@
 					showCancelButton:true, confirmButtonText:'Xóa', cancelButtonText:'Hủy', confirmButtonColor:'#dc2626' })
 					.then(function(r){ if(isConfirmed(r)){ showLoading(); form.submit(); } });
 			});
+		});
+
+		var hinhForm = document.getElementById('dt-module-hinh');
+		if(hinhForm) hinhForm.addEventListener('submit', function(event){
+			if(!event.submitter || event.submitter.name !== 'save_hinh_selected') return;
+			Array.prototype.forEach.call(hinhForm.querySelectorAll('[data-hinh-value]'), function(input){ input.remove(); });
+			var selected = document.querySelectorAll('.dt-bulk-item[form="dt-module-hinh"]:checked');
+			if(!selected.length){ event.preventDefault(); alert('Vui lòng chọn học viên cần lưu.'); return; }
+			for(var index = 0; index < selected.length; index++){
+				var rowForm = document.querySelector('form[data-hinh-id="'+selected[index].value+'"]');
+				if(!rowForm || !rowForm.reportValidity()) { event.preventDefault(); return; }
+				var values = new FormData(rowForm);
+				if(!values.get('gio') || !values.get('km')) { event.preventDefault(); alert('Vui lòng nhập đủ giờ và km cho học viên đã chọn.'); return; }
+				['gio','km','dat_override'].forEach(function(field){
+					var input = document.createElement('input');
+					input.type = 'hidden';
+					input.name = 'hinh['+selected[index].value+']['+field+']';
+					input.value = values.get(field) || '0';
+					input.setAttribute('data-hinh-value', '1');
+					hinhForm.appendChild(input);
+				});
+			}
 		});
 
 		// Chặn ở pha capture để thay thế confirm() gắn sẵn trên thẻ

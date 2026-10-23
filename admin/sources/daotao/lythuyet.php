@@ -57,11 +57,15 @@ function dt_lythuyet_list()
 		}
 	}
 	$byCccd = array();
-	foreach($rows as $rw) $byCccd[$rw['id_khoa'].'|'.$rw['cccd']][$rw['mon']] = $rw;
+	foreach($rows as $rw)
+	{
+		$rw['dat'] = dt_lythuyet_dat($rw['tien_do'], $rw['diem_kt'], $rw['mon']);
+		$byCccd[$rw['id_khoa'].'|'.$rw['cccd']][$rw['mon']] = $rw;
+	}
 	foreach($mpRows as $rw)
 	{
 		$key = $rw['id_khoa'].'|'.$rw['cccd'];
-		$mp = array('id' => 0, 'id_khoa' => $rw['id_khoa'], 'cccd' => $rw['cccd'], 'mon' => 'mophong', 'tien_do' => $rw['tien_do'], 'diem_kt' => 0, 'dat' => $rw['dat'], 'standalone' => 1);
+		$mp = array('id' => 0, 'id_khoa' => $rw['id_khoa'], 'cccd' => $rw['cccd'], 'mon' => 'mophong', 'tien_do' => $rw['tien_do'], 'diem_kt' => 0, 'dat' => dt_lythuyet_dat($rw['tien_do'], 0, 'mophong'), 'standalone' => 1);
 		if(isset($byCccd[$key]['mophong'])) $mp['id'] = $byCccd[$key]['mophong']['id'];
 		$byCccd[$key]['mophong'] = $mp;
 	}
@@ -151,8 +155,8 @@ function dt_lythuyet_upload_excel()
 		if(!isset($map['cccd']) || (!isset($map['on_luyen']) && !isset($map['tien_do'])))
 			dt_import_notice("Không nhận diện được cột 'Mã đăng nhập' và tiến độ (Ôn luyện / Tiến độ hoàn thành) trong file mô phỏng.", $back, false);
 	}
-	elseif(!isset($map['cccd']) || (!$have3 && !isset($map['tien_do'])) || !isset($map['diem_kt']))
-		dt_import_notice("Không nhận diện đủ cột: 'Mã đăng nhập', tiến độ (3 cột giờ hoặc 'Tiến độ hoàn thành') và 'Điểm kiểm tra'.", $back, false);
+	elseif(!isset($map['cccd']) || (!$have3 && !isset($map['tien_do'])))
+		dt_import_notice("Không nhận diện đủ cột: 'Mã đăng nhập' và tiến độ (3 cột giờ hoặc 'Tiến độ hoàn thành').", $back, false);
 
 	$backupTables = $mon === 'mophong' ? array('dt_lythuyet', 'dt_mophong') : array('dt_lythuyet');
 	dt_backup_tables($backupTables, 'imp_lythuyet');

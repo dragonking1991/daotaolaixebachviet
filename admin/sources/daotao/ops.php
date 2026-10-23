@@ -81,7 +81,7 @@ function dt_conggv_config()
 /* Các bảng dữ liệu đào tạo được phép sao lưu (whitelist an toàn). */
 function dt_backup_tables_list()
 {
-	return array('dt_khoa','dt_hocvien','dt_xe','dt_giaovien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_dat_override','dt_thuchanh_hinh');
+	return array('dt_khoa','dt_hocvien','dt_xe','dt_giaovien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_dat_override','dt_thuchanh_hinh','dt_ky_thi_hv');
 }
 
 /**

@@ -194,12 +194,11 @@ function dt_parse_datetime($v)
 
 /* ============================ Đánh giá kết quả ============================ */
 
-/* Đạt một môn lý thuyết: tiến độ >= 70 VÀ điểm kiểm tra >= 5. Môn mô phỏng chỉ xét tiến độ >= 70 (điểm thang /4). */
+/* Tat ca cac mon dat khi tien do >= 70%. */
 function dt_lythuyet_dat($tienDo, $diemKt, $mon = '')
 {
 	$ng = dt_nguong_lythuyet();
-	if($mon === 'mophong') return ((float)$tienDo >= $ng['tien_do']) ? 1 : 0;
-	return ((float)$tienDo >= $ng['tien_do'] && (float)$diemKt >= $ng['diem_kt']) ? 1 : 0;
+	return ((float)$tienDo >= $ng['tien_do']) ? 1 : 0;
 }
 
 /* Chỉ override = 1 xác nhận Đạt; NULL/0 đều tự xét (PDODb lưu NULL thành 0). */
@@ -306,7 +305,7 @@ function dt_lythuyet_mon_status($hv)
 	{
 		if(!isset($by[$mk])) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_du_lieu'); continue; }
 		$rw = $by[$mk];
-		if((int)$rw['dat'] === 1) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'dat'); continue; }
+		if(dt_lythuyet_dat($rw['tien_do'], $rw['diem_kt'], $mk)) { $out[$mk] = array('label' => $lbl, 'trang_thai' => 'dat'); continue; }
 		// Chưa đạt: điểm kiểm tra = 0 (và không phải mô phỏng) => chưa kiểm tra; còn lại => chưa đạt.
 		if($mk !== 'mophong' && (float)$rw['diem_kt'] <= 0) $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_kiem_tra');
 		else $out[$mk] = array('label' => $lbl, 'trang_thai' => 'chua_dat');
@@ -353,11 +352,11 @@ function dt_student_summary($hv)
 	// Lý thuyết: nâng hạng (C/CE) cần 4 môn check; còn lại cần 7 môn.
 	$monSet = dt_mon_lythuyet_for_hang($hv['hang']);
 	$tongMon = count($monSet);
-	$ltRows = $d->rawQuery("select mon, dat from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
+	$ltRows = $d->rawQuery("select mon, tien_do, diem_kt from #_dt_lythuyet where id_khoa = ? and cccd = ?", array($idKhoa, $cccd));
 	$ltByMon = array();
-	foreach($ltRows as $rw) $ltByMon[$rw['mon']] = (int)$rw['dat'];
-	$mophong = $d->rawQueryOne("select dat from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
-	if($mophong) $ltByMon['mophong'] = (int)$mophong['dat'];
+	foreach($ltRows as $rw) $ltByMon[$rw['mon']] = dt_lythuyet_dat($rw['tien_do'], $rw['diem_kt'], $rw['mon']);
+	$mophong = $d->rawQueryOne("select tien_do from #_dt_mophong where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+	if($mophong) $ltByMon['mophong'] = dt_lythuyet_dat($mophong['tien_do'], 0, 'mophong');
 	$soDat = 0; $soCo = 0;
 	foreach($monSet as $mk => $lbl)
 	{

@@ -73,6 +73,56 @@ function dt_hinh_save()
 	$func->transfer($msg, $back);
 }
 
+function dt_hinh_save_selected()
+{
+	global $d, $func;
+	$idKhoa = (int)($_POST['id_khoa'] ?? 0);
+	$back = 'index.php?com=daotao&act=hinh&id_khoa='.$idKhoa;
+	$ret = rawurldecode((string)($_POST['ret'] ?? ''));
+	if(strpos($ret, 'index.php?com=daotao&act=hinh') === 0) $back = $ret;
+	$ids = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['ids'] ?? array())))));
+	$rows = $_POST['hinh'] ?? array();
+	if(!$ids || !is_array($rows)) $func->transfer('Vui lòng chọn học viên cần lưu.', $back, false);
+	$pending = array();
+	foreach($ids as $id)
+	{
+		$hv = $d->rawQueryOne('select id, id_khoa, cccd, hoten, hang from #_dt_hocvien where id = ? limit 0,1', array($id));
+		$row = $rows[$id] ?? null;
+		if(!$hv || ($idKhoa && (int)$hv['id_khoa'] !== $idKhoa) || !is_array($row) || !isset($row['gio'], $row['km']) || trim((string)$row['gio']) === '' || trim((string)$row['km']) === '')
+			$func->transfer('Thiếu hoặc sai dữ liệu học viên đã chọn. Chưa lưu dữ liệu.', $back, false);
+		$gio = dt_parse_number($row['gio']);
+		$km = dt_parse_number($row['km']);
+		foreach(array('gio', 'km') as $field)
+			if(!is_numeric(str_replace(',', '.', trim((string)$row[$field]))))
+				$func->transfer('Giờ và km không hợp lệ: '.$hv['hoten'].'. Chưa lưu dữ liệu.', $back, false);
+		if(!is_finite($gio) || !is_finite($km) || $gio < 0 || $km < 0)
+			$func->transfer('Giờ và km phải là số không âm: '.$hv['hoten'], $back, false);
+		$errors = dt_hinh_cap_warn($hv['hang'], $gio, $km);
+		if($errors) $func->transfer($hv['hoten'].': '.implode('; ', $errors).'. Chưa lưu dữ liệu.', $back, false);
+		$pending[] = array('id_khoa' => (int)$hv['id_khoa'], 'cccd' => $hv['cccd'], 'gio' => $gio, 'km' => $km,
+			'dat_override' => isset($row['dat_override']) && (string)$row['dat_override'] === '1' ? 1 : null, 'nguoi_nhap' => dt_username());
+	}
+	$d->startTransaction();
+	foreach($pending as $data)
+	{
+		$exist = $d->rawQueryOne('select id from #_dt_thuchanh_hinh where id_khoa = ? and cccd = ? limit 0,1', array($data['id_khoa'], $data['cccd']));
+		if($exist && $exist['id']) { $d->where('id', $exist['id']); $saved = $d->update('dt_thuchanh_hinh', $data); }
+		else { $data['ngaytao'] = time(); $saved = $d->insert('dt_thuchanh_hinh', $data); }
+		if($saved === false)
+		{
+			$d->rollback();
+			$func->transfer('Không thể lưu dữ liệu. Đã hủy toàn bộ lần lưu này.', $back, false);
+		}
+	}
+	if($d->commit() === false)
+	{
+		$d->rollback();
+		$func->transfer('Không thể hoàn tất lưu dữ liệu.', $back, false);
+	}
+	dt_audit('update', 'hinh', count($pending), 'Luu nhieu hoc vien, id_khoa='.$idKhoa);
+	$func->transfer('Đã lưu thực hành trong hình cho '.count($pending).' học viên.', $back);
+}
+
 /* Đánh dấu Đạt (override) toàn bộ học viên trong khóa. */
 function dt_hinh_dat_all()
 {

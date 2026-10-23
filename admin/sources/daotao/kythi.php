@@ -212,9 +212,8 @@ function dt_kythi_import_roster()
 	if($score <= 0 || !isset($map['cccd']) || !isset($map['hoten']))
 		dt_import_notice("Không nhận diện được cột 'Họ và tên' và 'CCCD' trong file danh sách.", $back, false);
 
-	dt_backup_tables(array('dt_ky_thi_hv'), 'imp_kythi_roster');
-	$d->startTransaction();
-	$them = 0; $boQua = 0; $emptyStreak = 0;
+	$replace = !isset($_POST['roster_mode']) || $_POST['roster_mode'] !== 'append';
+	$pending = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
 		$row = dt_read_row($sheet, $r, $highestCol);
@@ -222,7 +221,9 @@ function dt_kythi_import_roster()
 		$hoten = dt_val($row, $map, 'hoten');
 		if(strlen($cccd) < 9)
 		{
-			if($hoten === '' && ++$emptyStreak >= 30) break;
+			if($hoten !== '' || $cccd !== '')
+				dt_import_notice("Dòng $r thiếu hoặc sai CCCD. Chưa thay đổi danh sách.", $back, false);
+			if(++$emptyStreak >= 30) break;
 			continue;
 		}
 		$emptyStreak = 0;
@@ -238,12 +239,82 @@ function dt_kythi_import_roster()
 			'ten_khoa' => dt_val($row, $map, 'ten_khoa'),
 			'gv_hoten' => dt_val($row, $map, 'giaovien') ?: ($sys ? ($sys['gv_hoten'] ?? '') : ''),
 		);
-		if(dt_kythi_them_hv($id, $hv)) $them++; else $boQua++;
+		if($hv['hoten'] === '') dt_import_notice("Dòng $r thiếu họ tên. Chưa thay đổi danh sách.", $back, false);
+		if(isset($pending[$cccd])) dt_import_notice("Dòng $r trùng CCCD $cccd. Chưa thay đổi danh sách.", $back, false);
+		$pending[$cccd] = $hv;
 	}
-	$d->commit();
-	dt_audit('import', 'ky_thi_hv', $them, 'roster '.$file['name']);
-	dt_log_import('ky_thi_roster', $file['name'], $them, 0);
-	dt_import_notice("Thêm vào kỳ: $them học viên".($boQua ? ", bỏ qua $boQua đã có" : ''), "index.php?com=daotao&act=kythiDetail&id=".$id, ($them > 0));
+	if(!$pending) dt_import_notice('File không có học viên hợp lệ. Giữ nguyên danh sách hiện tại.', $back, false);
+	if(!dt_backup_tables(array('dt_ky_thi_hv'), 'imp_kythi_roster'))
+		dt_import_notice('Không thể sao lưu. Chưa thay đổi danh sách.', $back, false);
+	$them = 0; $capnhat = 0;
+	$d->startTransaction();
+	try
+	{
+		$d->rawQueryOne('select id from #_dt_ky_thi where id = ? for update', array($id));
+		foreach($pending as $cccd => $hv)
+		{
+			$exist = $d->rawQueryOne('select id from #_dt_ky_thi_hv where id_ky = ? and cccd = ? limit 0,1', array($id, $hv['cccd']));
+			if($exist)
+			{
+				$data = $hv;
+				$data['nam_sinh'] = $data['ngaysinh']; unset($data['ngaysinh']);
+				$data['giaovien'] = $data['gv_hoten']; unset($data['gv_hoten']);
+				$d->where('id', $exist['id']);
+				if($d->update('dt_ky_thi_hv', $data) === false) throw new RuntimeException('Không thể cập nhật học viên.');
+				$capnhat++;
+			}
+			else
+			{
+				if(!dt_kythi_them_hv($id, $hv)) throw new RuntimeException('Không thể thêm học viên.');
+				$them++;
+			}
+		}
+		if($replace)
+		{
+			$placeholders = implode(',', array_fill(0, count($pending), '?'));
+			$d->rawQuery("delete from #_dt_ky_thi_hv where id_ky = ? and cccd not in ($placeholders)", array_merge(array($id), array_map('strval', array_keys($pending))));
+			if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể thay thế danh sách.');
+		}
+		if($d->commit() === false) throw new RuntimeException('Không thể hoàn tất import.');
+	}
+	catch(Exception $error)
+	{
+		$d->rollback();
+		dt_import_notice('Import thất bại. Giữ nguyên danh sách trước đó.', $back, false);
+	}
+	dt_audit('import', 'ky_thi_hv', count($pending), ($replace ? 'replace ' : 'append ').$file['name'].' id_ky='.$id);
+	dt_log_import('ky_thi_roster', $file['name'], count($pending), 0);
+	dt_import_notice(($replace ? 'Đã thay thế danh sách: '.count($pending).' học viên. ' : '')."Thêm $them, cập nhật $capnhat học viên.", "index.php?com=daotao&act=kythiDetail&id=".$id, true);
+}
+
+function dt_kythi_remove_selected()
+{
+	global $d, $func;
+	$id = (int)($_POST['id'] ?? 0);
+	$back = 'index.php?com=daotao&act=kythiDetail&id='.$id;
+	$all = ($_POST['delete_all'] ?? '') === '1';
+	$ids = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['ids'] ?? array())))));
+	if(!$id || (!$all && !$ids)) $func->transfer('Vui lòng chọn học viên cần xóa.', $back, false);
+	$ky = $d->rawQueryOne('select id from #_dt_ky_thi where id = ? limit 0,1', array($id));
+	if(!$ky) $func->transfer('Kỳ kiểm tra không tồn tại.', 'index.php?com=daotao&act=kythi', false);
+	if(!dt_backup_tables(array('dt_ky_thi_hv'), 'del_kythi_roster')) $func->transfer('Không thể sao lưu. Chưa xóa danh sách.', $back, false);
+	$params = array($id);
+	$where = 'id_ky = ?';
+	if(!$all) { $where .= ' and id in ('.implode(',', array_fill(0, count($ids), '?')).')'; $params = array_merge($params, $ids); }
+	$d->startTransaction();
+	try
+	{
+		$d->rawQueryOne('select id from #_dt_ky_thi where id = ? for update', array($id));
+		$d->rawQuery('delete from #_dt_ky_thi_hv where '.$where, $params);
+		if($d->getLastErrorCode() !== '00000' || $d->commit() === false) throw new RuntimeException('Không thể xóa danh sách.');
+	}
+	catch(Exception $error)
+	{
+		$d->rollback();
+		$func->transfer('Không thể xóa. Danh sách được giữ nguyên.', $back, false);
+	}
+	dt_audit('delete', 'ky_thi_hv', $all ? 0 : count($ids), 'id_ky='.$id.($all ? ' all' : ' ids='.implode(',', $ids)));
+	$func->transfer($all ? 'Đã xóa toàn bộ danh sách học viên trong kỳ.' : 'Đã xóa các học viên đã chọn khỏi kỳ.', $back);
 }
 
 /* Xóa 1 học viên khỏi kỳ. */
@@ -263,7 +334,7 @@ function dt_kythi_them_hv($idKy, $hv)
 	$cccd = $hv['cccd'];
 	$exist = $d->rawQueryOne("select id from #_dt_ky_thi_hv where id_ky = ? and cccd = ? limit 0,1", array($idKy, $cccd));
 	if($exist && $exist['id']) return false;
-	$d->insert('dt_ky_thi_hv', array(
+	$inserted = $d->insert('dt_ky_thi_hv', array(
 		'id_ky' => $idKy,
 		'id_khoa' => (int)$hv['id_khoa'],
 		'cccd' => $cccd,
@@ -276,7 +347,7 @@ function dt_kythi_them_hv($idKy, $hv)
 		'giaovien' => isset($hv['gv_hoten']) ? $hv['gv_hoten'] : '',
 		'ngaytao' => time(),
 	));
-	return true;
+	return $inserted !== false;
 }
 
 /* Xuất Excel kỳ kiểm tra theo mẫu tổng hợp để kiểm tra (gồm quá trình đào tạo).

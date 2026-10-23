@@ -57,7 +57,7 @@ class HinhDatabase
 		if(strpos($sql, '#_dt_dat_phien') !== false)
 			return array(array('gio_thuchanh' => 30, 'la_xe_tudong' => 1, 'gio_dem' => 2, 'km' => 900));
 		if(strpos($sql, '#_dt_lythuyet') !== false)
-			return array_map(function($mon) { return array('mon' => $mon, 'dat' => 1); }, array_keys(dt_mon_lythuyet()));
+			return array_map(function($mon) { return array('mon' => $mon, 'tien_do' => 70, 'diem_kt' => 0, 'dat' => 0); }, array_keys(dt_mon_lythuyet()));
 		if(strpos($sql, 'th.id as data_id') !== false)
 			return array(array_merge($this->student, $this->record ?? array('gio' => null, 'km' => null, 'dat_override' => null)));
 		if(strpos($sql, 'select h.*') === 0) return array($this->student);
@@ -182,6 +182,54 @@ foreach($samples as $values)
 		if($mode === 'admin' || !$overCap)
 			hinh_check($d->record['dat_override'] === 0, 'Regression must exercise real PDODb NULL-to-zero conversion');
 	}
+}
+
+foreach(array_keys(dt_mon_lythuyet()) as $mon)
+{
+	hinh_check(dt_lythuyet_dat(69.99, 10) === 0, 'Below 70% must fail: '.$mon);
+	hinh_check(dt_lythuyet_dat(70, 0) === 1, 'Exactly 70% must pass without an exam score: '.$mon);
+}
+hinh_check(dt_student_summary($d->student)['ly_thuyet']['dat'] === 1, 'Summary must recompute old failed flags at 70%');
+if($mode === 'admin')
+{
+	$d = new class extends HinhDatabase {
+		public $writes = 0;
+		public $failAt = 0;
+		public $rolledBack = false;
+		public $snapshot;
+		public function startTransaction() { $this->snapshot = $this->record; }
+		public function commit() { return true; }
+		public function rollback() { $this->record = $this->snapshot; $this->rolledBack = true; }
+		public function update($table, $data)
+		{
+			$this->writes++;
+			if($this->writes === $this->failAt) return false;
+			return parent::update($table, $data);
+		}
+	};
+	foreach(array('success', 'invalid', 'overcap', 'missing', 'wrong_course', 'db_error', 'empty') as $scenario)
+	{
+		$d->record = null; $d->writes = 0; $d->rolledBack = false;
+		$d->failAt = $scenario === 'db_error' ? 2 : 0;
+		$_POST = array('id_khoa' => 7, 'ids' => array(1, 2), 'hinh' => array(
+			1 => array('gio' => '35', 'km' => '120'),
+			2 => array('gio' => '36', 'km' => '127', 'dat_override' => 1),
+			3 => array('gio' => '999', 'km' => '999')));
+		if($scenario === 'invalid') $_POST['hinh'][2]['gio'] = 'abc';
+		if($scenario === 'overcap') $_POST['hinh'][2]['gio'] = '37';
+		if($scenario === 'missing') unset($_POST['hinh'][2]['gio']);
+		if($scenario === 'wrong_course') $_POST['id_khoa'] = 8;
+		if($scenario === 'empty') $_POST['ids'] = array();
+		try { dt_hinh_save_selected(); throw new RuntimeException('Missing bulk-save outcome'); }
+		catch(HinhTransfer $result)
+		{
+			hinh_check($result->success === ($scenario === 'success'), 'Bulk save result: '.$scenario);
+			if($scenario === 'success') hinh_check($d->writes === 2 && $d->record['gio'] === 36.0, 'Only selected rows are saved');
+			elseif($scenario === 'db_error') hinh_check($d->rolledBack && $d->record === null, 'DB error rolls back the entire batch');
+			else hinh_check($d->writes === 0, 'Invalid batch must not write: '.$scenario);
+		}
+	}
+	echo "[PASS] bulk save selection, validation and rollback\n";
 }
 
 $expectedThresholds = array(
