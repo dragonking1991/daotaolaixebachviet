@@ -19,6 +19,7 @@ require_once SOURCES.'xangdau/daotao_sync.php';
 require_once SOURCES.'daotao/tonghop.php';
 require_once SOURCES.'daotao/export.php';
 require_once SOURCES.'daotao/crud.php';
+require_once SOURCES.'daotao/taichinh.php';
 require_once SOURCES.'daotao/kythi.php';
 require_once SOURCES.'daotao/ketquadaotao.php';
 require_once SOURCES.'daotao/htkh.php';
@@ -76,6 +77,10 @@ function dt_admin_guard()
 
 switch($act)
 {
+	case 'taichinh': dt_guard(dt_p('taichinh','view')); dt_finance_list(); $template='daotao/taichinh/items'; break;
+	case 'createSathachPeriod': dt_guard(dt_p('sathach','edit')); dt_sathach_create_period(); break;
+	case 'saveTaichinh': dt_guard(dt_p('taichinh','edit')); dt_finance_save(); break;
+	case 'exportTaichinh': dt_guard(dt_p('taichinh','export')); dt_finance_export(); break;
 	/* ---------- Khóa học ---------- */
 	case "khoa":       dt_guard(dt_p('khoa','view'));   dt_khoa_list();   $template = "daotao/khoa/items"; break;
 	case "exportKhoa": dt_guard(dt_p('khoa','view'));   dt_khoa_export(); break;

@@ -14,8 +14,8 @@ function dt_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 	require_once LIBRARIES.'PHPExcel.php';
 
 	$ext = strtolower($ext);
-	if($ext !== 'xlsx' && $ext !== 'xls')
-		dt_import_notice("Chỉ hỗ trợ file .xlsx hoặc .xls. Vui lòng lưu lại đúng định dạng rồi import lại.", $backUrl, false);
+	if(!in_array($ext, array('xlsx','xls','xlsm'), true))
+		dt_import_notice("Chỉ hỗ trợ file .xlsx, .xls hoặc .xlsm.", $backUrl, false);
 
 	$inputFileName = $file['tmp_name'];
 	if(empty($inputFileName) || !is_readable($inputFileName))

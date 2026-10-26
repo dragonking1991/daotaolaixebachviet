@@ -120,6 +120,21 @@ b,strong,h1,h2,h3,h4,h5,h6{font-family: 'tieude';}
 	vertical-align:middle;
 	margin-right:7px;
 }
+.thongtin-actions{
+	display:flex;
+	align-items:center;
+	gap:18px;
+	flex-shrink:0;
+}
+.thongtin .header-account{
+	background:transparent;
+	color:#fff;
+	padding:6px 0;
+	text-transform:none;
+}
+.header-account i{
+	margin-right:5px;
+}
 .logo,.banner{
 	line-height: 0;
 	display: block;
@@ -149,21 +164,106 @@ b,strong,h1,h2,h3,h4,h5,h6{font-family: 'tieude';}
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	gap:24px;
 }
 .header{
 	position:relative;
+	flex:0 0 86px;
+}
+.header .logo img{
+	max-width:86px;
+	max-height:82px;
 }
 .wap_menu{
-	height: 45px;
-	line-height: 45px;
+	flex:1;
+	min-width:0;
+	line-height:44px;
 }
 .menu{
 	position:relative;
 	display: flex;
 	align-items: center;
+	gap:10px;
+	width:100%;
 }
 .menu ul{
   list-style:none;
+}
+.menu > ul{
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	flex:1;
+	min-width:0;
+	gap:4px;
+}
+.wap_menu .menu > ul > li{
+	float:none;
+	padding:0;
+}
+.menu > ul > .menu-account{
+	display:none;
+}
+.menu > ul > li > a{
+	white-space:nowrap;
+	text-transform:none;
+	padding:0 6px;
+	line-height:44px;
+}
+.menu > ul > li > a:focus-visible,
+.menu .tim:focus-visible,
+.thongtin a:focus-visible{
+	outline:2px solid currentColor;
+	outline-offset:3px;
+}
+.menu > ul > li > a::before{
+	display:none;
+}
+.wap_menu .menu > ul > li > a:hover::after,
+.wap_menu .menu > ul > li > a.active::after,
+.wap_menu .menu > ul > li > a.active2::after{
+	left:6px;
+	width:calc(100% - 12px);
+	height:2px;
+	border-radius:1px;
+}
+.menu > ul > li > a.menu-cta{
+	padding:0 16px;
+	line-height:38px;
+	border-radius:6px;
+	background:var(--color-red);
+	color:#fff;
+	transition:background-color .2s;
+}
+.menu > ul > li > a.menu-cta:hover{
+	background:#173cce;
+	color:#fff;
+}
+.menu > ul > li > a.menu-cta::after{
+	display:none;
+}
+.menu > ul > li:focus-within > ul{
+	display:block;
+}
+.menu > .wap_search{
+	flex:0 0 38px;
+}
+.menu > .wap_search .tim{
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	width:38px;
+	height:38px;
+	padding:0;
+	border-radius:6px;
+}
+.menu > .wap_search .tim:hover{
+	background:#f0f3fa;
+}
+.menu > .wap_search button.tim{
+	border:0;
+	background:transparent;
+	color:inherit;
 }
 .menu ul li{
   float:left;
@@ -179,7 +279,7 @@ b,strong,h1,h2,h3,h4,h5,h6{font-family: 'tieude';}
 	display:block;
 	font-family: 'tieude';
 	position:relative;
-	text-transform: capitalize;
+	text-transform: none;
 }
 .menu ul li a:hover:before,.menu ul li a:hover:after,.menu ul li a.active:before,.menu ul li a.active:after,.menu ul li a.active2:before,.menu ul li a.active2:after{
 	position:absolute;

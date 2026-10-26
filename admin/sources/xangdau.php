@@ -102,6 +102,11 @@ switch($act)
 		$syncResult = xd_sync_training_students();
 		$func->transfer("Đồng bộ học viên đạt DAT.".xd_sync_training_notice($syncResult), "index.php?com=xangdau&act=hocvien", !empty($syncResult['ok']));
 		break;
+	case "markImportedDat":
+		if(xd_permission_denied($act) || !xd_can_import()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_mark_imported_dat();
+		break;
 	case "ce":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();

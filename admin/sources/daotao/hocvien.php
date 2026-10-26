@@ -58,6 +58,8 @@ function dt_hocvien_upload_excel()
 		'giaovien' => array('giaovien','gvhuongdan','gv'),
 		'nguoi_gioithieu' => array('nguoinophoso','nguoigioithieu','nguoinop','nguoigt'),
 		'he_daotao' => array('hedaotao','nhomdaotao','nhom','he'),
+		'hoc_phi_da_dong' => array('sotiendadong','tiendadong','hocphidadong'),
+		'hoc_phi_con_thieu' => array('sotienconthieu','tienconthieu','hocphiconthieu'),
 	);
 	$contains = array(
 		'ma_hv' => array('madangky','mahoc','mahv'),
@@ -130,6 +132,16 @@ function dt_hocvien_upload_excel()
 			'nguoi_gioithieu' => dt_val($row, $map, 'nguoi_gioithieu'),
 			'he_daotao' => dt_val($row, $map, 'he_daotao'),
 		);
+		try
+		{
+			foreach(array('hoc_phi_da_dong','hoc_phi_con_thieu') as $field)
+				if(isset($map[$field])) $data[$field] = dt_finance_import_amount(dt_val($row, $map, $field));
+		}
+		catch(InvalidArgumentException $error)
+		{
+			$err++; if(count($errMsgs) < 12) $errMsgs[] = 'Dòng '.$r.': '.$error->getMessage();
+			continue;
+		}
 		if($preview) $data['khoa'] = $khoaCode !== '' ? $khoaCode : (string)$idKhoaSel;
 
 		if($preview)

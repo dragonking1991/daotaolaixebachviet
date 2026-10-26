@@ -10,9 +10,9 @@
         include TEMPLATE.LAYOUT."seo.php";
         include TEMPLATE.LAYOUT."header.php";
         if($source=='index') include TEMPLATE.LAYOUT."slider_slick.php";
-        else include TEMPLATE.LAYOUT."breadcrumb.php";
+        elseif($source!='lythuyet_online') include TEMPLATE.LAYOUT."breadcrumb.php";
     ?>
-    <div class="<?php if($source!='index')echo 'main_content main_fix';?> clear">
+    <div class="<?php if($source!='index' && $source!='lythuyet_online')echo 'main_content main_fix';?> clear">
         <?php include TEMPLATE.$template."_tpl.php"; ?>
     </div>
     <?php

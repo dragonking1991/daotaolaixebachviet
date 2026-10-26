@@ -19,7 +19,7 @@
 		if(n < 1048576) return (n/1024).toFixed(1) + ' KB';
 		return (n/1048576).toFixed(1) + ' MB';
 	}
-	function isExcel(f){ return /\.(xlsx|xls)$/i.test(f.name); }
+	function isExcel(f){ return /\.(xlsx|xls|xlsm)$/i.test(f.name); }
 
 	function setupZone(zone){
 		var input = zone.querySelector('.dt-dz-input');
@@ -120,7 +120,7 @@
 
 			if(files.length === 0){
 				e.preventDefault();
-				notify(false, 'Vui lòng chọn ít nhất 1 file Excel (.xlsx/.xls).');
+				notify(false, 'Vui lòng chọn ít nhất 1 file Excel (.xlsx/.xls/.xlsm).');
 				return;
 			}
 

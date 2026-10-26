@@ -328,7 +328,47 @@ function dt_ensure_tables()
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_chucdanh_v1')) { dt_ensure_htkh_chucdanh(); dt_migration_mark('htkh_chucdanh_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_hangce_v1')) { dt_ensure_htkh_hangce(); dt_migration_mark('htkh_hangce_v1'); }
 
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('update8_v1'))
+	{
+		dt_ensure_update8_schema();
+		dt_migration_mark('update8_v1');
+	}
 	$done = true;
+}
+
+function dt_ensure_update8_schema()
+{
+	global $d;
+	$columns = array(
+		'dt_hocvien' => array('hoc_phi_da_dong' => 'DECIMAL(18,0) NOT NULL DEFAULT 0', 'hoc_phi_con_thieu' => 'DECIMAL(18,0) NOT NULL DEFAULT 0'),
+		'dt_sat_hach' => array('id_ky' => 'INT NOT NULL DEFAULT 0', 'noi_dung_sh' => "VARCHAR(255) DEFAULT ''"),
+	);
+	foreach($columns as $table => $fields)
+	foreach($fields as $column => $definition)
+	{
+		$exists = $d->rawQueryOne('select column_name from information_schema.columns where table_schema=database() and table_name=? and column_name=?', array('table_'.$table, $column));
+		if(!$exists) $d->rawQuery("alter table table_$table add column `$column` $definition");
+		if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể cập nhật cấu trúc Update 8.');
+	}
+	$index = $d->rawQueryOne("select index_name from information_schema.statistics where table_schema=database() and table_name='table_dt_sat_hach' and index_name='uq_dt_sat_hach' and column_name='id_ky'");
+	if(!$index) $d->rawQuery('alter table table_dt_sat_hach drop index uq_dt_sat_hach, add unique key uq_dt_sat_hach (id_khoa,cccd,id_ky)');
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể cập nhật khóa kết quả sát hạch.');
+	$d->rawQuery("alter table table_dt_sat_hach modify ket_luan VARCHAR(255) DEFAULT '', modify ket_qua VARCHAR(255) DEFAULT '', modify lt VARCHAR(100) DEFAULT '', modify mp VARCHAR(100) DEFAULT '', modify hinh VARCHAR(100) DEFAULT '', modify duong VARCHAR(100) DEFAULT ''");
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể cập nhật trường kết quả.');
+	$d->rawQuery("create table if not exists table_dt_sh_ky (
+		id INT AUTO_INCREMENT PRIMARY KEY, ten VARCHAR(255) NOT NULL, ngay DATE NOT NULL,
+		loai VARCHAR(10) NOT NULL, nguoi_nhap VARCHAR(255) DEFAULT '', ngaytao INT DEFAULT 0,
+		KEY idx_sh_ngay(ngay)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể tạo kỳ sát hạch.');
+	$d->rawQuery("create table if not exists table_dt_taichinh (
+		id INT AUTO_INCREMENT PRIMARY KEY, id_hocvien INT NOT NULL, loai VARCHAR(20) NOT NULL,
+		ngay DATE NOT NULL, tien_luong DECIMAL(18,0) NOT NULL DEFAULT 0,
+		tien_nhien_lieu DECIMAL(18,0) NOT NULL DEFAULT 0, so_tien DECIMAL(18,0) NOT NULL DEFAULT 0,
+		request_key VARCHAR(64) NOT NULL, nguoi_nhap VARCHAR(255) DEFAULT '', ngaytao INT DEFAULT 0,
+		UNIQUE KEY uq_fin_request(id_hocvien,request_key), KEY idx_fin_hv(id_hocvien,loai)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể tạo sổ tài chính.');
 }
 
 /* Cột kiểu nâng hạng CE (c/d/d2) trên giấy HTKH. */

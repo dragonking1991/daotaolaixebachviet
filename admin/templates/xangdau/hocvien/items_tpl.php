@@ -13,6 +13,7 @@
 	$xd_ret_q['p'] = (int)$curPage;
 	$xd_ret = rawurlencode('index.php?'.http_build_query($xd_ret_q));
 	$xd_can_edit_info = (function_exists('xd_can_import') && xd_can_import()) || (function_exists('xd_can_kiem_tra') && xd_can_kiem_tra());
+	if(empty($_SESSION['xd_dat_csrf'])) $_SESSION['xd_dat_csrf'] = bin2hex(random_bytes(24));
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -113,15 +114,18 @@
 		<div class="card-header">
 			<h3 class="card-title">Danh sách học viên xăng dầu</h3>
 			<div class="card-tools text-muted">Học viên mới đồng bộ từ Đào tạo được gán nhóm <strong>DAT</strong>; hồ sơ đã có không bị ghi đè.<?php if(xd_can_xoa()) { ?>
-				<form id="xd-bulk-hocvien" method="post" action="index.php?com=xangdau&act=deleteHocvienSelected" class="d-inline"><input type="hidden" name="ret" value="<?=$xd_ret?>"></form>
 				<button type="submit" form="xd-bulk-hocvien" class="btn btn-sm btn-danger ml-2 xd-bulk-delete" data-label="học viên" data-note="Học viên đã thanh toán hoặc thuộc bảng kê sẽ được giữ lại."><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button>
 				<?php } ?></div>
 		</div>
 		<div class="card-body table-responsive p-0">
+				<form id="xd-bulk-hocvien" method="post" action="index.php?com=xangdau&act=deleteHocvienSelected"><input type="hidden" name="ret" value="<?=$xd_ret?>"><input type="hidden" name="csrf" value="<?=htmlspecialchars($_SESSION['xd_dat_csrf'])?>"><input type="hidden" name="khoa" value="<?=htmlspecialchars($xd_filter_khoa)?>"></form>
 			<table class="table table-hover">
+				<?php if(xd_can_import()): ?>
+				<caption style="caption-side:top;"><button type="submit" form="xd-bulk-hocvien" formaction="index.php?com=xangdau&act=markImportedDat" class="btn btn-sm btn-success"><i class="fas fa-check mr-1"></i>Đạt DAT mục đã chọn</button> <?php if($xd_filter_khoa !== ''): ?><button type="submit" name="all" value="1" form="xd-bulk-hocvien" formaction="index.php?com=xangdau&act=markImportedDat" class="btn btn-sm btn-outline-success" onclick="return confirm('Xác nhận DAT cho toàn bộ học viên chưa thanh toán trong khóa?')">Đạt DAT toàn khóa</button><?php endif; ?></caption>
+				<?php endif; ?>
 				<thead>
 					<tr>
-						<th class="text-center" style="width:34px"><?php if(xd_can_xoa()) { ?><input type="checkbox" class="xd-bulk-all" data-form="xd-bulk-hocvien" title="Chọn tất cả"><?php } ?></th>
+						<th class="text-center" style="width:34px"><?php if(xd_can_xoa() || xd_can_import()) { ?><input type="checkbox" class="xd-bulk-all" data-form="xd-bulk-hocvien" title="Chọn tất cả"><?php } ?></th>
 						<th>STT</th>
 						<th>Họ tên</th>
 						<th>CCCD</th>
@@ -138,7 +142,7 @@
 				<tbody>
 					<?php if(!empty($items)) { $i = 0; foreach($items as $it) { $i++; $badge = isset($nhomBadge[$it['nhom']]) ? $nhomBadge[$it['nhom']] : 'badge-secondary'; ?>
 					<tr>
-						<td class="text-center"><?php if(xd_can_xoa()) { ?><input type="checkbox" class="xd-bulk-item" form="xd-bulk-hocvien" name="ids[]" value="<?=(int)$it['id']?>"><?php } ?></td>
+						<td class="text-center"><?php if(xd_can_xoa() || xd_can_import()) { ?><input type="checkbox" class="xd-bulk-item" form="xd-bulk-hocvien" name="ids[]" value="<?=(int)$it['id']?>"><?php } ?></td>
 						<td><?=$i?></td>
 						<td><?=htmlspecialchars($it['ho_ten'])?></td>
 						<td><?=htmlspecialchars($it['cccd'])?></td>

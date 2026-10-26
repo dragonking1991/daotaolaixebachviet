@@ -185,6 +185,14 @@
 			$title_crumb = 'Tra cứu quá trình học';
 			break;
 
+		case 'ly-thuyet-online':
+			$source = "lythuyet_online";
+			$template = "daotao/lythuyet_online";
+			$type = 'ly-thuyet-online';
+			$seo->setSeo('type','article');
+			$title_crumb = 'Lý thuyết online';
+			break;
+
 		case 'cong-giao-vien':
 			$source = "cong_giaovien";
 			$template = "daotao/giaovien";

@@ -619,6 +619,7 @@
                         'ketquadaotao' => 'Kết quả đào tạo',
                         'htkh' => 'Số giấy HTKH',
                         'sathach' => 'Kết quả sát hạch',
+                        'taichinh' => 'Học phí, tạm ứng, thanh toán',
                         'audit' => 'Nhật ký thao tác',
                         'backup' => 'Sao lưu &amp; khôi phục',
                         'congGvConfig' => 'Cấu hình cổng GV',
@@ -630,6 +631,7 @@
                         'dat' => 'dat', 'tonghop' => 'tonghop', 'kythi' => 'kythi', 'ketquadaotao' => 'ketqua',
                         'htkh' => 'htkh', 'sathach' => 'sathach', 'audit' => '_man', 'backup' => '_man',
                         'congGvConfig' => '_man',
+                        'taichinh' => 'taichinh',
                     );
                 ?>
                 <li class="nav-item has-treeview <?=$menuopen_daotao?> <?=$none_daotao?>">

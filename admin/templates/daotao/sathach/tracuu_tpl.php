@@ -14,6 +14,7 @@
 		<div class="card-body">
 			<form method="get" class="form-inline mb-3">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="sathachTracuu">
+				<input type="date" name="ngay_sh" class="form-control form-control-sm mr-2" value="<?=htmlspecialchars($tc_filters['ngay_sh'])?>" aria-label="Ngày sát hạch">
 				<input type="text" name="cccd" class="form-control form-control-sm mr-2" placeholder="CCCD" value="<?=htmlspecialchars($tc_filters['cccd'])?>">
 				<input type="text" name="hoten" class="form-control form-control-sm mr-2" placeholder="Họ tên" value="<?=htmlspecialchars($tc_filters['hoten'])?>">
 				<input type="text" name="so_gplx" class="form-control form-control-sm mr-2" placeholder="Số GPLX" value="<?=htmlspecialchars($tc_filters['so_gplx'])?>">
@@ -25,7 +26,7 @@
 				$kq = trim((string)$kq); $diem = trim((string)$diem);
 				$out = $diem !== '' ? htmlspecialchars($diem) : '';
 				if($kq !== '') {
-					$ok = ($kq === 'Đ') || (mb_stripos($kq, 'đạt') !== false && mb_stripos($kq, 'không') === false);
+					$ok = dt_sathach_pass_label($kq);
 					$out .= ($out !== '' ? ' ' : '').'<span class="badge badge-'.($ok ? 'success' : 'danger').'">'.htmlspecialchars($kq).'</span>';
 				}
 				return $out !== '' ? $out : '—';
@@ -44,7 +45,7 @@
 						<td><?=$shB(isset($it['diem_mp'])?$it['diem_mp']:'', isset($it['mp'])?$it['mp']:'')?></td>
 						<td><?=$shB(isset($it['diem_hinh'])?$it['diem_hinh']:'', isset($it['hinh'])?$it['hinh']:'')?></td>
 						<td><?=$shB(isset($it['diem_duong'])?$it['diem_duong']:'', isset($it['duong'])?$it['duong']:'')?></td>
-						<td><?php $kl = ($it['ket_luan']!=='')?$it['ket_luan']:$it['ket_qua']; if($kl!==''): $okl=(mb_stripos($kl,'đạt')!==false && mb_stripos($kl,'không')===false); ?><span class="badge badge-<?=$okl?'success':'danger'?>"><?=htmlspecialchars($kl)?></span><?php else: ?>—<?php endif; ?></td>
+						<td><?php $kl = ($it['ket_luan']!=='')?$it['ket_luan']:$it['ket_qua']; if($kl!==''): $okl=dt_sathach_pass_label($kl); ?><span class="badge badge-<?=$okl?'success':'danger'?>"><?=htmlspecialchars($kl)?></span><?php else: ?>—<?php endif; ?></td>
 						<td><?=htmlspecialchars($it['so_gplx'])?></td>
 						<td><?=htmlspecialchars($it['ghi_chu'])?></td>
 					</tr>

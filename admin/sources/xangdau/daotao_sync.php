@@ -33,7 +33,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 		 where $where order by k.ma_khoa asc, h.id asc",
 		$params
 	);
-	if($rows === false) return array('ok' => false, 'error' => 'Không đọc được danh sách học viên đào tạo.');
+	if($rows === false || $d->getLastErrorCode() !== '00000') return array('ok' => false, 'error' => 'Không đọc được danh sách học viên đào tạo.');
 
 	$result = array('ok' => true, 'xd_added' => 0, 'ce_added' => 0, 'existing' => 0, 'not_passed' => 0, 'unsupported' => 0, 'errors' => array());
 	$now = time();
@@ -73,7 +73,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 					"update #_xd_ce_hocvien set ma_khoa = ?, ten_khoa = ?, ma_hv = ?, ho_ten = ?, ngaysinh = ?, gv_hoten = ?, gv_key = ? where id = ?",
 					array($courseCode, $courseName, $student['ma_hv'], $student['hoten'], $student['ngaysinh'], $teacher, $teacherKey, (int)$existing['id'])
 				);
-				if($ok === false) $result['errors'][] = $courseCode.': không cập nhật được hồ sơ CE '.$studentCccd;
+				if($ok === false || $d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không cập nhật được hồ sơ CE '.$studentCccd;
 				else $result['existing']++;
 				continue;
 			}
@@ -83,16 +83,24 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 				 on duplicate key update id = id",
 				array((int)$student['id_khoa'], $courseCode, $courseName, $student['ma_hv'], $student['hoten'], $studentCccd, $student['ngaysinh'], $teacher, $teacherKey, date('Y-m-d'), $now, 'Đồng bộ DAT')
 			);
-			if($ok === false) $result['errors'][] = $courseCode.': không lưu được học viên CE '.$studentCccd;
+			if($ok === false || $d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không lưu được học viên CE '.$studentCccd;
 			else $result['ce_added']++;
 			continue;
 		}
 
 		$variants = function_exists('dt_cccd_variants') ? dt_cccd_variants($studentCccd) : array($studentCccd);
 		$placeholders = implode(',', array_fill(0, count($variants), '?'));
-		$existing = $d->rawQueryOne("select id from #_xd_hocvien where cccd in ($placeholders) limit 0,1", $variants);
+		$existing = $d->rawQueryOne("select id, ngay_thanh_toan, so_tien_thanh_toan from #_xd_hocvien where cccd in ($placeholders) limit 0,1", $variants);
 		if($existing && !empty($existing['id']))
 		{
+			if(empty($existing['ngay_thanh_toan']) && (float)$existing['so_tien_thanh_toan'] <= 0)
+			{
+				$d->rawQuery(
+					"update #_xd_hocvien set ho_ten = ?, ngaysinh = ?, khoa = ?, nhom = 'DAT', gv_hoten = ?, gv_key = ? where id = ? and ngay_thanh_toan is null and coalesce(so_tien_thanh_toan,0) = 0 and coalesce(id_bangke,0) = 0",
+					array($student['hoten'], $student['ngaysinh'], $classCodes[$hang], $teacher, $teacherKey, (int)$existing['id'])
+				);
+				if($d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không cập nhật được học viên '.$studentCccd;
+			}
 			$result['existing']++;
 			continue;
 		}
@@ -103,7 +111,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 			 on duplicate key update id = id",
 			array($now, (int)$student['id'], $student['hoten'], $studentCccd, $student['ngaysinh'], $classCodes[$hang], $teacher, $teacherKey, $now, 'Đồng bộ DAT')
 		);
-		if($ok === false) $result['errors'][] = $courseCode.': không lưu được học viên '.$studentCccd;
+		if($ok === false || $d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không lưu được học viên '.$studentCccd;
 		else $result['xd_added']++;
 	}
 
@@ -114,5 +122,24 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 function xd_sync_training_notice($result)
 {
 	if(empty($result['ok'])) return ' Đồng bộ gặp lỗi: '.implode('; ', $result['errors'] ?? array($result['error'] ?? 'lỗi không xác định')).'.';
-	return ' Đã thêm '.$result['xd_added'].' học viên vào XD nhóm DAT và '.$result['ce_added'].' học viên vào danh sách CE riêng; giữ nguyên '.$result['existing'].' hồ sơ đã có.';
+	return ' Đã thêm '.$result['xd_added'].' học viên vào XD nhóm DAT và '.$result['ce_added'].' học viên vào danh sách CE riêng; đối chiếu '.$result['existing'].' hồ sơ đã có (giữ nguyên hồ sơ đã thanh toán).';
+}
+
+function xd_mark_imported_dat()
+{
+	global $d, $func;
+	$back = 'index.php?com=xangdau&act=hocvien';
+	if(!xd_can_import() || !hash_equals((string)($_SESSION['xd_dat_csrf'] ?? ''), (string)($_POST['csrf'] ?? '')) || empty($_SESSION['xd_dat_csrf']))
+		$func->transfer('Không có quyền hoặc phiên thao tác không hợp lệ.', $back, false);
+	$khoa = trim((string)($_POST['khoa'] ?? ''));
+	$ids = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['ids'] ?? array())))));
+	$all = ($_POST['all'] ?? '') === '1';
+	if(($all && $khoa === '') || (!$all && !$ids)) $func->transfer('Chọn khóa hoặc học viên cần xác nhận DAT.', $back, false);
+	$where = 'ngay_thanh_toan is null and coalesce(so_tien_thanh_toan,0)=0 and coalesce(id_bangke,0)=0';
+	$params = array();
+	if($khoa !== '') { $where .= ' and khoa = ?'; $params[] = $khoa; }
+	if(!$all) { $where .= ' and id in ('.implode(',', array_fill(0, count($ids), '?')).')'; $params = array_merge($params, $ids); }
+	$d->rawQuery("update #_xd_hocvien set nhom='DAT' where $where", $params);
+	$ok = $d->getLastErrorCode() === '00000';
+	$func->transfer($ok ? 'Đã xác nhận DAT; hồ sơ đã thanh toán/thuộc bảng kê được giữ nguyên.' : 'Không thể xác nhận DAT.', $back.($khoa !== '' ? '&khoa='.urlencode($khoa) : ''), $ok);
 }

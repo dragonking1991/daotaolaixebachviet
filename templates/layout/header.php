@@ -2,7 +2,10 @@
 	<div class="thongtin main_fix">
 		<p class="dc"><i class="fas fa-map-marker-alt"></i><?=$optsetting['diachi']?></p>
 		<p class="dienthoai hidden_m"><i class="fas fa-phone-volume"></i>Hotline: <?=$optsetting['dienthoai']?></p>
-		<a href="tra-cuu-thong-tin">Tra cứu</a>
+		<div class="thongtin-actions">
+			<a class="header-account hidden_m" href="admin/"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Đăng nhập</a>
+			<a href="tra-cuu-thong-tin">Tra cứu</a>
+		</div>
 	</div>
 </div>
 

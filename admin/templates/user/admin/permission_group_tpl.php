@@ -66,6 +66,7 @@
                 'ketqua'   => array('label' => 'Kết quả đào tạo', 'actions' => array('view','export')),
                 'htkh'     => array('label' => 'Số giấy HTKH', 'actions' => array('view','edit','delete','import','export')),
                 'sathach'  => array('label' => 'Kết quả sát hạch', 'actions' => array('view','edit','delete','import','export')),
+				'taichinh' => array('label' => 'Học phí, tạm ứng, thanh toán', 'actions' => array('view','edit','export')),
             );
             $dt_action_labels = array('view' => 'Tra cứu', 'edit' => 'Sửa', 'delete' => 'Xóa', 'import' => 'Import', 'export' => 'Xuất excel');
         ?>
