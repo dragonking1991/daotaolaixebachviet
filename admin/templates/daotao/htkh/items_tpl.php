@@ -28,6 +28,18 @@
 				<button class="btn btn-sm bg-gradient-primary">Lọc danh sách</button>
 			</form>
 			<?php if($__ky_sel): ?>
+			<?php if(dt_req('ky_khoa')!==''): ?>
+			<form method="post" action="index.php?com=daotao&act=htkhScheduleSave" class="border-top border-bottom py-3 mb-3">
+				<input type="hidden" name="id_ky" value="<?=$__ky_sel?>"><input type="hidden" name="ky_khoa" value="<?=htmlspecialchars(dt_req('ky_khoa'),ENT_QUOTES,'UTF-8')?>"><input type="hidden" name="csrf" value="<?=htmlspecialchars($_SESSION['dt_htkh_schedule_csrf'],ENT_QUOTES,'UTF-8')?>">
+				<h4 class="h6 font-weight-bold">Thời gian học: <?=htmlspecialchars($htkh_ky_khoa[dt_req('ky_khoa')],ENT_QUOTES,'UTF-8')?></h4>
+				<div class="form-row align-items-end">
+					<div class="form-group col-sm-4 col-lg-2 mb-2"><label for="htkh-so-ngay">Số ngày học</label><input id="htkh-so-ngay" name="so_ngay" type="number" min="1" max="10000" step="1" required class="form-control form-control-sm" value="<?=htmlspecialchars((string)$htkh_schedule['so_ngay'],ENT_QUOTES,'UTF-8')?>" <?=!dt_can('htkh','edit')?'disabled':''?>></div>
+					<div class="form-group col-sm-4 col-lg-3 mb-2"><label for="htkh-tu-ngay">Từ ngày</label><input id="htkh-tu-ngay" name="tu_ngay" type="date" required class="form-control form-control-sm" value="<?=htmlspecialchars($htkh_schedule['tu_ngay'],ENT_QUOTES,'UTF-8')?>" <?=!dt_can('htkh','edit')?'disabled':''?>></div>
+					<div class="form-group col-sm-4 col-lg-3 mb-2"><label for="htkh-den-ngay">Đến ngày</label><input id="htkh-den-ngay" name="den_ngay" type="date" required class="form-control form-control-sm" value="<?=htmlspecialchars($htkh_schedule['den_ngay'],ENT_QUOTES,'UTF-8')?>" <?=!dt_can('htkh','edit')?'disabled':''?>></div>
+					<?php if(dt_can('htkh','edit')): ?><div class="col-lg-4 mb-2"><button class="btn btn-sm bg-gradient-primary"><i class="fas fa-save mr-1"></i>Lưu thời gian học</button></div><?php endif; ?>
+				</div>
+			</form>
+			<?php endif; ?>
 			<div class="mb-2"><strong><?=count($htkh_ky_passed)?> học viên thi đạt</strong> theo bộ lọc đã chọn.</div>
 			<?php if(dt_can('htkh','edit') && !empty($htkh_ky_passed)): ?>
 			<form method="post" action="index.php?com=daotao&act=htkhCapGiayKy" class="form-inline mb-3" onsubmit="return confirm('Tạo/cập nhật giấy và thông tin ký cho <?=count($htkh_ky_passed)?> học viên đạt trong bộ lọc đã chọn?');">

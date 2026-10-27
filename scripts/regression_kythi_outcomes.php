@@ -30,11 +30,12 @@ class KythiOutcomeFunctions
 	public function transfer($message,$url,$success=true){throw new KythiOutcomeNotice($message,$success);}
 }
 function dt_import_notice($message,$url,$success=true){throw new KythiOutcomeNotice($message,$success);}
+function dt_can($section,$action='view'){return $action!=='edit'||($GLOBALS['scheduleTestEditable']??true);}
 function kythi_outcome_check($condition,$message){if(!$condition)throw new RuntimeException($message);}
 set_exception_handler(function($error){fwrite(STDERR,$error->getMessage()."\n".$error->getTraceAsString()."\n");exit(1);});
 
 $_SESSION=array('kythi_outcome_test'=>array('username'=>'kythi_outcome_test'));
-$login_admin='kythi_outcome_test';$func=new KythiOutcomeFunctions();$temporaryTables=array('dt_ky_thi_hv','dt_ky_thi','dt_hocvien','dt_khoa','dt_htkh');
+$login_admin='kythi_outcome_test';$func=new KythiOutcomeFunctions();$temporaryTables=array('dt_ky_thi_hv','dt_ky_thi','dt_hocvien','dt_khoa','dt_htkh','dt_setting');
 foreach($temporaryTables as $table)
 {
 	$definition=$d->rawQuery('show create table table_'.$table);
@@ -72,12 +73,52 @@ try
 		$previous=$current;
 	}
 	$document=dt_htkh_build_document('HTKH-TEST','Student Test','01/01/2000','B1','','Course','2026-01-01','2026-02-01','27/10/2026','Signer','gd','QD-2026-001');
-	$decisionRow=false;foreach(dt_htkh_document_rows($document) as $documentRow)if(strpos((string)($documentRow['text']??''),'Số Quyết định: QD-2026-001')!==false)$decisionRow=true;
-	kythi_outcome_check($decisionRow,'Generated HTKH document omitted the decision number');
+	$decisionRow=false;foreach(dt_htkh_document_rows($document) as $documentRow)if(is_string($documentRow['text']??null)&&strpos($documentRow['text'],'QD-2026-001')!==false)$decisionRow=true;
+	kythi_outcome_check(!$decisionRow,'Decision number must not be printed on the certificate');
+	foreach(array('35773'=>'09/12/1997','1997-12-09'=>'09/12/1997','9/12/1997'=>'09/12/1997','09-12-1997'=>'09/12/1997','1997'=>'1997','31/02/1997'=>'','0000-00-00'=>'',''=>'') as $birthInput=>$birthExpected)
+	{
+		$birthDocument=dt_htkh_build_document('TEST','Student',$birthInput,'B1','','Course','','','','','gd');
+		kythi_outcome_check($birthDocument['ngaysinh']===$birthExpected,'Incorrect certificate birth date for '.$birthInput.': '.$birthDocument['ngaysinh']);
+	}
+	$exportDocument=dt_htkh_build_document('TEST','Student','35773','B1','','Course','','','','','gd','QD-2026-001');
+	$html=dt_htkh_documents_html(array($exportDocument),'index.php');
+	$word=dt_htkh_documents_docx_body(array($exportDocument),'');
+	$excel=dt_htkh_documents_xlsx(array($exportDocument));
+	$excelText=json_encode($excel->getActiveSheet()->toArray(),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+	foreach(array('HTML'=>$html,'Word'=>$word,'Excel'=>$excelText) as $format=>$content)
+		kythi_outcome_check(strpos($content,'09/12/1997')!==false&&strpos($content,'QD-2026-001')===false,$format.' certificate has incorrect birth-date or decision-number output');
+	$excel->disconnectWorksheets();
 	$_REQUEST=array('id_ky'=>$id,'ky_khoa'=>'');$_POST=array('id_ky'=>$id,'ky_khoa'=>'','nguoi_ky'=>'Regression Signer','ngay_ky'=>'27/10/2026','chuc_danh'=>'gd','hang_ce'=>'','so_quyet_dinh'=>'QD-2026-001');
 	try{dt_htkh_cap_giay_ky();throw new RuntimeException('HTKH issue flow did not finish.');}catch(KythiOutcomeNotice $notice){kythi_outcome_check($notice->success,$notice->getMessage());}
 	$savedDecision=$d->rawQuery('select count(*) as num from #_dt_htkh where so_quyet_dinh=?',array('QD-2026-001'));
 	kythi_outcome_check((int)$savedDecision[0]['num']===134,'Decision number was not persisted for every passed student');
+	$courseKey=dt_htkh_khoa_key($passed[0]);
+	$_SESSION['dt_htkh_schedule_csrf']='schedule-test';$_REQUEST=array('id_ky'=>$id,'ky_khoa'=>$courseKey);
+	$_POST=array('csrf'=>'schedule-test','so_ngay'=>'90','tu_ngay'=>'2026-01-01','den_ngay'=>'2026-05-31');
+	try{dt_htkh_schedule_save();throw new RuntimeException('Missing schedule save result');}catch(KythiOutcomeNotice $notice){kythi_outcome_check($notice->success,$notice->getMessage());}
+	$schedule=dt_htkh_schedule_get($id,$courseKey);
+	kythi_outcome_check($schedule===array('so_ngay'=>90,'tu_ngay'=>'2026-01-01','den_ngay'=>'2026-05-31'),'Manual duration was not saved');
+	list($selectedPeriod,$selectedDocuments)=dt_htkh_ky_documents();
+	kythi_outcome_check(count($selectedDocuments)>0,'No old-course certificates generated');
+	foreach($selectedDocuments as $savedDocument)kythi_outcome_check($savedDocument['so_ngay']==='90 ngày'&&strpos($savedDocument['tu_den'],'ngày 01 tháng 01 năm 2026')!==false&&strpos($savedDocument['tu_den'],'ngày 31 tháng 05 năm 2026')!==false,'Old-course certificate omitted manual schedule');
+	$scheduleExcel=dt_htkh_documents_xlsx(array($selectedDocuments[0]));
+	$scheduleOutputs=array(dt_htkh_documents_html(array($selectedDocuments[0]),'index.php'),dt_htkh_documents_docx_body(array($selectedDocuments[0]),''),json_encode($scheduleExcel->getActiveSheet()->toArray(),JSON_UNESCAPED_UNICODE));
+	foreach($scheduleOutputs as $output)kythi_outcome_check(strpos($output,'90 ngày')!==false&&strpos($output,'ngày 31 tháng 05 năm 2026')!==false,'Manual schedule missing from a certificate export format');
+	$scheduleExcel->disconnectWorksheets();
+	dt_htkh_list();ob_start();require dirname(__DIR__).'/admin/templates/daotao/htkh/items_tpl.php';$scheduleForm=ob_get_clean();
+	kythi_outcome_check(strpos($scheduleForm,'act=htkhScheduleSave')!==false&&strpos($scheduleForm,'value="90"')!==false&&strpos($scheduleForm,'value="2026-01-01"')!==false,'Schedule editor did not reload saved values');
+	$scheduleTestEditable=false;ob_start();require dirname(__DIR__).'/admin/templates/daotao/htkh/items_tpl.php';$readOnlyForm=ob_get_clean();$scheduleTestEditable=true;
+	kythi_outcome_check(strpos($readOnlyForm,'Lưu thời gian học')===false,'Read-only account can see schedule save button');
+	$_REQUEST=array('id_ky'=>$id,'ky_khoa'=>'');list($allPeriod,$allDocuments)=dt_htkh_ky_documents();
+	$manualCount=0;foreach($allDocuments as $savedDocument)if($savedDocument['so_ngay']==='90 ngày')$manualCount++;
+	kythi_outcome_check($manualCount===count(dt_htkh_ky_passed($id,$courseKey)),'Schedule leaked into other courses in all-period export');
+	kythi_outcome_check(dt_htkh_schedule_get($id+1,$courseKey)['so_ngay']==='','Schedule leaked into another exam period');
+	$_REQUEST=array('id_ky'=>$id,'ky_khoa'=>$courseKey);$_POST['den_ngay']='2025-01-01';
+	try{dt_htkh_schedule_save();throw new RuntimeException('Reverse dates accepted');}catch(KythiOutcomeNotice $notice){kythi_outcome_check(!$notice->success,'Reverse dates accepted');}
+	kythi_outcome_check(dt_htkh_schedule_get($id,$courseKey)===$schedule,'Rejected dates changed saved schedule');
+	$_POST['den_ngay']='2026-05-31';$_POST['csrf']='wrong';
+	try{dt_htkh_schedule_save();throw new RuntimeException('Invalid CSRF accepted');}catch(KythiOutcomeNotice $notice){kythi_outcome_check(!$notice->success,'Invalid schedule CSRF accepted');}
+	echo "PASS manual course schedule save, certificate override, course/period isolation, invalid dates and CSRF\n";
 	$trainingProfiles=$d->rawQuery('select count(*) as num from #_dt_hocvien');
 	kythi_outcome_check((int)$trainingProfiles[0]['num']===0,'Exam result import must not create training profiles');
 	echo "PASS real B/C1 result import: 166 rows, 134 passed, 32 failed; HTKH returns 134; no training profile created\n";

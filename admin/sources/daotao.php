@@ -190,6 +190,7 @@ switch($act)
 	case "saveHtkh":        dt_guard(dt_p('htkh','edit'));  dt_htkh_save(); break;
 	case "htkhCapGiay":     dt_guard(dt_p('htkh','edit'));  dt_htkh_cap_giay(); break;
 	case "htkhCapGiayKy":   dt_guard(dt_p('htkh','edit'));  dt_htkh_cap_giay_ky(); break;
+	case "htkhScheduleSave": dt_guard(dt_p('htkh','edit')); dt_htkh_schedule_save(); break;
 	case "htkhPrint":       dt_guard(dt_p('htkh','view'));  dt_htkh_print(); break;
 	case "htkhPrintKy":     dt_guard(dt_p('htkh','view'));  dt_htkh_print_ky(); break;
 	case "htkhExcelKy":     dt_guard(dt_p('htkh','export')); dt_htkh_export_ky('xlsx'); break;

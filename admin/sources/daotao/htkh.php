@@ -80,15 +80,18 @@ function dt_htkh_chucdanh_text($key)
 /* Danh sách học viên của 1 khóa kèm số giấy HTKH. */
 function dt_htkh_list()
 {
-	global $d, $items, $ds_khoa, $id_khoa_sel, $total_items, $ds_ky, $htkh_ky_khoa, $htkh_ky_passed;
+	global $d, $items, $ds_khoa, $id_khoa_sel, $total_items, $ds_ky, $htkh_ky_khoa, $htkh_ky_passed, $htkh_schedule;
 	$ds_khoa = dt_khoa_options();
 	$ds_ky = $d->rawQuery("select id, ten, ngay_kt, (select count(*) from #_dt_ky_thi_hv h where h.id_ky = ky.id and h.co_ket_qua = 1) as so_kq from #_dt_ky_thi ky order by ky.ngay_kt desc, ky.id desc");
 	$idKy = (int)dt_req('id_ky', 0);
 	$htkh_ky_khoa = $idKy ? dt_htkh_ky_khoa_options($idKy) : array();
 	$htkh_ky_passed = array();
+	$htkh_schedule=array('so_ngay'=>'','tu_ngay'=>'','den_ngay'=>'');
+	if(empty($_SESSION['dt_htkh_schedule_csrf']))$_SESSION['dt_htkh_schedule_csrf']=bin2hex(random_bytes(24));
 	if($idKy)
 	{
 		list($ky, $htkh_ky_passed) = dt_htkh_ky_selection();
+		if(dt_req('ky_khoa')!=='')$htkh_schedule=dt_htkh_schedule_get($idKy,dt_req('ky_khoa'));
 	}
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array(); $total_items = 0;
@@ -249,6 +252,50 @@ function dt_htkh_ky_back()
 	return 'index.php?'.http_build_query(array('com' => 'daotao', 'act' => 'htkh', 'id_ky' => (int)dt_req('id_ky', 0), 'ky_khoa' => dt_req('ky_khoa')));
 }
 
+function dt_htkh_schedule_key($idKy,$courseKey)
+{
+	return 'htkh_schedule_'.(int)$idKy.'_'.hash('sha256',(string)$courseKey);
+}
+
+function dt_htkh_schedule_get($idKy,$courseKey)
+{
+	global $d;
+	$row=$d->rawQueryOne('select sval from #_dt_setting where skey=? limit 1',array(dt_htkh_schedule_key($idKy,$courseKey)));
+	if($d->getLastErrorCode()!=='00000')throw new RuntimeException('Không đọc được thời gian học HTKH.');
+	$data=$row?json_decode($row['sval'],true):array();
+	return array_merge(array('so_ngay'=>'','tu_ngay'=>'','den_ngay'=>''),is_array($data)?$data:array());
+}
+
+function dt_htkh_schedule_validate($input)
+{
+	$days=trim((string)($input['so_ngay']??''));
+	if(!preg_match('/^[1-9][0-9]{0,4}$/',$days)||(int)$days>10000)throw new InvalidArgumentException('Số ngày học phải là số nguyên từ 1 đến 10000.');
+	$values=array('so_ngay'=>(int)$days);
+	foreach(array('tu_ngay','den_ngay') as $field)
+	{
+		$value=trim((string)($input[$field]??''));$date=DateTimeImmutable::createFromFormat('!Y-m-d',$value);
+		if(!$date||$date->format('Y-m-d')!==$value)throw new InvalidArgumentException('Nhập đủ từ ngày/đến ngày hợp lệ.');
+		$values[$field]=$value;
+	}
+	if($values['den_ngay']<$values['tu_ngay'])throw new InvalidArgumentException('Đến ngày không được trước từ ngày.');
+	return $values;
+}
+
+function dt_htkh_schedule_save()
+{
+	global $d,$func;
+	$back=dt_htkh_ky_back();
+	if(empty($_SESSION['dt_htkh_schedule_csrf'])||!hash_equals($_SESSION['dt_htkh_schedule_csrf'],(string)($_POST['csrf']??'')))$func->transfer('Phiên thao tác không hợp lệ.',$back,false);
+	list($ky)=dt_htkh_ky_selection();$courseKey=dt_req('ky_khoa');
+	if($courseKey==='')$func->transfer('Chọn một khóa trong kỳ để cập nhật thời gian học.',$back,false);
+	try{$data=dt_htkh_schedule_validate($_POST);}
+	catch(InvalidArgumentException $error){$func->transfer($error->getMessage(),$back,false);return;}
+	$d->rawQuery('insert into #_dt_setting (skey,sval) values (?,?) on duplicate key update sval=values(sval)',array(dt_htkh_schedule_key($ky['id'],$courseKey),json_encode($data)));
+	if($d->getLastErrorCode()!=='00000')$func->transfer('Không lưu được thời gian học; vui lòng thử lại.',$back,false);
+	dt_audit('update','htkh_schedule',1,'ky='.(int)$ky['id'].' course='.$courseKey.' '.json_encode($data));
+	$func->transfer('Đã lưu thời gian học cho khóa trong kỳ. Giấy xuất/in sẽ dùng thông tin này.',$back);
+}
+
 function dt_htkh_ky_selection()
 {
 	global $d, $func;
@@ -351,7 +398,31 @@ function dt_htkh_so_ngay($ngayKhaiGiang, $ngayManHoa)
 }
 
 /* Gom dữ liệu 1 giấy xác nhận theo đúng các trường cố định của mẫu (thông tư). */
-function dt_htkh_build_document($so_giay, $hoten, $ngaysinh, $hang, $hang_ce, $khoa, $ngay_khaigiang, $ngay_manhoa, $ngay_ky, $nguoi_ky, $chuc_danh, $so_quyet_dinh='')
+function dt_htkh_birth_date($value)
+{
+	$value=trim((string)$value);
+	if($value===''||$value==='0000-00-00')return '';
+	if(preg_match('/^\d{4}$/',$value)&&(int)$value>=1900&&(int)$value<=2100)return $value;
+	if(is_numeric($value))
+	{
+		$serial=(float)$value;
+		if($serial<1||$serial>73050||(int)$serial===60)return '';
+		$base=new DateTimeImmutable($serial<60?'1899-12-31':'1899-12-30',new DateTimeZone('UTC'));
+		return $base->modify('+'.(int)$serial.' days')->format('d/m/Y');
+	}
+	if(preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/',$value,$parts))
+	{
+		$year=(int)$parts[1];$month=(int)$parts[2];$day=(int)$parts[3];
+	}
+	elseif(preg_match('/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/',$value,$parts))
+	{
+		$day=(int)$parts[1];$month=(int)$parts[2];$year=(int)$parts[3];
+	}
+	else return '';
+	return checkdate($month,$day,$year)?sprintf('%02d/%02d/%04d',$day,$month,$year):'';
+}
+
+function dt_htkh_build_document($so_giay, $hoten, $ngaysinh, $hang, $hang_ce, $khoa, $ngay_khaigiang, $ngay_manhoa, $ngay_ky, $nguoi_ky, $chuc_danh, $so_quyet_dinh='', $so_ngay='')
 {
 	$tuNgay = dt_htkh_ngay_text($ngay_khaigiang);
 	$denNgay = dt_htkh_ngay_text($ngay_manhoa);
@@ -361,10 +432,10 @@ function dt_htkh_build_document($so_giay, $hoten, $ngaysinh, $hang, $hang_ce, $k
 		'so_giay' => (string)$so_giay,
 		'so_quyet_dinh' => html_entity_decode((string)$so_quyet_dinh,ENT_QUOTES,'UTF-8'),
 		'hoten' => (string)$hoten,
-		'ngaysinh' => (string)$ngaysinh,
+		'ngaysinh' => dt_htkh_birth_date($ngaysinh),
 		'hang' => dt_htkh_hang_text($hang, $hang_ce),
 		'khoa' => (string)$khoa,
-		'so_ngay' => dt_htkh_so_ngay($ngay_khaigiang, $ngay_manhoa),
+		'so_ngay' => $so_ngay!==''?(string)(int)$so_ngay.' ngày':dt_htkh_so_ngay($ngay_khaigiang, $ngay_manhoa),
 		'tu_den' => $tuDen,
 		'ngay_ky_text' => 'Tp.Hồ Chí Minh, '.($ngayKyText !== '' ? $ngayKyText : 'ngày ... tháng ... năm ...'),
 		'nguoi_ky' => html_entity_decode((string)$nguoi_ky, ENT_QUOTES, 'UTF-8'),
@@ -378,6 +449,7 @@ function dt_htkh_ky_documents()
 	list($ky, $passed) = dt_htkh_ky_selection();
 	$documents = array();
 	$khoaCache = array();
+	$scheduleCache=array();
 	foreach($passed as $r)
 	{
 		$idKhoa = (int)$r['id_khoa'];
@@ -396,7 +468,11 @@ function dt_htkh_ky_documents()
 			}
 		}
 		$ngayKy = trim((string)$h['ngay_ky']) !== '' ? $h['ngay_ky'] : $h['ngay_cap'];
-		$documents[] = dt_htkh_build_document($h['so_giay'], $r['hoten'], $r['nam_sinh'], $r['hang'], $h['hang_ce'], $tenKhoa, $ngayKhaiGiang, $ngayManHoa, $ngayKy, $h['nguoi_ky'], $h['chuc_danh'], $h['so_quyet_dinh']);
+		$courseKey=dt_htkh_khoa_key($r);
+		if(!isset($scheduleCache[$courseKey]))$scheduleCache[$courseKey]=dt_htkh_schedule_get($ky['id'],$courseKey);
+		$schedule=$scheduleCache[$courseKey];$manualDays='';
+		if($schedule['so_ngay']!==''){$ngayKhaiGiang=$schedule['tu_ngay'];$ngayManHoa=$schedule['den_ngay'];$manualDays=$schedule['so_ngay'];}
+		$documents[] = dt_htkh_build_document($h['so_giay'], $r['hoten'], $r['nam_sinh'], $r['hang'], $h['hang_ce'], $tenKhoa, $ngayKhaiGiang, $ngayManHoa, $ngayKy, $h['nguoi_ky'], $h['chuc_danh'], $h['so_quyet_dinh'],$manualDays);
 	}
 	if(!$documents) $func->transfer('Bộ lọc này chưa có học viên đạt được cấp giấy. Hãy tạo giấy trước khi xuất hoặc in.', dt_htkh_ky_back(), false);
 	return array($ky, $documents);
