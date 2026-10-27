@@ -66,8 +66,11 @@
 					else alert('Hãy tích chọn ít nhất một mục để xóa.');
 					return;
 				}
-				if(!hasSwal){ if(confirm('Xóa '+n+' mục đã chọn?')){ showLoading(); form.submit(); } return; }
-				Swal.fire({ title:'Xóa '+n+' mục đã chọn?', text:'Hệ thống tự sao lưu trước khi xóa.', icon:'warning',
+				var periodDelete = form.getAttribute('id') === 'dt-bulk-sh-periods';
+				var title = periodDelete ? 'Xóa '+n+' kỳ sát hạch?' : 'Xóa '+n+' mục đã chọn?';
+				var detail = periodDelete ? 'Toàn bộ kết quả trong các kỳ đã chọn sẽ bị xóa; dữ liệu nguồn import được giữ lại.' : 'Hệ thống tự sao lưu trước khi xóa.';
+				if(!hasSwal){ if(confirm(title+' '+detail+' Hệ thống sẽ sao lưu trước khi xóa.')){ showLoading(); form.submit(); } return; }
+				Swal.fire({ title:title, text:detail+' Hệ thống sẽ sao lưu trước khi xóa.', icon:'warning',
 					showCancelButton:true, confirmButtonText:'Xóa', cancelButtonText:'Hủy', confirmButtonColor:'#dc2626' })
 					.then(function(r){ if(isConfirmed(r)){ showLoading(); form.submit(); } });
 			});

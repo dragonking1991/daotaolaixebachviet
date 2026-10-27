@@ -451,7 +451,7 @@ function dt_kythi_import_excel()
 		'duong' => array('duong'),
 		'chu_chi' => array('chuchi'),
 		'diem_chu_chi' => array('diemchuchi'),
-		'ket_luan' => array('ketluan'),
+		'ket_luan' => array('ketluan','ketluancsdt'),
 	);
 	$contains = array(
 		'cccd' => array('cccd','cmt'),

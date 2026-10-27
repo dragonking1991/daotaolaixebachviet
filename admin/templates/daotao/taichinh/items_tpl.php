@@ -7,7 +7,7 @@
     <div class="card-body">
         <form method="get" class="form-inline mb-3">
             <input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="taichinh">
-            <select name="group" class="form-control form-control-sm mr-2"><option value="bc" <?=$finance_group==='bc'?'selected':''?>>B / C1 / C</option><option value="ce" <?=$finance_group==='ce'?'selected':''?>>CE đạt DAT</option></select>
+            <select name="group" class="form-control form-control-sm mr-2" style="max-width:100%;"><option value="bc" <?=$finance_group==='bc'?'selected':''?>>Khác CE (đạt DAT, CK/DAT)</option><option value="ce" <?=$finance_group==='ce'?'selected':''?>>CE (đạt DAT, CK/DAT)</option></select>
             <select name="id_khoa" class="form-control form-control-sm mr-2"><option value="0">Chọn khóa</option><?php foreach($finance_courses as $course): ?><option value="<?=(int)$course['id']?>" <?=(int)$course['id']===$finance_course?'selected':''?>><?=htmlspecialchars($course['ma_khoa'].' '.$course['ten_khoa'])?></option><?php endforeach; ?></select>
             <button class="btn btn-sm bg-gradient-primary"><i class="fas fa-filter mr-1"></i>Lọc</button>
         </form>

@@ -198,7 +198,7 @@ function dt_dat_upload_excel()
 	dt_log_import('dat', $file['name'], $them, $err);
 	$msg = "Import DAT: thêm $them phiên mới, bỏ qua $trung phiên đã có".($err ? ", $err phiên lỗi (HV chưa có)" : "");
 	if(!empty($syncKhoaIds))
-		$msg .= " Đồng bộ sang XD: thêm ".$syncTotals['xd_added']." học viên nhóm DAT và ".$syncTotals['ce_added']." học viên CE riêng; giữ nguyên ".$syncTotals['existing']." hồ sơ đã có.";
+		$msg .= " Đồng bộ sang XD: thêm ".$syncTotals['xd_added']." học viên đạt DAT (mọi hạng); giữ nguyên ".$syncTotals['existing']." hồ sơ XD đã có.";
 	if(!empty($syncErrors)) $msg .= " Có lỗi đồng bộ: ".implode('; ', $syncErrors);
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
 	dt_import_notice($msg, "index.php?com=daotao&act=dat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($them > 0 || $err === 0) && empty($syncErrors));

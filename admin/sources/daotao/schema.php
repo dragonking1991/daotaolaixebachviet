@@ -333,7 +333,27 @@ function dt_ensure_tables()
 		dt_ensure_update8_schema();
 		dt_migration_mark('update8_v1');
 	}
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('sh_roster_link_v1'))
+	{
+		dt_ensure_sh_link_schema();
+		dt_migration_mark('sh_roster_link_v1');
+	}
 	$done = true;
+}
+
+function dt_ensure_sh_link_schema()
+{
+	global $d;
+	$d->rawQuery("create table if not exists table_dt_sh_import_row (
+		id INT AUTO_INCREMENT PRIMARY KEY, file_hash CHAR(64) NOT NULL, filename VARCHAR(500) NOT NULL,
+		so_dong INT NOT NULL, raw_json MEDIUMTEXT NOT NULL, data_json MEDIUMTEXT NOT NULL,
+		ly_do TEXT NOT NULL, trang_thai VARCHAR(20) NOT NULL DEFAULT 'pending',
+		id_hocvien INT NOT NULL DEFAULT 0, id_ketqua INT NOT NULL DEFAULT 0,
+		nguoi_nhap VARCHAR(255) DEFAULT '', ngaytao INT DEFAULT 0, ngay_sua INT DEFAULT 0,
+		UNIQUE KEY uq_sh_source_row(file_hash,so_dong), KEY idx_sh_pending(trang_thai,id),
+		KEY idx_sh_source_hv(id_hocvien), KEY idx_sh_source_result(id_ketqua)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể tạo danh sách dòng import chờ bổ sung.');
 }
 
 function dt_ensure_update8_schema()

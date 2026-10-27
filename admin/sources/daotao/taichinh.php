@@ -29,8 +29,12 @@ function dt_finance_import_amount($value)
 function dt_finance_eligible($student, $group)
 {
 	$hang = dt_norm_hang($student['hang']);
-	if($group !== 'ce') return in_array($hang, array('B1','B11','C1','C'), true);
-	if($hang !== 'CE') return false;
+	if($group === 'ce' && $hang !== 'CE') return false;
+	if($group !== 'ce' && $hang === 'CE') return false;
+	if((int)($student['id_khoa'] ?? 0) <= 0) return false;
+	$system = trim((string)($student['he_daotao'] ?? ''));
+	if($system === '') $system = (string)($student['he_khoa'] ?? '');
+	if(!in_array(dt_norm_header($system), array('ck','dat'), true)) return false;
 	$aggregate = dt_dat_aggregate($student['cccd'], (int)$student['id_khoa']);
 	list($passed) = dt_dat_danhgia($hang, $aggregate);
 	return $passed || dt_dat_override_get((int)$student['id_khoa'], $student['cccd']) === 1;
@@ -45,8 +49,8 @@ function dt_finance_list()
 	$finance_students = array(); $finance_history = array();
 	if(empty($_SESSION['dt_finance_csrf'])) $_SESSION['dt_finance_csrf'] = bin2hex(random_bytes(24));
 	if(!$finance_course) return;
-	$rows = $d->rawQuery("select h.*, coalesce(f.tam_ung,0) as tam_ung, coalesce(f.thanh_toan,0) as thanh_toan, coalesce(f.da_tt,0) as da_tt
-		from #_dt_hocvien h left join
+	$rows = $d->rawQuery("select h.*, k.he_daotao as he_khoa, coalesce(f.tam_ung,0) as tam_ung, coalesce(f.thanh_toan,0) as thanh_toan, coalesce(f.da_tt,0) as da_tt
+		from #_dt_hocvien h inner join #_dt_khoa k on k.id=h.id_khoa left join
 		(select id_hocvien, sum(case when loai='tam_ung' then so_tien else 0 end) as tam_ung,
 		sum(case when loai='thanh_toan' then so_tien else 0 end) as thanh_toan,
 		sum(case when loai='thanh_toan' then 1 else 0 end) as da_tt from #_dt_taichinh group by id_hocvien) f on f.id_hocvien=h.id
@@ -87,8 +91,8 @@ function dt_finance_save()
 	{
 		foreach($ids as $id)
 		{
-			$student = $d->rawQueryOne('select * from #_dt_hocvien where id=? and id_khoa=? for update', array($id, $course));
-			if(!$student || !dt_finance_eligible($student, $group)) throw new RuntimeException('Học viên không thuộc khóa/hạng hoặc CE chưa đạt DAT.');
+			$student = $d->rawQueryOne('select h.*,k.he_daotao as he_khoa from #_dt_hocvien h inner join #_dt_khoa k on k.id=h.id_khoa where h.id=? and h.id_khoa=? for update', array($id, $course));
+			if(!$student || !dt_finance_eligible($student, $group)) throw new RuntimeException('Học viên không thuộc khóa/nhóm đã chọn hoặc chưa đạt DAT thuộc hệ CK/DAT.');
 			$entries = $d->rawQuery('select loai,so_tien from #_dt_taichinh where id_hocvien=? for update', array($id));
 			if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể đọc lịch sử thanh toán.');
 			$sum = array('tam_ung'=>0,'da_tt'=>0);

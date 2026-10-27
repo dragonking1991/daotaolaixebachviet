@@ -6,12 +6,21 @@ function dt_hocvien_current_khoa()
 	return isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 }
 
+function dt_hocvien_sql($sql,$params=array())
+{
+	global $d;
+	$rows=$d->rawQuery($sql,$params);
+	if($d->getLastErrorCode()!=='00000')throw new RuntimeException('Không thể xử lý dữ liệu học viên.');
+	return $rows;
+}
+
 function dt_hocvien_list()
 {
 	global $d, $func, $curPage, $items, $paging, $ds_khoa, $id_khoa_sel, $total_items;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = dt_hocvien_current_khoa();
+	if(empty($_SESSION['dt_hocvien_unassigned_csrf']))$_SESSION['dt_hocvien_unassigned_csrf']=bin2hex(random_bytes(24));
 
 	list($where, $params) = dt_hocvien_where();
 
@@ -19,12 +28,48 @@ function dt_hocvien_list()
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$sql = "select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where 1 $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit $startpoint,$per_page";
 	$items = $d->rawQuery($sql, $params);
-	foreach($items as &$__it) $__it['sum'] = dt_student_summary($__it);
+	foreach($items as &$__it) $__it['sum'] = (int)$__it['id_khoa']>0 ? dt_student_summary($__it) : null;
 	unset($__it);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_hocvien h where 1 $where", $params);
 	$total_items = (int)$count['num'];
-	$url = "index.php?com=daotao&act=hocvien".($id_khoa_sel ? "&id_khoa=".$id_khoa_sel : "");
+	$query=array('com'=>'daotao','act'=>'hocvien');
+	foreach(array('id_khoa','keyword','hang','gv','he') as $key)if(isset($_REQUEST[$key])&&trim((string)$_REQUEST[$key])!=='')$query[$key]=trim((string)$_REQUEST[$key]);
+	$url = 'index.php?'.http_build_query($query);
 	$paging = $func->pagination($count['num'], $per_page, $curPage, $url);
+}
+
+function dt_hocvien_delete_unassigned()
+{
+	global $d, $func;
+	$back='index.php?com=daotao&act=hocvien&id_khoa=-1';
+	if(!dt_is_admin())$func->transfer('Chỉ quản trị viên được xóa hàng loạt học viên chưa gán khóa.',$back,false);
+	if(empty($_SESSION['dt_hocvien_unassigned_csrf'])||!hash_equals($_SESSION['dt_hocvien_unassigned_csrf'],(string)($_POST['csrf']??'')))$func->transfer('Phiên thao tác không hợp lệ; vui lòng tải lại trang.',$back,false);
+	$lock=dt_hocvien_sql('select get_lock(?,10) as acquired',array('bachviet_sh_summary_import'));
+	if((int)($lock[0]['acquired']??0)!==1)$func->transfer('Đang có lượt import kết quả sát hạch; vui lòng thử lại.',$back,false);
+	try
+	{
+		$financial=dt_hocvien_sql('select count(*) as num from #_dt_taichinh t inner join #_dt_hocvien h on h.id=t.id_hocvien where h.id_khoa=0');
+		if((int)$financial[0]['num']>0)$func->transfer('Có hồ sơ chưa gán khóa còn giao dịch tài chính; không xóa để giữ lịch sử tiền.',$back,false);
+		$students=dt_hocvien_sql('select id from #_dt_hocvien where id_khoa=0 order by id');
+		if(!$students)$func->transfer('Hiện không có học viên chưa gán khóa.',$back,false);
+		if(!dt_backup_tables(array('dt_hocvien'),'del_unassigned_hocvien'))$func->transfer('Không sao lưu được dữ liệu; chưa xóa học viên.',$back,false);
+		$d->startTransaction();
+		try
+		{
+			$students=dt_hocvien_sql('select id from #_dt_hocvien where id_khoa=0 order by id for update');
+			$ids=array_map(function($row){return (int)$row['id'];},$students);$deleted=count($ids);
+			foreach(array_chunk($ids,500) as $chunk)
+			{
+				$marks=implode(',',array_fill(0,count($chunk),'?'));
+				dt_hocvien_sql('delete from #_dt_hocvien where id_khoa=0 and id in ('.$marks.')',$chunk);
+			}
+			if($d->commit()===false)throw new RuntimeException('Không thể hoàn tất xóa học viên.');
+		}
+		catch(Exception $error){$d->rollback();throw $error;}
+		dt_audit('delete','hocvien_unassigned',$deleted,'exam results and source records retained');
+		$func->transfer('Đã xóa '.$deleted.' hồ sơ chưa gán khóa; kết quả sát hạch và dữ liệu nguồn được giữ nguyên.',$back);
+	}
+	finally{$d->rawQuery("select release_lock('bachviet_sh_summary_import')");}
 }
 
 function dt_hocvien_upload_form()
@@ -82,7 +127,11 @@ function dt_hocvien_upload_excel()
 	$preview = !empty($_REQUEST['preview']);
 	$previewRows = array(); $insCnt = 0; $updCnt = 0;
 	$syncKhoaIds = array();
-	if(!$preview) { dt_backup_tables(array('dt_hocvien','dt_khoa'), 'imp_hocvien'); $d->startTransaction(); }
+	if(!$preview)
+	{
+		if(!dt_backup_tables(array('dt_hocvien','dt_khoa'), 'imp_hocvien'))dt_import_notice('Không thể sao lưu trước khi nhập học viên.',$back,false);
+		$d->startTransaction();
+	}
 	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
@@ -189,7 +238,7 @@ function dt_hocvien_upload_excel()
 
 	$msg = "Import học viên: $ok dòng thành công".($err ? ", $err dòng lỗi" : "");
 	if(!empty($syncKhoaIds))
-		$msg .= " Đồng bộ sang XD: thêm ".$syncTotals['xd_added']." học viên nhóm DAT và ".$syncTotals['ce_added']." học viên CE riêng; giữ nguyên ".$syncTotals['existing']." hồ sơ đã có.";
+		$msg .= " Đồng bộ sang XD: thêm ".$syncTotals['xd_added']." học viên đạt DAT (mọi hạng); giữ nguyên ".$syncTotals['existing']." hồ sơ XD đã có.";
 	if(!empty($syncErrors)) $msg .= " Có lỗi đồng bộ: ".implode('; ', $syncErrors);
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
 	dt_import_notice($msg, "index.php?com=daotao&act=hocvien".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($ok > 0 || $err === 0) && empty($syncErrors));

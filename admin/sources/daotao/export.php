@@ -115,7 +115,8 @@ function dt_hocvien_where()
 	global $d;
 	$where = ""; $params = array();
 	$idKhoa = (int)dt_req('id_khoa', 0);
-	if($idKhoa) { $where .= " and h.id_khoa = ?"; $params[] = $idKhoa; }
+	if($idKhoa===-1) $where .= ' and h.id_khoa=0';
+	elseif($idKhoa>0) { $where .= " and h.id_khoa = ?"; $params[] = $idKhoa; }
 	$kw = dt_req('keyword');
 	if($kw !== '')
 	{

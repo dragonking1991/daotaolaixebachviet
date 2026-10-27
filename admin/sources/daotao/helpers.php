@@ -348,6 +348,13 @@ function dt_student_summary($hv)
 	$idKhoa = (int)$hv['id_khoa'];
 	$cccd = $hv['cccd'];
 	$maHv = $hv['ma_hv'];
+	if($idKhoa<=0)return array(
+		'ly_thuyet'=>array('dat'=>0,'so_dat'=>0,'so_co'=>0,'tong'=>0),
+		'cabin'=>array('dat'=>0,'co'=>0,'yeu_cau'=>1),
+		'hinh'=>array('dat'=>0,'gio'=>0,'km'=>0),
+		'dat'=>array('dat'=>0,'agg'=>array('a'=>0,'b'=>0,'c'=>0,'d'=>0,'e'=>0),'thieu'=>array('Chưa gán khóa')),
+		'du_dieu_kien'=>0
+	);
 
 	// Lý thuyết: nâng hạng (C/CE) cần 4 môn check; còn lại cần 7 môn.
 	$monSet = dt_mon_lythuyet_for_hang($hv['hang']);

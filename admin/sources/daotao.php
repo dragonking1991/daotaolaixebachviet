@@ -75,10 +75,20 @@ function dt_admin_guard()
 	if(!dt_is_admin()) $func->transfer("Thao tác này chỉ dành cho quản trị viên", "index.php?com=daotao", false);
 }
 
+function dt_sathach_can_manage()
+{
+	return !dt_permission_denied(array('daotao_man','daotao_sathach','daotao_sathach_edit','daotao_sathach_delete','daotao_sathach_export'));
+}
+
 switch($act)
 {
 	case 'taichinh': dt_guard(dt_p('taichinh','view')); dt_finance_list(); $template='daotao/taichinh/items'; break;
 	case 'createSathachPeriod': dt_guard(dt_p('sathach','edit')); dt_sathach_create_period(); break;
+	case 'deleteSathachPeriod': dt_guard(dt_p('sathach','delete')); dt_sathach_delete_period(); break;
+	case 'deleteSathachPeriodsSelected': dt_guard(dt_p('sathach','delete')); dt_sathach_delete_periods_selected(); break;
+	case 'saveSathachNotes': dt_guard(dt_p('sathach','edit')); dt_sathach_note_selected(); break;
+	case 'sathachPending': dt_guard(dt_p('sathach','import')); dt_sathach_period_options(); dt_sh_pending_page(); $template='daotao/sathach/pending'; break;
+	case 'saveSathachPending': dt_guard(dt_p('sathach','import')); dt_sh_pending_save(); break;
 	case 'saveTaichinh': dt_guard(dt_p('taichinh','edit')); dt_finance_save(); break;
 	case 'exportTaichinh': dt_guard(dt_p('taichinh','export')); dt_finance_export(); break;
 	/* ---------- Khóa học ---------- */
@@ -103,6 +113,7 @@ switch($act)
 
 	/* ---------- Học viên ---------- */
 	case "hocvien":            dt_guard(dt_p('hocvien','view'));   dt_hocvien_list();   $template = "daotao/hocvien/items"; break;
+	case "deleteUnassignedHocvien": dt_guard(dt_p('hocvien','delete')); dt_hocvien_delete_unassigned(); break;
 	case "exportHocvien":      dt_guard(dt_p('hocvien','export')); dt_hocvien_export(); break;
 	case "uploadHocvien":      dt_guard(dt_p('hocvien','import')); dt_hocvien_upload_form(); $template = "daotao/hocvien/upload"; break;
 	case "uploadHocvienExcel": dt_guard(dt_p('hocvien','import')); dt_hocvien_upload_excel(); break;
@@ -188,8 +199,12 @@ switch($act)
 	case "exportHtkh":      dt_guard(dt_p('htkh','export')); dt_htkh_export(); break;
 
 	/* ---------- Kết quả sát hạch ---------- */
-	case "sathach":            dt_guard(dt_p('sathach','view')); dt_sathach_list();   $template = "daotao/sathach/items"; break;
-	case "sathachTracuu":      dt_guard(dt_p('sathach','view')); dt_sathach_tracuu(); $template = "daotao/sathach/tracuu"; break;
+	case "sathach":
+		dt_guard(array_unique(array_merge(dt_p('sathach','view'),dt_p('sathach','edit'),dt_p('sathach','delete'),dt_p('sathach','import'),dt_p('sathach','export'))));
+		if(dt_sathach_can_manage()) { dt_sathach_list(); $template = "daotao/sathach/items"; }
+		else { dt_sathach_tracuu(); $template = "daotao/sathach/tracuu"; }
+		break;
+	case "sathachTracuu":      dt_guard(array_unique(array_merge(dt_p('sathach','view'),dt_p('sathach','import')))); dt_sathach_tracuu(); $template = "daotao/sathach/tracuu"; break;
 	case "uploadSathach":      dt_guard(dt_p('sathach','import'));   dt_sathach_upload_form(); $template = "daotao/sathach/upload"; break;
 	case "uploadSathachExcel": dt_guard(dt_p('sathach','import'));   dt_sathach_upload_excel(); break;
 	case "exportSathach":      dt_guard(dt_p('sathach','export')); dt_sathach_export(); break;

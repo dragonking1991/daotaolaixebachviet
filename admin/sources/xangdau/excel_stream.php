@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
  * Đọc 1 sheet của file .xlsx theo LUỒNG (XMLReader) để tiết kiệm bộ nhớ.
  * @return XdArraySheet|false  (trả $highestRow, $highestColIndex qua tham chiếu)
  */
-function xd_stream_read_xlsx($path, $sheetHints, &$highestRow, &$highestColIndex, $maxRow = 20000)
+function xd_stream_read_xlsx($path, $sheetHints, &$highestRow, &$highestColIndex, $maxRow = 20000, $rowFilter = null)
 {
 	$highestRow = 0; $highestColIndex = 0;
 	if(!class_exists('ZipArchive') || !class_exists('XMLReader')) return false;
@@ -71,6 +71,7 @@ function xd_stream_read_xlsx($path, $sheetHints, &$highestRow, &$highestColIndex
 		$node = $rd->expand($dom);
 		if(!$node) continue;
 		$anyVal = false;
+		$rowValues = array();
 		foreach($node->childNodes as $c)
 		{
 			if($c->nodeType !== XML_ELEMENT_NODE || $c->localName !== 'c') continue;
@@ -92,13 +93,19 @@ function xd_stream_read_xlsx($path, $sheetHints, &$highestRow, &$highestColIndex
 			$val = trim((string)$val);
 			if($val !== '')
 			{
-				$rows[$rowNum][$colIdx] = $val;
-				if($colIdx + 1 > $maxColIdx) $maxColIdx = $colIdx + 1;
+				$rowValues[$colIdx] = $val;
 				$anyVal = true;
 			}
 		}
-		if($anyVal) { $lastData = $rowNum; $emptyStreak = 0; }
-		elseif($lastData > 0 && ++$emptyStreak > 200) break;
+		if($rowFilter !== null && !call_user_func($rowFilter, $rowValues, $rowNum)) continue;
+		if($anyVal)
+		{
+			$rows[$rowNum] = $rowValues;
+			$maxColIdx = max($maxColIdx, max(array_keys($rowValues)) + 1);
+			$lastData = $rowNum;
+			$emptyStreak = 0;
+		}
+		elseif($rowFilter === null && $lastData > 0 && ++$emptyStreak > 200) break;
 	}
 	$rd->close();
 

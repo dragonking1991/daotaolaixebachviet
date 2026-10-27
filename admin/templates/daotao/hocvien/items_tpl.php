@@ -28,6 +28,7 @@
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="hocvien">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
 					<option value="0">— Tất cả khóa —</option>
+					<option value="-1" <?=$id_khoa_sel===-1?'selected':''?>>Chưa gán khóa</option>
 					<?php foreach($ds_khoa as $k): ?>
 					<option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option>
 					<?php endforeach; ?>
@@ -41,6 +42,7 @@
 				<input type="text" name="he" class="form-control form-control-sm mr-2" placeholder="Hệ đào tạo" value="<?=isset($_REQUEST['he'])?htmlspecialchars($_REQUEST['he']):''?>">
 				<button class="btn btn-sm bg-gradient-primary">Tìm</button>
 			</form>
+			<?php if($id_khoa_sel===-1 && $total_items>0 && dt_is_admin()): ?><form method="post" action="index.php?com=daotao&act=deleteUnassignedHocvien" class="mb-3" onsubmit="return confirm('Xóa toàn bộ <?=$total_items?> hồ sơ chưa gán khóa? Kết quả sát hạch và dữ liệu nguồn sẽ được giữ lại. Hệ thống sẽ sao lưu trước khi xóa.');"><input type="hidden" name="csrf" value="<?=htmlspecialchars($_SESSION['dt_hocvien_unassigned_csrf'])?>"><button class="btn btn-sm btn-danger"><i class="fas fa-trash mr-1"></i>Xóa tất cả học viên chưa gán khóa</button></form><?php endif; ?>
 			<table class="table dt-list table-hover mb-0">
 				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('hocvien','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-hocvien" title="Chọn tất cả"><?php endif; ?></th><th>Học viên</th><th>Thông tin đào tạo</th><th>Tiến độ</th><th class="text-center">Điều kiện dự thi</th><th class="dt-actions">Hành động</th></tr></thead>
 				<tbody>
@@ -58,11 +60,11 @@
 							</div>
 						</td>
 						<td>
-							<div><?php if(!empty($it['hang'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang'])?></span><?php endif; ?> <?php if(!empty($it['ma_khoa'])): ?><span class="dt-tag is-muted"><?=htmlspecialchars($it['ma_khoa'])?></span><?php endif; ?></div>
+							<div><?php if(!empty($it['hang'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang'])?></span><?php endif; ?> <?php if(!empty($it['ma_khoa'])): ?><span class="dt-tag is-muted"><?=htmlspecialchars($it['ma_khoa'])?></span><?php elseif((int)$it['id_khoa']===0): ?><span class="badge badge-warning">Chưa gán khóa</span><?php endif; ?></div>
 							<div class="dt-sub"><i class="fas fa-chalkboard-teacher"></i>GV: <?=htmlspecialchars($it['gv_hoten'] ?: '—')?></div>
 						</td>
 						<td>
-								<div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pct?>%"></span></div><span class="dt-prog-num"><?=$done?>/4</span></div>
+								<?php if((int)$it['id_khoa']>0): ?><div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pct?>%"></span></div><span class="dt-prog-num"><?=$done?>/4</span></div><?php else: ?><span class="text-muted">Chưa có dữ liệu đào tạo</span><?php endif; ?>
 							<?php if($s): $__kq = ($it['id_khoa']?'&id_khoa='.(int)$it['id_khoa']:'').'&keyword='.urlencode($it['cccd'] ?: $it['ma_hv']); ?><div class="dt-sub mt-1">
 								<a href="index.php?com=daotao&act=lythuyet<?=$__kq?>" class="badge badge-<?=$s['ly_thuyet']['dat']?'success':'secondary'?>" title="Xem lý thuyết">LT</a>
 								<a href="index.php?com=daotao&act=cabinkq<?=$__kq?>" class="badge badge-<?=$s['cabin']['dat']?'success':(empty($s['cabin']['yeu_cau'])?'info':'secondary')?>" title="<?=empty($s['cabin']['yeu_cau'])?'Nâng hạng — không yêu cầu cabin':'Xem cabin'?>">Cabin</a>
@@ -70,7 +72,7 @@
 								<a href="index.php?com=daotao&act=dat<?=$__kq?>" class="badge badge-<?=$s['dat']['dat']?'success':'secondary'?>" title="Xem DAT">DAT</a>
 							</div><?php endif; ?>
 						</td>
-						<td class="text-center"><?php if($s && $s['du_dieu_kien']): ?><span class="badge badge-success">Đủ ĐK</span><?php else: ?><span class="badge badge-danger">Chưa đủ</span><?php endif; ?></td>
+						<td class="text-center"><?php if((int)$it['id_khoa']===0): ?><span class="badge badge-secondary">Chờ gán khóa</span><?php elseif($s && $s['du_dieu_kien']): ?><span class="badge badge-success">Đủ ĐK</span><?php else: ?><span class="badge badge-danger">Chưa đủ</span><?php endif; ?></td>
 						<td class="dt-actions"><?php if(dt_can('hocvien','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=hocvien&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a><?php endif; ?> <?php if(dt_can('hocvien','delete')): ?><a href="index.php?com=daotao&act=crudDelete&entity=hocvien&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-danger dt-del" data-name="<?=htmlspecialchars($it['hoten'])?>"><i class="fas fa-trash"></i></a><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>

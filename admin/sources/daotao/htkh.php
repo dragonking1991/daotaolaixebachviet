@@ -205,16 +205,22 @@ function dt_htkh_ky_khoa_options($idKy)
 	return $options;
 }
 
+function dt_htkh_ket_qua_dat($row)
+{
+	$text = dt_strip_diacritics(trim((string)($row['ket_qua_tong'] ?? '').' '.(string)($row['ket_luan'] ?? '')));
+	if($text === '' || preg_match('/(^|[^a-z])(rot|truot|vang|khong|chua)([^a-z]|$)/', $text)) return false;
+	return (bool)preg_match('/(^|[^a-z])(dat|dau)([^a-z]|$)/', $text);
+}
+
 function dt_htkh_ky_passed($idKy, $khoa = '')
 {
 	global $d;
-	$rows = $d->rawQuery("select id_khoa, cccd, ma_hv, hoten, nam_sinh, hang, ma_khoa, ten_khoa, ket_luan from #_dt_ky_thi_hv where id_ky = ? and co_ket_qua = 1 order by substring_index(hoten, ' ', -1) asc, hoten asc", array((int)$idKy));
+	$rows = $d->rawQuery("select id_khoa, cccd, ma_hv, hoten, nam_sinh, hang, ma_khoa, ten_khoa, ket_qua_tong, ket_luan from #_dt_ky_thi_hv where id_ky = ? and co_ket_qua = 1 order by substring_index(hoten, ' ', -1) asc, hoten asc", array((int)$idKy));
 	$out = array();
 	foreach($rows as $r)
 	{
 		if($khoa !== '' && dt_htkh_khoa_key($r) !== $khoa) continue;
-		$kl = (string)$r['ket_luan'];
-		if(mb_stripos($kl, 'đạt') === false || mb_stripos($kl, 'không') !== false || mb_stripos($kl, 'chưa') !== false) continue;
+		if(!dt_htkh_ket_qua_dat($r)) continue;
 		$out[] = $r;
 	}
 	return $out;
