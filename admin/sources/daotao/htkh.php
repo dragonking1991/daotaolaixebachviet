@@ -108,7 +108,7 @@ function dt_htkh_list()
 	if($ids)
 	{
 		$in = implode(',', array_map('intval', array_keys($ids)));
-		foreach($d->rawQuery("select id_khoa, cccd, so_giay, ngay_cap, ghi_chu, hang_giay, nguoi_ky, ngay_ky from #_dt_htkh where id_khoa in ($in)") as $r)
+		foreach($d->rawQuery("select id_khoa, cccd, so_giay, so_quyet_dinh, ngay_cap, ghi_chu, hang_giay, nguoi_ky, ngay_ky from #_dt_htkh where id_khoa in ($in)") as $r)
 			$byCccd[$r['id_khoa'].'|'.$r['cccd']] = $r;
 	}
 	foreach($hvs as $hv)
@@ -133,9 +133,12 @@ function dt_htkh_save()
 
 	$soGiay = dt_htkh_norm_so_giay($_POST['so_giay'] ?? '');
 	if($soGiay === '') $soGiay = dt_htkh_so_giay($hv['ma_hv'], $hv['hang']);
+	$soQuyetDinh=trim((string)($_POST['so_quyet_dinh']??''));
+	if(mb_strlen($soQuyetDinh,'UTF-8')>100)$func->transfer('Số quyết định tối đa 100 ký tự.',$back,false);
 	$data = array(
 		'id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'ma_hv' => $hv['ma_hv'],
 		'so_giay' => htmlspecialchars($soGiay, ENT_QUOTES, 'UTF-8'),
+		'so_quyet_dinh' => $soQuyetDinh,
 		'hang_giay' => dt_htkh_hang_quydoi($hv['hang']),
 		'ngay_cap' => htmlspecialchars(trim($_POST['ngay_cap'] ?? ''), ENT_QUOTES, 'UTF-8'),
 		'ghi_chu' => htmlspecialchars(trim($_POST['ghi_chu'] ?? ''), ENT_QUOTES, 'UTF-8'),
@@ -161,9 +164,11 @@ function dt_htkh_cap_giay()
 	$chiDat = empty($_POST['tat_ca']);
 	$chucDanh = dt_htkh_chucdanh_key($_POST['chuc_danh'] ?? '');
 	$hangCe = dt_htkh_ce_key($_POST['hang_ce'] ?? '');
+	$soQuyetDinh=trim((string)($_POST['so_quyet_dinh']??''));
+	if(mb_strlen($soQuyetDinh,'UTF-8')>100)$func->transfer('Số quyết định tối đa 100 ký tự.',$back,false);
 	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($idKhoa));
 	$existing = array();
-	foreach($d->rawQuery("select cccd, so_giay from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $existing[$r['cccd']] = $r;
+	foreach($d->rawQuery("select cccd, so_giay, so_quyet_dinh from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $existing[$r['cccd']] = $r;
 	$d->startTransaction();
 	$n = 0;
 	foreach($hvs as $hv)
@@ -173,7 +178,7 @@ function dt_htkh_cap_giay()
 		$soGiay = ($ex && trim((string)$ex['so_giay']) !== '') ? $ex['so_giay'] : dt_htkh_so_giay($hv['ma_hv'], $hv['hang']);
 		$data = array(
 			'id_khoa' => $idKhoa, 'cccd' => $hv['cccd'], 'ma_hv' => $hv['ma_hv'],
-			'so_giay' => $soGiay, 'hang_giay' => dt_htkh_hang_quydoi($hv['hang']), 'hang_ce' => $hangCe,
+			'so_giay' => $soGiay, 'so_quyet_dinh' => $soQuyetDinh!==''?$soQuyetDinh:(string)($ex['so_quyet_dinh']??''), 'hang_giay' => dt_htkh_hang_quydoi($hv['hang']), 'hang_ce' => $hangCe,
 			'ngay_cap' => $ngayKy, 'ngay_ky' => $ngayKy, 'nguoi_ky' => $nguoiKy, 'chuc_danh' => $chucDanh, 'nguoi_nhap' => dt_username(),
 		);
 		$row = $d->rawQueryOne("select id from #_dt_htkh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $hv['cccd']));
@@ -215,7 +220,7 @@ function dt_htkh_ket_qua_dat($row)
 function dt_htkh_ky_passed($idKy, $khoa = '')
 {
 	global $d;
-	$rows = $d->rawQuery("select id_khoa, cccd, ma_hv, hoten, nam_sinh, hang, ma_khoa, ten_khoa, ket_qua_tong, ket_luan from #_dt_ky_thi_hv where id_ky = ? and co_ket_qua = 1 order by substring_index(hoten, ' ', -1) asc, hoten asc", array((int)$idKy));
+	$rows = $d->rawQuery("select id_khoa, cccd, ma_hv, hoten, nam_sinh, hang, ma_khoa, ten_khoa, ket_qua_tong, ket_luan from #_dt_ky_thi_hv where id_ky = ? and co_ket_qua = 1", array((int)$idKy));
 	$out = array();
 	foreach($rows as $r)
 	{
@@ -223,6 +228,19 @@ function dt_htkh_ky_passed($idKy, $khoa = '')
 		if(!dt_htkh_ket_qua_dat($r)) continue;
 		$out[] = $r;
 	}
+	usort($out,function($left,$right){
+		$leftCourse=trim((string)$left['ma_khoa']);if($leftCourse==='')$leftCourse=trim((string)$left['ten_khoa']);
+		$rightCourse=trim((string)$right['ma_khoa']);if($rightCourse==='')$rightCourse=trim((string)$right['ten_khoa']);
+		if($leftCourse===''&&$rightCourse===''){$courseCompare=(int)$left['id_khoa']<=>(int)$right['id_khoa'];}
+		else $courseCompare=strcmp(dt_strip_diacritics($leftCourse),dt_strip_diacritics($rightCourse));
+		if($courseCompare!==0)return $courseCompare;
+		$leftName=preg_split('/\s+/u',trim((string)$left['hoten']));$rightName=preg_split('/\s+/u',trim((string)$right['hoten']));
+		$givenCompare=strcmp(dt_strip_diacritics(end($leftName)),dt_strip_diacritics(end($rightName)));
+		if($givenCompare!==0)return $givenCompare;
+		$fullCompare=strcmp(dt_strip_diacritics($left['hoten']),dt_strip_diacritics($right['hoten']));
+		if($fullCompare!==0)return $fullCompare;
+		return strcmp((string)$left['cccd'],(string)$right['cccd']);
+	});
 	return $out;
 }
 
@@ -259,6 +277,8 @@ function dt_htkh_cap_giay_ky()
 		$func->transfer('Vui lòng nhập người ký và ngày ký hợp lệ (dd/mm/yyyy)', $back, false);
 	$chucDanh = dt_htkh_chucdanh_key($_POST['chuc_danh'] ?? '');
 	$hangCe = dt_htkh_ce_key($_POST['hang_ce'] ?? '');
+	$soQuyetDinh=trim((string)($_POST['so_quyet_dinh']??''));
+	if(mb_strlen($soQuyetDinh,'UTF-8')>100)$func->transfer('Số quyết định tối đa 100 ký tự.',$back,false);
 
 	if(!$passed) $func->transfer("Bộ lọc này chưa có học viên thi đạt (đã import kết quả).", $back, false);
 
@@ -269,11 +289,11 @@ function dt_htkh_cap_giay_ky()
 		$idKhoa = (int)$r['id_khoa'];
 		$cccd = $r['cccd'];
 		$base = trim((string)$r['ma_hv']) !== '' ? $r['ma_hv'] : $cccd;
-		$exist = $d->rawQueryOne("select id, so_giay from #_dt_htkh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
+		$exist = $d->rawQueryOne("select id, so_giay, so_quyet_dinh from #_dt_htkh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
 		$soGiay = ($exist && trim((string)$exist['so_giay']) !== '') ? $exist['so_giay'] : dt_htkh_so_giay($base, $r['hang']);
 		$data = array(
 			'id_khoa' => $idKhoa, 'cccd' => $cccd, 'ma_hv' => (string)$r['ma_hv'],
-			'so_giay' => $soGiay, 'hang_giay' => dt_htkh_hang_quydoi($r['hang']), 'hang_ce' => $hangCe,
+			'so_giay' => $soGiay, 'so_quyet_dinh' => $soQuyetDinh!==''?$soQuyetDinh:(string)($exist['so_quyet_dinh']??''), 'hang_giay' => dt_htkh_hang_quydoi($r['hang']), 'hang_ce' => $hangCe,
 			'ngay_cap' => $ngayKy, 'ngay_ky' => $ngayKy, 'nguoi_ky' => $nguoiKy, 'chuc_danh' => $chucDanh, 'nguoi_nhap' => dt_username(),
 		);
 		if($exist && $exist['id']) { $d->where('id', $exist['id']); $saved = $d->update('dt_htkh', $data); }
@@ -331,7 +351,7 @@ function dt_htkh_so_ngay($ngayKhaiGiang, $ngayManHoa)
 }
 
 /* Gom dữ liệu 1 giấy xác nhận theo đúng các trường cố định của mẫu (thông tư). */
-function dt_htkh_build_document($so_giay, $hoten, $ngaysinh, $hang, $hang_ce, $khoa, $ngay_khaigiang, $ngay_manhoa, $ngay_ky, $nguoi_ky, $chuc_danh)
+function dt_htkh_build_document($so_giay, $hoten, $ngaysinh, $hang, $hang_ce, $khoa, $ngay_khaigiang, $ngay_manhoa, $ngay_ky, $nguoi_ky, $chuc_danh, $so_quyet_dinh='')
 {
 	$tuNgay = dt_htkh_ngay_text($ngay_khaigiang);
 	$denNgay = dt_htkh_ngay_text($ngay_manhoa);
@@ -339,6 +359,7 @@ function dt_htkh_build_document($so_giay, $hoten, $ngaysinh, $hang, $hang_ce, $k
 	$ngayKyText = dt_htkh_ngay_text($ngay_ky);
 	return array(
 		'so_giay' => (string)$so_giay,
+		'so_quyet_dinh' => html_entity_decode((string)$so_quyet_dinh,ENT_QUOTES,'UTF-8'),
 		'hoten' => (string)$hoten,
 		'ngaysinh' => (string)$ngaysinh,
 		'hang' => dt_htkh_hang_text($hang, $hang_ce),
@@ -360,7 +381,7 @@ function dt_htkh_ky_documents()
 	foreach($passed as $r)
 	{
 		$idKhoa = (int)$r['id_khoa'];
-		$h = $d->rawQueryOne("select so_giay, hang_giay, hang_ce, ngay_ky, nguoi_ky, ngay_cap, chuc_danh from #_dt_htkh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $r['cccd']));
+		$h = $d->rawQueryOne("select so_giay, so_quyet_dinh, hang_giay, hang_ce, ngay_ky, nguoi_ky, ngay_cap, chuc_danh from #_dt_htkh where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $r['cccd']));
 		if(!$h || trim((string)$h['so_giay']) === '') continue; // chỉ in HV đã cấp giấy
 		$tenKhoa = trim((string)($r['ten_khoa'] !== '' ? $r['ten_khoa'] : $r['ma_khoa']));
 		$ngayKhaiGiang = ''; $ngayManHoa = '';
@@ -375,7 +396,7 @@ function dt_htkh_ky_documents()
 			}
 		}
 		$ngayKy = trim((string)$h['ngay_ky']) !== '' ? $h['ngay_ky'] : $h['ngay_cap'];
-		$documents[] = dt_htkh_build_document($h['so_giay'], $r['hoten'], $r['nam_sinh'], $r['hang'], $h['hang_ce'], $tenKhoa, $ngayKhaiGiang, $ngayManHoa, $ngayKy, $h['nguoi_ky'], $h['chuc_danh']);
+		$documents[] = dt_htkh_build_document($h['so_giay'], $r['hoten'], $r['nam_sinh'], $r['hang'], $h['hang_ce'], $tenKhoa, $ngayKhaiGiang, $ngayManHoa, $ngayKy, $h['nguoi_ky'], $h['chuc_danh'], $h['so_quyet_dinh']);
 	}
 	if(!$documents) $func->transfer('Bộ lọc này chưa có học viên đạt được cấp giấy. Hãy tạo giấy trước khi xuất hoặc in.', dt_htkh_ky_back(), false);
 	return array($ky, $documents);
@@ -424,12 +445,14 @@ function dt_htkh_upload_excel()
 		'cccd' => array('cccd','socccd','socmt','socmnd'),
 		'ma_hv' => array('mahv','mahocvien'),
 		'so_giay' => array('sogiayhtkh','sogiay','sohtkh','sochungnhan','sogcn','sogiaychungnhan'),
+		'so_quyet_dinh' => array('soquyetdinh','soqd','soquyetdinhcapgiay'),
 		'ngay_cap' => array('ngaycap','ngaycapgiay'),
 		'ghi_chu' => array('ghichu'),
 	);
 	$contains = array(
 		'cccd' => array('cccd','cmt'),
 		'so_giay' => array('htkh','chungnhan','sogiay'),
+		'so_quyet_dinh' => array('quyetdinh','soqd'),
 		'ma_hv' => array('mahv','mahocvien'),
 	);
 	list($headerRow, $map, $score) = dt_find_header_row($sheet, $highestRow, $highestCol, $aliases, $contains);
@@ -461,6 +484,7 @@ function dt_htkh_upload_excel()
 			'so_giay' => $soGiay, 'ngay_cap' => dt_val($row, $map, 'ngay_cap'), 'ghi_chu' => dt_val($row, $map, 'ghi_chu'),
 			'nguoi_nhap' => dt_username(),
 		);
+		if(isset($map['so_quyet_dinh']))$data['so_quyet_dinh']=dt_val($row,$map,'so_quyet_dinh');
 		$exist = $d->rawQueryOne("select id from #_dt_htkh where id_khoa = ? and cccd = ? limit 0,1", array($hv['id_khoa'], $hv['cccd']));
 		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_htkh', $data); }
 		else { $data['ngaytao'] = time(); $d->insert('dt_htkh', $data); }
@@ -482,14 +506,14 @@ function dt_htkh_export()
 	if(!$idKhoa) $func->transfer('Vui lòng chọn khóa để xuất', 'index.php?com=daotao&act=htkh', false);
 	$hvs = $d->rawQuery("select h.cccd, h.ma_hv, h.hoten, h.hang, h.gv_hoten from #_dt_hocvien h where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", array($idKhoa));
 	$byCccd = array();
-	foreach($d->rawQuery("select cccd, so_giay, ngay_cap, ghi_chu from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $byCccd[$r['cccd']] = $r;
-	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên','Số giấy HTKH','Ngày cấp','Ghi chú');
+	foreach($d->rawQuery("select cccd, so_giay, so_quyet_dinh, ngay_cap, ghi_chu from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $byCccd[$r['cccd']] = $r;
+	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên','Số giấy HTKH','Số quyết định','Ngày cấp','Ghi chú');
 	$out = array(); $stt = 1;
 	foreach($hvs as $hv)
 	{
 		$h = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : null;
 		$out[] = array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang'], $hv['gv_hoten'],
-			$h ? $h['so_giay'] : '', $h ? $h['ngay_cap'] : '', $h ? $h['ghi_chu'] : '');
+			$h ? $h['so_giay'] : '', $h ? $h['so_quyet_dinh'] : '', $h ? $h['ngay_cap'] : '', $h ? $h['ghi_chu'] : '');
 	}
 	dt_xlsx_simple('So giay HTKH', 'so-giay-htkh-'.date('Ymd_His').'.xlsx', $headers, $out, array(1, 3));
 }
@@ -504,7 +528,7 @@ function dt_htkh_print()
 	if(!$khoa) $func->transfer('Khóa không tồn tại', 'index.php?com=daotao&act=htkh', false);
 	$hvs = $d->rawQuery("select h.cccd, h.ma_hv, h.hoten, h.hang, h.ngaysinh from #_dt_hocvien h where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", array($idKhoa));
 	$byCccd = array();
-	foreach($d->rawQuery("select cccd, so_giay, hang_giay, hang_ce, ngay_ky, nguoi_ky, ngay_cap, chuc_danh from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $byCccd[$r['cccd']] = $r;
+	foreach($d->rawQuery("select cccd, so_giay, so_quyet_dinh, hang_giay, hang_ce, ngay_ky, nguoi_ky, ngay_cap, chuc_danh from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $byCccd[$r['cccd']] = $r;
 
 	$tenKhoa = trim((string)($khoa['ten_khoa'] !== '' ? $khoa['ten_khoa'] : $khoa['ma_khoa']));
 	$documents = array();
@@ -513,7 +537,7 @@ function dt_htkh_print()
 		$h = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : null;
 		if(!$h || trim((string)$h['so_giay']) === '') continue;
 		$ngayKy = trim((string)$h['ngay_ky']) !== '' ? $h['ngay_ky'] : $h['ngay_cap'];
-		$documents[] = dt_htkh_build_document($h['so_giay'], $hv['hoten'], $hv['ngaysinh'], $hv['hang'], $h['hang_ce'], $tenKhoa, $khoa['ngay_khaigiang'], $khoa['ngay_manhoa'], $ngayKy, $h['nguoi_ky'], $h['chuc_danh']);
+		$documents[] = dt_htkh_build_document($h['so_giay'], $hv['hoten'], $hv['ngaysinh'], $hv['hang'], $h['hang_ce'], $tenKhoa, $khoa['ngay_khaigiang'], $khoa['ngay_manhoa'], $ngayKy, $h['nguoi_ky'], $h['chuc_danh'], $h['so_quyet_dinh']);
 	}
 	if(!$documents) $func->transfer('Chưa có học viên nào được cấp giấy. Hãy bấm "Cấp giấy" trước khi in.', 'index.php?com=daotao&act=htkh&id_khoa='.$idKhoa, false);
 

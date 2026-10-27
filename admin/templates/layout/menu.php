@@ -754,6 +754,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link <?=($com=='xangdau' && in_array($act,array('khoa','saveKhoa','deleteKhoa'),true))?'active':''?>" href="index.php?com=xangdau&act=khoa" title="Quản lý khóa XD">
+                                <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Quản lý khóa XD</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link <?=($com=='xangdau' && (strpos($act, 'ceInvoice') === 0 || $act=='ce'))?'active':''?>" href="index.php?com=xangdau&act=ce" title="Học viên và hóa đơn CE">
                                 <i class="nav-icon text-sm far fa-caret-square-right"></i><p>Quản lý CE</p>
                             </a>

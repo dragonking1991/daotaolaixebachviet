@@ -79,10 +79,10 @@
 			</div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start">
 				<label class="mb-1 small text-muted">Khóa</label>
-				<select class="form-control form-control-sm text-sm" name="khoa" style="min-width:140px;">
+				<select class="form-control form-control-sm text-sm" name="khoa" style="min-width:140px;max-width:100%;" title="Khóa lưu trong XD và các nhóm đồng bộ DAT cũ theo hạng">
 					<option value="">Tất cả khóa</option>
 					<?php foreach(($xd_hocvien_khoas ?? array()) as $k) { ?>
-					<option value="<?=htmlspecialchars($k['khoa'], ENT_QUOTES, 'UTF-8')?>" <?=($xd_filter_khoa === (string)$k['khoa'])?'selected':''?>><?=htmlspecialchars($k['khoa'])?> (<?=(int)$k['so']?>)</option>
+					<option value="<?=htmlspecialchars($k['khoa'], ENT_QUOTES, 'UTF-8')?>" <?=($xd_filter_khoa === (string)$k['khoa'])?'selected':''?>><?=htmlspecialchars(xd_hocvien_course_label($k), ENT_QUOTES, 'UTF-8')?></option>
 					<?php } ?>
 				</select>
 			</div>

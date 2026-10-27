@@ -54,7 +54,7 @@ function xd_get_hocvien()
 		 from #_xd_hocvien where gv_key <> '' group by gv_key order by substring_index(max(gv_hoten), ' ', -1) asc, max(gv_hoten) asc",
 		array()
 	);
-	$xd_hocvien_khoas = $d->rawQuery("select khoa, count(*) as so from #_xd_hocvien where khoa <> '' group by khoa order by khoa asc", array());
+	$xd_hocvien_khoas = $d->rawQuery("select khoa, count(*) as so, sum(case when user_tao='Đồng bộ DAT' then 1 else 0 end) as so_dong_bo from #_xd_hocvien where khoa <> '' group by khoa order by khoa asc", array());
 
 	$url = "index.php?com=xangdau&act=hocvien";
 	if($xd_filter_keyword !== '') $url .= '&keyword='.urlencode($xd_filter_keyword);
@@ -65,6 +65,20 @@ function xd_get_hocvien()
 	if($xd_filter_tt_from !== '') $url .= '&tt_from='.urlencode($xd_filter_tt_from);
 	if($xd_filter_tt_to !== '') $url .= '&tt_to='.urlencode($xd_filter_tt_to);
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
+}
+
+function xd_hocvien_course_label($course)
+{
+	$name=trim((string)$course['khoa']);
+	$total=(int)$course['so'];$synced=(int)($course['so_dong_bo']??0);
+	$ranks=array('bss'=>'B số sàn','btd'=>'B tự động','c1'=>'C1','c'=>'C','ce'=>'CE');
+	$key=strtolower($name);
+	$label=$name.' ('.$total.')';
+	if($synced>0&&isset($ranks[$key]))$label.=' - Gộp theo hạng '.$ranks[$key].', không phải một khóa';
+	elseif($synced===$total&&$total>0)$label.=' - Khóa đồng bộ từ Đào tạo';
+	else $label.=' - Khóa lưu trong XD';
+	if($synced>0&&$synced<$total)$label.='; '.$synced.' đồng bộ DAT + '.($total-$synced).' XD có sẵn';
+	return $label;
 }
 
 function xd_hocvien_where_and_params($scope = 'all', $keyword = '', $nhom = '', $ttFrom = '', $ttTo = '', $khoa = '', $gvKey = '')

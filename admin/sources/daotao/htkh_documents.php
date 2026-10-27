@@ -30,7 +30,7 @@ function dt_htkh_document_rows($doc)
 		array('image' => true, 'height' => 90),
 		array('text' => 'GIẤY XÁC NHẬN HOÀN THÀNH KHÓA ĐÀO TẠO LÁI XE', 'align' => 'center', 'bold' => true, 'size' => 14, 'height' => 26, 'nowrap' => true),
 		array('text' => 'Số: '.dt_htkh_norm_so_giay(html_entity_decode($g('so_giay'), ENT_QUOTES, 'UTF-8')), 'align' => 'center', 'bold' => true, 'size' => 13, 'height' => 22, 'nowrap' => true),
-		array('text' => '', 'height' => 24),
+		array('text' => trim($g('so_quyet_dinh'))!==''?'Số Quyết định: '.$g('so_quyet_dinh'):'', 'align' => 'center', 'size' => 13, 'height' => 24, 'nowrap' => true),
 		array('text' => 'TRUNG TÂM GIÁO DỤC NGHỀ NGHIỆP BÁCH VIỆT', 'align' => 'center', 'bold' => true, 'color' => 'C00000', 'size' => 14, 'height' => 26, 'nowrap' => true),
 		array('text' => '', 'height' => 26),
 		array('text' => 'Xác nhận cho Ông (Bà) :  '.mb_strtoupper($g('hoten'), 'UTF-8'), 'size' => 14, 'height' => 28),

@@ -37,6 +37,8 @@
 				<input id="htkh-nguoi-ky" type="text" name="nguoi_ky" class="form-control form-control-sm mr-2" placeholder="Họ tên người ký" maxlength="255" required style="width:180px">
 				<label class="mr-2" for="htkh-ngay-ky">Ngày ký</label>
 				<input id="htkh-ngay-ky" type="text" name="ngay_ky" class="form-control form-control-sm mr-2" placeholder="dd/mm/yyyy" value="<?=date('d/m/Y')?>" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" maxlength="10" required style="width:140px">
+				<label class="mr-2" for="htkh-so-quyet-dinh">Số Quyết định</label>
+				<input id="htkh-so-quyet-dinh" type="text" name="so_quyet_dinh" class="form-control form-control-sm mr-2" placeholder="Số quyết định" maxlength="100" style="width:150px">
 				<select name="chuc_danh" class="form-control form-control-sm mr-2" style="width:230px" title="Chức danh người ký"><option value="kt_pgd">KT. GIÁM ĐỐC / PHÓ GIÁM ĐỐC</option><option value="gd">GIÁM ĐỐC</option></select>
 				<select name="hang_ce" class="form-control form-control-sm mr-2" style="width:170px" title="Kiểu nâng hạng (chỉ áp dụng hạng CE)"><option value="">Hạng CE: C lên CE</option><option value="d">Hạng CE: D lên CE</option><option value="d2">Hạng CE: D2 lên CE</option></select>
 				<button class="btn btn-sm bg-gradient-warning"><i class="fas fa-certificate mr-1"></i>Tạo giấy xác nhận</button>
@@ -96,6 +98,10 @@
 							<input id="htkh-khoa-ngay-ky" type="text" name="ngay_ky" class="form-control form-control-sm" placeholder="dd/mm/yyyy" aria-describedby="htkh-khoa-ngay-ky-hint">
 							<small id="htkh-khoa-ngay-ky-hint" class="form-text text-muted">Để trống: dùng ngày hôm nay.</small>
 						</div>
+						<div class="form-group col-md-6 col-xl-3 mb-3 mb-xl-0">
+							<label for="htkh-khoa-so-quyet-dinh">Số Quyết định</label>
+							<input id="htkh-khoa-so-quyet-dinh" type="text" name="so_quyet_dinh" class="form-control form-control-sm" maxlength="100" placeholder="Nhập số quyết định">
+						</div>
 						<div class="form-group col-md-6 col-xl-4 mb-3 mb-md-0">
 							<label for="htkh-khoa-chuc-danh">Chức danh người ký</label>
 							<select id="htkh-khoa-chuc-danh" name="chuc_danh" class="form-control form-control-sm">
@@ -127,7 +133,7 @@
 			</form>
 			<?php endif; ?>
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th style="width:520px">Số giấy HTKH / Ngày cấp</th><th>Ký</th></tr></thead>
+				<thead><tr><th>Họ và tên</th><th>CCCD</th><th>Hạng</th><th style="width:700px">Số giấy HTKH / Ngày cấp / Số Quyết định</th><th>Ký</th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): foreach($items as $it): $h=$it['htkh']; $autoSo = dt_htkh_so_giay($it['ma_hv'], $it['hang']); ?>
 					<tr>
@@ -135,14 +141,15 @@
 						<td><?=htmlspecialchars($it['cccd'])?></td>
 						<td><?=htmlspecialchars($it['hang'])?> <span class="badge badge-light border" title="Hạng in trên giấy"><?=htmlspecialchars(dt_htkh_hang_quydoi($it['hang']))?></span></td>
 						<td>
-							<form method="post" action="index.php?com=daotao&act=saveHtkh&id_khoa=<?=(int)$it['id_khoa']?>" style="display:flex;gap:6px;align-items:center;margin:0;">
+							<form method="post" action="index.php?com=daotao&act=saveHtkh&id_khoa=<?=(int)$it['id_khoa']?>" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0;">
 								<input type="hidden" name="cccd" value="<?=htmlspecialchars($it['cccd'])?>">
 								<input type="text" name="so_giay" class="form-control form-control-sm" style="width:200px" placeholder="<?=htmlspecialchars($autoSo)?>" value="<?=$h?htmlspecialchars($h['so_giay']):''?>" title="Để trống sẽ tự sinh: <?=htmlspecialchars($autoSo)?>">
 								<input type="text" name="ngay_cap" class="form-control form-control-sm" style="width:120px" placeholder="dd/mm/yyyy" value="<?=$h?htmlspecialchars($h['ngay_cap']):''?>">
+								<input type="text" name="so_quyet_dinh" class="form-control form-control-sm" style="width:140px" placeholder="Số quyết định" maxlength="100" value="<?=$h?htmlspecialchars($h['so_quyet_dinh']):''?>">
 								<input type="text" name="ghi_chu" class="form-control form-control-sm" style="width:110px" placeholder="Ghi chú" value="<?=$h?htmlspecialchars($h['ghi_chu']):''?>">
 								<button class="btn btn-xs bg-gradient-success"><i class="fas fa-save mr-1"></i>Lưu</button>
 							</form>
-							<?php if($h && (trim((string)(isset($h['nguoi_ky'])?$h['nguoi_ky']:'')) !== '' || trim((string)(isset($h['ngay_ky'])?$h['ngay_ky']:'')) !== '')): ?><div class="dt-sub"><i class="fas fa-signature"></i> <?=htmlspecialchars(isset($h['nguoi_ky'])?$h['nguoi_ky']:'')?><?php if(!empty($h['ngay_ky'])): ?> <span class="dt-sep">•</span> <?=htmlspecialchars($h['ngay_ky'])?><?php endif; ?></div><?php endif; ?>
+							<?php if($h && (trim((string)($h['so_quyet_dinh']??''))!=='' || trim((string)($h['nguoi_ky']??''))!=='' || trim((string)($h['ngay_ky']??''))!=='')): ?><div class="dt-sub"><i class="fas fa-signature"></i><?php if(!empty($h['so_quyet_dinh'])): ?> QĐ: <?=htmlspecialchars($h['so_quyet_dinh'])?><?php endif; ?><?php if(!empty($h['nguoi_ky'])): ?> <?=htmlspecialchars($h['nguoi_ky'])?><?php endif; ?><?php if(!empty($h['ngay_ky'])): ?> <span class="dt-sep">•</span> <?=htmlspecialchars($h['ngay_ky'])?><?php endif; ?></div><?php endif; ?>
 						</td>
 						<td class="text-center"><?php if($h && trim((string)$h['so_giay'])!==''): ?><span class="badge badge-success">Đã có</span><?php else: ?><span class="badge badge-secondary">Chưa</span><?php endif; ?></td>
 					</tr>

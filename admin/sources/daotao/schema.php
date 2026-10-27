@@ -232,6 +232,7 @@ function dt_ensure_tables()
 		cccd VARCHAR(20) DEFAULT '',
 		ma_hv VARCHAR(100) DEFAULT '',
 		so_giay VARCHAR(100) DEFAULT '',
+		so_quyet_dinh VARCHAR(100) DEFAULT '',
 		ngay_cap VARCHAR(20) DEFAULT '',
 		hang_giay VARCHAR(20) DEFAULT '',
 		hang_ce VARCHAR(10) DEFAULT '',
@@ -327,6 +328,7 @@ function dt_ensure_tables()
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('sathach_noidung_v1')) { dt_ensure_sathach_noidung_cols(); dt_migration_mark('sathach_noidung_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_chucdanh_v1')) { dt_ensure_htkh_chucdanh(); dt_migration_mark('htkh_chucdanh_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_hangce_v1')) { dt_ensure_htkh_hangce(); dt_migration_mark('htkh_hangce_v1'); }
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_soquyetdinh_v1')) { dt_ensure_htkh_soquyetdinh(); dt_migration_mark('htkh_soquyetdinh_v1'); }
 
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('update8_v1'))
 	{
@@ -397,6 +399,14 @@ function dt_ensure_htkh_hangce()
 	global $d;
 	$ex = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_htkh' and column_name = 'hang_ce' limit 0,1");
 	if(!$ex) $d->rawQuery("ALTER TABLE table_dt_htkh ADD COLUMN hang_ce VARCHAR(10) DEFAULT ''");
+}
+
+/* Số quyết định hiển thị/in trên giấy HTKH. */
+function dt_ensure_htkh_soquyetdinh()
+{
+	global $d;
+	$ex=$d->rawQueryOne("select column_name from information_schema.columns where table_schema=database() and table_name='table_dt_htkh' and column_name='so_quyet_dinh' limit 0,1");
+	if(!$ex)$d->rawQuery("ALTER TABLE table_dt_htkh ADD COLUMN so_quyet_dinh VARCHAR(100) DEFAULT '' AFTER so_giay");
 }
 
 /* Cột chức danh người ký trên giấy HTKH (KT. GIÁM ĐỐC / GIÁM ĐỐC). */

@@ -34,7 +34,7 @@ function kythi_outcome_check($condition,$message){if(!$condition)throw new Runti
 set_exception_handler(function($error){fwrite(STDERR,$error->getMessage()."\n".$error->getTraceAsString()."\n");exit(1);});
 
 $_SESSION=array('kythi_outcome_test'=>array('username'=>'kythi_outcome_test'));
-$login_admin='kythi_outcome_test';$func=new KythiOutcomeFunctions();$temporaryTables=array('dt_ky_thi_hv','dt_ky_thi','dt_hocvien','dt_khoa');
+$login_admin='kythi_outcome_test';$func=new KythiOutcomeFunctions();$temporaryTables=array('dt_ky_thi_hv','dt_ky_thi','dt_hocvien','dt_khoa','dt_htkh');
 foreach($temporaryTables as $table)
 {
 	$definition=$d->rawQuery('show create table table_'.$table);
@@ -56,6 +56,28 @@ try
 	kythi_outcome_check((int)$counts[0]['passed']===134 && (int)$counts[0]['failed']===32 && (int)$counts[0]['blank']===0,'Cached “Kết luận CSDT” formulas were not imported correctly: '.json_encode($counts[0],JSON_UNESCAPED_UNICODE));
 	$passed=dt_htkh_ky_passed($id);
 	kythi_outcome_check(count($passed)===134,'HTKH pass filter should return 134 B/C1 students, got '.count($passed));
+	$previous=null;
+	foreach($passed as $row)
+	{
+		$course=trim((string)$row['ma_khoa']);if($course==='')$course=trim((string)$row['ten_khoa']);
+		$parts=preg_split('/\s+/u',trim((string)$row['hoten']));
+		$current=array('course'=>dt_strip_diacritics($course),'id'=>(int)$row['id_khoa'],'given'=>dt_strip_diacritics(end($parts)),'name'=>dt_strip_diacritics($row['hoten']),'cccd'=>(string)$row['cccd']);
+		if($previous)
+		{
+			$courseCompare=strcmp($previous['course'],$current['course']);
+			if($previous['course']===''&&$current['course']==='')$courseCompare=$previous['id']<=>$current['id'];
+			$ordered=$courseCompare<0||($courseCompare===0&&($previous['given']<$current['given']||($previous['given']===$current['given']&&($previous['name']<$current['name']||($previous['name']===$current['name']&&$previous['cccd']<=$current['cccd'])))));
+			kythi_outcome_check($ordered,'HTKH passed list is not ordered by course then name A-Z at '.$row['hoten']);
+		}
+		$previous=$current;
+	}
+	$document=dt_htkh_build_document('HTKH-TEST','Student Test','01/01/2000','B1','','Course','2026-01-01','2026-02-01','27/10/2026','Signer','gd','QD-2026-001');
+	$decisionRow=false;foreach(dt_htkh_document_rows($document) as $documentRow)if(strpos((string)($documentRow['text']??''),'Số Quyết định: QD-2026-001')!==false)$decisionRow=true;
+	kythi_outcome_check($decisionRow,'Generated HTKH document omitted the decision number');
+	$_REQUEST=array('id_ky'=>$id,'ky_khoa'=>'');$_POST=array('id_ky'=>$id,'ky_khoa'=>'','nguoi_ky'=>'Regression Signer','ngay_ky'=>'27/10/2026','chuc_danh'=>'gd','hang_ce'=>'','so_quyet_dinh'=>'QD-2026-001');
+	try{dt_htkh_cap_giay_ky();throw new RuntimeException('HTKH issue flow did not finish.');}catch(KythiOutcomeNotice $notice){kythi_outcome_check($notice->success,$notice->getMessage());}
+	$savedDecision=$d->rawQuery('select count(*) as num from #_dt_htkh where so_quyet_dinh=?',array('QD-2026-001'));
+	kythi_outcome_check((int)$savedDecision[0]['num']===134,'Decision number was not persisted for every passed student');
 	$trainingProfiles=$d->rawQuery('select count(*) as num from #_dt_hocvien');
 	kythi_outcome_check((int)$trainingProfiles[0]['num']===0,'Exam result import must not create training profiles');
 	echo "PASS real B/C1 result import: 166 rows, 134 passed, 32 failed; HTKH returns 134; no training profile created\n";

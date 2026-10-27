@@ -18,6 +18,7 @@ require_once SOURCES.'xangdau/excel_stream.php';
 require_once SOURCES.'xangdau/excel_open.php';
 require_once SOURCES.'xangdau/hoadon_import.php';
 require_once SOURCES.'xangdau/hocvien_crud.php';
+require_once SOURCES.'xangdau/khoa.php';
 require_once SOURCES.'xangdau/hocvien_import.php';
 require_once SOURCES.'xangdau/algorithm.php';
 require_once SOURCES.'xangdau/loc.php';
@@ -29,6 +30,13 @@ require_once SOURCES.'xangdau/export_tonghop.php';
 
 switch($act)
 {
+	case 'khoa':
+		if(xd_permission_denied($act)) $func->transfer('Bạn không có quyền vào trang này','index.php',false);
+		xd_ensure_tables();xd_courses_page();$template='xangdau/khoa/items';break;
+	case 'saveKhoa':
+	case 'deleteKhoa':
+		if(xd_permission_denied($act)) $func->transfer('Bạn không có quyền vào trang này','index.php',false);
+		xd_ensure_tables();xd_course_save_action($act==='deleteKhoa');break;
 	// ---- Cấu hình định mức ----
 	case "config":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
