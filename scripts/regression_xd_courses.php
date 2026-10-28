@@ -2,13 +2,15 @@
 if(PHP_SAPI!=='cli'||($argv[1]??'')!=='--local-db')exit("Usage: php scripts/regression_xd_courses.php --local-db\n");
 define('LIBRARIES',dirname(__DIR__).'/libraries/');define('SOURCES',dirname(__DIR__).'/admin/sources/');
 $_SERVER['SERVER_NAME']='localhost';require LIBRARIES.'config.php';require LIBRARIES.'autoload.php';new AutoLoad();$d=new PDODb($config['database']);
-require SOURCES.'xangdau/khoa.php';require SOURCES.'xangdau/permissions.php';require SOURCES.'xangdau/hocvien_crud.php';
+require SOURCES.'xangdau/khoa.php';require SOURCES.'xangdau/permissions.php';require SOURCES.'xangdau/helpers.php';require SOURCES.'xangdau/hocvien_crud.php';
 function xd_course_test($condition,$message){if(!$condition)throw new RuntimeException($message);}
 class XdCourseTestFunctions{public function check_permission(){return true;} public function transfer($message,$url,$success=true){throw new RuntimeException($message);} public function pagination($total,$perPage,$page,$url){return '';}}
 $func=new XdCourseTestFunctions();$backups=array();$login_admin='test';$_SESSION=array('test'=>array('active'=>true),'list_quyen'=>array('xangdau_view'));
 set_exception_handler(function($error){fwrite(STDERR,$error->getMessage()."\n");exit(1);});
 $definition=xd_course_query('show create table #_xd_hocvien');
 $sql=preg_replace('/^CREATE TABLE /','CREATE TEMPORARY TABLE ',$definition[0]['Create Table']);$sql=preg_replace('/ AUTO_INCREMENT=\d+/','',$sql);xd_course_query($sql);
+$courseDefinition=xd_course_query('show create table #_dt_khoa');
+$courseSql=preg_replace('/^CREATE TABLE /','CREATE TEMPORARY TABLE ',$courseDefinition[0]['Create Table']);$courseSql=preg_replace('/ AUTO_INCREMENT=\d+/','',$courseSql);xd_course_query($courseSql);
 try
 {
 	xd_course_test(xd_permission_denied('saveKhoa')&&xd_permission_denied('deleteKhoa')&&!xd_permission_denied('khoa'),'View-only course permissions failed');
@@ -40,11 +42,25 @@ try
 	xd_course_query('insert into #_xd_hocvien (ho_ten,cccd,khoa,user_tao) values (?,?,?,?)',array('Imported student','990000000008','K122-B(TD)','ketoanxd'));
 	$mixed=xd_course_change('K122-B(TD)','IMPORTED ONLY');$backups[]=$mixed['backup'];
 	xd_course_test($mixed['changed']===1&&$mixed['kept']===1&&$datBefore===xd_course_query("select * from #_xd_hocvien where user_tao='Đồng bộ DAT'"),'Mixed-course rename changed a DAT-origin row');
+	xd_course_query("insert into #_dt_khoa (ma_khoa,ten_khoa,hang) values ('79044K261016','Khóa đồng bộ mã 16','B11')");
+	xd_course_query("insert into #_xd_hocvien (ho_ten,cccd,khoa,user_tao) values (?,?,?,?)",array('Synced course student','990000000007','79044K261016','Đồng bộ DAT'));
+	$curPage=1;$_REQUEST=array();xd_get_hocvien();$syncedCourse=null;
+	foreach($xd_hocvien_khoas as $course)if($course['khoa']==='79044K261016')$syncedCourse=$course;
+	xd_course_test($syncedCourse&&$syncedCourse['ten_khoa']==='Khóa đồng bộ mã 16','Training course name was not joined to the synchronized XD group');
+	xd_course_test(xd_hocvien_course_group($syncedCourse)==='synced'&&xd_hocvien_course_label($syncedCourse)==='Khóa đồng bộ mã 16 · 1 HV','Synchronized course label should be concise and display the training name');
+	ob_start();require dirname(__DIR__).'/admin/templates/xangdau/hocvien/items_tpl.php';$listHtml=ob_get_clean();
+	$groupMarkup=strpos($listHtml,'<optgroup label="Đồng bộ từ Đào tạo (')!==false;$codeMarkup=strpos($listHtml,'value="79044K261016"')!==false;$nameMarkup=strpos($listHtml,'Khóa đồng bộ mã 16 · 1 HV')!==false;
+	xd_course_test($groupMarkup&&$codeMarkup&&$nameMarkup,'Course dropdown grouping or code value is incorrect: '.json_encode(array('group'=>$groupMarkup,'code'=>$codeMarkup,'name'=>$nameMarkup,'groups'=>$xd_hocvien_khoa_groups),JSON_UNESCAPED_UNICODE));
+	$rankCourse=array('khoa'=>'c1','so'=>96,'so_dong_bo'=>46);
+	xd_course_test(xd_hocvien_course_group($rankCourse)==='rank'&&xd_hocvien_course_label($rankCourse)==='C1 · 96 HV (46 DAT + 50 XD)','Mixed rank aggregation label is unclear or inaccurate');
+	$storedCourse=array('khoa'=>'98B-C','so'=>8,'so_dong_bo'=>0);
+	xd_course_test(xd_hocvien_course_group($storedCourse)==='stored'&&xd_hocvien_course_label($storedCourse)==='98B-C · 8 HV','XD-only course label is incorrect');
 	echo "PASS course rename/delete, protected history, collision rejection, CSRF and permission matrix\n";
 }
 finally
 {
 	$d->rawQuery('drop temporary table if exists table_xd_hocvien');
+	$d->rawQuery('drop temporary table if exists table_dt_khoa');
 	foreach($backups as $backup){$path=dirname(__DIR__).'/backups/'.$backup;if(is_file($path))unlink($path);}
 	echo "Temporary XD table and test backups removed; real data unchanged\n";
 }

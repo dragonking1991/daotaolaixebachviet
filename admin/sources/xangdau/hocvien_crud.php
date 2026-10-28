@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_hocvien()
 {
-	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers, $xd_filter_khoa, $xd_filter_gv, $xd_hocvien_khoas;
+	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers, $xd_filter_khoa, $xd_filter_gv, $xd_hocvien_khoas, $xd_hocvien_khoa_groups;
 
 	$where = "";
 	$params = array();
@@ -54,7 +54,15 @@ function xd_get_hocvien()
 		 from #_xd_hocvien where gv_key <> '' group by gv_key order by substring_index(max(gv_hoten), ' ', -1) asc, max(gv_hoten) asc",
 		array()
 	);
-	$xd_hocvien_khoas = $d->rawQuery("select khoa, count(*) as so, sum(case when user_tao='Đồng bộ DAT' then 1 else 0 end) as so_dong_bo from #_xd_hocvien where khoa <> '' group by khoa order by khoa asc", array());
+	$xd_hocvien_khoas = $d->rawQuery("select x.khoa, count(*) as so, sum(case when x.user_tao='Đồng bộ DAT' then 1 else 0 end) as so_dong_bo,
+		(select k.ten_khoa from #_dt_khoa k where (k.ma_khoa=x.khoa or k.ten_khoa=x.khoa) and k.ten_khoa <> '' order by (k.ma_khoa=x.khoa) desc limit 1) as ten_khoa
+		from #_xd_hocvien x where x.khoa <> '' group by x.khoa order by x.khoa asc", array());
+	$xd_hocvien_khoa_groups=array('synced'=>array(),'mixed'=>array(),'stored'=>array(),'rank'=>array());
+	foreach($xd_hocvien_khoas as $course)
+	{
+		$group=xd_hocvien_course_group($course);
+		$xd_hocvien_khoa_groups[$group][]=$course;
+	}
 
 	$url = "index.php?com=xangdau&act=hocvien";
 	if($xd_filter_keyword !== '') $url .= '&keyword='.urlencode($xd_filter_keyword);
@@ -67,17 +75,31 @@ function xd_get_hocvien()
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
 }
 
-function xd_hocvien_course_label($course)
+function xd_hocvien_course_group($course)
 {
 	$name=trim((string)$course['khoa']);
 	$total=(int)$course['so'];$synced=(int)($course['so_dong_bo']??0);
 	$ranks=array('bss'=>'B số sàn','btd'=>'B tự động','c1'=>'C1','c'=>'C','ce'=>'CE');
 	$key=strtolower($name);
-	$label=$name.' ('.$total.')';
-	if($synced>0&&isset($ranks[$key]))$label.=' - Gộp theo hạng '.$ranks[$key].', không phải một khóa';
-	elseif($synced===$total&&$total>0)$label.=' - Khóa đồng bộ từ Đào tạo';
-	else $label.=' - Khóa lưu trong XD';
-	if($synced>0&&$synced<$total)$label.='; '.$synced.' đồng bộ DAT + '.($total-$synced).' XD có sẵn';
+	if($synced>0&&isset($ranks[$key]))return 'rank';
+	if($synced===$total&&$total>0)return 'synced';
+	if($synced>0)return 'mixed';
+	return 'stored';
+}
+
+function xd_hocvien_course_label($course)
+{
+	$name=trim((string)$course['khoa']);
+	$total=(int)$course['so'];$synced=(int)($course['so_dong_bo']??0);
+	$trainingName=trim((string)($course['ten_khoa']??''));
+	$ranks=array('bss'=>'B số sàn','btd'=>'B tự động','c1'=>'C1','c'=>'C','ce'=>'CE');
+	$key=strtolower($name);
+	$group=xd_hocvien_course_group($course);
+	if($group==='rank')
+		return $ranks[$key].' · '.$total.' HV'.($synced<$total?' ('.$synced.' DAT + '.($total-$synced).' XD)':'');
+	$label=($group==='synced'&&$trainingName!=='')?$trainingName:$name;
+	$label.=' · '.$total.' HV';
+	if($group==='mixed')$label.=' ('.$synced.' DAT + '.($total-$synced).' XD)';
 	return $label;
 }
 

@@ -56,14 +56,32 @@ function dt_kythi_delete()
 /* Chi tiết một kỳ: danh sách HV + bộ lọc khóa để thêm HV đủ điều kiện. */
 function dt_kythi_detail()
 {
-	global $d, $func, $ky, $items, $ds_khoa, $total_items, $tracuu_kq, $tracuu_kw;
+	global $d, $func, $ky, $items, $ds_khoa, $total_items, $result_total, $result_filters, $result_stats, $tracuu_kq, $tracuu_kw;
 	$id = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
 	$ky = $d->rawQueryOne("select * from #_dt_ky_thi where id = ? limit 0,1", array($id));
 	if(!$ky || !$ky['id']) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
 
 	$ds_khoa = dt_khoa_options();
-	$items = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id));
+	$allItems = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id));
+	$result_total = count($allItems);
+	$result_filters = array('ma_khoa' => dt_req('ma_khoa'), 'ten_khoa' => dt_req('ten_khoa'));
+	$items = array(); $result_stats = array();
+	foreach($allItems as $item)
+	{
+		$maKhoa = trim((string)$item['ma_khoa']); $tenKhoa = trim((string)$item['ten_khoa']);
+		$matchMaKhoa = function_exists('mb_stripos') ? mb_stripos($maKhoa, $result_filters['ma_khoa'], 0, 'UTF-8') : stripos($maKhoa, $result_filters['ma_khoa']);
+		$matchTenKhoa = function_exists('mb_stripos') ? mb_stripos($tenKhoa, $result_filters['ten_khoa'], 0, 'UTF-8') : stripos($tenKhoa, $result_filters['ten_khoa']);
+		if($result_filters['ma_khoa'] !== '' && $matchMaKhoa === false) continue;
+		if($result_filters['ten_khoa'] !== '' && $matchTenKhoa === false) continue;
+		$items[] = $item;
+		$key = json_encode(array($maKhoa, $tenKhoa), JSON_UNESCAPED_UNICODE);
+		if(!isset($result_stats[$key])) $result_stats[$key] = array('ma_khoa' => $maKhoa, 'ten_khoa' => $tenKhoa, 'so_hv' => 0, 'so_dat' => 0);
+		$result_stats[$key]['so_hv']++;
+		if((int)$item['co_ket_qua'] === 1 && dt_htkh_ket_qua_dat($item)) $result_stats[$key]['so_dat']++;
+	}
 	$total_items = count($items);
+	$result_stats = array_values($result_stats);
+	usort($result_stats, function($a, $b) { return strcmp($a['ma_khoa'].' '.$a['ten_khoa'], $b['ma_khoa'].' '.$b['ten_khoa']); });
 
 	// Tra cứu học viên đủ điều kiện (chưa thuộc kỳ) để thêm lẻ.
 	$tracuu_kq = array(); $tracuu_kw = trim(dt_req('tc'));
@@ -350,6 +368,18 @@ function dt_kythi_them_hv($idKy, $hv)
 	return $inserted !== false;
 }
 
+/* Ưu tiên thông tin khóa trong Đào tạo; nếu hồ sơ khóa thiếu thì giữ giá trị từ kết quả import. */
+function dt_kythi_course_values($row, $hv)
+{
+	global $d;
+	$course = ($hv && !empty($hv['id_khoa'])) ? $d->rawQueryOne("select ma_khoa, ten_khoa from #_dt_khoa where id = ? limit 0,1", array((int)$hv['id_khoa'])) : null;
+	return array(
+		'ma_hv' => ($hv && trim((string)$hv['ma_hv']) !== '') ? $hv['ma_hv'] : $row['ma_hv'],
+		'ma_khoa' => ($course && trim((string)$course['ma_khoa']) !== '') ? $course['ma_khoa'] : $row['ma_khoa'],
+		'ten_khoa' => ($course && trim((string)$course['ten_khoa']) !== '') ? $course['ten_khoa'] : $row['ten_khoa'],
+	);
+}
+
 /* Xuất Excel kỳ kiểm tra theo mẫu tổng hợp để kiểm tra (gồm quá trình đào tạo).
  * Mô phỏng gộp chung trong nội dung Lý thuyết. Lọc theo đủ/không đủ điều kiện qua dk=du|chua|all. */
 function dt_kythi_export()
@@ -370,9 +400,10 @@ function dt_kythi_export()
 		$hv = ($r['cccd'] !== '') ? dt_find_hocvien_by_cccd($r['cccd']) : null;
 		if($hv)
 		{
-			$k = $d->rawQueryOne("select ma_khoa, ten_khoa from #_dt_khoa where id = ? limit 0,1", array($hv['id_khoa']));
-			$hv['ma_khoa'] = $k ? $k['ma_khoa'] : $r['ma_khoa'];
-			$hv['ten_khoa'] = $k ? $k['ten_khoa'] : $r['ten_khoa'];
+			$courseValues = dt_kythi_course_values($r, $hv);
+			$hv['ma_hv'] = $courseValues['ma_hv'];
+			$hv['ma_khoa'] = $courseValues['ma_khoa'];
+			$hv['ten_khoa'] = $courseValues['ten_khoa'];
 			$s = dt_student_summary($hv);
 			$du = $s['du_dieu_kien'];
 			if($dk === 'du' && !$du) continue;
@@ -436,9 +467,10 @@ function dt_kythi_import_excel()
 		'hoten' => array('hovaten','hoten'),
 		'nam_sinh' => array('namsinh','ngaysinh'),
 		'cccd' => array('cccd','socccd','socmt'),
+		'ma_hv' => array('mahv','mahocvien'),
 		'hang' => array('hang'),
-		'ma_khoa' => array('makhoa'),
-		'ten_khoa' => array('tenkhoa'),
+		'ma_khoa' => array('makhoa','makhoahoc'),
+		'ten_khoa' => array('tenkhoa','khoahang','khoa'),
 		'giaovien' => array('giaovien','gv'),
 		'diem_lt' => array('diemlt'),
 		'lt' => array('lt'),
@@ -492,25 +524,32 @@ function dt_kythi_import_excel()
 			'ket_luan' => dt_val($row, $map, 'ket_luan'),
 			'co_ket_qua' => 1,
 		);
-		$exist = $d->rawQueryOne("select id from #_dt_ky_thi_hv where id_ky = ? and cccd = ? limit 0,1", array($id, $cccd));
+		$exist = $d->rawQueryOne("select * from #_dt_ky_thi_hv where id_ky = ? and cccd = ? limit 0,1", array($id, $cccd));
+		$cccdVariants = dt_cccd_variants($cccd);
+		$hv = $cccdVariants ? $d->rawQueryOne("select h.*, k.ma_khoa as sys_ma_khoa, k.ten_khoa as sys_ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where h.cccd in (".implode(',', array_fill(0, count($cccdVariants), '?')).") limit 0,1", $cccdVariants) : null;
+		$khoaDaoTao = $hv ? array('ma_khoa' => $hv['sys_ma_khoa'], 'ten_khoa' => $hv['sys_ten_khoa']) : null;
+		$identity = array(
+			'ma_hv' => ($hv && trim((string)$hv['ma_hv']) !== '') ? $hv['ma_hv'] : (dt_val($row, $map, 'ma_hv') ?: ($exist ? $exist['ma_hv'] : '')),
+			'ma_khoa' => ($khoaDaoTao && trim((string)$khoaDaoTao['ma_khoa']) !== '') ? $khoaDaoTao['ma_khoa'] : (dt_val($row, $map, 'ma_khoa') ?: ($exist ? $exist['ma_khoa'] : '')),
+			'ten_khoa' => ($khoaDaoTao && trim((string)$khoaDaoTao['ten_khoa']) !== '') ? $khoaDaoTao['ten_khoa'] : (dt_val($row, $map, 'ten_khoa') ?: ($exist ? $exist['ten_khoa'] : '')),
+		);
 		if($exist && $exist['id'])
 		{
-			$d->where('id', $exist['id']); $d->update('dt_ky_thi_hv', $kq);
+			$d->where('id', $exist['id']); $d->update('dt_ky_thi_hv', array_merge($kq, $identity));
 			$ok++;
 		}
 		else
 		{
 			// Khóa cũ: chèn mới để lưu trữ kết quả.
-			$hv = dt_find_hocvien_by_cccd($cccd);
 			$kq['id_ky'] = $id;
 			$kq['id_khoa'] = $hv ? (int)$hv['id_khoa'] : 0;
 			$kq['cccd'] = $cccd;
-			$kq['ma_hv'] = $hv ? $hv['ma_hv'] : '';
+			$kq['ma_hv'] = $identity['ma_hv'];
 			$kq['hoten'] = $hoten ?: ($hv ? $hv['hoten'] : '');
 			$kq['nam_sinh'] = dt_val($row, $map, 'nam_sinh') ?: ($hv ? $hv['ngaysinh'] : '');
 			$kq['hang'] = dt_val($row, $map, 'hang') ?: ($hv ? $hv['hang'] : '');
-			$kq['ma_khoa'] = dt_val($row, $map, 'ma_khoa');
-			$kq['ten_khoa'] = dt_val($row, $map, 'ten_khoa');
+			$kq['ma_khoa'] = $identity['ma_khoa'];
+			$kq['ten_khoa'] = $identity['ten_khoa'];
 			$kq['giaovien'] = dt_val($row, $map, 'giaovien') ?: ($hv ? $hv['gv_hoten'] : '');
 			$kq['ngaytao'] = time();
 			$d->insert('dt_ky_thi_hv', $kq);

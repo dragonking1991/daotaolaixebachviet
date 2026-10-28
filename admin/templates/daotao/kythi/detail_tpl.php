@@ -91,23 +91,44 @@
 				</div>
 			</form>
 			<hr>
+			<form method="get" class="form-inline mb-2 p-2" style="background:#f4f6f9;border-radius:4px;">
+				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="kythiDetail"><input type="hidden" name="id" value="<?=(int)$ky['id']?>">
+				<strong class="mr-2">Lọc kết quả:</strong>
+				<input type="text" name="ma_khoa" class="form-control form-control-sm mr-2" placeholder="Mã khóa" value="<?=htmlspecialchars($result_filters['ma_khoa'])?>">
+				<input type="text" name="ten_khoa" class="form-control form-control-sm mr-2" placeholder="Khóa" value="<?=htmlspecialchars($result_filters['ten_khoa'])?>">
+				<button class="btn btn-sm bg-gradient-secondary"><i class="fas fa-filter mr-1"></i>Lọc</button>
+				<a href="index.php?com=daotao&act=kythiDetail&id=<?=(int)$ky['id']?>" class="btn btn-sm btn-default ml-1">Xóa lọc</a>
+				<span class="text-muted ml-2"><?=number_format((int)$total_items)?> / <?=number_format((int)$result_total)?> học viên</span>
+			</form>
+			<?php if(!empty($result_stats)): ?>
+			<div class="table-responsive mb-2">
+				<table class="table table-sm table-bordered mb-0" style="max-width:760px;">
+					<thead><tr><th>Mã khóa</th><th>Khóa</th><th class="text-center">Số HV</th><th class="text-center">Đạt</th></tr></thead>
+					<tbody><?php foreach($result_stats as $stat): ?>
+					<tr><td><?=htmlspecialchars($stat['ma_khoa'] ?: '—')?></td><td><?=htmlspecialchars($stat['ten_khoa'] ?: '—')?></td><td class="text-center"><?=number_format((int)$stat['so_hv'])?></td><td class="text-center"><span class="badge badge-success"><?=number_format((int)$stat['so_dat'])?></span></td></tr>
+					<?php endforeach; ?></tbody>
+				</table>
+			</div>
+			<?php endif; ?>
 			<div class="table-responsive">
 			<table class="table dt-list table-hover mb-0">
-				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('kythi','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-kythi-roster" title="Chọn tất cả"><?php endif; ?></th><th>STT</th><th>Học viên</th><th>Hạng</th><th>Khóa</th><th>Giáo viên</th><th class="text-center">Kết quả</th><th class="dt-actions"></th></tr></thead>
+				<thead><tr><th class="text-center" style="width:34px"><?php if(dt_can('kythi','delete')): ?><input type="checkbox" class="dt-bulk-all" data-form="dt-bulk-kythi-roster" title="Chọn tất cả"><?php endif; ?></th><th>STT</th><th>Học viên</th><th>Mã HV</th><th>Hạng</th><th>Mã khóa</th><th>Khóa</th><th>Giáo viên</th><th class="text-center">Kết quả</th><th class="dt-actions"></th></tr></thead>
 				<tbody>
 					<?php if(!empty($items)): $i=1; foreach($items as $it): ?>
 					<tr>
 						<td class="text-center"><?php if(dt_can('kythi','delete')): ?><input type="checkbox" class="dt-bulk-item" form="dt-bulk-kythi-roster" name="ids[]" value="<?=(int)$it['id']?>"><?php endif; ?></td>
 						<td><?=$i++?></td>
 						<td><div class="dt-title"><?=htmlspecialchars($it['hoten'])?></div><div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($it['cccd'])?></div></td>
+						<td><?=htmlspecialchars($it['ma_hv'] ?: '—')?></td>
 						<td><?=htmlspecialchars($it['hang'])?></td>
-						<td><?=htmlspecialchars(trim($it['ma_khoa'].' '.$it['ten_khoa']))?></td>
+						<td><?=htmlspecialchars($it['ma_khoa'] ?: '—')?></td>
+						<td><?=htmlspecialchars($it['ten_khoa'] ?: '—')?></td>
 						<td><?=htmlspecialchars($it['giaovien'] ?: '—')?></td>
 						<td class="text-center"><?php if((int)$it['co_ket_qua']===1): ?><span class="badge badge-<?=($it['ket_luan']==='Đạt')?'success':'danger'?>"><?=htmlspecialchars($it['ket_luan'] ?: 'Đã có KQ')?></span><?php else: ?><span class="badge badge-secondary">Chưa có</span><?php endif; ?></td>
 						<td class="dt-actions"><a href="index.php?com=daotao&act=kythiRemove&id=<?=$ky['id']?>&hvid=<?=$it['id']?>" onclick="return confirm('Xóa học viên khỏi kỳ?')" class="btn btn-xs bg-gradient-danger" title="Xóa khỏi kỳ"><i class="fas fa-times"></i></a></td>
 					</tr>
 					<?php endforeach; else: ?>
-					<tr><td colspan="8" class="text-center text-muted p-3">Chưa có học viên trong kỳ. Dùng bộ lọc phía trên để thêm.</td></tr>
+					<tr><td colspan="10" class="text-center text-muted p-3">Không có học viên phù hợp bộ lọc.</td></tr>
 					<?php endif; ?>
 				</tbody>
 			</table>
