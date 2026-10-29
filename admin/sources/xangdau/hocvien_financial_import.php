@@ -157,8 +157,31 @@ function xd_roster_plan($rows, $lock = false)
 		$matches = xd_roster_query("select * from #_xd_hocvien where cccd in ($marks)".($lock ? ' for update' : ''), $variants);
 		if(count($matches) > 1) throw new InvalidArgumentException('Dòng '.$row['row'].': định danh khớp nhiều hồ sơ; chưa import.');
 		$existing = $matches ? $matches[0] : null;
-		if(!$existing && ($row['khoa'] === '' || mb_strlen($row['khoa'], 'UTF-8') > 100 || !in_array($row['nhom'], array('BT','CK','DAT'), true)))
-			throw new InvalidArgumentException('Dòng '.$row['row'].': học viên mới cần khóa XD (tối đa 100 ký tự) và nhóm BT/CK/DAT.');
+		if(!$existing && $row['khoa'] === '')
+		{
+			$training = xd_roster_query("select h.hoten, k.ma_khoa, k.ten_khoa
+				from #_dt_hocvien h inner join #_dt_khoa k on k.id = h.id_khoa
+				where h.cccd in ($marks)", $variants);
+			$name = mb_strtolower(preg_replace('/\s+/u', ' ', trim($row['ho_ten'])), 'UTF-8');
+			$courses = array();
+			foreach($training as $student)
+			{
+				if(mb_strtolower(preg_replace('/\s+/u', ' ', trim($student['hoten'])), 'UTF-8') !== $name) continue;
+				$course = trim((string)$student['ma_khoa']);
+				if($course === '') $course = trim((string)$student['ten_khoa']);
+				if($course !== '') $courses[] = $course;
+			}
+			$courses = array_values(array_unique($courses));
+			if(count($courses) > 1)
+				throw new InvalidArgumentException('Dòng '.$row['row'].': họ tên và CCCD khớp nhiều khóa Đào tạo; nhập Khóa XD trên form hoặc trong file để chọn rõ khóa.');
+			if($courses) $row['khoa'] = $courses[0];
+		}
+		if(!$existing && $row['khoa'] === '')
+			throw new InvalidArgumentException('Dòng '.$row['row'].': thiếu khóa XD; không tìm được khóa Đào tạo khớp cả họ tên và CCCD. Nhập Khóa XD cho học viên mới trên form hoặc bổ sung cột Khóa.');
+		if(!$existing && mb_strlen($row['khoa'], 'UTF-8') > 100)
+			throw new InvalidArgumentException('Dòng '.$row['row'].': khóa XD vượt quá 100 ký tự.');
+		if(!$existing && !in_array($row['nhom'], array('BT','CK','DAT'), true))
+			throw new InvalidArgumentException('Dòng '.$row['row'].': học viên mới thiếu nhóm BT/CK/DAT; bổ sung Hệ đào tạo trong file hoặc chọn nhóm trên form.');
 		if(!$existing && $row['gv_hoten'] === '')
 			throw new InvalidArgumentException('Dòng '.$row['row'].': học viên mới chưa có giáo viên; bổ sung Giáo viên trong file trước khi import.');
 		$row['existing'] = $existing;

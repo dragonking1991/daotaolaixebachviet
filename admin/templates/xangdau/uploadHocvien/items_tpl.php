@@ -36,7 +36,7 @@
 					Mẫu cũ bỏ qua hồ sơ đã thanh toán. Mẫu tài chính được cập nhật 6 khoản tiền nguồn kể cả hồ sơ đã thanh toán, nhưng không sửa lịch sử tiền XD.
 				</div>
 				<div class="form-row">
-					<div class="form-group col-md-6"><label for="khoa_mac_dinh">Khóa XD cho học viên mới (nếu file không có cột Khóa)</label><input id="khoa_mac_dinh" name="khoa_mac_dinh" maxlength="100" class="form-control form-control-sm" placeholder="Ví dụ: 201-B(SS)"><small class="text-muted">Không tạo hoặc thay đổi khóa Đào tạo; hồ sơ đã có giữ khóa hiện tại.</small></div>
+					<div class="form-group col-md-6"><label for="khoa_mac_dinh">Khóa XD cho học viên mới (nếu file không có cột Khóa)</label><input id="khoa_mac_dinh" name="khoa_mac_dinh" maxlength="100" class="form-control form-control-sm" placeholder="Ví dụ: 201-B(SS)"><small class="text-muted">Để trống: tra khóa Đào tạo khớp cả họ tên và CCCD (ưu tiên mã khóa, nếu trống dùng tên khóa). Nhiều khóa khác nhau sẽ báo lỗi để chọn rõ khóa. Không tạo hoặc thay đổi dữ liệu Đào tạo; hồ sơ XD đã có giữ khóa hiện tại.</small></div>
 					<div class="form-group col-md-6"><label for="nhom_mac_dinh">Nhóm cho học viên mới nếu file để trống Hệ đào tạo</label><select id="nhom_mac_dinh" name="nhom_mac_dinh" class="form-control form-control-sm"><option value="">Lấy từ file; báo lỗi nếu thiếu</option><option value="BT">BT</option><option value="CK">CK</option><option value="DAT">DAT</option></select></div>
 				</div>
 				<div class="form-group mb-0">

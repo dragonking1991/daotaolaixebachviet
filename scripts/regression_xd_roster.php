@@ -24,6 +24,12 @@ $definition = xd_roster_query('show create table #_xd_hocvien');
 $sql = preg_replace('/^CREATE TABLE /', 'CREATE TEMPORARY TABLE ', $definition[0]['Create Table']);
 $sql = preg_replace('/ AUTO_INCREMENT=\d+/', '', $sql);
 xd_roster_query($sql);
+foreach(array('dt_khoa','dt_hocvien') as $table)
+{
+	$definition = xd_roster_query('show create table #_'.$table);
+	$sql = preg_replace('/^CREATE TABLE /', 'CREATE TEMPORARY TABLE ', $definition[0]['Create Table']);
+	xd_roster_query(preg_replace('/ AUTO_INCREMENT=\d+/', '', $sql));
+}
 try
 {
 	$columns = xd_roster_query('show columns from #_xd_hocvien');
@@ -42,6 +48,30 @@ try
 	$rows = xd_roster_parse($sheet, 2, $map, $header, array('khoa'=>'XD-TEST'));
 	roster_assert($rows[0]['financial']['mien_giam'] === 1000, 'VND amount was multiplied');
 	roster_assert($rows[0]['ngay_nop_ho_so'] === '2026-10-29' && $map['ngay_nop_ho_so'] === 20, 'Submission date header or Vietnamese date parsing failed');
+	$fallbackRows = $rows; $fallbackRows[0]['khoa'] = '';
+	roster_rejects(function() use ($fallbackRows) { xd_roster_plan($fallbackRows); }, 'Missing training course accepted');
+	xd_roster_query("insert into #_dt_khoa (id,ma_khoa,ten_khoa) values (1,'TRAIN-1','Training One'),(2,'','Training Two')");
+	xd_roster_query("insert into #_dt_hocvien (id_khoa,cccd,hoten) values (1,'99000000001','  REGRESSION   STUDENT  ')");
+	$fallbackPlan = xd_roster_plan($fallbackRows);
+	roster_assert($fallbackPlan['rows'][0]['khoa'] === 'TRAIN-1', 'Name/CCCD normalized fallback failed');
+	$mismatchRows = $fallbackRows; $mismatchRows[0]['ho_ten'] = 'Different Name';
+	roster_rejects(function() use ($mismatchRows) { xd_roster_plan($mismatchRows); }, 'CCCD-only match accepted');
+	$mismatchRows = $fallbackRows; $mismatchRows[0]['cccd'] = '099000000099';
+	roster_rejects(function() use ($mismatchRows) { xd_roster_plan($mismatchRows); }, 'Name-only match accepted');
+	xd_roster_query("insert into #_dt_hocvien (id_khoa,cccd,hoten) values (2,'99000000001','Regression Student')");
+	roster_rejects(function() use ($fallbackRows) { xd_roster_save($fallbackRows); }, 'Conflicting training courses accepted');
+	roster_assert(count(xd_roster_query('select id from #_xd_hocvien')) === 0, 'Ambiguous fallback wrote a student');
+	roster_assert(xd_roster_plan($rows)['rows'][0]['khoa'] === 'XD-TEST', 'Explicit course lost priority');
+	xd_roster_query('delete from #_dt_hocvien where id_khoa=1');
+	$fallbackPlan = xd_roster_plan($fallbackRows);
+	roster_assert($fallbackPlan['rows'][0]['khoa'] === 'Training Two', 'Blank training code did not use course name');
+	$fallbackSaved = xd_roster_save($fallbackRows); $backups[] = $fallbackSaved['backup'];
+	$storedFallback = xd_roster_query('select * from #_xd_hocvien');
+	roster_assert(count($storedFallback) === 1 && $storedFallback[0]['khoa'] === 'Training Two', 'Fallback not persisted');
+	xd_roster_query("update #_dt_khoa set ma_khoa='CHANGED' where id=2");
+	roster_assert(xd_roster_plan($fallbackRows)['rows'][0]['khoa'] === 'Training Two', 'Existing XD course overwritten by training fallback');
+	xd_roster_query('delete from #_xd_hocvien');
+	echo "PASS training course fallback, normalized name/identity, explicit priority, mismatch, ambiguity rollback, persistence and existing course preservation\n";
 	roster_assert(xd_roster_submission_date('2024-02-29') === '2024-02-29', 'ISO leap day rejected');
 	foreach(array('10-07-2026'=>'2026-07-10','30-07-2026'=>'2026-07-30','03-08-2026'=>'2026-08-03','3-8-2026'=>'2026-08-03','29-02-2024'=>'2024-02-29') as $input => $expectedDate)
 		roster_assert(xd_roster_submission_date($input) === $expectedDate, 'Excel-style day-month-year date rejected or reversed: '.$input);

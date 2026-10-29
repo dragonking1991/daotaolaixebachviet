@@ -60,9 +60,16 @@
 							</div>
 						</td>
 						<td>
-							<div><?php if(!empty($it['hang'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang'])?></span><?php endif; ?> <?php if(!empty($it['ma_khoa'])): ?><span class="dt-tag is-muted"><?=htmlspecialchars($it['ma_khoa'])?></span><?php elseif((int)$it['id_khoa']===0): ?><span class="badge badge-warning">Chưa gán khóa</span><?php endif; ?></div>
-							<div class="dt-sub">Hệ đào tạo: <?=htmlspecialchars(trim((string)($it['he_daotao'] ?? '')) ?: '—')?></div>
-							<div class="dt-sub"><i class="fas fa-chalkboard-teacher"></i>GV: <?=htmlspecialchars($it['gv_hoten'] ?: '—')?></div>
+							<div class="d-flex flex-wrap align-items-center">
+								<?php if(!empty($it['hang'])): ?><span class="dt-tag mr-1" title="Hạng đào tạo"><?=htmlspecialchars($it['hang'])?></span><?php endif; ?>
+								<?php if(!empty($it['ma_khoa']) || trim((string)($it['ten_khoa'] ?? '')) !== ''): ?>
+								<span class="dt-tag is-muted" style="white-space:normal;overflow-wrap:anywhere" title="Mã khóa — Tên khóa"><i class="fas fa-book-open mr-1" aria-hidden="true"></i><?=htmlspecialchars($it['ma_khoa'] ?? '')?><?php if(!empty($it['ma_khoa']) && trim((string)($it['ten_khoa'] ?? '')) !== ''): ?> — <?php endif; ?><?=htmlspecialchars($it['ten_khoa'] ?? '')?></span>
+								<?php elseif((int)$it['id_khoa']===0): ?><span class="badge badge-warning">Chưa gán khóa</span><?php endif; ?>
+							</div>
+							<div class="dt-sub d-flex flex-wrap align-items-center">
+								<span class="mr-3" title="Hệ đào tạo"><i class="fas fa-graduation-cap" aria-hidden="true"></i><span class="sr-only">Hệ đào tạo: </span><?=htmlspecialchars(trim((string)($it['he_daotao'] ?? '')) ?: '—')?></span>
+								<span title="Giáo viên"><i class="fas fa-chalkboard-teacher" aria-hidden="true"></i><span class="sr-only">Giáo viên: </span><?=htmlspecialchars($it['gv_hoten'] ?: '—')?></span>
+							</div>
 						</td>
 						<td>
 								<?php if((int)$it['id_khoa']>0): ?><div class="dt-prog"><div class="dt-prog-bar"><span style="width:<?=$pct?>%"></span></div><span class="dt-prog-num"><?=$done?>/4</span></div><?php else: ?><span class="text-muted">Chưa có dữ liệu đào tạo</span><?php endif; ?>

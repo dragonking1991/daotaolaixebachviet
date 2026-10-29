@@ -287,6 +287,8 @@ stateDiagram-v2
 - Xuất **bảng kê theo GV** chỉ được khi hóa đơn của GV đó **đã kiểm tra**.
 - Xuất được: bảng kê từng GV, tổng hợp đã duyệt, tổng hợp GV, toàn bộ bảng kê, danh sách học viên.
 
+- **Tự tra khóa cho mẫu BC1/tài chính/ngày nộp hồ sơ:** khi học viên XD mới thiếu khóa trong file và form, tìm bên Đào tạo bằng cả CCCD (có đối chiếu số 0 đầu) và họ tên (không phân biệt hoa/thường, gộp khoảng trắng, vẫn phân biệt dấu). Lấy mã khóa; nếu mã trống lấy tên khóa. Không tìm được hoặc khớp nhiều khóa khác nhau thì báo lỗi để nhập khóa rõ ràng. Khóa trong file ưu tiên trước khóa trên form, rồi mới tra Đào tạo; hồ sơ XD đã tồn tại vẫn giữ khóa cũ. Không sửa dữ liệu Đào tạo hoặc đổi nhóm theo kết quả tra khóa.
+
 ### 4.6 Danh sách CE
 
 - Học viên **hạng CE đạt DAT** tự vào đây (tách riêng theo khóa, không vào quyết toán XD chung).

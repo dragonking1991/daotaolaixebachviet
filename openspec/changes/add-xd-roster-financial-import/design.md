@@ -10,6 +10,8 @@ The supplied XLS files have 22 identical headers but no course or XD group colum
 
 ## Decisions
 
+- For new XD students missing both file and form course, read training students by CCCD variants and compare names case-insensitively with collapsed whitespace, preserving accents. Resolve the unique course code (or course name if code is blank); reject multiple distinct courses. Never change training records or derive the group from training. Existing XD courses and explicit file/form courses retain priority.
+
 - Extend the existing XD importer rather than introduce another import destination.
 - Store six explicit decimal source fields on XD students, independent of fuel-payment fields.
 - Use exact header aliases and integer VND validation; do not reuse fuel helpers that multiply small numbers by 1,000.

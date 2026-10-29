@@ -4,6 +4,8 @@ The XD student importer does not accept the supplied XLS roster layout or retain
 
 ## What Changes
 
+- Reuse a training course for new XD students missing a course when both name and CCCD match uniquely; do not guess between conflicting courses.
+
 - Accept the existing XD XLSX layout and the supplied 22-column XLS roster layout.
 - Retain tuition, discount, tuition paid, tuition outstanding, advance, and salary-payment source amounts separately from XD fuel payments.
 - Provide preview before import and safe repeat imports matched by normalized identity.

@@ -1,5 +1,16 @@
 ## ADDED Requirements
 
+### Requirement: Missing course lookup in training
+For new XD students without file or form course, the importer SHALL match both CCCD variants and name (case-insensitive, collapsed whitespace, accents retained) against training records and use the unique course code, falling back to course name when code is blank. It SHALL not modify training or replace an explicit/existing XD course.
+
+#### Scenario: Matching student with a unique course
+- **WHEN** a new XD student's name and CCCD match training records resolving to one course
+- **THEN** preview and persistence SHALL use that course without requiring a form default.
+
+#### Scenario: No match or conflicting courses
+- **WHEN** no usable course matches both name and CCCD, or matches resolve to different courses
+- **THEN** import SHALL stop with a row-level message requesting an explicit XD course, without partial writes.
+
 ### Requirement: Legacy training synchronization group repair
 The training sync SHALL repair DAT to BT for DAT-qualified B1/B11/C1 students whose resolved training system is BT when the existing DAT-origin XD record links to that same training student ID. It SHALL preserve all settlement and linkage fields, report repair counts and remain idempotent.
 

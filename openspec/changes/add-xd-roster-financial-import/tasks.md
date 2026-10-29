@@ -30,3 +30,8 @@
 
 - [x] 6.1 Repair legacy DAT groups to BT for matching DAT-origin B1/B11/C1 students whose training system is BT; retain manual/imported groups and settlement history.
 - [x] 6.2 Test paid/unpaid repairs, repeat synchronization and exclusions; correct the affected local student with backup and refresh delivery.
+
+## 7. Training course fallback
+
+- [x] 7.1 Resolve missing new-student XD courses by matching both name and normalized identity to training; reject conflicting courses and preserve explicit/existing courses.
+- [x] 7.2 Test fallback, ambiguity, persistence and actual sample preview; update guidance and delivery.
