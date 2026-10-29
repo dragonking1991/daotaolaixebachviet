@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
  * Đọc 1 sheet của file .xlsx theo LUỒNG (XMLReader) để tiết kiệm bộ nhớ.
  * @return XdArraySheet|false  (trả $highestRow, $highestColIndex qua tham chiếu)
  */
-function xd_stream_read_xlsx($path, $sheetHints, &$highestRow, &$highestColIndex, $maxRow = 20000, $rowFilter = null)
+function xd_stream_read_xlsx($path, $sheetHints, &$highestRow, &$highestColIndex, $maxRow = 20000, $rowFilter = null, $requireFormulaCache = false)
 {
 	$highestRow = 0; $highestColIndex = 0;
 	if(!class_exists('ZipArchive') || !class_exists('XMLReader')) return false;
@@ -79,17 +79,21 @@ function xd_stream_read_xlsx($path, $sheetHints, &$highestRow, &$highestColIndex
 			if($colIdx < 0) continue;
 			$t = $c->getAttribute('t');
 			$val = '';
+			$hasFormula = false; $hasCachedValue = false;
 			foreach($c->childNodes as $ch)
 			{
 				if($ch->nodeType !== XML_ELEMENT_NODE) continue;
 				if($ch->localName === 'v')
 				{
+					$hasCachedValue = true;
 					$raw = $ch->textContent;
 					if($t === 's') { $ii = (int)$raw; $val = isset($shared[$ii]) ? $shared[$ii] : ''; }
 					else $val = $raw;
 				}
+				elseif($ch->localName === 'f') $hasFormula = true;
 				elseif($ch->localName === 'is') $val = $ch->textContent;
 			}
+			if($requireFormulaCache && $hasFormula && !$hasCachedValue) $val = '#N/A';
 			$val = trim((string)$val);
 			if($val !== '')
 			{

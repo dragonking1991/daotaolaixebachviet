@@ -20,16 +20,28 @@
 			<div class="card-body">
 				<div class="alert alert-warning mb-3">
 					<strong>Cột theo mẫu:</strong> STT | HỌ VÀ TÊN | KHÓA | Ngày tháng năm sinh | Số CCCD | NGƯỌI NỘP | <strong>PHÂN XE / GIÁO VIÊN</strong> | <strong>GHI CHÚ / Nhóm</strong> (BT/CK/DAT).<br>
-					Giáo viên được liên kết theo <strong>tên</strong> ở cột PHÂN XE/GIÁO VIÊN. Nhóm nhận diện theo tiêu đề hoặc theo giá trị BT/CK/DAT.<br>					<strong>Import bổ sung/cập nhật:</strong> file import chỉ bổ sung dữ liệu và cập nhật bản ghi trùng theo CCCD/định danh; dữ liệu cũ không bị xóa ngầm, tránh mất toàn bộ danh sách hiện có.<br>					<strong>Hỗ trợ định dạng:</strong> chỉ nhận file .xlsx. Nếu đang có file .xls hoặc .xlsb, vui lòng mở bằng Excel và lưu lại dưới dạng .xlsx.
+					Giáo viên được liên kết theo <strong>tên</strong> ở cột PHÂN XE/GIÁO VIÊN. Nhóm nhận diện theo tiêu đề hoặc theo giá trị BT/CK/DAT.<br>
+					<strong>Hỗ trợ định dạng:</strong> .xlsx và .xls. Dữ liệu cũ không bị xóa khi import lại.
+				</div>
+				<div class="alert alert-info mb-3">
+					<strong>Mẫu BC1 có tài chính:</strong> Họ và tên | Ngày sinh | Số CMND/HC | Hệ đào tạo | Giáo viên | Người nộp hồ sơ; bổ sung
+					<strong>Số tiền học phí | Miễn giảm | Số tiền đã đóng | Số tiền còn thiếu | Số tiền tạm ứng | Thanh toán Lương</strong>.<br>
+					Tiền tính theo <strong>VNĐ</strong>, không nhân 1.000. Công thức dùng kết quả lưu sẵn trong file Excel.
+					Mẫu này luôn có bước <strong>xem trước → xác nhận</strong>; không import vào Đào tạo, không tạo giao dịch hoặc thay đổi trạng thái thanh toán XD.
+					Hồ sơ đã có giữ nguyên khóa, lịch sử thanh toán và liên kết DAT. <strong>Nhóm BT/CK/DAT cập nhật theo Hệ đào tạo/Nhóm trong Excel, kể cả đã thanh toán.</strong> Cột/ô nhóm trống giữ nhóm cũ; lựa chọn nhóm mặc định bên dưới chỉ dùng cho học viên mới. Nhóm mới áp dụng cho tính toán XD về sau, không tính lại số tiền đã thanh toán. Cột tiền không có trong file được giữ nguyên; ô tiền trống trong cột có sẵn được nhập là 0.
+					<br><strong>Ngày nộp hồ sơ:</strong> nhận dd-mm-yyyy (ví dụ 10-07-2026), dd/mm/yyyy, yyyy-mm-dd hoặc ngày Excel. Ngày đứng trước tháng. Cột/ô trống giữ ngày cũ; không lấy Ngày nhận Hồ sơ thay thế. Ô lỗi công thức (ví dụ #REF!) phải sửa và lưu lại file trước khi import.
 				</div>
 				<div class="alert alert-danger mb-3">
 					<strong>Kiểm tra trùng CCCD:</strong> CCCD bị lặp trong chính file sẽ làm import không được lưu để tránh dữ liệu không rõ ràng.
-					Các học viên đã thanh toán trên hệ thống sẽ được <strong>bỏ qua riêng</strong>; những dòng CCCD không trùng vẫn được import.
+					Mẫu cũ bỏ qua hồ sơ đã thanh toán. Mẫu tài chính được cập nhật 6 khoản tiền nguồn kể cả hồ sơ đã thanh toán, nhưng không sửa lịch sử tiền XD.
 				</div>
-
+				<div class="form-row">
+					<div class="form-group col-md-6"><label for="khoa_mac_dinh">Khóa XD cho học viên mới (nếu file không có cột Khóa)</label><input id="khoa_mac_dinh" name="khoa_mac_dinh" maxlength="100" class="form-control form-control-sm" placeholder="Ví dụ: 201-B(SS)"><small class="text-muted">Không tạo hoặc thay đổi khóa Đào tạo; hồ sơ đã có giữ khóa hiện tại.</small></div>
+					<div class="form-group col-md-6"><label for="nhom_mac_dinh">Nhóm cho học viên mới nếu file để trống Hệ đào tạo</label><select id="nhom_mac_dinh" name="nhom_mac_dinh" class="form-control form-control-sm"><option value="">Lấy từ file; báo lỗi nếu thiếu</option><option value="BT">BT</option><option value="CK">CK</option><option value="DAT">DAT</option></select></div>
+				</div>
 				<div class="form-group mb-0">
 					<div class="custom-file my-custom-file">
-						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx" required>
+						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xlsx,.xls" required>
 						<label class="custom-file-label" for="file-excel" id="file-label">Chọn file...</label>
 					</div>
 				</div>

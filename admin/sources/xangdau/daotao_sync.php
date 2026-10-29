@@ -35,7 +35,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 	);
 	if($rows === false || $d->getLastErrorCode() !== '00000') return array('ok' => false, 'error' => 'Không đọc được danh sách học viên đào tạo.');
 
-	$result = array('ok' => true, 'xd_added' => 0, 'ce_added' => 0, 'existing' => 0, 'not_passed' => 0, 'unsupported' => 0, 'errors' => array());
+	$result = array('ok' => true, 'xd_added' => 0, 'xd_course_updated' => 0, 'xd_group_updated' => 0, 'ce_added' => 0, 'existing' => 0, 'not_passed' => 0, 'unsupported' => 0, 'errors' => array());
 	$now = time();
 	foreach($rows as $student)
 	{
@@ -71,10 +71,30 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 
 		$variants = function_exists('dt_cccd_variants') ? dt_cccd_variants($studentCccd) : array($studentCccd);
 		$placeholders = implode(',', array_fill(0, count($variants), '?'));
-		$existing = $d->rawQueryOne("select id, ngay_thanh_toan, so_tien_thanh_toan from #_xd_hocvien where cccd in ($placeholders) limit 0,1", $variants);
+		$existing = $d->rawQueryOne("select id, khoa, nhom, user_tao, thu_tu_file from #_xd_hocvien where cccd in ($placeholders) limit 0,1", $variants);
+		if($d->getLastErrorCode() !== '00000')
+		{
+			$result['errors'][] = $courseCode.': không đọc được hồ sơ XD của học viên '.$studentCccd;
+			continue;
+		}
 		if($existing && !empty($existing['id']))
 		{
-			$result['existing']++;
+			$repairBtGroup = $xdGroup === 'BT' && $existing['nhom'] === 'DAT'
+				&& $existing['user_tao'] === 'Đồng bộ DAT' && (int)$existing['thu_tu_file'] === (int)$student['id'];
+			if($repairBtGroup)
+			{
+				$d->rawQuery("update #_xd_hocvien set nhom = ? where id = ? and nhom = ? and user_tao = ? and thu_tu_file = ?",
+					array('BT', (int)$existing['id'], 'DAT', 'Đồng bộ DAT', (int)$student['id']));
+				if($d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không sửa được nhóm BT của học viên '.$studentCccd;
+				else $result['xd_group_updated']++;
+			}
+			if(trim((string)$existing['khoa']) !== $courseCode)
+			{
+				$d->rawQuery("update #_xd_hocvien set khoa = ? where id = ?", array($courseCode, (int)$existing['id']));
+				if($d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không cập nhật được khóa XD của học viên '.$studentCccd;
+				else $result['xd_course_updated']++;
+			}
+			elseif(!$repairBtGroup) $result['existing']++;
 			continue;
 		}
 
@@ -95,7 +115,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 function xd_sync_training_notice($result)
 {
 	if(empty($result['ok'])) return ' Đồng bộ gặp lỗi: '.implode('; ', $result['errors'] ?? array($result['error'] ?? 'lỗi không xác định')).'.';
-	return ' Đã thêm '.$result['xd_added'].' học viên đạt DAT vào XD (mọi hạng); giữ nguyên '.$result['existing'].' hồ sơ XD đã có.';
+	return ' Đã thêm '.$result['xd_added'].' học viên đạt DAT vào XD; cập nhật mã khóa cho '.$result['xd_course_updated'].' hồ sơ XD đã có; sửa nhóm DAT → BT cho '.$result['xd_group_updated'].' hồ sơ đồng bộ cũ; '.$result['existing'].' hồ sơ không cần cập nhật được giữ nguyên.';
 }
 
 function xd_mark_imported_dat()

@@ -21,6 +21,7 @@ require SOURCES.'xangdau/daotao_sync.php';
 
 function dt_backup_tables($tables, $tag) { return 'test-no-backup'; }
 function dt_audit($action, $entity, $affected, $detail) {}
+function dt_can($section,$action='view') { return !empty($GLOBALS['u8_dat_edit']); }
 class Update8Notice extends RuntimeException
 {
     public $success;
@@ -113,18 +114,60 @@ try
     echo "PASS finance atomic rollback for mixed CE eligibility\n";
     $student=$d->rawQueryOne('select * from #_dt_hocvien where id=?',array($ids[1]));
     u8_query("insert into #_xd_hocvien (ho_ten,cccd,khoa,nhom,ngay_thanh_toan,so_tien_thanh_toan,id_bangke) values (?,?,'old','BT',null,0,0)",array($tag,$student['cccd']));
-    $sync=xd_sync_training_students($bc);
+    $u8_dat_edit=true;$_REQUEST=array('id_khoa'=>$bc);dt_dat_list();$sync=$module_sync_result;
     u8_check($sync['ok'],'DAT sync failed '.json_encode($sync,JSON_UNESCAPED_UNICODE).' DB='.json_encode($d->getLastError(),JSON_UNESCAPED_UNICODE));
     $fuel=$d->rawQueryOne('select * from #_xd_hocvien where cccd=?',array($student['cccd']));
-    u8_check($fuel['ho_ten']===$tag && $fuel['nhom']==='BT' && $fuel['khoa']==='old','Unpaid XD record must remain unchanged');
+    u8_check($sync['xd_added']===1 && $sync['xd_course_updated']===1,'Sync should add a new student and correct the existing course code');
+    u8_check($fuel['ho_ten']===$tag && $fuel['nhom']==='BT' && $fuel['khoa']===$tag.'-B1','Existing DAT student should receive the actual course code');
     $btFuel=$d->rawQueryOne('select * from #_xd_hocvien where cccd=?',array($syncStudent['cccd']));
-    u8_check($sync['xd_added']===1 && $btFuel['khoa']===$tag.'-B1' && $btFuel['nhom']==='BT' && $btFuel['gv_hoten']===$syncTeacher && $btFuel['gv_key']===dt_gv_key($syncTeacher),'DAT sync must use the real course code, teacher and BT group for a B1 BT student');
+    u8_check($sync['xd_added']===1 && $btFuel['khoa']===$tag.'-B1' && $btFuel['nhom']==='BT' && $btFuel['gv_hoten']===$syncTeacher && $btFuel['gv_key']===dt_gv_key($syncTeacher),'Opening the DAT course must sync passing students using the real course code and preserve BT/teacher data');
     u8_check($btFuel['ngay_thanh_toan']===null && (int)$btFuel['so_tien_thanh_toan']===0 && (int)$btFuel['id_bangke']===0,'New DAT sync must start unpaid and outside a payment batch');
+    $u8_dat_edit=false;dt_dat_list();u8_check($module_sync_result===null,'View-only DAT user must not trigger synchronization');$u8_dat_edit=true;
     echo "PASS B1 BT sync uses course/teacher and starts unpaid\n";
+    foreach(array('B1','B11','C1') as $repairRank)
+    {
+        u8_query('update #_dt_hocvien set hang=? where id=?',array($repairRank,$syncStudent['id']));
+        foreach(array(false,true) as $paidRepair)
+        {
+            u8_query("update #_xd_hocvien set nhom='DAT',ngay_thanh_toan=?,so_tien_thanh_toan=?,id_bangke=?,quan_ly_duyet=?,ke_toan_kiem_tra=? where id=?",
+                array($paidRepair?'2026-10-24':null,$paidRepair?1234567:0,$paidRepair?42:0,$paidRepair?1:0,$paidRepair?1:0,$btFuel['id']));
+            $beforeRepair=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
+            $repair=xd_sync_training_students($bc);
+            $afterRepair=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
+            $expectedRepair=$beforeRepair;$expectedRepair['nhom']='BT';
+            u8_check($repair['ok'] && $repair['xd_group_updated']===1 && $afterRepair===$expectedRepair,'Legacy '.$repairRank.' BT repair changed history or failed');
+            u8_check(strpos(xd_sync_training_notice($repair),'DAT → BT cho 1')!==false,'Missing group-repair notice');
+            $repeatRepair=xd_sync_training_students($bc);
+            u8_check($repeatRepair['ok'] && $repeatRepair['xd_group_updated']===0 &&
+                $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']))===$afterRepair,'Repeated legacy repair was not idempotent');
+        }
+    }
+    u8_query("update #_dt_hocvien set hang='B1' where id=?",array($syncStudent['id']));
+    foreach(array(
+        array('DAT','independent-import',(int)$syncStudent['id']),
+        array('DAT','Đồng bộ DAT',(int)$syncStudent['id']+1000000),
+        array('CK','Đồng bộ DAT',(int)$syncStudent['id']),
+        array('BT','Đồng bộ DAT',(int)$syncStudent['id'])
+    ) as $excludedRepair)
+    {
+        u8_query('update #_xd_hocvien set nhom=?,user_tao=?,thu_tu_file=? where id=?',array_merge($excludedRepair,array($btFuel['id'])));
+        $excludedBefore=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
+        $excludedResult=xd_sync_training_students($bc);
+        u8_check($excludedResult['ok'] && $excludedResult['xd_group_updated']===0 &&
+            $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']))===$excludedBefore,'Legacy repair overwrote an independent/manual group or mismatched link');
+    }
+    u8_query("update #_dt_hocvien set he_daotao='' where id=?",array($syncStudent['id']));
+    u8_query("update #_dt_khoa set he_daotao='BT' where id=?",array($bc));
+    u8_query("update #_xd_hocvien set nhom='DAT' where id=?",array($btFuel['id']));
+    $fallbackRepair=xd_sync_training_students($bc);
+    u8_check($fallbackRepair['ok'] && $fallbackRepair['xd_group_updated']===1,'Legacy repair did not use the course system fallback');
+    u8_query("update #_dt_hocvien set he_daotao='BT' where id=?",array($syncStudent['id']));
+    u8_query("update #_dt_khoa set he_daotao='CK' where id=?",array($bc));
+    echo "PASS legacy DAT-to-BT repair for B1/B11/C1, paid/unpaid full-row history, fallback, exclusions and repeat sync\n";
     u8_query("update #_xd_hocvien set ho_ten=?,ngay_thanh_toan='2026-10-24',so_tien_thanh_toan=100 where id=?",array($tag.' paid',$fuel['id']));
     xd_sync_training_students($bc);
     $fuel=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($fuel['id']));
-    u8_check($fuel['ho_ten']===$tag.' paid','Paid fuel records must be unchanged');
+    u8_check($fuel['ho_ten']===$tag.' paid' && $fuel['khoa']===$tag.'-B1' && $fuel['ngay_thanh_toan']==='2026-10-24' && (float)$fuel['so_tien_thanh_toan']==100,'Sync may correct the course code but must preserve paid history and amount');
     u8_query("update #_dt_hocvien set he_daotao='BT' where id=?",array($studentIds['CE'][1]));
     $ceSync=xd_sync_training_students($courseIds['CE']);
     u8_check($ceSync['ok'] && $ceSync['xd_added']===1 && $ceSync['ce_added']===0,'Passed CE must enter normal XD list, not CE-only storage');
@@ -147,7 +190,7 @@ try
     u8_check(dt_finance_eligible($other,'bc'),'Other rank with manual DAT and CK system must enter finance');
     $again=xd_sync_training_students($courseIds['CE']);
     u8_check($again['ok'] && $again['xd_added']===0,'Repeated sync must not duplicate CE students');
-    echo "PASS DAT: all ranks, CE in regular XD, missing DAT blocked, old XD frozen and repeat sync idempotent\n";
+    echo "PASS DAT: all ranks, CE in regular XD, missing DAT blocked, existing course corrected without altering payment history, repeat sync idempotent\n";
     require_once LIBRARIES.'PHPExcel.php';
     $tuitionFile=sys_get_temp_dir().'/'.$tag.'.xlsx';
     foreach(array(true,false) as $withFees)

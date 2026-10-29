@@ -3,6 +3,7 @@ if(PHP_SAPI!=='cli'||($argv[1]??'')!=='--local-db')exit("Usage: php scripts/regr
 define('LIBRARIES',dirname(__DIR__).'/libraries/');define('SOURCES',dirname(__DIR__).'/admin/sources/');
 $_SERVER['SERVER_NAME']='localhost';require LIBRARIES.'config.php';require LIBRARIES.'autoload.php';new AutoLoad();$d=new PDODb($config['database']);
 require SOURCES.'xangdau/khoa.php';require SOURCES.'xangdau/permissions.php';require SOURCES.'xangdau/helpers.php';require SOURCES.'xangdau/hocvien_crud.php';
+require SOURCES.'xangdau/hocvien_financial_import.php';
 function xd_course_test($condition,$message){if(!$condition)throw new RuntimeException($message);}
 class XdCourseTestFunctions{public function check_permission(){return true;} public function transfer($message,$url,$success=true){throw new RuntimeException($message);} public function pagination($total,$perPage,$page,$url){return '';}}
 $func=new XdCourseTestFunctions();$backups=array();$login_admin='test';$_SESSION=array('test'=>array('active'=>true),'list_quyen'=>array('xangdau_view'));
@@ -11,6 +12,8 @@ $definition=xd_course_query('show create table #_xd_hocvien');
 $sql=preg_replace('/^CREATE TABLE /','CREATE TEMPORARY TABLE ',$definition[0]['Create Table']);$sql=preg_replace('/ AUTO_INCREMENT=\d+/','',$sql);xd_course_query($sql);
 $courseDefinition=xd_course_query('show create table #_dt_khoa');
 $courseSql=preg_replace('/^CREATE TABLE /','CREATE TEMPORARY TABLE ',$courseDefinition[0]['Create Table']);$courseSql=preg_replace('/ AUTO_INCREMENT=\d+/','',$courseSql);xd_course_query($courseSql);
+$studentDefinition=xd_course_query('show create table #_dt_hocvien');
+$studentSql=preg_replace('/^CREATE TABLE /','CREATE TEMPORARY TABLE ',$studentDefinition[0]['Create Table']);$studentSql=preg_replace('/ AUTO_INCREMENT=\d+/','',$studentSql);xd_course_query($studentSql);
 try
 {
 	xd_course_test(xd_permission_denied('saveKhoa')&&xd_permission_denied('deleteKhoa')&&!xd_permission_denied('khoa'),'View-only course permissions failed');
@@ -46,13 +49,26 @@ try
 	xd_course_query("insert into #_xd_hocvien (ho_ten,cccd,khoa,user_tao) values (?,?,?,?)",array('Synced course student','990000000007','79044K261016','Đồng bộ DAT'));
 	$curPage=1;$_REQUEST=array();xd_get_hocvien();$syncedCourse=null;
 	foreach($xd_hocvien_khoas as $course)if($course['khoa']==='79044K261016')$syncedCourse=$course;
-	xd_course_test($syncedCourse&&$syncedCourse['ten_khoa']==='Khóa đồng bộ mã 16','Training course name was not joined to the synchronized XD group');
-	xd_course_test(xd_hocvien_course_group($syncedCourse)==='synced'&&xd_hocvien_course_label($syncedCourse)==='Khóa đồng bộ mã 16 · 1 HV','Synchronized course label should be concise and display the training name');
+	xd_course_test($syncedCourse&&$syncedCourse['ten_khoa']==='Khóa đồng bộ mã 16','Training course name was not joined to the synchronized XD group: '.json_encode($syncedCourse,JSON_UNESCAPED_UNICODE).' SQL='.json_encode($d->getLastError(),JSON_UNESCAPED_UNICODE));
+	xd_course_test(xd_hocvien_course_group($syncedCourse)==='synced'&&xd_hocvien_course_label($syncedCourse)==='79044K261016 — Khóa đồng bộ mã 16 · 1 HV','Synchronized course label should display both course code and training name');
+	$_GET=array();xd_courses_page();$courseSummary=null;foreach($xd_courses as $course)if($course['khoa']==='79044K261016')$courseSummary=$course;
+	xd_course_test($courseSummary&&$courseSummary['ten_khoa']==='Khóa đồng bộ mã 16'&&xd_hocvien_course_label($courseSummary)==='79044K261016 — Khóa đồng bộ mã 16 · 1 HV','Course management list should resolve and display the training course name');
 	ob_start();require dirname(__DIR__).'/admin/templates/xangdau/hocvien/items_tpl.php';$listHtml=ob_get_clean();
+	foreach(xd_student_financial_fields() as $label)xd_course_test(strpos($listHtml,$label)!==false,'Missing source financial column in student list: '.$label);
+	xd_course_test(strpos($listHtml,'Ngày nộp hồ sơ')!==false,'Missing submission date column in student list');
 	$groupMarkup=strpos($listHtml,'<optgroup label="Đồng bộ từ Đào tạo (')!==false;$codeMarkup=strpos($listHtml,'value="79044K261016"')!==false;$nameMarkup=strpos($listHtml,'Khóa đồng bộ mã 16 · 1 HV')!==false;
 	xd_course_test($groupMarkup&&$codeMarkup&&$nameMarkup,'Course dropdown grouping or code value is incorrect: '.json_encode(array('group'=>$groupMarkup,'code'=>$codeMarkup,'name'=>$nameMarkup,'groups'=>$xd_hocvien_khoa_groups),JSON_UNESCAPED_UNICODE));
 	$rankCourse=array('khoa'=>'c1','so'=>96,'so_dong_bo'=>46);
 	xd_course_test(xd_hocvien_course_group($rankCourse)==='rank'&&xd_hocvien_course_label($rankCourse)==='C1 · 96 HV (46 DAT + 50 XD)','Mixed rank aggregation label is unclear or inaccurate');
+	$mixedSyncedCourse=array('khoa'=>'79044K261016','ten_khoa'=>'Tên khóa đào tạo K16','so'=>5,'so_dong_bo'=>2);
+	xd_course_test(xd_hocvien_course_group($mixedSyncedCourse)==='mixed'&&xd_hocvien_course_label($mixedSyncedCourse)==='79044K261016 — Tên khóa đào tạo K16 · 5 HV (2 DAT + 3 XD)','Mixed XD group should display both course code and training name');
+	xd_course_query("insert into #_dt_khoa (ma_khoa,ten_khoa,hang) values ('79044K261017','Khóa nguồn K17','C1')");$linkedCourseId=(int)$d->getLastInsertId();
+	xd_course_query("insert into #_dt_hocvien (id_khoa,ma_hv,cccd,hoten,hang) values (?, 'LINKED-STUDENT','990000000006','Linked Student','C1')",array($linkedCourseId));$linkedStudentId=(int)$d->getLastInsertId();
+	xd_course_query('insert into #_xd_hocvien (thu_tu_file,ho_ten,cccd,khoa,user_tao) values (?,?,?,?,?)',array($linkedStudentId,'Linked student','990000000006','STALE-COURSE-CODE','Đồng bộ DAT'));
+	$curPage=1;$_REQUEST=array();xd_get_hocvien();$legacyCourse=null;foreach($xd_hocvien_khoas as $course)if($course['khoa']==='STALE-COURSE-CODE')$legacyCourse=$course;
+	xd_course_test($legacyCourse&&$legacyCourse['ten_khoa']==='Khóa nguồn K17'&&xd_hocvien_course_label($legacyCourse)==='STALE-COURSE-CODE — Khóa nguồn K17 · 1 HV','A legacy XD course code should resolve its name through the linked DAT training profile');
+	$_GET=array();xd_courses_page();$legacySummary=null;foreach($xd_courses as $course)if($course['khoa']==='STALE-COURSE-CODE')$legacySummary=$course;
+	xd_course_test($legacySummary&&$legacySummary['ten_khoa']==='Khóa nguồn K17','Course management list should resolve legacy names through linked DAT training profiles');
 	$storedCourse=array('khoa'=>'98B-C','so'=>8,'so_dong_bo'=>0);
 	xd_course_test(xd_hocvien_course_group($storedCourse)==='stored'&&xd_hocvien_course_label($storedCourse)==='98B-C · 8 HV','XD-only course label is incorrect');
 	echo "PASS course rename/delete, protected history, collision rejection, CSRF and permission matrix\n";

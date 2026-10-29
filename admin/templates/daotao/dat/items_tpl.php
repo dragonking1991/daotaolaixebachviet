@@ -36,6 +36,9 @@
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
 			<div class="dt-stats mb-2"><div class="dt-stat is-green"><div class="dt-stat-label">DAT đạt</div><div class="dt-stat-num"><?=(int)$module_stats['dat']?></div></div><div class="dt-stat is-red"><div class="dt-stat-label">DAT chưa đạt</div><div class="dt-stat-num"><?=(int)$module_stats['chua']?></div></div></div>
+			<?php if(!empty($module_sync_result) && (!empty($module_sync_result['xd_added']) || !empty($module_sync_result['xd_course_updated']) || !empty($module_sync_result['errors']))): ?>
+			<div class="alert alert-<?=empty($module_sync_result['ok'])?'danger':'info'?> py-2 mb-2" role="status"><?=htmlspecialchars(trim(xd_sync_training_notice($module_sync_result)),ENT_QUOTES,'UTF-8')?></div>
+			<?php endif; ?>
 			<?php if(!$id_khoa_sel && empty($items)): ?>
 			<div class="alert alert-info mb-0">Chọn khóa để xem tổng hợp DAT, hoặc nhập CCCD/tên để tra cứu toàn bộ khóa.</div>
 			<?php else: ?>

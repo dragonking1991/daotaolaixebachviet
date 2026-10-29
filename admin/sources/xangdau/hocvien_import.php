@@ -11,15 +11,23 @@ function xd_upload_hocvien_excel()
 	@set_time_limit(300);
 
 	$backUrl = "index.php?com=xangdau&act=uploadHocvien";
+	if(isset($_POST['confirm_roster'])) return xd_roster_upload();
 
 	if(!isset($_FILES['file-excel']) || (int)$_FILES['file-excel']['error'] !== UPLOAD_ERR_OK)
 		xd_hocvien_import_error("Vui lòng chọn file Excel hợp lệ", $backUrl);
 
 	$file = $_FILES['file-excel'];
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-	if($ext !== 'xlsx') xd_hocvien_import_error("Import học viên chỉ hỗ trợ file .xlsx. Vui lòng mở file XLSB/XLS bằng Excel và lưu lại dưới dạng .xlsx rồi thử lại.", $backUrl);
+	if(!in_array($ext, array('xlsx', 'xls'), true)) xd_hocvien_import_error("Import học viên hỗ trợ file .xlsx hoặc .xls.", $backUrl);
 
 	list($objPHPExcel, $sheet, $highestRow, $highestColIndex) = xd_open_upload_sheet($file, $ext, $backUrl, array('hocvien'));
+	list($rosterHeader, $rosterMap) = xd_roster_header($sheet, $highestRow, $highestColIndex);
+	if(isset($rosterMap['ngay_nop_ho_so']) || array_intersect_key($rosterMap, xd_student_financial_fields()))
+	{
+		if($ext === 'xlsx')
+			list($objPHPExcel, $sheet, $highestRow, $highestColIndex) = xd_open_upload_sheet($file, $ext, $backUrl, array('hocvien'), true);
+		return xd_roster_upload($sheet, $highestRow, $rosterMap, $rosterHeader);
+	}
 
 	// Cột theo mẫu thực tế: STT | HỌ VÀ TÊN | KHÓA | Ngày sinh | Số CCCD | NGƯỜI NỘP | GIÁO VIÊN/PHÂN XE | Nhóm/GHI CHÚ | đã tt | Menu | ...
 	$aliasGroups = array(

@@ -44,13 +44,14 @@ function dt_dat_upload_form()
 /* Tra cứu tổng hợp DAT theo khóa (mỗi học viên 1 dòng, có tham số A/B/C/D/E). */
 function dt_dat_list()
 {
-	global $d, $func, $items, $phien, $ds_khoa, $id_khoa_sel, $total_items, $module_stats;
+	global $d, $func, $items, $phien, $ds_khoa, $id_khoa_sel, $total_items, $module_stats, $module_sync_result;
 
 	$ds_khoa = dt_khoa_options();
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array(); $phien = array();
 	$total_items = 0;
 	$module_stats = array('dat' => 0, 'chua' => 0);
+	$module_sync_result = null;
 	$kw = dt_mb_lower(dt_req('keyword'));
 	if(!$id_khoa_sel && $kw === '') return;
 	if($id_khoa_sel)
@@ -80,6 +81,8 @@ function dt_dat_list()
 		$items[] = array('hv' => $hv, 'agg' => $agg, 'dat' => $dat, 'thieu' => $thieu, 'so_phien' => $soPhien, 'override' => $override);
 	}
 	$total_items = count($items);
+	if($id_khoa_sel && function_exists('dt_can') && dt_can('dat','edit') && function_exists('xd_sync_training_students'))
+		$module_sync_result = xd_sync_training_students($id_khoa_sel);
 }
 
 function dt_dat_upload_excel()
@@ -186,7 +189,7 @@ function dt_dat_upload_excel()
 	}
 
 	$d->commit();
-	$syncTotals = array('xd_added' => 0, 'ce_added' => 0, 'existing' => 0);
+	$syncTotals = array('xd_added' => 0, 'xd_course_updated' => 0, 'ce_added' => 0, 'existing' => 0);
 	$syncErrors = array();
 	foreach($syncKhoaIds as $syncKhoaId)
 	{
@@ -198,7 +201,7 @@ function dt_dat_upload_excel()
 	dt_log_import('dat', $file['name'], $them, $err);
 	$msg = "Import DAT: thêm $them phiên mới, bỏ qua $trung phiên đã có".($err ? ", $err phiên lỗi (HV chưa có)" : "");
 	if(!empty($syncKhoaIds))
-		$msg .= " Đồng bộ sang XD: thêm ".$syncTotals['xd_added']." học viên đạt DAT (mọi hạng); giữ nguyên ".$syncTotals['existing']." hồ sơ XD đã có.";
+		$msg .= " Đồng bộ sang XD: thêm ".$syncTotals['xd_added']." học viên đạt DAT; cập nhật mã khóa cho ".$syncTotals['xd_course_updated']." hồ sơ đã có; giữ nguyên ".$syncTotals['existing']." hồ sơ đã đúng khóa.";
 	if(!empty($syncErrors)) $msg .= " Có lỗi đồng bộ: ".implode('; ', $syncErrors);
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
 	dt_import_notice($msg, "index.php?com=daotao&act=dat".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($them > 0 || $err === 0) && empty($syncErrors));

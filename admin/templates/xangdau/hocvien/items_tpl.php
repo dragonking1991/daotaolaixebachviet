@@ -135,9 +135,11 @@
 						<th>CCCD</th>
 						<th>Khóa</th>
 						<th>Ngày sinh</th>
+						<th>Ngày nộp hồ sơ</th>
 						<th>Nhóm</th>
 						<th>GV phụ trách</th>
-						<th class="text-right">Số tiền TT</th>
+						<?php foreach(xd_student_financial_fields() as $financialLabel): ?><th class="text-right"><?=htmlspecialchars($financialLabel)?><small class="d-block text-muted">Nguồn · VNĐ</small></th><?php endforeach; ?>
+						<th class="text-right">Số tiền TT XD</th>
 						<th>Trạng thái</th>
 						<th>Ngày TT</th>
 						<th></th>
@@ -152,8 +154,10 @@
 						<td><?=htmlspecialchars($it['cccd'])?></td>
 						<td><?=htmlspecialchars(isset($it['khoa']) ? $it['khoa'] : '')?></td>
 						<td><?=htmlspecialchars($it['ngaysinh'])?></td>
+						<td><?=!empty($it['ngay_nop_ho_so']) ? date('d/m/Y', strtotime($it['ngay_nop_ho_so'])) : ''?></td>
 						<td><span class="badge <?=$badge?>"><?=htmlspecialchars($it['nhom'])?></span></td>
 						<td><?=htmlspecialchars($it['gv_hoten'])?></td>
+						<?php foreach(xd_student_financial_fields() as $financialKey => $financialLabel): ?><td class="text-right"><?=number_format((float)($it[$financialKey] ?? 0), 0, ',', '.')?></td><?php endforeach; ?>
 						<td class="text-right"><?=number_format((float)$it['so_tien_thanh_toan'], 0, ',', '.')?></td>
 						<td>
 							<?php if($it['ngay_thanh_toan'] !== null) { ?>
@@ -188,7 +192,7 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="12" class="text-center text-muted py-4">
+					<tr><td colspan="19" class="text-center text-muted py-4">
 						<div style="font-size:34px;line-height:1;color:#c8ccd4;margin-bottom:8px;"><i class="fas fa-users"></i></div>
 						<div class="mb-2">Chưa có học viên xăng dầu nào.</div>
 						<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên ngay</a>

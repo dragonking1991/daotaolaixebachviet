@@ -8,7 +8,7 @@ if(!defined('SOURCES')) die("Error");
  *   Chỉ nạp đúng sheet khớp để tránh tốn bộ nhớ với file nhiều/lớn sheet.
  * @return array [objPHPExcel, sheet, highestRow, highestColIndex]  (thoát bằng transfer nếu lỗi)
  */
-function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
+function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array(), $requireFormulaCache = false)
 {
 	global $func;
 
@@ -65,7 +65,7 @@ function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 	if($ext === 'xlsx' || $ext === 'xlsb')
 	{
 		$streamRow = 0; $streamCol = 0;
-		$streamSheet = xd_stream_read_xlsx($loadFile, $sheetHints, $streamRow, $streamCol, 20000);
+		$streamSheet = xd_stream_read_xlsx($loadFile, $sheetHints, $streamRow, $streamCol, 20000, null, $requireFormulaCache);
 		if($streamSheet !== false)
 		{
 			xd_cleanup_converted($convertedFile);

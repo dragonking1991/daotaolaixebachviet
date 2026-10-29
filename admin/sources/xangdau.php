@@ -20,6 +20,7 @@ require_once SOURCES.'xangdau/hoadon_import.php';
 require_once SOURCES.'xangdau/hocvien_crud.php';
 require_once SOURCES.'xangdau/khoa.php';
 require_once SOURCES.'xangdau/hocvien_import.php';
+require_once SOURCES.'xangdau/hocvien_financial_import.php';
 require_once SOURCES.'xangdau/algorithm.php';
 require_once SOURCES.'xangdau/loc.php';
 require_once SOURCES.'xangdau/export_list.php';
@@ -149,7 +150,7 @@ switch($act)
 	case "uploadHocvienExcel":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();
-		xd_upload_hocvien_excel();
+		if(xd_upload_hocvien_excel()) $template = "xangdau/uploadHocvien/preview";
 		break;
 	case "deleteHocvien":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);

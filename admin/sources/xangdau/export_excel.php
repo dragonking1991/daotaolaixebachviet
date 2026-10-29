@@ -264,9 +264,13 @@ function xd_xuat_hocvien_excel()
 	list($where, $params) = xd_hocvien_where_and_params($scope, $keyword, $nhom, $ttFrom, $ttTo, $khoa, $gv);
 	$rows = $d->rawQuery("select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause(), $params);
 	$labels = array('all' => 'TẤT CẢ', 'paid' => 'ĐÃ THANH TOÁN', 'unpaid' => 'CHƯA THANH TOÁN');
-	xd_xuat_danh_sach_excel('DANH SÁCH HỌC VIÊN XĂNG DẦU - '.$labels[$scope], array('STT', 'Họ tên', 'CCCD', 'Khóa', 'Ngày sinh', 'Nhóm', 'GV phụ trách', 'Số tiền TT', 'Ngày TT', 'Trạng thái'), array('A'=>6, 'B'=>28, 'C'=>18, 'D'=>14, 'E'=>14, 'F'=>10, 'G'=>26, 'H'=>18, 'I'=>14, 'J'=>20), $rows, function($row, $stt) {
-		return array($stt, $row['ho_ten'], $row['cccd'], $row['khoa'], $row['ngaysinh'], $row['nhom'], $row['gv_hoten'], (float)$row['so_tien_thanh_toan'], !empty($row['ngay_thanh_toan']) ? date('d/m/Y', strtotime($row['ngay_thanh_toan'])) : '', !empty($row['ngay_thanh_toan']) ? 'Đã thanh toán' : 'Chưa thanh toán');
-	}, 8, 'hoc_vien_xd_'.strtolower($scope));
+	$headers = array_merge(array('STT', 'Họ tên', 'CCCD', 'Khóa', 'Ngày sinh', 'Nhóm', 'GV phụ trách', 'Số tiền TT XD', 'Ngày TT', 'Trạng thái'), array_values(xd_student_financial_fields()), array('Ngày nộp hồ sơ'));
+	xd_xuat_danh_sach_excel('DANH SÁCH HỌC VIÊN XĂNG DẦU - '.$labels[$scope], $headers, array('A'=>6, 'B'=>28, 'C'=>18, 'D'=>14, 'E'=>14, 'F'=>10, 'G'=>26, 'H'=>18, 'I'=>14, 'J'=>20, 'K'=>20, 'L'=>18, 'M'=>20, 'N'=>20, 'O'=>20, 'P'=>20, 'Q'=>20), $rows, function($row, $stt) {
+		$values = array($stt, $row['ho_ten'], $row['cccd'], $row['khoa'], $row['ngaysinh'], $row['nhom'], $row['gv_hoten'], (float)$row['so_tien_thanh_toan'], !empty($row['ngay_thanh_toan']) ? date('d/m/Y', strtotime($row['ngay_thanh_toan'])) : '', !empty($row['ngay_thanh_toan']) ? 'Đã thanh toán' : 'Chưa thanh toán');
+		foreach(xd_student_financial_fields() as $key => $label) $values[] = (int)($row[$key] ?? 0);
+		$values[] = !empty($row['ngay_nop_ho_so']) ? date('d/m/Y', strtotime($row['ngay_nop_ho_so'])) : '';
+		return $values;
+	}, array(8,11,12,13,14,15,16), 'hoc_vien_xd_'.strtolower($scope));
 }
 
 function xd_xuat_danh_sach_excel($title, $headers, $widths, $rows, $rowValues, $moneyColumn, $filenamePrefix)
@@ -296,8 +300,11 @@ function xd_xuat_danh_sach_excel($title, $headers, $widths, $rows, $rowValues, $
 	$lastRow = $rowNumber - 1;
 	$border = array('borders' => array('allborders' => array('style' => PHPExcel_Style_Border::BORDER_THIN, 'color' => array('rgb' => '000000'))));
 	$ws->getStyle('A4:'.$lastColumn.$lastRow)->applyFromArray($border);
-	$moneyColumnLetter = PHPExcel_Cell::stringFromColumnIndex($moneyColumn - 1);
-	$ws->getStyle($moneyColumnLetter.'5:'.$moneyColumnLetter.$lastRow)->getNumberFormat()->setFormatCode('#,##0');
+	foreach((array)$moneyColumn as $moneyIndex)
+	{
+		$moneyColumnLetter = PHPExcel_Cell::stringFromColumnIndex($moneyIndex - 1);
+		$ws->getStyle($moneyColumnLetter.'5:'.$moneyColumnLetter.$lastRow)->getNumberFormat()->setFormatCode('#,##0');
+	}
 	$ws->getStyle('A5:A'.$lastRow)->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
 	$ws->getPageSetup()->setPrintArea('A1:'.$lastColumn.$lastRow);
 	$objPHPExcel->setActiveSheetIndex(0);

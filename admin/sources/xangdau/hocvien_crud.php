@@ -55,8 +55,11 @@ function xd_get_hocvien()
 		array()
 	);
 	$xd_hocvien_khoas = $d->rawQuery("select x.khoa, count(*) as so, sum(case when x.user_tao='Đồng bộ DAT' then 1 else 0 end) as so_dong_bo,
-		(select k.ten_khoa from #_dt_khoa k where (k.ma_khoa=x.khoa or k.ten_khoa=x.khoa) and k.ten_khoa <> '' order by (k.ma_khoa=x.khoa) desc limit 1) as ten_khoa
-		from #_xd_hocvien x where x.khoa <> '' group by x.khoa order by x.khoa asc", array());
+		coalesce(nullif(max(case when hd.id is not null and k.id=hd.id_khoa then k.ten_khoa end),''),nullif(max(case when k.ma_khoa=x.khoa or k.ten_khoa=x.khoa then k.ten_khoa end),'')) as ten_khoa
+		from #_xd_hocvien x
+		left join #_dt_hocvien hd on hd.id=x.thu_tu_file and hd.cccd=x.cccd and x.user_tao='Đồng bộ DAT'
+		left join #_dt_khoa k on (k.id=hd.id_khoa or k.ma_khoa=x.khoa or k.ten_khoa=x.khoa) and k.ten_khoa<>''
+		where x.khoa <> '' group by x.khoa order by x.khoa asc", array());
 	$xd_hocvien_khoa_groups=array('synced'=>array(),'mixed'=>array(),'stored'=>array(),'rank'=>array());
 	foreach($xd_hocvien_khoas as $course)
 	{
@@ -97,7 +100,7 @@ function xd_hocvien_course_label($course)
 	$group=xd_hocvien_course_group($course);
 	if($group==='rank')
 		return $ranks[$key].' · '.$total.' HV'.($synced<$total?' ('.$synced.' DAT + '.($total-$synced).' XD)':'');
-	$label=($group==='synced'&&$trainingName!=='')?$trainingName:$name;
+	$label=($trainingName!=='')?$name.' — '.$trainingName:$name;
 	$label.=' · '.$total.' HV';
 	if($group==='mixed')$label.=' ('.$synced.' DAT + '.($total-$synced).' XD)';
 	return $label;

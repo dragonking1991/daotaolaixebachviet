@@ -145,6 +145,7 @@ function xd_ensure_tables()
 	xd_ensure_column('xd_hocvien', 'thu_tu_file', "ADD COLUMN thu_tu_file INT(10) UNSIGNED NOT NULL DEFAULT 0 AFTER lan_import");
 	xd_ensure_column('xd_hocvien', 'khoa', "ADD COLUMN khoa VARCHAR(100) NOT NULL DEFAULT '' AFTER ngaysinh");
 	xd_ensure_column('xd_hocvien', 'nguoi_nop', "ADD COLUMN nguoi_nop VARCHAR(255) NOT NULL DEFAULT '' AFTER nhom");
+	xd_ensure_student_financial_columns();
 	xd_ensure_column('xd_hocvien', 'dinh_muc_ca_nhan', "ADD COLUMN dinh_muc_ca_nhan DECIMAL(18,2) NOT NULL DEFAULT 0 AFTER dinh_muc");
 	xd_ensure_column('xd_hocvien', 'da_dieu_chinh_tt', "ADD COLUMN da_dieu_chinh_tt TINYINT(1) NOT NULL DEFAULT 0 AFTER dinh_muc_ca_nhan");
 	$d->rawQuery("update #_xd_hocvien set da_dieu_chinh_tt = 1 where dinh_muc_ca_nhan <> 0 and da_dieu_chinh_tt = 0");
@@ -152,6 +153,18 @@ function xd_ensure_tables()
 	xd_ensure_column('xd_hocvien', 'ke_toan_kiem_tra', "ADD COLUMN ke_toan_kiem_tra TINYINT(1) NOT NULL DEFAULT 0 AFTER ngay_thanh_toan");
 	xd_ensure_column('xd_hocvien', 'quan_ly_duyet', "ADD COLUMN quan_ly_duyet TINYINT(1) NOT NULL DEFAULT 0 AFTER ke_toan_kiem_tra");
 	xd_ensure_index('xd_hocvien', 'idx_xd_hocvien_gvkey', "ADD KEY idx_xd_hocvien_gvkey (gv_key)");
+}
+
+function xd_ensure_student_financial_columns()
+{
+	global $d;
+	xd_ensure_column('xd_hocvien', 'ngay_nop_ho_so', "ADD COLUMN ngay_nop_ho_so DATE NULL DEFAULT NULL");
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể bổ sung Ngày nộp hồ sơ học viên XD.');
+	foreach(array('hoc_phi','mien_giam','hoc_phi_da_dong','hoc_phi_con_thieu','tam_ung_nguon','thanh_toan_luong_nguon') as $column)
+	{
+		xd_ensure_column('xd_hocvien', $column, "ADD COLUMN `$column` DECIMAL(18,2) NOT NULL DEFAULT 0");
+		if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể bổ sung cột tài chính học viên XD.');
+	}
 }
 
 function xd_ensure_column($table, $column, $alterAdd)

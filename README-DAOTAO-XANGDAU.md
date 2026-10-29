@@ -255,7 +255,13 @@ flowchart TD
 
 ### 4.4 Học viên XD
 
-- Nguồn: **Import học viên** (file .xlsx, cột Họ tên, Khóa, Ngày sinh, CCCD, Người nộp, Giáo viên, Nhóm…) hoặc **tự đồng bộ từ DAT**. Có nút **Đồng bộ HV đạt DAT** để chạy tay.
+- Nguồn: **Import học viên** (file .xlsx/.xls, cột Họ tên, Khóa, Ngày sinh, CCCD, Người nộp, Giáo viên, Nhóm…) hoặc **tự đồng bộ từ DAT**. Có nút **Đồng bộ HV đạt DAT** để chạy tay.
+- **Mẫu BC1 có tài chính**: nhận `Số CMND/HC`, `Hệ đào tạo` (BT/CK/DAT), `Giáo viên`, `Người nộp hồ sơ` cùng 6 cột `Số tiền học phí`, `Miễn giảm`, `Số tiền đã đóng`, `Số tiền còn thiếu`, `Số tiền tạm ứng`, `Thanh toán Lương`. Import trực tiếp vào XD, **không tạo khóa/hồ sơ Đào tạo**. Với học viên mới, nhập khóa XD ở form nếu file thiếu cột Khóa; nhóm lấy từ Hệ đào tạo hoặc lựa chọn trên form. Học viên mới phải có giáo viên.
+- Mẫu tài chính luôn **xem trước rồi xác nhận**. Dùng kết quả công thức đã lưu sẵn (kể cả tham chiếu ngoài); công thức thiếu kết quả hoặc lỗi Excel sẽ được báo rõ. Các khoản tiền là **nguyên đồng VNĐ**, không nhân 1.000 và không tự tính lại từ các cột khác.
+- **Import lại mẫu tài chính/ngày nộp hồ sơ**: ghép theo CMND/CCCD (có đối chiếu số 0 đầu), cập nhật thông tin và tiền nguồn; **nhóm BT/CK/DAT lấy theo cột Hệ đào tạo/Nhóm trong Excel cho mọi hồ sơ, kể cả đã thanh toán hoặc đồng bộ DAT**. Cột/ô nhóm trống giữ nhóm cũ; lựa chọn nhóm mặc định chỉ dùng cho học viên mới. Nhóm khác BT/CK/DAT báo lỗi và chặn toàn bộ file. Xem trước hiển thị nhóm cũ → mới và số hồ sơ đổi nhóm. Nhóm mới dùng cho tính toán XD về sau, không tính lại tiền đã thanh toán. Giữ nguyên khóa, liên kết DAT, ngày/số tiền TT XD, bảng kê, định mức và cờ duyệt/kiểm tra. Cột tiền vắng mặt giữ giá trị cũ, ô trống trong cột hiện diện nhập là 0. Giáo viên trống giữ giá trị cũ; giáo viên hồ sơ DAT hoặc đã thanh toán/duyệt/thuộc bảng kê được giữ nguyên. Lưu bản sao trong `backups/` trước khi ghi; toàn bộ file thành công hoặc không lưu dòng nào.
+- Sáu khoản tiền nguồn hiển thị trong danh sách học viên (nhãn **Nguồn · VNĐ**) và được thêm vào cuối file xuất Excel, độc lập với thanh toán XD; **không tự tạo giao dịch học phí, tạm ứng hoặc lương**.
+- **Ngày nộp hồ sơ**: nhận cột cùng tên trong XLS/XLSX, định dạng `dd-mm-yyyy` (như Excel: `10-07-2026` là ngày 10 tháng 7), `dd/mm/yyyy`, `yyyy-mm-dd` hoặc ngày số Excel; lưu riêng và hiển thị trong xem trước, danh sách học viên, xuất Excel. Có thể import chỉ ngày mà không có 6 cột tiền. Ô trống/cột vắng mặt giữ ngày cũ; hồ sơ mới chưa có ngày lưu trống. **Ngày nhận Hồ sơ không phải Ngày nộp hồ sơ**. Ngày không tồn tại hoặc công thức có kết quả lỗi `#REF!` được báo theo dòng/cột và chặn toàn bộ file; cần sửa công thức hoặc dán ngày hợp lệ dưới dạng giá trị rồi lưu file.
+- Công cụ local: `php scripts/import_xd_roster.php --local-db --course='201-B(SS)' /duong-dan/file.xls` chỉ xem trước và in tổng tiền/số dòng, không in thông tin cá nhân. Sau khi kiểm tra, thêm `--apply` để sao lưu, ghi và đối chiếu dữ liệu. Công cụ yêu cầu `MYSQLHOST` là `db`, `localhost` hoặc `127.0.0.1`; không dùng để import production. Kiểm thử: `php scripts/regression_xd_roster.php --local-db` (bảng tạm, không sửa học viên thật).
 - **Bộ lọc**: từ khóa, **Nhóm**, **Khóa**, **Giáo viên**, trạng thái, khoảng ngày thanh toán. Xuất Excel theo đúng bộ lọc.
 - Mỗi dòng: bấm nhãn trạng thái để chuyển **đã / chưa thanh toán**; nút ✎ sửa **Nhóm / Giáo viên** (chỉ khi chưa thanh toán).
 - **Chọn nhiều → Xóa mục đã chọn**, hoặc **Xóa theo giáo viên**. Học viên **đã thanh toán / đã vào bảng kê luôn được giữ lại**.
@@ -294,12 +300,9 @@ stateDiagram-v2
 flowchart TD
     T[Import DAT / Thêm phiên / Đạt mục đã chọn /<br/>Đạt toàn bộ / Import học viên /<br/>Nút Đồng bộ HV đạt DAT] --> S{Đạt DAT?<br/>đủ ngưỡng hoặc Đạt tay}
     S -- Không --> X[Bỏ qua]
-    S -- Có --> H{Hạng}
-    H -- B1 / B11 / C1 / C --> E{Đã có trong<br/>Học viên XD?<br/>so theo CCCD}
-    E -- Chưa --> N[Thêm mới:<br/>Nhóm = DAT<br/>Khóa = bss/btd/c1/c<br/>GV = GV bên Đào tạo<br/>Chưa thanh toán]
-    E -- Có --> K[Giữ nguyên, không ghi đè]
-    H -- CE --> C[Danh sách CE:<br/>thêm mới hoặc cập nhật thông tin]
-    H -- Hạng khác --> X
+    S -- Có --> E{Đã có trong<br/>Học viên XD?<br/>so theo CCCD}
+    E -- Chưa --> N[Thêm mới:<br/>B1/B11/C1 hệ BT: nhóm BT<br/>Trường hợp khác: nhóm DAT<br/>Khóa = mã khóa đào tạo<br/>GV = GV bên Đào tạo<br/>Chưa thanh toán]
+    E -- Có --> K[Cập nhật mã khóa;<br/>sửa DAT thành BT cho hồ sơ đồng bộ cũ<br/>đúng liên kết B1/B11/C1 hệ BT;<br/>giữ lịch sử thanh toán]
     N --> L[Lọc thanh toán như cũ]
 ```
 
@@ -307,7 +310,8 @@ Lưu ý — hệ thống **không** tự làm các việc sau:
 - Đổi giáo viên bên Đào tạo **không** tự đổi ở học viên XD đã có → sửa tay ở Học viên XD.
 - Bỏ Đạt DAT / xóa phiên DAT **không** xóa học viên đã sang XD.
 - Sửa bên XD **không** cập nhật ngược về Đào tạo.
-- Cột **Khóa** của học viên đồng bộ là **mã hạng** (bss/btd/c1/c) để tính định mức, không phải mã khóa học.
+- Cột **Khóa** của học viên đồng bộ là **mã khóa đào tạo** (dùng tên khóa nếu mã trống).
+- **Sửa nhóm đồng bộ cũ:** bấm **Đồng bộ HV đạt DAT** để sửa DAT → BT cho hồ sơ B1/B11/C1 hệ BT do luồng đồng bộ cũ tạo. Chỉ sửa khi nguồn là `Đồng bộ DAT` và ID liên kết khớp học viên Đào tạo; không ghi đè nhóm CK, hồ sơ import riêng hoặc liên kết khác. Hệ đào tạo ưu tiên học viên, nếu trống dùng hệ của khóa. Sửa cả hồ sơ đã thanh toán nhưng giữ nguyên số tiền/ngày thanh toán, bảng kê, định mức và cờ duyệt/kiểm tra; nhóm mới chỉ ảnh hưởng tính toán về sau. Thông báo đồng bộ hiển thị số hồ sơ đã sửa. Đồng bộ lại không tạo trùng hay sửa lại hồ sơ đã đúng.
 
 ---
 

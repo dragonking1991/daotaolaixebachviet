@@ -61,6 +61,7 @@
 						</td>
 						<td>
 							<div><?php if(!empty($it['hang'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang'])?></span><?php endif; ?> <?php if(!empty($it['ma_khoa'])): ?><span class="dt-tag is-muted"><?=htmlspecialchars($it['ma_khoa'])?></span><?php elseif((int)$it['id_khoa']===0): ?><span class="badge badge-warning">Chưa gán khóa</span><?php endif; ?></div>
+							<div class="dt-sub">Hệ đào tạo: <?=htmlspecialchars(trim((string)($it['he_daotao'] ?? '')) ?: '—')?></div>
 							<div class="dt-sub"><i class="fas fa-chalkboard-teacher"></i>GV: <?=htmlspecialchars($it['gv_hoten'] ?: '—')?></div>
 						</td>
 						<td>
