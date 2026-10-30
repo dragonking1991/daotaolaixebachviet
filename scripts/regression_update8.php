@@ -29,6 +29,7 @@ class Update8Notice extends RuntimeException
 }
 class Update8Functions
 {
+    public function pagination($total,$perPage,$page,$url) { return ''; }
     public function transfer($message, $url, $success=true) { throw new Update8Notice($message,$success); }
     public function redirect($url) { throw new Update8Notice($url,true); }
 }
@@ -124,46 +125,98 @@ try
     u8_check($btFuel['ngay_thanh_toan']===null && (int)$btFuel['so_tien_thanh_toan']===0 && (int)$btFuel['id_bangke']===0,'New DAT sync must start unpaid and outside a payment batch');
     $u8_dat_edit=false;dt_dat_list();u8_check($module_sync_result===null,'View-only DAT user must not trigger synchronization');$u8_dat_edit=true;
     echo "PASS B1 BT sync uses course/teacher and starts unpaid\n";
+    $newSyncIndex=0;
     foreach(array('B1','B11','C1') as $repairRank)
     {
         u8_query('update #_dt_hocvien set hang=? where id=?',array($repairRank,$syncStudent['id']));
-        foreach(array(false,true) as $paidRepair)
+        foreach(array('BT'=>'BT','Bổ túc'=>'BT','CK'=>'CK',' Chính khóa '=>'CK') as $repairSystem=>$expectedGroup)
         {
-            u8_query("update #_xd_hocvien set nhom='DAT',ngay_thanh_toan=?,so_tien_thanh_toan=?,id_bangke=?,quan_ly_duyet=?,ke_toan_kiem_tra=? where id=?",
-                array($paidRepair?'2026-10-24':null,$paidRepair?1234567:0,$paidRepair?42:0,$paidRepair?1:0,$paidRepair?1:0,$btFuel['id']));
-            $beforeRepair=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
-            $repair=xd_sync_training_students($bc);
-            $afterRepair=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
-            $expectedRepair=$beforeRepair;$expectedRepair['nhom']='BT';
-            u8_check($repair['ok'] && $repair['xd_group_updated']===1 && $afterRepair===$expectedRepair,'Legacy '.$repairRank.' BT repair changed history or failed');
-            u8_check(strpos(xd_sync_training_notice($repair),'DAT → BT cho 1')!==false,'Missing group-repair notice');
-            $repeatRepair=xd_sync_training_students($bc);
-            u8_check($repeatRepair['ok'] && $repeatRepair['xd_group_updated']===0 &&
-                $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']))===$afterRepair,'Repeated legacy repair was not idempotent');
+            u8_query('update #_dt_hocvien set he_daotao=? where id=?',array($repairSystem,$syncStudent['id']));
+            foreach(array(false,true) as $paidRepair)
+            {
+                u8_query("update #_xd_hocvien set nhom='DAT',ngay_thanh_toan=?,so_tien_thanh_toan=?,id_bangke=?,quan_ly_duyet=?,ke_toan_kiem_tra=? where id=?",
+                    array($paidRepair?'2026-10-24':null,$paidRepair?1234567:0,$paidRepair?42:0,$paidRepair?1:0,$paidRepair?1:0,$btFuel['id']));
+                $beforeRepair=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
+                $repair=xd_sync_training_students($bc);
+                $afterRepair=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
+                $expectedRepair=$beforeRepair;$expectedRepair['nhom']=$expectedGroup;
+                u8_check($repair['ok'] && $repair['xd_group_updated']===1 &&
+                    $repair['xd_group_updated_'.strtolower($expectedGroup)]===1 && $afterRepair===$expectedRepair,
+                    'Legacy '.$repairRank.' '.$repairSystem.' repair changed history or failed');
+                u8_check(strpos(xd_sync_training_notice($repair),'DAT → '.$expectedGroup.' cho 1')!==false,'Missing group-repair notice');
+                $repeatRepair=xd_sync_training_students($bc);
+                u8_check($repeatRepair['ok'] && $repeatRepair['xd_group_updated']===0 &&
+                    $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']))===$afterRepair,'Repeated legacy repair was not idempotent');
+            }
+            $newSyncIndex++;
+            $newIdentity='98'.substr(preg_replace('/\D/','',hash('sha256',$tag.'-new-'.$newSyncIndex)).'1234567890',0,10);
+            u8_check(!u8_query('select id from #_dt_hocvien where cccd=?',array($newIdentity)) &&
+                !u8_query('select id from #_xd_hocvien where cccd=?',array($newIdentity)),'New fixture identity collides with existing data');
+            u8_query('insert into #_dt_hocvien (id_khoa,ma_hv,cccd,hoten,hang,he_daotao) values (?,?,?,?,?,?)',
+                array($bc,$tag.'-NEW-'.$newSyncIndex,$newIdentity,$tag.' new '.$newSyncIndex,$repairRank,$repairSystem));
+            $newTrainingId=(int)$d->getLastInsertId();
+            $newNotPassed=xd_sync_training_students($bc,$newIdentity);
+            u8_check($newNotPassed['ok'] && $newNotPassed['not_passed']===1 && $newNotPassed['xd_added']===0 &&
+                !u8_query('select id from #_xd_hocvien where cccd=?',array($newIdentity)),
+                'New BT/CK student must not bypass DAT qualification');
+            u8_query('insert into #_dt_dat_override (id_khoa,cccd,dat) values (?,?,1)',array($bc,$newIdentity));
+            $newSync=xd_sync_training_students($bc,$newIdentity);
+            $newFuel=$d->rawQueryOne('select * from #_xd_hocvien where cccd=?',array($newIdentity));
+            u8_check($newSync['ok'] && $newSync['xd_added']===1 && $newFuel['nhom']===$expectedGroup &&
+                (int)$newFuel['thu_tu_file']===$newTrainingId && $newFuel['ngay_thanh_toan']===null &&
+                (float)$newFuel['so_tien_thanh_toan']===0.0 && (int)$newFuel['id_bangke']===0,
+                'New '.$repairRank.' '.$repairSystem.' must retain system and start unpaid');
         }
     }
     u8_query("update #_dt_hocvien set hang='B1' where id=?",array($syncStudent['id']));
-    foreach(array(
-        array('DAT','independent-import',(int)$syncStudent['id']),
-        array('DAT','Đồng bộ DAT',(int)$syncStudent['id']+1000000),
-        array('CK','Đồng bộ DAT',(int)$syncStudent['id']),
-        array('BT','Đồng bộ DAT',(int)$syncStudent['id'])
-    ) as $excludedRepair)
+    foreach(array('BT','CK') as $excludedSystem)
     {
-        u8_query('update #_xd_hocvien set nhom=?,user_tao=?,thu_tu_file=? where id=?',array_merge($excludedRepair,array($btFuel['id'])));
-        $excludedBefore=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
-        $excludedResult=xd_sync_training_students($bc);
-        u8_check($excludedResult['ok'] && $excludedResult['xd_group_updated']===0 &&
-            $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']))===$excludedBefore,'Legacy repair overwrote an independent/manual group or mismatched link');
+        u8_query('update #_dt_hocvien set he_daotao=? where id=?',array($excludedSystem,$syncStudent['id']));
+        foreach(array(
+            array('DAT','independent-import',(int)$syncStudent['id']),
+            array('DAT','Đồng bộ DAT',(int)$syncStudent['id']+1000000),
+            array('CK','Đồng bộ DAT',(int)$syncStudent['id']),
+            array('BT','Đồng bộ DAT',(int)$syncStudent['id'])
+        ) as $excludedRepair)
+        {
+            u8_query('update #_xd_hocvien set nhom=?,user_tao=?,thu_tu_file=? where id=?',array_merge($excludedRepair,array($btFuel['id'])));
+            $excludedBefore=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
+            $excludedResult=xd_sync_training_students($bc);
+            u8_check($excludedResult['ok'] && $excludedResult['xd_group_updated']===0 &&
+                $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']))===$excludedBefore,'Legacy repair overwrote an independent/manual group or mismatched link');
+        }
     }
     u8_query("update #_dt_hocvien set he_daotao='' where id=?",array($syncStudent['id']));
-    u8_query("update #_dt_khoa set he_daotao='BT' where id=?",array($bc));
-    u8_query("update #_xd_hocvien set nhom='DAT' where id=?",array($btFuel['id']));
-    $fallbackRepair=xd_sync_training_students($bc);
-    u8_check($fallbackRepair['ok'] && $fallbackRepair['xd_group_updated']===1,'Legacy repair did not use the course system fallback');
+    foreach(array('BT'=>'BT','CK'=>'CK','chinh khoa'=>'CK') as $fallbackSystem=>$fallbackGroup)
+    {
+        u8_query('update #_dt_khoa set he_daotao=? where id=?',array($fallbackSystem,$bc));
+        u8_query("update #_xd_hocvien set nhom='DAT' where id=?",array($btFuel['id']));
+        $fallbackRepair=xd_sync_training_students($bc);
+        u8_check($fallbackRepair['ok'] && $fallbackRepair['xd_group_updated']===1 &&
+            $d->rawQueryOne('select nhom from #_xd_hocvien where id=?',array($btFuel['id']))['nhom']===$fallbackGroup,
+            'Legacy repair did not use the course system fallback');
+    }
+    u8_query("update #_dt_khoa set he_daotao='' where id=?",array($bc));
+    foreach(array('','GTT','DAT') as $unmappedSystem)
+    {
+        u8_query('update #_dt_hocvien set he_daotao=? where id=?',array($unmappedSystem,$syncStudent['id']));
+        u8_query("update #_xd_hocvien set nhom='DAT' where id=?",array($btFuel['id']));
+        $unmappedBefore=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']));
+        $unmapped=xd_sync_training_students($bc,$syncStudent['cccd']);
+        u8_check($unmapped['ok'] && $unmapped['xd_group_updated']===0 &&
+            $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']))===$unmappedBefore,
+            'Blank/unknown/DAT system must retain the existing DAT mapping');
+    }
+    u8_query("update #_dt_hocvien set he_daotao='CK' where id=?",array($syncStudent['id']));
+    u8_query('delete from #_dt_dat_override where id_khoa=? and cccd=?',array($bc,$syncStudent['cccd']));
+    $notPassed=xd_sync_training_students($bc,$syncStudent['cccd']);
+    u8_check($notPassed['ok'] && $notPassed['not_passed']===1 && $notPassed['xd_group_updated']===0 &&
+        $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($btFuel['id']))===$unmappedBefore,
+        'CK legacy repair must not bypass DAT qualification');
+    u8_query('insert into #_dt_dat_override (id_khoa,cccd,dat) values (?,?,1)',array($bc,$syncStudent['cccd']));
     u8_query("update #_dt_hocvien set he_daotao='BT' where id=?",array($syncStudent['id']));
     u8_query("update #_dt_khoa set he_daotao='CK' where id=?",array($bc));
-    echo "PASS legacy DAT-to-BT repair for B1/B11/C1, paid/unpaid full-row history, fallback, exclusions and repeat sync\n";
+    echo "PASS new and legacy BT/CK aliases for B1/B11/C1, paid/unpaid full-row history, student/course precedence, exclusions, missing DAT and repeat sync\n";
     u8_query("update #_xd_hocvien set ho_ten=?,ngay_thanh_toan='2026-10-24',so_tien_thanh_toan=100 where id=?",array($tag.' paid',$fuel['id']));
     xd_sync_training_students($bc);
     $fuel=$d->rawQueryOne('select * from #_xd_hocvien where id=?',array($fuel['id']));
@@ -175,6 +228,12 @@ try
     u8_check(count(u8_query('select id from #_xd_ce_hocvien where id_khoa=?',array($courseIds['CE'])))===0,'CE-only storage must not receive new DAT students');
         $ceFuel=$d->rawQueryOne('select * from #_xd_hocvien where cccd=?',array($ce['cccd']));
         u8_check($ceFuel['khoa']===$tag.'-CE' && $ceFuel['nhom']==='DAT' && $ceFuel['gv_hoten']===$ceTeacher && $ceFuel['ngay_thanh_toan']===null,'CE sync must use the real course/teacher and remain unpaid in regular XD');
+    u8_query("update #_dt_hocvien set he_daotao='CK' where id=?",array($studentIds['CE'][1]));
+    $ceCkSync=xd_sync_training_students($courseIds['CE']);
+    u8_check($ceCkSync['ok'] && $ceCkSync['xd_group_updated']===0 &&
+        $d->rawQueryOne('select * from #_xd_hocvien where id=?',array($ceFuel['id']))===$ceFuel,
+        'CK mapping for B1/B11/C1 must not change the existing CE DAT policy');
+    u8_query("update #_dt_hocvien set he_daotao='BT' where id=?",array($studentIds['CE'][1]));
     $_REQUEST=array('id_khoa'=>$courseIds['CE'],'group'=>'ce');
     dt_finance_list();
     u8_check(count($finance_students)===0,'BT student with DAT may enter XD but must not enter CK/DAT finance');

@@ -41,7 +41,7 @@
 						<strong class="mr-2">Thêm cả khóa (đủ ĐK):</strong>
 						<select name="id_khoa" class="form-control form-control-sm mr-2">
 							<option value="0">— Chọn khóa —</option>
-							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=(isset($_REQUEST['id_khoa'])&&$_REQUEST['id_khoa']==$k['id'])?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
+							<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=(isset($_REQUEST['id_khoa'])&&$_REQUEST['id_khoa']==$k['id'])?'selected':''?>><?=htmlspecialchars(course_option_label($k))?></option><?php endforeach; ?>
 						</select>
 						<button class="btn btn-sm bg-gradient-secondary">Lọc</button>
 						<?php if(!empty($_REQUEST['id_khoa'])): ?><a href="index.php?com=daotao&act=kythiAddEligible&id=<?=$ky['id']?>&id_khoa=<?=(int)$_REQUEST['id_khoa']?>" onclick="return confirm('Thêm TẤT CẢ học viên đủ điều kiện của khóa này vào kỳ?')" class="btn btn-sm bg-gradient-primary ml-2"><i class="fas fa-user-plus mr-1"></i>Thêm đủ ĐK</a>

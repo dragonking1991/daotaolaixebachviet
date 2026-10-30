@@ -25,7 +25,7 @@
 				<select id="ce_course" name="id_khoa" class="form-control form-control-sm">
 					<option value="0">Tất cả khóa CE</option>
 					<?php foreach(($xd_ce_courses ?? array()) as $course): ?>
-					<option value="<?=(int)$course['id']?>" <?=(int)$xd_ce_filter_khoa === (int)$course['id'] ? 'selected' : ''?>><?=htmlspecialchars($course['ma_khoa'].' — '.$course['ten_khoa'])?></option>
+					<option value="<?=(int)$course['id']?>" <?=(int)$xd_ce_filter_khoa === (int)$course['id'] ? 'selected' : ''?>><?=htmlspecialchars(course_option_label($course))?></option>
 					<?php endforeach; ?>
 				</select>
 				<input class="form-control form-control-sm" type="search" name="keyword" value="<?=htmlspecialchars($xd_ce_filter_keyword ?? '')?>" placeholder="Tên, CCCD, mã khóa, giáo viên/hóa đơn">
@@ -43,7 +43,7 @@
 								<label for="ce-invoice-course">Khóa CE</label>
 								<select class="form-control form-control-sm" id="ce-invoice-course" name="id_khoa" required>
 									<option value="">Chọn khóa</option>
-									<?php foreach(($xd_ce_courses ?? array()) as $course): ?><option value="<?=(int)$course['id']?>"><?=htmlspecialchars($course['ma_khoa'].' — '.$course['ten_khoa'])?></option><?php endforeach; ?>
+									<?php foreach(($xd_ce_courses ?? array()) as $course): ?><option value="<?=(int)$course['id']?>"><?=htmlspecialchars(course_option_label($course))?></option><?php endforeach; ?>
 								</select>
 							</div>
 							<div class="form-group col-md-6"><label>Số hóa đơn</label><input class="form-control form-control-sm" type="text" name="ma_hoa_don" maxlength="191" required></div>

@@ -1,6 +1,24 @@
 <?php
 if(!defined('SOURCES')) die("Error");
 
+require_once SOURCES.'xangdau/hocvien_financial_import.php';
+require_once LIBRARIES.'course_options.php';
+
+function dt_finance_source_data($course, $page = null)
+{
+	global $d;
+	$where = $course === '' ? '1' : 'khoa=?';
+	$params = $course === '' ? array() : array($course);
+	$count = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where $where", $params);
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không đọc được tổng số hồ sơ tiền nguồn.');
+	$fields = implode(',', array_keys(xd_student_financial_fields()));
+	$limit = $page === null ? '' : ' limit '.((max(1,(int)$page)-1)*30).',30';
+	$rows = $d->rawQuery("select id,ho_ten,cccd,khoa,nhom,gv_hoten,$fields from #_xd_hocvien
+		where $where order by substring_index(trim(ho_ten),' ',-1),ho_ten,id$limit", $params);
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không đọc được tiền nguồn import XD; kiểm tra cập nhật các cột tài chính XD.');
+	return array('rows'=>$rows, 'total'=>(int)$count['total']);
+}
+
 function dt_finance_amount($value)
 {
 	$value = trim((string)$value);
@@ -42,11 +60,21 @@ function dt_finance_eligible($student, $group)
 
 function dt_finance_list()
 {
-	global $d, $finance_students, $finance_courses, $finance_history, $finance_course, $finance_group;
+	global $d, $func, $finance_students, $finance_courses, $finance_history, $finance_course, $finance_group,
+		$finance_source, $finance_source_courses, $finance_source_course, $finance_source_paging;
 	$finance_course = (int)dt_req('id_khoa', 0);
 	$finance_group = dt_req('group') === 'ce' ? 'ce' : 'bc';
 	$finance_courses = dt_khoa_options();
 	$finance_students = array(); $finance_history = array();
+	$finance_source_course = trim((string)dt_req('source_khoa'));
+	$finance_source_courses = $d->rawQuery("select x.khoa,count(distinct x.id) as total,max(k.ten_khoa) as ten_khoa
+		from #_xd_hocvien x left join #_dt_khoa k on k.ma_khoa=x.khoa or k.ten_khoa=x.khoa
+		group by x.khoa order by x.khoa");
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không đọc được danh sách khóa tiền nguồn.');
+	$finance_source = dt_finance_source_data($finance_source_course, max(1,(int)dt_req('p',1)));
+	$sourceUrl = 'index.php?'.http_build_query(array('com'=>'daotao','act'=>'taichinh','id_khoa'=>$finance_course,
+		'group'=>$finance_group,'source_khoa'=>$finance_source_course));
+	$finance_source_paging = $func->pagination($finance_source['total'],30,max(1,(int)dt_req('p',1)),$sourceUrl);
 	if(empty($_SESSION['dt_finance_csrf'])) $_SESSION['dt_finance_csrf'] = bin2hex(random_bytes(24));
 	if(!$finance_course) return;
 	$rows = $d->rawQuery("select h.*, k.he_daotao as he_khoa, coalesce(f.tam_ung,0) as tam_ung, coalesce(f.thanh_toan,0) as thanh_toan, coalesce(f.da_tt,0) as da_tt
@@ -121,6 +149,21 @@ function dt_finance_save()
 function dt_finance_export()
 {
 	global $finance_students;
+	if(dt_req('source_export') === '1')
+	{
+		$data = dt_finance_source_data(trim((string)dt_req('source_khoa')));
+		$rows = array();
+		foreach($data['rows'] as $student)
+		{
+			$row = array($student['ho_ten'],$student['cccd'],$student['khoa'],$student['nhom'],$student['gv_hoten']);
+			foreach(xd_student_financial_fields() as $key => $label) $row[] = (float)$student[$key];
+			$rows[] = $row;
+		}
+		dt_xlsx_simple('Tien nguon Excel','tien-nguon-excel-'.date('Ymd_His').'.xlsx',
+			array_merge(array('Họ tên','CCCD','Khóa XD','Nhóm XD','Giáo viên'),array_values(xd_student_financial_fields())),
+			$rows,array(0,1,2,3,4));
+		return;
+	}
 	dt_finance_list();
 	$rows = array();
 	foreach($finance_students as $student) $rows[] = array($student['hoten'],$student['cccd'],$student['hang'],$student['gv_hoten'],$student['hoc_phi_da_dong'],$student['hoc_phi_con_thieu'],$student['tam_ung'],$student['thanh_toan'],$student['da_tt'] ? 'Đã thanh toán' : 'Chưa thanh toán');

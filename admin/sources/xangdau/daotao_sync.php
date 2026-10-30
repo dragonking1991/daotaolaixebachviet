@@ -35,7 +35,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 	);
 	if($rows === false || $d->getLastErrorCode() !== '00000') return array('ok' => false, 'error' => 'Không đọc được danh sách học viên đào tạo.');
 
-	$result = array('ok' => true, 'xd_added' => 0, 'xd_course_updated' => 0, 'xd_group_updated' => 0, 'ce_added' => 0, 'existing' => 0, 'not_passed' => 0, 'unsupported' => 0, 'errors' => array());
+	$result = array('ok' => true, 'xd_added' => 0, 'xd_course_updated' => 0, 'xd_group_updated' => 0, 'xd_group_updated_bt' => 0, 'xd_group_updated_ck' => 0, 'ce_added' => 0, 'existing' => 0, 'not_passed' => 0, 'unsupported' => 0, 'errors' => array());
 	$now = time();
 	foreach($rows as $student)
 	{
@@ -62,12 +62,14 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 
 		$teacher = trim((string)$student['gv_hoten']);
 		$teacherKey = function_exists('dt_gv_key') ? dt_gv_key($teacher) : '';
-			$courseCode = trim((string)$student['ma_khoa']);
-			if($courseCode==='')$courseCode=trim((string)$student['ten_khoa']);
-			$system=trim((string)$student['he_daotao']);
-			if($system==='')$system=trim((string)$student['he_khoa']);
-			$xdGroup='DAT';
-			if(in_array($hang,array('B1','B11','C1'),true)&&dt_norm_header($system)==='bt')$xdGroup='BT';
+		$courseCode = trim((string)$student['ma_khoa']);
+		if($courseCode === '') $courseCode = trim((string)$student['ten_khoa']);
+		$system = trim((string)$student['he_daotao']);
+		if($system === '') $system = trim((string)$student['he_khoa']);
+		$groupBySystem = array('bt' => 'BT', 'botuc' => 'BT', 'ck' => 'CK', 'chinhkhoa' => 'CK');
+		$xdGroup = 'DAT';
+		if(in_array($hang, array('B1','B11','C1'), true))
+			$xdGroup = $groupBySystem[dt_norm_header($system)] ?? 'DAT';
 
 		$variants = function_exists('dt_cccd_variants') ? dt_cccd_variants($studentCccd) : array($studentCccd);
 		$placeholders = implode(',', array_fill(0, count($variants), '?'));
@@ -79,14 +81,18 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 		}
 		if($existing && !empty($existing['id']))
 		{
-			$repairBtGroup = $xdGroup === 'BT' && $existing['nhom'] === 'DAT'
+			$repairGroup = in_array($xdGroup, array('BT','CK'), true) && $existing['nhom'] === 'DAT'
 				&& $existing['user_tao'] === 'Đồng bộ DAT' && (int)$existing['thu_tu_file'] === (int)$student['id'];
-			if($repairBtGroup)
+			if($repairGroup)
 			{
 				$d->rawQuery("update #_xd_hocvien set nhom = ? where id = ? and nhom = ? and user_tao = ? and thu_tu_file = ?",
-					array('BT', (int)$existing['id'], 'DAT', 'Đồng bộ DAT', (int)$student['id']));
-				if($d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không sửa được nhóm BT của học viên '.$studentCccd;
-				else $result['xd_group_updated']++;
+					array($xdGroup, (int)$existing['id'], 'DAT', 'Đồng bộ DAT', (int)$student['id']));
+				if($d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không sửa được nhóm '.$xdGroup.' của học viên '.$studentCccd;
+				else
+				{
+					$result['xd_group_updated']++;
+					$result['xd_group_updated_'.strtolower($xdGroup)]++;
+				}
 			}
 			if(trim((string)$existing['khoa']) !== $courseCode)
 			{
@@ -94,7 +100,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 				if($d->getLastErrorCode() !== '00000') $result['errors'][] = $courseCode.': không cập nhật được khóa XD của học viên '.$studentCccd;
 				else $result['xd_course_updated']++;
 			}
-			elseif(!$repairBtGroup) $result['existing']++;
+			elseif(!$repairGroup) $result['existing']++;
 			continue;
 		}
 
@@ -115,7 +121,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 function xd_sync_training_notice($result)
 {
 	if(empty($result['ok'])) return ' Đồng bộ gặp lỗi: '.implode('; ', $result['errors'] ?? array($result['error'] ?? 'lỗi không xác định')).'.';
-	return ' Đã thêm '.$result['xd_added'].' học viên đạt DAT vào XD; cập nhật mã khóa cho '.$result['xd_course_updated'].' hồ sơ XD đã có; sửa nhóm DAT → BT cho '.$result['xd_group_updated'].' hồ sơ đồng bộ cũ; '.$result['existing'].' hồ sơ không cần cập nhật được giữ nguyên.';
+	return ' Đã thêm '.$result['xd_added'].' học viên đạt DAT vào XD; cập nhật mã khóa cho '.$result['xd_course_updated'].' hồ sơ XD đã có; sửa nhóm DAT → BT cho '.$result['xd_group_updated_bt'].' hồ sơ, DAT → CK cho '.$result['xd_group_updated_ck'].' hồ sơ đồng bộ cũ; '.$result['existing'].' hồ sơ không cần cập nhật được giữ nguyên.';
 }
 
 function xd_mark_imported_dat()

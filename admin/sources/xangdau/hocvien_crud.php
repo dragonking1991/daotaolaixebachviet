@@ -42,7 +42,7 @@ function xd_get_hocvien()
 	list($where, $params) = xd_hocvien_where_and_params($scope, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_tt_from, $xd_filter_tt_to, $xd_filter_khoa, $xd_filter_gv);
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
-	$sql = "select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause()." limit ".$startpoint.",".$per_page;
+	$sql = "select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause(true)." limit ".$startpoint.",".$per_page;
 	$items = $d->rawQuery($sql, $params);
 
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien where $where", $params);
@@ -60,6 +60,7 @@ function xd_get_hocvien()
 		left join #_dt_hocvien hd on hd.id=x.thu_tu_file and hd.cccd=x.cccd and x.user_tao='Đồng bộ DAT'
 		left join #_dt_khoa k on (k.id=hd.id_khoa or k.ma_khoa=x.khoa or k.ten_khoa=x.khoa) and k.ten_khoa<>''
 		where x.khoa <> '' group by x.khoa order by x.khoa asc", array());
+	xd_hocvien_attach_dat_counts($xd_hocvien_khoas);
 	$xd_hocvien_khoa_groups=array('synced'=>array(),'mixed'=>array(),'stored'=>array(),'rank'=>array());
 	foreach($xd_hocvien_khoas as $course)
 	{
@@ -76,6 +77,41 @@ function xd_get_hocvien()
 	if($xd_filter_tt_from !== '') $url .= '&tt_from='.urlencode($xd_filter_tt_from);
 	if($xd_filter_tt_to !== '') $url .= '&tt_to='.urlencode($xd_filter_tt_to);
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
+}
+
+function xd_hocvien_attach_dat_counts(&$courses)
+{
+	global $d;
+	if(!$courses) return;
+	require_once LIBRARIES.'daotao_lib.php';
+	$names = array_column($courses, 'khoa');
+	$marks = implode(',', array_fill(0, count($names), '?'));
+	$students = $d->rawQuery("select h.id, h.hang, k.ma_khoa, k.ten_khoa, coalesce(o.dat,0) as override_dat,
+		coalesce(p.c,0) as c, coalesce(p.d,0) as d, coalesce(p.b,0) as b, coalesce(p.e,0) as e
+		from #_dt_hocvien h inner join #_dt_khoa k on k.id=h.id_khoa
+		left join (select id_khoa,cccd,
+			sum(case when la_xe_tudong=1 then gio_thuchanh else 0 end) as c,
+			sum(case when la_xe_tudong=1 then 0 else gio_thuchanh end) as d,
+			sum(gio_dem) as b,sum(km) as e
+			from #_dt_dat_phien group by id_khoa,cccd) p on p.id_khoa=h.id_khoa and p.cccd=h.cccd
+		left join #_dt_dat_override o on o.id_khoa=h.id_khoa and o.cccd=h.cccd
+		where k.ma_khoa in ($marks) or k.ten_khoa in ($marks)", array_merge($names,$names));
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không đọc được số học viên đạt DAT theo khóa.');
+	$counts = array();
+	foreach($students as $student)
+	{
+		$agg = array('a'=>round((float)$student['c']+(float)$student['d'],4));
+		foreach(array('b','c','d','e') as $key) $agg[$key] = round((float)$student[$key],4);
+		list($passed) = dt_dat_danhgia($student['hang'], $agg);
+		foreach(array_unique(array($student['ma_khoa'],$student['ten_khoa'])) as $name)
+		{
+			if(!isset($counts[$name])) $counts[$name] = 0;
+			if($passed || (int)$student['override_dat'] === 1) $counts[$name]++;
+		}
+	}
+	foreach($courses as &$course)
+		if(array_key_exists($course['khoa'], $counts)) $course['so_dat'] = $counts[$course['khoa']];
+	unset($course);
 }
 
 function xd_hocvien_course_group($course)
@@ -99,10 +135,9 @@ function xd_hocvien_course_label($course)
 	$key=strtolower($name);
 	$group=xd_hocvien_course_group($course);
 	if($group==='rank')
-		return $ranks[$key].' · '.$total.' HV'.($synced<$total?' ('.$synced.' DAT + '.($total-$synced).' XD)':'');
-	$label=($trainingName!=='')?$name.' — '.$trainingName:$name;
-	$label.=' · '.$total.' HV';
-	if($group==='mixed')$label.=' ('.$synced.' DAT + '.($total-$synced).' XD)';
+		return course_option_label(array('khoa'=>$name,'ten_khoa'=>$ranks[$key],'so'=>$total));
+	$label=course_option_label($course);
+	if(isset($course['so_dat'])) $label.=' · '.(int)$course['so_dat'].' đạt DAT';
 	return $label;
 }
 
@@ -151,6 +186,20 @@ function xd_delete_hocvien_selected()
 {
 	global $d, $func;
 	$ret = xd_safe_ret($_POST['ret'] ?? '', 'index.php?com=xangdau&act=hocvien');
+	if(($_POST['delete_course'] ?? '') === '1')
+	{
+		if(!xd_can_xoa() || empty($_SESSION['xd_dat_csrf']) ||
+			!hash_equals((string)$_SESSION['xd_dat_csrf'], (string)($_POST['csrf'] ?? '')))
+			$func->transfer('Không có quyền hoặc phiên thao tác không hợp lệ.', $ret, false);
+		$course = trim((string)($_POST['khoa'] ?? ''));
+		if($course === '') $func->transfer('Chọn một khóa XD trước khi xóa toàn khóa.', $ret, false);
+		try { $result = xd_course_change($course, '', true); }
+		catch(RuntimeException $error) { $func->transfer($error->getMessage(), $ret, false); return; }
+		$func->transfer('Đã xóa '.$result['changed'].' học viên trong toàn khóa '.$course.
+			'; giữ lại '.$result['kept'].' hồ sơ có thanh toán/bảng kê/duyệt/kiểm tra. Sao lưu: '.$result['backup'].
+			'. Có thể bấm Đồng bộ HV đạt DAT để tạo lại hồ sơ đủ điều kiện; các khoản tiền nguồn cần import lại Excel.', $ret);
+		return;
+	}
 	$ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? array()))));
 	if(!$ids) $func->transfer("Chưa chọn học viên nào để xóa.", $ret, false);
 

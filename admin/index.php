@@ -84,6 +84,7 @@
 	<script src="assets/js/bootstrap.bundle.js"></script>
 	<script src="assets/js/adminlte.js"></script>
 	<script src="assets/js/daotao.js?v=<?=@filemtime(__DIR__.'/assets/js/daotao.js')?>"></script>
+	<script src="assets/js/course-select.js?v=<?=filemtime(__DIR__.'/assets/js/course-select.js')?>"></script>
 	<script src="assets/js/daotao-import.js?v=<?=@filemtime(__DIR__.'/assets/js/daotao-import.js')?>"></script>
 	<script src="assets/lucide/lucide.min.js"></script>
 	<script src="assets/lucide/lucide-shim.js"></script>

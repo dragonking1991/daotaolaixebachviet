@@ -914,7 +914,9 @@
 
 	$(document).ready(function(){
 		/* Select 2 */
-		$('.select2').select2();
+		$('select.select2').filter(function() {
+			return !$(this).data('select2');
+		}).select2();
 
 		/* Format price */
 		$(".format-price").priceFormat({

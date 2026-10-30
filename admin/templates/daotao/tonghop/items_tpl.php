@@ -63,7 +63,7 @@
 			<form method="get" class="mb-3">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="tonghop">
 				<div class="row">
-					<div class="col-md-3 form-group mb-1"><select name="id_khoa" class="form-control form-control-sm"><option value="0">— Tất cả khóa —</option><?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$filters['id_khoa']==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option><?php endforeach; ?></select></div>
+					<div class="col-md-3 form-group mb-1"><select name="id_khoa" class="form-control form-control-sm"><option value="0">— Tất cả khóa —</option><?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$filters['id_khoa']==$k['id']?'selected':''?>><?=htmlspecialchars(course_option_label($k))?></option><?php endforeach; ?></select></div>
 					<div class="col-md-2 form-group mb-1"><input type="date" name="tu_ngay" class="form-control form-control-sm" value="<?=htmlspecialchars($filters['tu_ngay'])?>" title="Từ ngày (DAT)"></div>
 					<div class="col-md-2 form-group mb-1"><input type="date" name="toi_ngay" class="form-control form-control-sm" value="<?=htmlspecialchars($filters['toi_ngay'])?>" title="Tới ngày (DAT)"></div>
 					<div class="col-md-2 form-group mb-1"><input type="text" name="cccd" class="form-control form-control-sm" placeholder="CCCD" value="<?=htmlspecialchars($filters['cccd'])?>"></div>

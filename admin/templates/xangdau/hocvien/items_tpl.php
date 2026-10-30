@@ -117,8 +117,11 @@
 	<div class="card card-primary card-outline text-sm mb-0">
 		<div class="card-header">
 			<h3 class="card-title">Danh sách học viên xăng dầu</h3>
-			<div class="card-tools text-muted">Học viên mới đồng bộ lấy khóa và giáo viên từ Đào tạo; B1/B11/C1 hệ BT vào nhóm BT, CE vào nhóm DAT. Hồ sơ đã có không bị ghi đè.<?php if(xd_can_xoa()) { ?>
+			<div class="card-tools text-muted">Học viên mới đồng bộ lấy khóa và giáo viên từ Đào tạo; B1/B11/C1 giữ nhóm BT/CK theo hệ đào tạo, CE vào nhóm DAT. Hồ sơ đồng bộ cũ đúng liên kết được sửa DAT → BT/CK; lịch sử thanh toán được giữ nguyên.<?php if(xd_can_xoa()) { ?>
 				<button type="submit" form="xd-bulk-hocvien" class="btn btn-sm btn-danger ml-2 xd-bulk-delete" data-label="học viên" data-note="Học viên đã thanh toán hoặc thuộc bảng kê sẽ được giữ lại."><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button>
+				<?php if($xd_filter_khoa !== ''): ?>
+				<button type="submit" name="delete_course" value="1" form="xd-bulk-hocvien" class="btn btn-sm btn-outline-danger ml-1" onclick="return confirm(<?=htmlspecialchars(json_encode('Xóa toàn bộ học viên đủ điều kiện trong khóa '.$xd_filter_khoa.' trên TẤT CẢ các trang? Thao tác áp dụng cho cả khóa, không phụ thuộc các bộ lọc khác hoặc ô đã chọn. Giữ hồ sơ có thanh toán, bảng kê, duyệt/kiểm tra; sao lưu trước khi xóa. Dữ liệu Đào tạo không bị xóa. Đồng bộ lại chỉ tạo học viên đạt DAT; các khoản tiền nguồn/ngày nộp hồ sơ cần import lại từ Excel.', JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8')?>)"><i class="fas fa-trash-alt mr-1" aria-hidden="true"></i>Xóa toàn khóa</button>
+				<?php endif; ?>
 				<?php } ?></div>
 		</div>
 		<div class="card-body table-responsive p-0">
@@ -138,7 +141,6 @@
 						<th>Ngày nộp hồ sơ</th>
 						<th>Nhóm</th>
 						<th>GV phụ trách</th>
-						<?php foreach(xd_student_financial_fields() as $financialLabel): ?><th class="text-right"><?=htmlspecialchars($financialLabel)?><small class="d-block text-muted">Nguồn · VNĐ</small></th><?php endforeach; ?>
 						<th class="text-right">Số tiền TT XD</th>
 						<th>Trạng thái</th>
 						<th>Ngày TT</th>
@@ -157,7 +159,6 @@
 						<td><?=!empty($it['ngay_nop_ho_so']) ? date('d/m/Y', strtotime($it['ngay_nop_ho_so'])) : ''?></td>
 						<td><span class="badge <?=$badge?>"><?=htmlspecialchars($it['nhom'])?></span></td>
 						<td><?=htmlspecialchars($it['gv_hoten'])?></td>
-						<?php foreach(xd_student_financial_fields() as $financialKey => $financialLabel): ?><td class="text-right"><?=number_format((float)($it[$financialKey] ?? 0), 0, ',', '.')?></td><?php endforeach; ?>
 						<td class="text-right"><?=number_format((float)$it['so_tien_thanh_toan'], 0, ',', '.')?></td>
 						<td>
 							<?php if($it['ngay_thanh_toan'] !== null) { ?>
@@ -192,7 +193,7 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="19" class="text-center text-muted py-4">
+					<tr><td colspan="13" class="text-center text-muted py-4">
 						<div style="font-size:34px;line-height:1;color:#c8ccd4;margin-bottom:8px;"><i class="fas fa-users"></i></div>
 						<div class="mb-2">Chưa có học viên xăng dầu nào.</div>
 						<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên ngay</a>

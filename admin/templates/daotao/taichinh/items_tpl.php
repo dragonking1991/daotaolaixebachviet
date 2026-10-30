@@ -5,10 +5,30 @@
     <div class="card-header"><h3 class="card-title"><strong>Học phí, tạm ứng, thanh toán</strong> <span class="dt-count"><?=count($finance_students)?></span></h3>
     <?php if(dt_can('taichinh','export')): ?><div class="card-tools"><a class="btn btn-sm bg-gradient-info" href="<?=dt_export_link('exportTaichinh',array('id_khoa','group'))?>"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a></div><?php endif; ?></div>
     <div class="card-body">
+        <h6><i class="fas fa-file-invoice-dollar mr-1" aria-hidden="true"></i>Tiền nguồn từ Excel <span class="dt-count"><?=(int)$finance_source['total']?></span></h6>
+        <div class="alert alert-info py-2">6 khoản tiền nguồn được đọc từ dữ liệu import XD (VNĐ), gồm tất cả nhóm BT/CK/DAT, không yêu cầu đạt DAT. Chỉ xem/đối chiếu; không cộng vào giao dịch tạm ứng, thanh toán hoặc học phí đã ghi nhận bên Đào tạo. Import và nơi lưu dữ liệu giữ nguyên.</div>
+        <form method="get" class="form-inline mb-2">
+            <input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="taichinh">
+            <input type="hidden" name="id_khoa" value="<?=(int)$finance_course?>"><input type="hidden" name="group" value="<?=htmlspecialchars($finance_group)?>">
+            <select name="source_khoa" class="form-control form-control-sm mr-2" aria-label="Khóa XD của tiền nguồn"><option value="">Tất cả khóa XD (tiền nguồn)</option><?php foreach($finance_source_courses as $course): if($course['khoa']==='') continue; ?><option value="<?=htmlspecialchars($course['khoa'])?>" <?=$course['khoa']===$finance_source_course?'selected':''?>><?=htmlspecialchars(course_option_label($course))?></option><?php endforeach; ?></select>
+            <button class="btn btn-sm bg-gradient-primary mr-2">Lọc tiền nguồn</button>
+            <?php if(dt_can('taichinh','export')): ?><a class="btn btn-sm bg-gradient-info" href="<?=htmlspecialchars('index.php?'.http_build_query(array('com'=>'daotao','act'=>'exportTaichinh','source_export'=>'1','source_khoa'=>$finance_source_course)))?>"><i class="fas fa-file-excel mr-1"></i>Xuất tiền nguồn</a><?php endif; ?>
+        </form>
+        <div class="table-responsive"><table class="table dt-list table-hover"><thead><tr><th>Học viên</th><th>Khóa XD / Nhóm</th><th>Giáo viên</th><?php foreach(xd_student_financial_fields() as $label): ?><th class="text-right"><?=htmlspecialchars($label)?><small class="d-block text-muted">Nguồn · VNĐ</small></th><?php endforeach; ?></tr></thead><tbody>
+        <?php foreach($finance_source['rows'] as $student): ?><tr>
+            <td><div class="dt-title"><?=htmlspecialchars($student['ho_ten'])?></div><div class="dt-sub"><?=htmlspecialchars($student['cccd'])?></div></td>
+            <td><?=htmlspecialchars($student['khoa'].' / '.$student['nhom'])?></td><td><?=htmlspecialchars($student['gv_hoten'])?></td>
+            <?php foreach(xd_student_financial_fields() as $key => $label): ?><td class="text-right"><?=number_format((float)$student[$key],0,',','.')?></td><?php endforeach; ?>
+        </tr><?php endforeach; ?>
+        <?php if(!$finance_source['rows']): ?><tr><td colspan="9" class="text-center text-muted">Chưa có dữ liệu tiền nguồn trong khóa đã chọn.</td></tr><?php endif; ?>
+        </tbody></table></div>
+        <div class="mb-3"><?=$finance_source_paging?></div>
+        <hr><h6>Giao dịch Đào tạo (đạt DAT, hệ CK/DAT)</h6>
         <form method="get" class="form-inline mb-3">
             <input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="taichinh">
+            <input type="hidden" name="source_khoa" value="<?=htmlspecialchars($finance_source_course)?>">
             <select name="group" class="form-control form-control-sm mr-2" style="max-width:100%;"><option value="bc" <?=$finance_group==='bc'?'selected':''?>>Khác CE (đạt DAT, CK/DAT)</option><option value="ce" <?=$finance_group==='ce'?'selected':''?>>CE (đạt DAT, CK/DAT)</option></select>
-            <select name="id_khoa" class="form-control form-control-sm mr-2"><option value="0">Chọn khóa</option><?php foreach($finance_courses as $course): ?><option value="<?=(int)$course['id']?>" <?=(int)$course['id']===$finance_course?'selected':''?>><?=htmlspecialchars($course['ma_khoa'].' '.$course['ten_khoa'])?></option><?php endforeach; ?></select>
+            <select name="id_khoa" class="form-control form-control-sm mr-2"><option value="0">Chọn khóa</option><?php foreach($finance_courses as $course): ?><option value="<?=(int)$course['id']?>" <?=(int)$course['id']===$finance_course?'selected':''?>><?=htmlspecialchars(course_option_label($course))?></option><?php endforeach; ?></select>
             <button class="btn btn-sm bg-gradient-primary"><i class="fas fa-filter mr-1"></i>Lọc</button>
         </form>
         <?php if(dt_can('taichinh','edit')): ?>

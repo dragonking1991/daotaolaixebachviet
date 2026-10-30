@@ -1,5 +1,6 @@
 <?php
 if(!defined('SOURCES')) die("Error");
+require_once dirname(__DIR__,3).'/libraries/course_options.php';
 
 /* ============================ Helpers dùng chung ============================ */
 
@@ -54,8 +55,9 @@ function xd_cccd_variants($cccd)
 	return array_values(array_unique(array_filter($variants, function($v){ return $v !== ''; })));
 }
 
-function xd_hocvien_order_clause()
+function xd_hocvien_order_clause($byName = false)
 {
+	if($byName) return "substring_index(trim(ho_ten), ' ', -1) asc, trim(ho_ten) asc, id asc";
 	return "lower(trim(khoa)) asc, lan_import asc, thu_tu_file asc, id asc";
 }
 

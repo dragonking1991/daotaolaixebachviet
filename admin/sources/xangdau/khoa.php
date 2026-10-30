@@ -11,7 +11,7 @@ function xd_course_query($sql,$params=array())
 
 function xd_course_mutable($row)
 {
-	return $row['ngay_thanh_toan']===null && (int)$row['id_bangke']===0 && (float)$row['so_tien_thanh_toan']==0 && empty($row['quan_ly_duyet']);
+	return $row['ngay_thanh_toan']===null && (int)$row['id_bangke']===0 && (float)$row['so_tien_thanh_toan']==0 && empty($row['quan_ly_duyet']) && empty($row['ke_toan_kiem_tra']);
 }
 
 function xd_courses_page()
@@ -20,10 +20,18 @@ function xd_courses_page()
 	if(empty($_SESSION['xd_course_csrf']))$_SESSION['xd_course_csrf']=bin2hex(random_bytes(24));
 	$keyword=trim((string)($_GET['keyword']??''));
 	$where="x.khoa<>''";$params=array();
-	if($keyword!==''){$where.=' and x.khoa like ?';$params[]='%'.$keyword.'%';}
+	if($keyword!=='')
+	{
+		$where.=" and (x.khoa like ? or exists (
+			select 1 from #_dt_khoa k
+			left join #_dt_hocvien h on h.id_khoa=k.id and h.id=x.thu_tu_file and h.cccd=x.cccd and x.user_tao='Đồng bộ DAT'
+			where (k.ma_khoa=x.khoa or k.ten_khoa=x.khoa or h.id is not null)
+			and (k.ma_khoa like ? or k.ten_khoa like ?)))";
+		$params=array_fill(0,3,'%'.$keyword.'%');
+	}
 	$xd_courses=xd_course_query("select x.khoa,count(*) as so,sum(case when x.user_tao='Đồng bộ DAT' then 1 else 0 end) as so_dong_bo,
 		sum(case when x.ngay_thanh_toan is not null then 1 else 0 end) as paid,
-		sum(case when x.ngay_thanh_toan is null and x.id_bangke=0 and x.so_tien_thanh_toan=0 and x.quan_ly_duyet=0 then 1 else 0 end) as editable,
+		sum(case when x.ngay_thanh_toan is null and x.id_bangke=0 and x.so_tien_thanh_toan=0 and x.quan_ly_duyet=0 and x.ke_toan_kiem_tra=0 then 1 else 0 end) as editable,
 		count(distinct nullif(x.gv_key,'')) as teachers,sum(x.so_tien_thanh_toan) as amount
 		from #_xd_hocvien x where $where group by x.khoa order by x.khoa",$params);
 	$courseNames=xd_course_query("select x.khoa,
@@ -36,6 +44,7 @@ function xd_courses_page()
 	foreach($courseNames as $courseName)if(trim((string)$courseName['ten_khoa'])!=='')$courseNameByCode[$courseName['khoa']]=$courseName['ten_khoa'];
 	foreach($xd_courses as &$course)$course['ten_khoa']=$courseNameByCode[$course['khoa']]??'';
 	unset($course);
+	xd_hocvien_attach_dat_counts($xd_courses);
 	$xd_course_name=trim((string)($_GET['khoa']??''));$xd_course_students=array();$xd_course_paging='';$xd_course_total=0;
 	if($xd_course_name==='')return;
 	$count=xd_course_query('select count(*) as num from #_xd_hocvien where khoa=?',array($xd_course_name));

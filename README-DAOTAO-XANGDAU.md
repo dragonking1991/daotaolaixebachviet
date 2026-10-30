@@ -255,6 +255,14 @@ flowchart TD
 
 ### 4.4 Học viên XD
 
+- **Xóa toàn khóa để đồng bộ lại:** chọn khóa XD, bấm **Xóa toàn khóa** rồi xác nhận. Nút này áp dụng mọi trang trong khóa, bỏ qua bộ lọc tên/nhóm/giáo viên/trạng thái/ngày; không cần chọn từng ô. Chỉ tài khoản có quyền xóa được thao tác, có kiểm tra phiên và sao lưu trước khi xóa. Giữ hồ sơ có ngày/số tiền thanh toán, bảng kê hoặc cờ duyệt/kiểm tra; không xóa dữ liệu Đào tạo. Sau đó bấm **Đồng bộ HV đạt DAT** để tạo lại hồ sơ đủ điều kiện; đồng bộ không khôi phục tiền nguồn hay ngày nộp hồ sơ, cần import lại Excel cho các dữ liệu này.
+
+- **6 cột tiền nguồn** (học phí, miễn giảm, đã đóng, còn thiếu, tạm ứng, thanh toán lương) được xem tại **Đào tạo → Học phí, tạm ứng, thanh toán → Tiền nguồn từ Excel**, không còn hiển thị trong danh sách học viên XD. Phần tiền nguồn có bộ lọc khóa XD, phân trang và nút **Xuất tiền nguồn** riêng; gồm mọi nhóm BT/CK/DAT kể cả chưa đạt DAT hoặc chưa có hồ sơ Đào tạo. Bộ lọc giao dịch Đào tạo bên dưới không giới hạn tiền nguồn. Dữ liệu vẫn lưu/import ở XD, không sao chép vào học phí Đào tạo, không cộng vào tạm ứng/thanh toán thực tế và không tạo giao dịch. Import preview và file xuất học viên XD hiện có giữ nguyên để đối chiếu.
+
+- Nhãn khóa hiển thị riêng số **đạt DAT thực tế bên Đào tạo** (ví dụ `62 HV · 54 đạt DAT`), gồm đủ điều kiện giờ/km hoặc đạt thủ công. Đây là số đạt của khóa Đào tạo, không phải nhóm BT/CK/DAT hay nguồn tạo hồ sơ XD; khóa XD không khớp khóa Đào tạo không hiển thị số này.
+
+- Danh sách và xuất Excel học viên sắp theo **tên gọi cuối họ tên A–Z**, sau đó họ tên đầy đủ và ID khi trùng tên. Bộ lọc và phân trang giữ nguyên; thứ tự ưu tiên trích tiền/quyết toán vẫn theo khóa và thứ tự import, không đổi theo thứ tự hiển thị.
+
 - Nguồn: **Import học viên** (file .xlsx/.xls, cột Họ tên, Khóa, Ngày sinh, CCCD, Người nộp, Giáo viên, Nhóm…) hoặc **tự đồng bộ từ DAT**. Có nút **Đồng bộ HV đạt DAT** để chạy tay.
 - **Mẫu BC1 có tài chính**: nhận `Số CMND/HC`, `Hệ đào tạo` (BT/CK/DAT), `Giáo viên`, `Người nộp hồ sơ` cùng 6 cột `Số tiền học phí`, `Miễn giảm`, `Số tiền đã đóng`, `Số tiền còn thiếu`, `Số tiền tạm ứng`, `Thanh toán Lương`. Import trực tiếp vào XD, **không tạo khóa/hồ sơ Đào tạo**. Với học viên mới, nhập khóa XD ở form nếu file thiếu cột Khóa; nhóm lấy từ Hệ đào tạo hoặc lựa chọn trên form. Học viên mới phải có giáo viên.
 - Mẫu tài chính luôn **xem trước rồi xác nhận**. Dùng kết quả công thức đã lưu sẵn (kể cả tham chiếu ngoài); công thức thiếu kết quả hoặc lỗi Excel sẽ được báo rõ. Các khoản tiền là **nguyên đồng VNĐ**, không nhân 1.000 và không tự tính lại từ các cột khác.
@@ -303,8 +311,8 @@ flowchart TD
     T[Import DAT / Thêm phiên / Đạt mục đã chọn /<br/>Đạt toàn bộ / Import học viên /<br/>Nút Đồng bộ HV đạt DAT] --> S{Đạt DAT?<br/>đủ ngưỡng hoặc Đạt tay}
     S -- Không --> X[Bỏ qua]
     S -- Có --> E{Đã có trong<br/>Học viên XD?<br/>so theo CCCD}
-    E -- Chưa --> N[Thêm mới:<br/>B1/B11/C1 hệ BT: nhóm BT<br/>Trường hợp khác: nhóm DAT<br/>Khóa = mã khóa đào tạo<br/>GV = GV bên Đào tạo<br/>Chưa thanh toán]
-    E -- Có --> K[Cập nhật mã khóa;<br/>sửa DAT thành BT cho hồ sơ đồng bộ cũ<br/>đúng liên kết B1/B11/C1 hệ BT;<br/>giữ lịch sử thanh toán]
+    E -- Chưa --> N[Thêm mới:<br/>B1/B11/C1 hệ BT hoặc Bổ túc: nhóm BT<br/>B1/B11/C1 hệ CK hoặc Chính khóa: nhóm CK<br/>Trường hợp khác: nhóm DAT<br/>Khóa = mã khóa đào tạo<br/>GV = GV bên Đào tạo<br/>Chưa thanh toán]
+    E -- Có --> K[Cập nhật mã khóa;<br/>sửa DAT thành BT hoặc CK cho hồ sơ đồng bộ cũ<br/>đúng liên kết B1/B11/C1 và hệ tương ứng;<br/>giữ lịch sử thanh toán]
     N --> L[Lọc thanh toán như cũ]
 ```
 
@@ -313,11 +321,30 @@ Lưu ý — hệ thống **không** tự làm các việc sau:
 - Bỏ Đạt DAT / xóa phiên DAT **không** xóa học viên đã sang XD.
 - Sửa bên XD **không** cập nhật ngược về Đào tạo.
 - Cột **Khóa** của học viên đồng bộ là **mã khóa đào tạo** (dùng tên khóa nếu mã trống).
-- **Sửa nhóm đồng bộ cũ:** bấm **Đồng bộ HV đạt DAT** để sửa DAT → BT cho hồ sơ B1/B11/C1 hệ BT do luồng đồng bộ cũ tạo. Chỉ sửa khi nguồn là `Đồng bộ DAT` và ID liên kết khớp học viên Đào tạo; không ghi đè nhóm CK, hồ sơ import riêng hoặc liên kết khác. Hệ đào tạo ưu tiên học viên, nếu trống dùng hệ của khóa. Sửa cả hồ sơ đã thanh toán nhưng giữ nguyên số tiền/ngày thanh toán, bảng kê, định mức và cờ duyệt/kiểm tra; nhóm mới chỉ ảnh hưởng tính toán về sau. Thông báo đồng bộ hiển thị số hồ sơ đã sửa. Đồng bộ lại không tạo trùng hay sửa lại hồ sơ đã đúng.
+- **Sửa nhóm đồng bộ cũ:** bấm **Đồng bộ HV đạt DAT** để sửa DAT → BT/CK cho hồ sơ B1/B11/C1 hệ tương ứng do luồng đồng bộ cũ tạo. Nhận cả `BT`/`Bổ túc`, `CK`/`Chính khóa` (không phân biệt hoa/thường, dấu và khoảng trắng). Chỉ sửa khi học viên vẫn đạt DAT, nguồn là `Đồng bộ DAT` và ID liên kết khớp học viên Đào tạo; không ghi đè nhóm đã là BT/CK, hồ sơ import riêng hoặc liên kết khác. Hệ đào tạo ưu tiên học viên, nếu trống dùng hệ của khóa. Sửa cả hồ sơ đã thanh toán nhưng giữ nguyên số tiền/ngày thanh toán, bảng kê, định mức và cờ duyệt/kiểm tra; nhóm mới chỉ ảnh hưởng tính toán về sau. Thông báo đồng bộ hiển thị riêng số sửa sang BT và CK. Đồng bộ lại không tạo trùng hay sửa lại hồ sơ đã đúng.
+
+### Các trường hợp cần đối chiếu khi đồng bộ nhóm
+
+| Trường hợp | Xử lý hiện tại / điều cần lưu ý |
+|---|---|
+| B1/B11/C1 đạt DAT, hệ CK hoặc Chính khóa | Tạo mới nhóm CK; sửa hồ sơ DAT đồng bộ cũ đúng liên kết sang CK. |
+| B1/B11/C1 đạt DAT, hệ BT hoặc Bổ túc | Tạo mới nhóm BT; sửa hồ sơ DAT đồng bộ cũ đúng liên kết sang BT. |
+| Hệ học viên trống, hệ khóa có giá trị | Dùng hệ khóa; nếu học viên có hệ riêng thì ưu tiên hệ học viên. |
+| Cả hai hệ trống hoặc hệ khác như GTT | Vẫn DAT theo quy tắc cũ; cần xác nhận nghiệp vụ, không tự đoán CK/BT. |
+| C, CE và các hạng ngoài B1/B11/C1 | Vẫn DAT theo quy tắc cũ, kể cả khi có hệ CK/BT; chưa mở rộng ngoại lệ sang các hạng này. |
+| Chưa đạt DAT | Không thêm mới hoặc sửa nhóm qua đồng bộ; không tự xóa hồ sơ XD đã tồn tại. |
+| Hồ sơ import riêng, liên kết khác hoặc đã có nhóm BT/CK | Không tự sửa nhóm. Excel có nhóm BT/CK/DAT rõ ràng vẫn là nguồn cập nhật khi import. |
+| Hồ sơ đã thanh toán/duyệt/thuộc bảng kê | Sửa nhóm đồng bộ cũ không tính lại lịch sử, không sinh giao dịch; nhóm ảnh hưởng lần tính về sau. |
+| Một CCCD có nhiều khóa Đào tạo | XD ghép theo CCCD, không lưu riêng mỗi lần học; cần xác định khóa ưu tiên trước khi đồng bộ hàng loạt. |
+| Nút “Đạt DAT mục đã chọn” ở XD | Đây là thao tác chủ động gán nhóm DAT cho hồ sơ đủ điều kiện chưa thanh toán, không chỉ xác nhận kết quả học; có thể đổi nhóm BT/CK đã có. Không dùng nút này nếu muốn giữ hệ. |
 
 ---
 
 ## 6. Thao tác chung
+
+- **Chọn khóa (Đào tạo và Xăng dầu):** mọi dropdown khóa hiển thị `Mã khóa — Tên khóa · N HV`. Bấm vào là xổ toàn bộ danh sách để cuộn chọn, không cần gõ; mỗi lần mở lại sẽ xóa từ tìm trước đó. Gõ mã hoặc tên để tìm/gợi ý, không phân biệt hoa/thường hay dấu tiếng Việt; dùng phím lên/xuống và Enter để chọn. Không tạo khóa mới khi gõ. Số HV theo danh sách tương ứng: Đào tạo, XD/tiền nguồn, CE hoặc hồ sơ trong kỳ HTKH; số đạt DAT vẫn hiển thị riêng. Khóa cũ thiếu tên/mã được ghi rõ “Chưa có tên/mã khóa”. Các lựa chọn tất cả/chưa gán khóa, giá trị ID/mã và cơ chế tự lọc giữ nguyên.
+- **Khởi tạo Select2:** bộ khởi tạo chung chỉ áp dụng cho `select.select2` chưa khởi tạo, không áp dụng lại vào container `.select2` do thư viện tạo. Khi cập nhật phải chép cả `admin/assets/js/myscript.php` để tránh ô khóa rỗng, mất chữ “Tất cả khóa”/“Chọn khóa” và báo “No results found” dù có dữ liệu. Ô tìm khóa có gợi ý “Tìm mã hoặc tên khóa (có/không dấu)”.
+- **Phân biệt tên/mã:** danh sách khóa Đào tạo hiển thị tên (ví dụ `K13-C1`) ở dòng chính, mã (`79044K26C1005`) có nhãn “Mã khóa” bên dưới. Quản lý khóa XD tìm theo cả mã và tên Đào tạo, kể cả tên tra từ hồ sơ đồng bộ DAT cũ; không đổi mã lưu hoặc khóa của học viên.
 
 | Thao tác | Cách làm |
 |---|---|
@@ -334,7 +361,7 @@ Lưu ý — hệ thống **không** tự làm các việc sau:
 
 **Import học viên báo "thiếu khóa"?** File không có cột Khóa → chọn khóa ở ô chọn trước khi import.
 
-**Học viên đạt DAT nhưng không thấy bên XD?** Kiểm tra: học viên có CCCD chưa, hạng có thuộc B1/B11/C1/C không (CE nằm ở Danh sách CE), hoặc đã có sẵn trong XD. Bấm **Đồng bộ HV đạt DAT** để chạy lại.
+**Học viên đạt DAT nhưng không thấy bên XD?** Kiểm tra CCCD, hạng, kết quả DAT hoặc đánh dấu Đạt tay, và hồ sơ XD đã có cùng CCCD. Học viên đạt DAT ở mọi hạng, kể cả CE, đi vào danh sách Học viên XD thông thường; luồng này không tự tạo thêm hồ sơ ở Danh sách CE riêng. Bấm **Đồng bộ HV đạt DAT** để chạy lại.
 
 **Hóa đơn hiện "Không hợp lệ" sai?** Import lại file với tick **Đồng bộ lại** (chỉ sửa hóa đơn chưa quyết toán), hoặc bấm nút 👍 để đổi tay.
 

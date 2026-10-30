@@ -46,8 +46,8 @@
 					<tr>
 						<td class="text-center"><?php if(dt_can('khoa','delete')): ?><input type="checkbox" class="dt-khoa-select" name="ids[]" value="<?=$it['id']?>"><?php endif; ?></td>
 						<td>
-							<div class="dt-title"><?=htmlspecialchars($it['ma_khoa'])?></div>
-							<div class="dt-sub"><?=htmlspecialchars($it['ten_khoa'] ?: '—')?></div>
+							<div class="dt-title" title="Tên khóa"><?=htmlspecialchars($it['ten_khoa'] ?: 'Chưa có tên khóa')?></div>
+							<div class="dt-sub">Mã khóa: <?=htmlspecialchars($it['ma_khoa'])?></div>
 						</td>
 						<td>
 							<div><?php if(!empty($it['hang'])): ?><span class="dt-tag"><?=htmlspecialchars($it['hang'])?></span><?php endif; ?></div>

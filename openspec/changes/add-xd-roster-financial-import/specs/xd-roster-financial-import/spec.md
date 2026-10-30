@@ -1,5 +1,29 @@
 ## ADDED Requirements
 
+### Requirement: Searchable consistent course selectors
+All training and XD course selectors SHALL display course code, name and context-specific student count, explicitly marking missing legacy metadata. Search SHALL suggest existing options by code or name, case- and Vietnamese-accent-insensitively, without changing option values, optgroups, placeholders or submission behavior.
+
+#### Scenario: Search course by name without accents
+- **WHEN** a user types an unaccented portion of a Vietnamese course name
+- **THEN** matching existing courses SHALL appear as suggestions and selection SHALL submit the original ID/key, never create a new course.
+
+#### Scenario: Open the complete course list
+- **WHEN** a user clicks a course selector, including after a previous search with no matches
+- **THEN** it SHALL clear the search and immediately show all existing options in a scrollable dropdown without requiring typing or changing the selected value.
+
+#### Scenario: Global initializer runs after course initialization
+- **WHEN** the shared admin Select2 initializer runs after course selectors are enhanced
+- **THEN** it SHALL initialize only uninitialized select elements, not generated containers, and preserve the original default label (such as `Tất cả khóa` or `Chọn khóa`), search placeholder and complete course options.
+
+#### Scenario: Counts in specialized selectors
+- **WHEN** users select courses in CE, source finance, training or HTKH periods
+- **THEN** labels SHALL include counts from the respective student lists and maintain empty/unassigned options and existing DAT-pass information.
+
+#### Scenario: Distinguish and search course metadata
+- **WHEN** a course has code `79044K26C1005` and name `K13-C1`
+- **THEN** the training list SHALL show the name as its title and explicitly label the code, and XD course management and course dropdowns SHALL find it using `k13` or its code without changing stored keys or multiplying student counts.
+- **AND** XD course management SHALL also match training names obtained through valid legacy DAT student links.
+
 ### Requirement: Missing course lookup in training
 For new XD students without file or form course, the importer SHALL match both CCCD variants and name (case-insensitive, collapsed whitespace, accents retained) against training records and use the unique course code, falling back to course name when code is blank. It SHALL not modify training or replace an explicit/existing XD course.
 
@@ -12,11 +36,21 @@ For new XD students without file or form course, the importer SHALL match both C
 - **THEN** import SHALL stop with a row-level message requesting an explicit XD course, without partial writes.
 
 ### Requirement: Legacy training synchronization group repair
-The training sync SHALL repair DAT to BT for DAT-qualified B1/B11/C1 students whose resolved training system is BT when the existing DAT-origin XD record links to that same training student ID. It SHALL preserve all settlement and linkage fields, report repair counts and remain idempotent.
+The training sync SHALL map BT/Bổ túc to BT and CK/Chính khóa to CK for DAT-qualified B1/B11/C1 students, using normalized case/accent/whitespace and preferring the student system over a blank-system course fallback. It SHALL repair existing DAT groups only when the DAT-origin XD record links to that same training student ID, preserve all settlement and linkage fields, report BT/CK repair counts separately and remain idempotent.
 
 #### Scenario: Existing legacy BT student
 - **WHEN** a linked DAT-origin XD record has group DAT but its B1 training student has system BT
 - **THEN** synchronization SHALL change only the group to BT (plus the existing course-code synchronization), including for settled records, without recalculating payment history.
+
+#### Scenario: New or legacy CK student
+- **WHEN** a DAT-qualified B1/B11/C1 student's effective system is CK or Chính khóa
+- **THEN** a new XD record SHALL use CK and an existing correctly linked DAT-origin DAT record SHALL be repaired to CK, including settled records, without recalculating settlement fields or creating transactions.
+
+#### Scenario: Missing DAT or different mapping scope
+- **WHEN** a student has not passed DAT
+- **THEN** synchronization SHALL neither add nor repair that student.
+- **WHEN** the rank is outside B1/B11/C1, or its effective system is blank or unrecognized
+- **THEN** synchronization SHALL retain the existing DAT mapping, including CE, without inferring CK/BT from another rank or unknown system.
 
 #### Scenario: Independent or manually chosen group
 - **WHEN** the existing XD record was independently imported, links to a different training student, or already has BT or CK
@@ -65,11 +99,19 @@ The system SHALL provide a write-free preview with new/update counts and source 
 - **THEN** the preview reports the error and the import writes no students.
 
 ### Requirement: Inspect retained amounts
-The XD student interface SHALL expose all six source financial amounts and distinguish them from fuel settlement.
+Training finance SHALL expose all six XD source financial amounts in a read-only source section instead of the XD student list and distinguish them from training transactions and fuel settlement. XD storage/import SHALL remain unchanged.
 
 #### Scenario: Staff inspect student
-- **WHEN** staff view imported student financial information
+- **WHEN** staff view training finance source information
 - **THEN** they can inspect each source amount with its correct label and VND unit.
+
+#### Scenario: Source data outside transaction eligibility
+- **WHEN** an XD source record is BT, not DAT-qualified, or has no training student
+- **THEN** it SHALL remain visible in the source section without becoming selectable for transactions.
+
+#### Scenario: Source course filtering and export
+- **WHEN** staff filter a source course or export its source amounts
+- **THEN** pagination SHALL preserve the filter and source export SHALL include all filtered records, all six amounts, and text CCCDs without updating data or creating transactions.
 
 ### Requirement: Submission date
 The XD importer SHALL store the optional `Ngày nộp hồ sơ` field separately from receipt and fuel-payment dates, accept valid day/month/year, ISO and Excel serial dates, and expose it in preview, student list and Excel export.

@@ -1,5 +1,6 @@
 <?php
 if(!defined('SOURCES')) die("Error");
+require_once dirname(__DIR__,3).'/libraries/course_options.php';
 
 /* ============================ Helpers dùng chung (đào tạo) ============================ */
 

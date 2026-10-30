@@ -12,7 +12,7 @@
 			<?php if(dt_can('lythuyet','edit') || dt_can('lythuyet','delete')): ?><form id="dt-module-mophong" method="post" action="index.php?com=daotao&act=modulePassSelected"><input type="hidden" name="entity" value="mophong"><input type="hidden" name="id_khoa" value="<?=(int)$id_khoa_sel?>"><input type="hidden" name="ret" value="<?=$mp_ret?>"></form><?php endif; ?>
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="mophong">
-				<select name="id_khoa" class="form-control form-control-sm mr-2 mb-1" onchange="this.form.submit()"><option value="0">— Chọn khóa —</option><?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option><?php endforeach; ?></select>
+				<select name="id_khoa" class="form-control form-control-sm mr-2 mb-1" onchange="this.form.submit()"><option value="0">— Chọn khóa —</option><?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars(course_option_label($k))?></option><?php endforeach; ?></select>
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2 mb-1" placeholder="Tên / CCCD / Mã HV" value="<?=htmlspecialchars(dt_req('keyword'))?>">
 				<select name="trang_thai" class="form-control form-control-sm mr-2 mb-1"><option value="">— Trạng thái —</option><option value="dat" <?=$status==='dat'?'selected':''?>>Đạt</option><option value="chua" <?=$status==='chua'?'selected':''?>>Chưa đạt / chưa nhập</option></select>
 				<button class="btn btn-sm bg-gradient-primary mb-1">Lọc</button>

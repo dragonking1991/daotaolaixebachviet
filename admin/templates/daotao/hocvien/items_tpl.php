@@ -30,7 +30,7 @@
 					<option value="0">— Tất cả khóa —</option>
 					<option value="-1" <?=$id_khoa_sel===-1?'selected':''?>>Chưa gán khóa</option>
 					<?php foreach($ds_khoa as $k): ?>
-					<option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option>
+					<option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars(course_option_label($k))?></option>
 					<?php endforeach; ?>
 				</select>
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD / Mã HV" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">

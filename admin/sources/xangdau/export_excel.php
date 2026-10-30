@@ -262,7 +262,7 @@ function xd_xuat_hocvien_excel()
 	$khoa = isset($_REQUEST['khoa']) ? trim((string)$_REQUEST['khoa']) : '';
 	$gv = isset($_REQUEST['gv']) ? trim((string)$_REQUEST['gv']) : '';
 	list($where, $params) = xd_hocvien_where_and_params($scope, $keyword, $nhom, $ttFrom, $ttTo, $khoa, $gv);
-	$rows = $d->rawQuery("select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause(), $params);
+	$rows = $d->rawQuery("select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause(true), $params);
 	$labels = array('all' => 'TẤT CẢ', 'paid' => 'ĐÃ THANH TOÁN', 'unpaid' => 'CHƯA THANH TOÁN');
 	$headers = array_merge(array('STT', 'Họ tên', 'CCCD', 'Khóa', 'Ngày sinh', 'Nhóm', 'GV phụ trách', 'Số tiền TT XD', 'Ngày TT', 'Trạng thái'), array_values(xd_student_financial_fields()), array('Ngày nộp hồ sơ'));
 	xd_xuat_danh_sach_excel('DANH SÁCH HỌC VIÊN XĂNG DẦU - '.$labels[$scope], $headers, array('A'=>6, 'B'=>28, 'C'=>18, 'D'=>14, 'E'=>14, 'F'=>10, 'G'=>26, 'H'=>18, 'I'=>14, 'J'=>20, 'K'=>20, 'L'=>18, 'M'=>20, 'N'=>20, 'O'=>20, 'P'=>20, 'Q'=>20), $rows, function($row, $stt) {

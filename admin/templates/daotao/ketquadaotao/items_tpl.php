@@ -18,7 +18,7 @@
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="ketquadaotao">
 				<select name="id_khoa" class="form-control form-control-sm mr-2">
 					<option value="0">— Chọn khóa —</option>
-					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$filters['id_khoa']==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
+					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$filters['id_khoa']==$k['id']?'selected':''?>><?=htmlspecialchars(course_option_label($k))?></option><?php endforeach; ?>
 				</select>
 				<input type="text" name="cccd" class="form-control form-control-sm mr-2" placeholder="CCCD" value="<?=htmlspecialchars($filters['cccd'])?>">
 				<input type="text" name="hoten" class="form-control form-control-sm mr-2" placeholder="Họ tên" value="<?=htmlspecialchars($filters['hoten'])?>">

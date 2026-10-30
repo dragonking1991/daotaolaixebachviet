@@ -11,7 +11,9 @@ function xd_get_ce_data()
 	global $d, $func, $xd_ce_courses, $xd_ce_students, $xd_ce_invoices, $xd_ce_filter_khoa, $xd_ce_filter_keyword;
 
 	dt_ensure_tables();
-	$allCourses = $d->rawQuery("select id, ma_khoa, ten_khoa, hang from #_dt_khoa where hienthi >= 0 order by ma_khoa asc");
+	$allCourses = $d->rawQuery("select k.id, k.ma_khoa, k.ten_khoa, k.hang,
+		(select count(*) from #_xd_ce_hocvien h where h.id_khoa=k.id) as so_hoc_vien
+		from #_dt_khoa k where k.hienthi >= 0 order by k.ma_khoa asc");
 	if($allCourses === false) $func->transfer("Không tải được danh sách khóa đào tạo CE.", "index.php?com=xangdau&act=hocvien", false);
 	$xd_ce_courses = array();
 	foreach(is_array($allCourses) ? $allCourses : array() as $course)

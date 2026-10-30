@@ -16,6 +16,15 @@ $studentDefinition=xd_course_query('show create table #_dt_hocvien');
 $studentSql=preg_replace('/^CREATE TABLE /','CREATE TEMPORARY TABLE ',$studentDefinition[0]['Create Table']);$studentSql=preg_replace('/ AUTO_INCREMENT=\d+/','',$studentSql);xd_course_query($studentSql);
 try
 {
+	xd_course_query("insert into #_xd_hocvien (ho_ten,cccd,khoa,lan_import,thu_tu_file) values
+		('Trần Bình','990000000101','A',1,1),
+		('Nguyễn An','990000000102','Z',2,2),
+		('Lê An','990000000103','Y',3,3)");
+	$curPage=1;$_REQUEST=array();xd_get_hocvien();
+	xd_course_test(array_column($items,'ho_ten')===array('Lê An','Nguyễn An','Trần Bình'),'Student list must sort given name then full name, not course/import order');
+	$originalOrder=xd_course_query('select ho_ten from #_xd_hocvien order by '.xd_hocvien_order_clause());
+	xd_course_test(array_column($originalOrder,'ho_ten')===array('Trần Bình','Lê An','Nguyễn An'),'Display sorting changed settlement priority');
+	xd_course_query('delete from #_xd_hocvien');
 	xd_course_test(xd_permission_denied('saveKhoa')&&xd_permission_denied('deleteKhoa')&&!xd_permission_denied('khoa'),'View-only course permissions failed');
 	$_SESSION['list_quyen']=array('xangdau_import');xd_course_test(!xd_permission_denied('saveKhoa')&&xd_permission_denied('deleteKhoa'),'Import-only course permissions failed');
 	$_SESSION['list_quyen']=array('xangdau_xoa');xd_course_test(xd_permission_denied('saveKhoa')&&!xd_permission_denied('deleteKhoa'),'Delete-only course permissions failed');
@@ -54,14 +63,14 @@ try
 	$_GET=array();xd_courses_page();$courseSummary=null;foreach($xd_courses as $course)if($course['khoa']==='79044K261016')$courseSummary=$course;
 	xd_course_test($courseSummary&&$courseSummary['ten_khoa']==='Khóa đồng bộ mã 16'&&xd_hocvien_course_label($courseSummary)==='79044K261016 — Khóa đồng bộ mã 16 · 1 HV','Course management list should resolve and display the training course name');
 	ob_start();require dirname(__DIR__).'/admin/templates/xangdau/hocvien/items_tpl.php';$listHtml=ob_get_clean();
-	foreach(xd_student_financial_fields() as $label)xd_course_test(strpos($listHtml,$label)!==false,'Missing source financial column in student list: '.$label);
+	foreach(xd_student_financial_fields() as $label)xd_course_test(strpos($listHtml,$label)===false,'Source financial column should be shown in training finance, not XD: '.$label);
 	xd_course_test(strpos($listHtml,'Ngày nộp hồ sơ')!==false,'Missing submission date column in student list');
 	$groupMarkup=strpos($listHtml,'<optgroup label="Đồng bộ từ Đào tạo (')!==false;$codeMarkup=strpos($listHtml,'value="79044K261016"')!==false;$nameMarkup=strpos($listHtml,'Khóa đồng bộ mã 16 · 1 HV')!==false;
 	xd_course_test($groupMarkup&&$codeMarkup&&$nameMarkup,'Course dropdown grouping or code value is incorrect: '.json_encode(array('group'=>$groupMarkup,'code'=>$codeMarkup,'name'=>$nameMarkup,'groups'=>$xd_hocvien_khoa_groups),JSON_UNESCAPED_UNICODE));
 	$rankCourse=array('khoa'=>'c1','so'=>96,'so_dong_bo'=>46);
-	xd_course_test(xd_hocvien_course_group($rankCourse)==='rank'&&xd_hocvien_course_label($rankCourse)==='C1 · 96 HV (46 DAT + 50 XD)','Mixed rank aggregation label is unclear or inaccurate');
+	xd_course_test(xd_hocvien_course_group($rankCourse)==='rank'&&xd_hocvien_course_label($rankCourse)==='c1 — C1 · 96 HV','Rank aggregation must display stored value, rank label and count');
 	$mixedSyncedCourse=array('khoa'=>'79044K261016','ten_khoa'=>'Tên khóa đào tạo K16','so'=>5,'so_dong_bo'=>2);
-	xd_course_test(xd_hocvien_course_group($mixedSyncedCourse)==='mixed'&&xd_hocvien_course_label($mixedSyncedCourse)==='79044K261016 — Tên khóa đào tạo K16 · 5 HV (2 DAT + 3 XD)','Mixed XD group should display both course code and training name');
+	xd_course_test(xd_hocvien_course_group($mixedSyncedCourse)==='mixed'&&xd_hocvien_course_label($mixedSyncedCourse)==='79044K261016 — Tên khóa đào tạo K16 · 5 HV','Mixed XD group should display course code/name without misleading source counts');
 	xd_course_query("insert into #_dt_khoa (ma_khoa,ten_khoa,hang) values ('79044K261017','Khóa nguồn K17','C1')");$linkedCourseId=(int)$d->getLastInsertId();
 	xd_course_query("insert into #_dt_hocvien (id_khoa,ma_hv,cccd,hoten,hang) values (?, 'LINKED-STUDENT','990000000006','Linked Student','C1')",array($linkedCourseId));$linkedStudentId=(int)$d->getLastInsertId();
 	xd_course_query('insert into #_xd_hocvien (thu_tu_file,ho_ten,cccd,khoa,user_tao) values (?,?,?,?,?)',array($linkedStudentId,'Linked student','990000000006','STALE-COURSE-CODE','Đồng bộ DAT'));
@@ -69,8 +78,57 @@ try
 	xd_course_test($legacyCourse&&$legacyCourse['ten_khoa']==='Khóa nguồn K17'&&xd_hocvien_course_label($legacyCourse)==='STALE-COURSE-CODE — Khóa nguồn K17 · 1 HV','A legacy XD course code should resolve its name through the linked DAT training profile');
 	$_GET=array();xd_courses_page();$legacySummary=null;foreach($xd_courses as $course)if($course['khoa']==='STALE-COURSE-CODE')$legacySummary=$course;
 	xd_course_test($legacySummary&&$legacySummary['ten_khoa']==='Khóa nguồn K17','Course management list should resolve legacy names through linked DAT training profiles');
+	foreach(array('khóa đồng bộ mã 16'=>'79044K261016','79044K261016'=>'79044K261016','khóa nguồn k17'=>'STALE-COURSE-CODE') as $keyword=>$expectedCode)
+	{
+		$_GET=array('keyword'=>$keyword);xd_courses_page();
+		xd_course_test(array_column($xd_courses,'khoa')===array($expectedCode),'Course search must match code or training name, including linked legacy codes: '.$keyword);
+		xd_course_test((int)$xd_courses[0]['so']===1,'Name search multiplied student count');
+	}
+	$_GET=array('keyword'=>'no-matching-course');xd_courses_page();
+	xd_course_test(!$xd_courses,'Unmatched course search returned unrelated courses');
+	$_GET=array();
 	$storedCourse=array('khoa'=>'98B-C','so'=>8,'so_dong_bo'=>0);
-	xd_course_test(xd_hocvien_course_group($storedCourse)==='stored'&&xd_hocvien_course_label($storedCourse)==='98B-C · 8 HV','XD-only course label is incorrect');
+	xd_course_test(xd_hocvien_course_group($storedCourse)==='stored'&&xd_hocvien_course_label($storedCourse)==='98B-C — Chưa có tên khóa · 8 HV','XD-only course label must explicitly report missing training name');
+	foreach(array('dt_dat_phien','dt_dat_override') as $table)
+	{
+		$definition=xd_course_query('show create table #_'.$table);
+		$temporarySql=preg_replace('/^CREATE TABLE /','CREATE TEMPORARY TABLE ',$definition[0]['Create Table']);
+		xd_course_query(preg_replace('/ AUTO_INCREMENT=\d+/','',$temporarySql));
+	}
+	xd_course_query("insert into #_dt_khoa (id,ma_khoa,ten_khoa,hang) values (90001,'DAT-COUNT','Test DAT count','C1')");
+	foreach(array('990000001001','990000001002','990000001003') as $identity)
+		xd_course_query("insert into #_dt_hocvien (id_khoa,cccd,hoten,hang) values (90001,?,'DAT count student','C1')",array($identity));
+	xd_course_query("insert into #_dt_dat_phien (id_khoa,cccd,ma_phien,gio_thuchanh,la_xe_tudong,gio_dem,km)
+		values (90001,'990000001001','count-auto',1,1,0,30),(90001,'990000001001','count-manual',25,0,4,900)");
+	xd_course_query("insert into #_dt_dat_override (id_khoa,cccd,dat) values (90001,'990000001002',1)");
+	$datCourses=array(array('khoa'=>'DAT-COUNT','ten_khoa'=>'Test DAT count','so'=>3,'so_dong_bo'=>1),$storedCourse);
+	xd_hocvien_attach_dat_counts($datCourses);
+	xd_course_test($datCourses[0]['so_dat']===2&&xd_hocvien_course_label($datCourses[0])==='DAT-COUNT — Test DAT count · 3 HV · 2 đạt DAT','DAT count must include actual passing and manual override, not source count');
+	xd_course_test(!isset($datCourses[1]['so_dat']),'Unmatched course must not claim zero DAT passes');
+	echo "PASS actual DAT counts, manual overrides, non-passed exclusion and source-independent labels\n";
+	for($index=0;$index<45;$index++)
+		xd_course_query("insert into #_xd_hocvien (ho_ten,cccd,khoa,user_tao) values (?,?,?,?)",
+			array('Course bulk '.$index,'980000'.sprintf('%06d',$index),'BULK-ALL','Đồng bộ DAT'));
+	xd_course_query("insert into #_xd_hocvien (ho_ten,cccd,khoa,ke_toan_kiem_tra) values ('Checked','980000009999','BULK-ALL',1)");
+	$beforeBulk=xd_course_query("select * from #_xd_hocvien order by id");
+	$_POST=array('delete_course'=>'1','khoa'=>'BULK-ALL','csrf'=>'bad');
+	$_SESSION['xd_dat_csrf']='test';
+	$_SESSION['list_quyen']=array('xangdau_xoa');
+	try{xd_delete_hocvien_selected();throw new RuntimeException('Invalid course delete CSRF accepted');}
+	catch(RuntimeException $error){xd_course_test(strpos($error->getMessage(),'phiên thao tác')!==false,$error->getMessage());}
+	$_POST['csrf']='test';$_SESSION['list_quyen']=array('xangdau_view');
+	try{xd_delete_hocvien_selected();throw new RuntimeException('View-only course deletion accepted');}
+	catch(RuntimeException $error){xd_course_test(strpos($error->getMessage(),'phiên thao tác')!==false,$error->getMessage());}
+	xd_course_test($beforeBulk===xd_course_query('select * from #_xd_hocvien order by id'),'Rejected course deletion changed data');
+	$_SESSION['list_quyen']=array('xangdau_xoa');$_POST['khoa']='';
+	try{xd_delete_hocvien_selected();throw new RuntimeException('Empty course deletion accepted');}
+	catch(RuntimeException $error){xd_course_test(strpos($error->getMessage(),'Chọn một khóa')!==false,$error->getMessage());}
+	$_POST['khoa']='BULK-ALL';
+	$protectedBulk=xd_course_query("select * from #_xd_hocvien where khoa<>'BULK-ALL' or ke_toan_kiem_tra=1 order by id");
+	$bulk=xd_course_change('BULK-ALL','',true);$backups[]=$bulk['backup'];
+	xd_course_test($bulk['changed']===45&&$bulk['kept']===1,'Whole-course deletion did not cover all pages or preserve checked student');
+	xd_course_test($protectedBulk===xd_course_query('select * from #_xd_hocvien order by id'),'Whole-course deletion changed protected/other-course data');
+	echo "PASS whole-course deletion across 45 rows, source-linked records, checked protection, scope, CSRF and permissions\n";
 	echo "PASS course rename/delete, protected history, collision rejection, CSRF and permission matrix\n";
 }
 finally

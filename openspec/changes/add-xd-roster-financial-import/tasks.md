@@ -35,3 +35,23 @@
 
 - [x] 7.1 Resolve missing new-student XD courses by matching both name and normalized identity to training; reject conflicting courses and preserve explicit/existing courses.
 - [x] 7.2 Test fallback, ambiguity, persistence and actual sample preview; update guidance and delivery.
+
+## 8. Source financial display in training finance
+
+- [x] 8.1 Move six read-only source columns from XD student list to a separate training finance section, including BT/unmatched students, course filtering, pagination and source export; leave storage/import and transaction eligibility unchanged.
+- [x] 8.2 Test source display/export and no writes, existing finance/import regressions, and refresh delivery documentation/ZIP.
+
+## 9. Searchable course selectors
+
+- [x] 9.1 Standardize all training/XD course options with code, name and context-specific student counts, including CE, source finance and HTKH period courses.
+- [x] 9.2 Enable existing Select2 search/suggestions by code/name with Vietnamese accent-insensitive matching, preserving values, placeholders, groups and submit behavior.
+- [x] 9.3 Validate dropdown coverage, label/count providers, browser interactions and existing regressions; refresh documentation and ZIP.
+- [x] 9.4 Show all options immediately on click, reset previous searches on reopening, and verify browser behavior and refreshed ZIP.
+- [x] 9.5 Fix global Select2 initialization colliding with generated course containers; verify original placeholder labels, full list, search and repeated initialization in browser, and refresh delivery.
+- [x] 9.6 Distinguish course name from code in training list, search XD course management by either metadata field (including legacy links), and verify real K13 search without changing stored identities.
+
+## 10. CK synchronization and gap audit
+
+- [x] 10.1 Preserve CK/Chính khóa and BT/Bổ túc for DAT-qualified B1/B11/C1 students; safely repair linked DAT-origin groups and report BT/CK counts separately, retaining other-rank behavior.
+- [x] 10.2 Test new/legacy/paid records, aliases, student/course precedence, exclusions, missing DAT and repeat sync; audit local mapping gaps.
+- [x] 10.3 Back up and repair only the reported local XD record 7684 linked to training record 1825, verify group-only difference, document remaining cases and refresh ZIP.

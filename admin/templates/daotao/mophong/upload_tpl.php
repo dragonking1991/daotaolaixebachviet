@@ -12,7 +12,7 @@
 					<label>Khóa <span class="text-danger">*</span></label>
 					<select name="id_khoa" class="form-control form-control-sm" required>
 						<option value="">— Chọn khóa —</option>
-						<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'].' — '.(int)$k['so_hoc_vien'].' học viên')?></option><?php endforeach; ?>
+						<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars(course_option_label($k))?></option><?php endforeach; ?>
 					</select>
 				</div>
 				<div class="form-group">

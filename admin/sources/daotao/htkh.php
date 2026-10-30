@@ -205,10 +205,10 @@ function dt_htkh_ky_khoa_options($idKy)
 {
 	global $d;
 	$options = array();
-	foreach($d->rawQuery("select distinct id_khoa, ma_khoa, ten_khoa from #_dt_ky_thi_hv where id_ky = ? order by ma_khoa, ten_khoa", array((int)$idKy)) as $row)
+	foreach($d->rawQuery("select id_khoa, ma_khoa, ten_khoa,count(*) as so_hoc_vien from #_dt_ky_thi_hv
+		where id_ky = ? group by id_khoa,ma_khoa,ten_khoa order by ma_khoa,ten_khoa", array((int)$idKy)) as $row)
 	{
-		$label = trim($row['ma_khoa'].' '.$row['ten_khoa']);
-		$options[dt_htkh_khoa_key($row)] = $label !== '' ? $label : 'Chưa có thông tin khóa';
+		$options[dt_htkh_khoa_key($row)] = course_option_label($row);
 	}
 	return $options;
 }
