@@ -100,6 +100,16 @@ function xd_backup_table_json($table, $tag)
 	$json = json_encode(array('action' => 'delete_all', 'table' => $table, 'rows' => $rows), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 	if($json === false || file_put_contents($file, $json, LOCK_EX) !== strlen($json)) return '';
 	@chmod($file, 0600);
+	/* Ảnh chụp trước import/hoàn tác: giữ 20 bản gần nhất mỗi loại để không đầy ổ đĩa. */
+	if(strpos($tag, 'imp_') === 0 || $tag === 'pre_undo')
+	{
+		$same = glob($directory.'/xd_'.$tag.'_*.json') ?: array();
+		if(count($same) > 20)
+		{
+			usort($same, function($a, $b) { return filemtime($b) - filemtime($a); });
+			foreach(array_slice($same, 20) as $old) @unlink($old);
+		}
+	}
 	return basename($file);
 }
 

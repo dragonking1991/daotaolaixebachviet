@@ -28,8 +28,13 @@ require_once SOURCES.'xangdau/export_quyettoan.php';
 require_once SOURCES.'xangdau/export_excel.php';
 require_once SOURCES.'xangdau/so_thanh_chu.php';
 require_once SOURCES.'xangdau/export_tonghop.php';
+require_once SOURCES.'xangdau/import_kit.php';
 
 admin_csrf_guard('xangdau', $act);
+
+/* Kết quả import hiển thị bằng thẻ cố định thay cho trang tự chuyển 1 giây. */
+$xdImportModules = array('uploadHocvienExcel' => 'hocvien', 'uploadHoadonExcel' => 'hoadon', 'ceInvoiceUpload' => 'ce');
+if(isset($xdImportModules[$act])) $func = new XdImportResultFunctions($func, $xdImportModules[$act]);
 
 switch($act)
 {
@@ -111,7 +116,35 @@ switch($act)
 	case "syncTrainingDat":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		$syncResult = xd_sync_training_students();
-		$func->transfer("Đồng bộ học viên đạt DAT.".xd_sync_training_notice($syncResult), "index.php?com=xangdau&act=hocvien", !empty($syncResult['ok']));
+		xd_sync_remember($syncResult);
+		ik_notice('xangdau', trim(xd_sync_training_notice($syncResult)), !empty($syncResult['ok']), array('title' => 'Đồng bộ học viên đạt DAT', 'steps' => false,
+			'links' => array(array('label' => 'Xem học viên XD', 'url' => 'index.php?com=xangdau&act=hocvien', 'icon' => 'fa-users', 'primary' => true))));
+		$func->redirect("index.php?com=xangdau&act=hocvien");
+		break;
+	case "syncTrainingDatPreview":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_sync_preview_page();
+		$template = "xangdau/sync/preview";
+		break;
+	case "importTemplate":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		if(!ik_template_output('xangdau.'.preg_replace('/[^a-z]/', '', (string)($_GET['type'] ?? '')))) $func->transfer("Không có file mẫu cho loại import này.", "index.php?com=xangdau&act=hocvien", false);
+		exit;
+	case "importHistory":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_import_history_page();
+		$template = "import/history";
+		break;
+	case "importErrors":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_import_errors_download();
+		break;
+	case "importUndo":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_import_undo();
 		break;
 	case "markImportedDat":
 		if(xd_permission_denied($act) || !xd_can_import()) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);

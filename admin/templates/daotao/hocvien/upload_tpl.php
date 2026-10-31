@@ -13,6 +13,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import danh sách học viên (mẫu 2)</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = true; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.hocvien'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-warning">File phải có <strong>cả Mã đăng ký (mã học viên) và Số CMND/CCCD</strong>. Dòng thiếu một trong hai sẽ bị báo lỗi và không nạp.</div>
 				<div class="form-group">
 					<label>Khóa <span class="text-muted">(tự nhận từ cột “Khóa” trong file; để trống nếu file đã có)</span></label>

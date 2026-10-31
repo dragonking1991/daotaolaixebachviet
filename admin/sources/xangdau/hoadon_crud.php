@@ -95,7 +95,7 @@ function xd_toggle_hop_le_hoadon()
 
 	$newState = ((int)$row['hop_le'] === 1) ? 0 : 1;
 	$ok = $d->rawQuery("update #_xd_hoadon set hop_le = ? where id = ? and da_quyettoan = 0", array($newState, $id));
-	if($ok === false) $func->transfer("Không thể cập nhật trạng thái hợp lệ của hóa đơn.", $redirect, false);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể cập nhật trạng thái hợp lệ của hóa đơn.", $redirect, false);
 	$func->transfer($newState === 1 ? "Hóa đơn đã được đánh dấu hợp lệ." : "Hóa đơn đã được đánh dấu không hợp lệ.", $redirect, true);
 }
 
@@ -141,7 +141,7 @@ function xd_delete_hoadon_selected()
 	if($canDelete === 0) $func->transfer("Các hóa đơn đã chọn đều đã quyết toán, không thể xóa.", $ret, false);
 
 	$ok = $d->rawQuery("delete from #_xd_hoadon where id in ($in) and da_quyettoan = 0", $ids);
-	if($ok === false) $func->transfer("Không thể xóa hóa đơn đã chọn.", $ret, false);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể xóa hóa đơn đã chọn.", $ret, false);
 	$msg = "Đã xóa $canDelete hóa đơn.";
 	if($kept > 0) $msg .= " Giữ lại $kept hóa đơn đã quyết toán.";
 	$func->transfer($msg, $ret);
@@ -155,7 +155,7 @@ function xd_delete_all_hoadon()
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hoadon");
 	$ok = $d->rawQuery("delete from #_xd_hoadon");
 	$n = isset($count['num']) ? (int)$count['num'] : 0;
-	if($ok === false) $func->transfer("Không thể xóa toàn bộ hóa đơn", "index.php?com=xangdau&act=hoadon", false);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể xóa toàn bộ hóa đơn", "index.php?com=xangdau&act=hoadon", false);
 	$func->transfer("Đã xóa toàn bộ $n hóa đơn. Sao lưu: $backup", "index.php?com=xangdau&act=hoadon");
 }
 

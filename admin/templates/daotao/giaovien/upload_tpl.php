@@ -13,6 +13,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import danh sách giáo viên (sheet GiaoVien)</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = true; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.giaovien'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-warning">Đọc theo tên cột: <strong>HoTenDem, TenGV, SoCMT (CCCD), HangGPLX, Hạng đào tạo được phép</strong>... Giáo viên mới được cấp mật khẩu cổng mặc định = CCCD.</div>
 				<div class="form-group">
 					<label>File Excel (.xlsx, .xls) — có thể chọn/thả nhiều file</label>

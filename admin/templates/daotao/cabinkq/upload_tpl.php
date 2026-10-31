@@ -13,6 +13,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import kết quả cabin (mẫu cabin - 13C1)</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.cabin'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-warning">Ghép theo <strong>Mã học viên</strong> trong khóa. Đạt khi ghi chú "Đáp ứng quy định".</div>
 				<div class="form-group">
 					<label>Khóa <span class="text-muted">(tùy chọn)</span></label>

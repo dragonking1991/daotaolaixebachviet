@@ -17,7 +17,7 @@
 			<h3 class="card-title"><strong>Danh sách học viên</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
 			<div class="card-tools">
 				<?php if(dt_can('hocvien','edit')): ?><a href="index.php?com=daotao&act=crudEdit&entity=hocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-primary"><i class="fas fa-plus mr-1"></i>Thêm</a><?php endif; ?>
-				<?php if(dt_can('hocvien','import')): ?><a href="index.php?com=daotao&act=uploadHocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import học viên</a><?php endif; ?>
+				<?php if(dt_can('hocvien','import')): ?><a href="index.php?com=daotao&act=uploadHocvien<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import học viên</a> <a href="index.php?com=daotao&act=importHistory" class="btn btn-sm btn-link px-1" title="Lịch sử import, tải lỗi, hoàn tác"><i class="fas fa-history mr-1"></i>Lịch sử import</a><?php endif; ?>
 				<?php if(dt_can('hocvien','export')): ?><a href="<?=dt_export_link('exportHocvien', array('id_khoa','keyword','hang','gv','he'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php endif; ?>
 				<?php if(dt_can('hocvien','delete')): ?><button type="submit" form="dt-bulk-hocvien" class="btn btn-sm bg-gradient-danger dt-bulk-delete"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button><?php endif; ?>
 			</div>

@@ -7,7 +7,8 @@ if(!function_exists('dt_dat_aggregate') || !function_exists('dt_dat_danhgia'))
 require_once SOURCES.'daotao/schema.php';
 require_once SOURCES.'xangdau/schema.php';
 
-function xd_sync_training_students($idKhoa = 0, $cccd = '')
+/* $dryRun = true: chạy đầy đủ trong transaction rồi luôn hoàn tác, chỉ trả số liệu (xem trước đồng bộ). */
+function xd_sync_training_students($idKhoa = 0, $cccd = '', $dryRun = false)
 {
 	global $d;
 	static $schemasReady = false;
@@ -39,6 +40,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 	$now = time();
 	/* Toàn bộ lượt đồng bộ là một transaction: có lỗi thì hoàn tác, tránh danh sách XD đồng bộ dở dang. */
 	$ownTransaction = !$d->pdo()->inTransaction();
+	if($dryRun && !$ownTransaction) return array('ok' => false, 'error' => 'Không thể chạy thử đồng bộ trong một giao dịch khác.', 'errors' => array('Không thể chạy thử đồng bộ trong một giao dịch khác.'));
 	if($ownTransaction) $d->startTransaction();
 	foreach($rows as $student)
 	{
@@ -117,6 +119,13 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 		else $result['xd_added']++;
 	}
 
+	if($dryRun)
+	{
+		$d->rollback();
+		$result['dry_run'] = true;
+		if(!empty($result['errors'])) $result['ok'] = false;
+		return $result;
+	}
 	if(!empty($result['errors']))
 	{
 		$result['ok'] = false;

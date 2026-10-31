@@ -1,0 +1,87 @@
+/* Bộ giao diện import dùng chung Đào tạo + Xăng dầu: thanh bước, hướng dẫn cột, thẻ kết quả, lịch sử, xem trước. */
+
+/* ---- Thanh 4 bước ---- */
+.ik-steps { display: flex; gap: 0; list-style: none; margin: 0 0 14px; padding: 0; counter-reset: ik; }
+.ik-step { position: relative; flex: 1 1 0; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px 6px 0; color: #94a3b8; }
+.ik-step:not(:last-child)::after { content: ""; flex: 1 1 auto; height: 2px; margin-left: 4px; background: #e2e8f0; border-radius: 2px; }
+.ik-step-dot { flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 700; background: #f1f5f9; color: #64748b; border: 2px solid #e2e8f0; }
+.ik-step-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; white-space: nowrap; }
+.ik-step-text strong { font-size: .82rem; }
+.ik-step-text small { font-size: .7rem; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; }
+.ik-step.is-current { color: #1d4ed8; }
+.ik-step.is-current .ik-step-dot { background: #2563eb; border-color: #2563eb; color: #fff; box-shadow: 0 0 0 4px rgba(37, 99, 235, .15); }
+.ik-step.is-done { color: #15803d; }
+.ik-step.is-done .ik-step-dot { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+.ik-step.is-done::after { background: #86efac; }
+.ik-steps.is-failed .ik-step.is-current { color: #b91c1c; }
+.ik-steps.is-failed .ik-step.is-current .ik-step-dot { background: #dc2626; border-color: #dc2626; box-shadow: 0 0 0 4px rgba(220, 38, 38, .15); }
+@media (max-width: 767.98px) { .ik-step-text small { display: none; } .ik-step:not(:last-child)::after { min-width: 8px; } }
+@media (max-width: 479.98px) { .ik-step:not(.is-current) .ik-step-text { display: none; } }
+
+/* ---- Hướng dẫn cột + file mẫu ---- */
+.ik-guide { border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; margin-bottom: 14px; }
+.ik-guide-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; }
+.ik-guide-summary { display: flex; align-items: baseline; gap: 8px; color: #334155; font-size: .84rem; min-width: 0; }
+.ik-guide-summary i { color: #2563eb; }
+.ik-guide-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.ik-guide-body { border-top: 1px solid #e2e8f0; padding: 10px 12px; font-size: .84rem; }
+.ik-guide-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px 18px; }
+.ik-guide-cols ul, .ik-guide-notes { margin: 0 0 8px; padding-left: 18px; }
+.ik-guide-heading { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #64748b; margin-bottom: 4px; }
+.ik-guide-heading.is-required { color: #b45309; }
+.ik-guide-extra { margin-bottom: 8px; color: #475569; }
+
+/* ---- Thẻ kết quả cố định ---- */
+.dt-import-notice.ik-result { position: relative; display: grid !important; grid-template-columns: 18px minmax(0, 1fr) 32px; align-items: start; column-gap: 10px; margin: 0 16px 12px; padding: 12px 12px 12px 14px; border-radius: 10px; box-shadow: 0 3px 12px rgba(15, 23, 42, .06); font-size: .88rem; line-height: 1.5; }
+.dt-import-notice.ik-result.alert-success { background: #edf8f1; border-color: #cdebd7; color: #176b3a; }
+.dt-import-notice.ik-result.alert-danger { background: #fff1f1; border-color: #f3d0d0; color: #9f2525; }
+.ik-result > i { margin-top: 3px; }
+.ik-result-title { font-weight: 700; font-size: .95rem; margin-bottom: 8px; }
+.ik-result .ik-steps { margin-bottom: 10px; }
+.ik-result-head { font-weight: 600; }
+.ik-result-lines { margin: 6px 0 0; padding-left: 18px; }
+.ik-result-lines.is-collapsed li:nth-child(n+7) { display: none; }
+.ik-result-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ik-result .ik-result-actions .btn { text-decoration: none !important; }
+.ik-result .ik-result-actions .btn-light { color: #1e293b !important; background: #fff; }
+.ik-result .ik-result-actions .btn-light:hover { background: #f1f5f9; }
+.ik-result .ik-result-actions .btn-primary { color: #fff !important; }
+.ik-result .dt-import-notice-close { border: 0; background: transparent; font-size: 1.3rem; line-height: 1; color: inherit; opacity: .6; cursor: pointer; }
+.ik-result .dt-import-notice-close:hover { opacity: 1; }
+
+/* ---- Xem trước: tab lọc + bảng cột ---- */
+.ik-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.ik-tab { border: 1px solid #e2e8f0; background: #fff; color: #334155; border-radius: 999px; padding: 3px 12px; font-size: .8rem; cursor: pointer; }
+.ik-tab .badge { margin-left: 4px; }
+.ik-tab.is-active { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+.ik-tab:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+.ik-mapping { font-size: .8rem; }
+.ik-mapping td, .ik-mapping th { padding: .3rem .5rem !important; }
+.ik-mapping .ik-col-letter { display: inline-block; min-width: 26px; text-align: center; font-weight: 700; background: #e0e7ff; color: #3730a3; border-radius: 5px; }
+.ik-confirm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ik-confirm-bar .ik-file { color: #475569; font-size: .84rem; }
+
+/* ---- Kiểm tra file phía trình duyệt ---- */
+.ik-dz-errors { list-style: none; margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: #fff1f1; color: #9f2525; font-size: .82rem; }
+.ik-dz-errors:empty { display: none; }
+.dt-dz-item.is-invalid { background: #fff5f5; }
+.dt-dz-item.is-invalid i { color: #dc2626 !important; }
+
+/* ---- Lịch sử import ---- */
+.ik-history .badge { font-weight: 600; }
+.ik-history td { vertical-align: middle !important; }
+.ik-history .ik-num { font-variant-numeric: tabular-nums; }
+
+/* ---- Đồng bộ DAT: chạy thử ---- */
+.ik-sync-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.ik-sync-stat { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; background: #fff; }
+.ik-sync-stat .ik-sync-num { font-size: 1.5rem; font-weight: 700; line-height: 1.1; }
+.ik-sync-stat .ik-sync-label { font-size: .78rem; color: #64748b; }
+.ik-sync-stat.is-add .ik-sync-num { color: #15803d; }
+.ik-sync-stat.is-change .ik-sync-num { color: #b45309; }
+.ik-sync-stat.is-error .ik-sync-num { color: #b91c1c; }
+.ik-last-sync { font-size: .78rem; color: #64748b; }
+
+/* ---- Ghi chú ngắn trong form import ---- */
+.ik-note { border: 1px solid #dbeafe; background: #f5f9ff; color: #334155; border-radius: 8px; padding: 8px 12px; font-size: .84rem; }
+.ik-note a { color: #1d4ed8; text-decoration: underline; }

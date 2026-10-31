@@ -145,8 +145,6 @@ function xd_upload_hocvien_excel()
 
 		if($ten === '' && $cccd === '')
 		{
-			// Dừng sớm khi gặp nhiều dòng trống liên tiếp (file chuyển đổi có thể có vùng dùng đến hết bảng)
-			if(++$emptyStreak > 50) break;
 			continue; // dòng trống
 		}
 		$emptyStreak = 0;
@@ -154,6 +152,16 @@ function xd_upload_hocvien_excel()
 		if($cccd === '')
 		{
 			$errors[] = "Dòng $row: thiếu số CCCD học viên.";
+			continue;
+		}
+		if(isset($map['ngaysinh']) && $ngaysinh === '' && trim((string)xd_cell_raw($sheet, $map['ngaysinh'], $row)) !== '')
+		{
+			$errors[] = "Dòng $row: ngày sinh '".htmlspecialchars(trim((string)xd_cell_raw($sheet, $map['ngaysinh'], $row)))."' không tồn tại hoặc sai định dạng (dd/mm/yyyy).";
+			continue;
+		}
+		if(isset($map['ngaytt']) && $ngayTTFile === null && trim((string)xd_cell_raw($sheet, $map['ngaytt'], $row)) !== '')
+		{
+			$errors[] = "Dòng $row: ngày thanh toán không tồn tại hoặc sai định dạng (dd/mm/yyyy).";
 			continue;
 		}
 		if($ten === '')
@@ -182,7 +190,7 @@ function xd_upload_hocvien_excel()
 
 		$rows[] = array(
 			'row' => $row, 'ten' => $ten, 'khoa' => $khoa, 'ngaysinh' => $ngaysinh, 'cccd' => $cccd,
-			'nguoinop' => $nguoinop, 'nhom' => $nhom, 'gvten' => $gvten, 'gvkey' => $gvkey, 'datt' => $daTT, 'ngaytt_file' => $ngayTTFile, 'existing_id' => 0
+			'nguoinop' => $nguoinop, 'nhom' => $nhom, 'gvten' => $gvten, 'gvkey' => $gvkey, 'datt' => $daTT, 'ngaytt_file' => $ngayTTFile, 'existing_id' => 0, 'existing_dat' => false
 		);
 	}
 
@@ -193,7 +201,7 @@ function xd_upload_hocvien_excel()
 	{
 		$variants = xd_cccd_variants($r['cccd']);
 		$placeholders = implode(',', array_fill(0, count($variants), '?'));
-		$existing = $d->rawQueryOne("select id, ngay_thanh_toan from #_xd_hocvien where cccd in ($placeholders) limit 0,1", $variants);
+		$existing = $d->rawQueryOne("select id, ngay_thanh_toan, user_tao from #_xd_hocvien where cccd in ($placeholders) limit 0,1", $variants);
 		if($existing && isset($existing['id']))
 		{
 			if($existing['ngay_thanh_toan'] !== null)
@@ -201,7 +209,10 @@ function xd_upload_hocvien_excel()
 				$skippedPaidRows[$r['row']] = "Dòng ".$r['row'].": CCCD ".$r['cccd']." đã thanh toán, bỏ qua không ghi đè.";
 			}
 			else
+			{
 				$r['existing_id'] = (int)$existing['id'];
+				$r['existing_dat'] = trim((string)$existing['user_tao']) === 'Đồng bộ DAT';
+			}
 		}
 	}
 	unset($r);
@@ -234,6 +245,9 @@ function xd_upload_hocvien_excel()
 	if($lastImport === false) xd_hocvien_import_error("Không xác định được thứ tự import trước đó. Vui lòng thử lại.", $backUrl);
 	$lanImport = max(time(), (int)($lastImport['max_import'] ?? 0) + 1);
 	$config = getXdConfig($d);
+	$snapshot = xd_backup_table_json('xd_hocvien', 'imp_hocvien');
+	if($snapshot === '') xd_hocvien_import_error("Không sao lưu được dữ liệu trước khi import; chưa lưu dòng nào.", $backUrl);
+	$affectedIds = array();
 	$d->startTransaction();
 	foreach($rows as $r)
 	{
@@ -242,7 +256,15 @@ function xd_upload_hocvien_excel()
 		$ngayTT  = $daTT ? (!empty($r['ngaytt_file']) ? $r['ngaytt_file'] : $today) : null;
 		$dinhMuc = $daTT ? (int)$config['dinh_muc'] : 0;
 		$soTien  = $daTT ? (int)xdMucTheoNhom($config, $r['nhom']) : 0;
-		if($r['existing_id'] > 0)
+		if($r['existing_id'] > 0 && $r['existing_dat'])
+		{
+			/* Hồ sơ đồng bộ từ Đào tạo: giữ liên kết (thu_tu_file = ID học viên Đào tạo), khóa, giáo viên và thứ tự ưu tiên trích tiền. */
+			$ok = $d->rawQuery(
+				"update #_xd_hocvien set ho_ten = ?, cccd = ?, ngaysinh = ?, nhom = ?, nguoi_nop = ?, dinh_muc = ?, so_tien_thanh_toan = ?, ngay_thanh_toan = ?, id_bangke = 0 where id = ? and ngay_thanh_toan is null",
+				array($r['ten'], $r['cccd'], $r['ngaysinh'], $r['nhom'], $r['nguoinop'], $dinhMuc, $soTien, $ngayTT, $r['existing_id'])
+			);
+		}
+		elseif($r['existing_id'] > 0)
 		{
 			$ok = $d->rawQuery(
 				"update #_xd_hocvien set lan_import = ?, thu_tu_file = ?, ho_ten = ?, cccd = ?, ngaysinh = ?, khoa = ?, nhom = ?, nguoi_nop = ?, gv_hoten = ?, gv_key = ?, dinh_muc = ?, so_tien_thanh_toan = ?, ngay_thanh_toan = ?, id_bangke = 0 where id = ? and ngay_thanh_toan is null",
@@ -256,8 +278,13 @@ function xd_upload_hocvien_excel()
 				array($lanImport, (int)$r['row'], $r['ten'], $r['cccd'], $r['ngaysinh'], $r['khoa'], $r['nhom'], $r['nguoinop'], $r['gvten'], $r['gvkey'], $dinhMuc, $soTien, $ngayTT, time(), $username)
 			);
 		}
-		if($ok === false) $failRows[] = $r['row'];
-		else { if($r['existing_id'] > 0) $updated++; else $inserted++; if($ngayTT !== null) $paidCount++; }
+		if($ok === false || $d->getLastErrorCode() !== '00000') $failRows[] = $r['row'];
+		else
+		{
+			if($r['existing_id'] > 0) { $updated++; $affectedIds[] = $r['existing_id']; }
+			else { $inserted++; $affectedIds[] = (int)$d->pdo()->lastInsertId(); }
+			if($ngayTT !== null) $paidCount++;
+		}
 	}
 
 	if(!empty($failRows))
@@ -267,6 +294,9 @@ function xd_upload_hocvien_excel()
 	}
 
 	$d->commit();
+	$historyId = xd_import_history_done('hocvien', array('filename' => (string)$file['name'], 'so_them' => $inserted, 'so_capnhat' => $updated,
+		'so_loi' => count($skippedPaidRows), 'errors' => array_values($skippedPaidRows), 'backup' => $snapshot, 'batch' => (string)$lanImport, 'ids' => $affectedIds));
+	ik_history_update($historyId, array('link' => 'index.php?com=xangdau&act=hocvien&import='.$historyId));
 	$msg = "Import thành công $inserted học viên mới";
 	if($updated > 0) $msg .= "; cập nhật $updated học viên đã có";
 	if(!empty($skippedPaidRows)) $msg .= "; bỏ qua ".count($skippedPaidRows)." học viên đã thanh toán";
@@ -278,7 +308,9 @@ function xd_upload_hocvien_excel()
 function xd_hocvien_import_error($message, $backUrl)
 {
 	if(session_status() !== PHP_SESSION_ACTIVE) @session_start();
-	$_SESSION['xd_hocvien_import_error'] = $message;
-	header('Location: '.$backUrl);
+	xd_import_record_failure(isset($_POST['confirm_roster']) || !empty($GLOBALS['xd_roster_financial']) ? 'hocvien_bc1' : 'hocvien', $message, false);
+	ik_notice('xangdau', $message, false);
+	global $func;
+	$func->redirect($backUrl);
 	exit();
 }

@@ -13,6 +13,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import kết quả kỳ: <?=htmlspecialchars($ky['ten'] ?: '')?></strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.kythi'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-warning">Nạp file kết quả từ TTSH (mẫu đã xuất). Ghép theo <strong>CCCD</strong>: cập nhật học viên trong kỳ, đồng thời chèn mới học viên khóa cũ (vắng/rớt) để lưu trữ.</div>
 				<div class="form-group">
 					<label>File Excel (.xlsx, .xls)</label>

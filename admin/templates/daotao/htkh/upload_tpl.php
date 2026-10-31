@@ -13,6 +13,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import số giấy HTKH</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.htkh'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-warning">File cần có cột <strong>CCCD</strong> (hoặc Mã HV) và <strong>Số giấy HTKH</strong>; tùy chọn Ngày cấp, Ghi chú. Ghép theo CCCD/Mã HV.</div>
 				<div class="form-group">
 					<label>Khóa <span class="text-muted">(tùy chọn)</span></label>

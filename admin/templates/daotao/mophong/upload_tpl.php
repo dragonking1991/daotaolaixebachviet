@@ -7,6 +7,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import kết quả mô phỏng</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.lythuyet'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-info">Nhận diện cột CCCD/Mã đăng nhập và Tiến độ hoàn thành. Đạt khi tiến độ &gt; <?=dt_nguong_mophong()?>%. Kết quả được cập nhật theo khóa và CCCD.</div>
 				<div class="form-group">
 					<label>Khóa <span class="text-danger">*</span></label>

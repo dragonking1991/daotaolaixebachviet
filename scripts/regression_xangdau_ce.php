@@ -43,8 +43,21 @@ class RegressionCeDatabase
 	public $rolledBack = false;
 	private $snapshot = array();
 
+	private $lastCode = '00000';
+
+	public function getLastErrorCode()
+	{
+		return $this->lastCode;
+	}
+
+	public function transactionFailed()
+	{
+		return false;
+	}
+
 	public function rawQuery($sql, $params = array())
 	{
+		$this->lastCode = '00000';
 		$this->queries[] = array($sql, $params);
 		if(strpos($sql, 'select id, ma_khoa, hang from #_dt_khoa') === 0)
 			return array(
@@ -53,7 +66,7 @@ class RegressionCeDatabase
 			);
 		if(strpos($sql, 'insert into #_xd_ce_hoadon') === 0)
 		{
-			if($this->failInsertAt > 0 && count($this->inserted) + 1 === $this->failInsertAt) return false;
+			if($this->failInsertAt > 0 && count($this->inserted) + 1 === $this->failInsertAt) { $this->lastCode = '23000'; return array(); }
 			$this->inserted[] = $params;
 			return true;
 		}

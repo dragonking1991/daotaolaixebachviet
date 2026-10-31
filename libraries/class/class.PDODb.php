@@ -55,6 +55,8 @@ class PDODb
          * @var string
          */
         private $lastErrorCode = '';
+        /* Số câu lệnh lỗi kể từ startTransaction(); rawQuery() trả mảng rỗng khi lỗi nên cần đếm riêng. */
+        private $transactionErrors = 0;
         /**
          * Name of the auto increment column
          * @var string
@@ -329,6 +331,7 @@ class PDODb
             $this->rowCount      = $stmt->rowCount();
             $this->lastError     = $stmt->errorInfo();
             $this->lastErrorCode = $stmt->errorCode();
+            $this->trackTransactionError();
             $this->createlogs(@$_SESSION[$login_admin]['username'],'insert',$tableName,$this->pdo()->lastInsertId());
             $this->reset();
             if ($status && $this->pdo()->lastInsertId() > 0) {
@@ -626,6 +629,7 @@ class PDODb
             $stmt->execute();
             $this->lastError     = $stmt->errorInfo();
             $this->lastErrorCode = $stmt->errorCode();
+            $this->trackTransactionError();
             $this->rowCount      = $stmt->rowCount();
             $this->reset();
             return ($this->rowCount > 0);
@@ -848,6 +852,7 @@ class PDODb
             $stmt->execute();
             $this->lastError     = $stmt->errorInfo();
             $this->lastErrorCode = $stmt->errorCode();
+            $this->trackTransactionError();
             $this->rowCount      = $stmt->rowCount();
             if (in_array('SQL_CALC_FOUND_ROWS', $this->queryOptions)) {
                 $totalStmt        = $this->pdo()->query('SELECT FOUND_ROWS()');
@@ -1125,6 +1130,7 @@ class PDODb
             $this->lastQuery = $this->query;
             if (!$stmt instanceof PDOStatement) {
                 $this->lastErrorCode = $this->pdo()->errorCode();
+                $this->trackTransactionError();
                 $this->lastError     = $this->pdo()->errorInfo();
                 return null;
             }
@@ -1153,6 +1159,7 @@ class PDODb
                 $stmt->execute();
                 $this->lastError     = $stmt->errorInfo();
                 $this->lastErrorCode = $stmt->errorCode();
+                $this->trackTransactionError();
                 $result              = $this->buildResult($stmt);
             } else {
                 $result = null;
@@ -1246,6 +1253,20 @@ class PDODb
             $this->updateColumns   = [];
             $this->where           = [];
         }
+        private function trackTransactionError()
+        {
+            if ($this->transaction && (string)$this->lastErrorCode !== '00000') {
+                $this->transactionErrors++;
+            }
+        }
+        /**
+         * Có câu lệnh nào lỗi trong transaction hiện tại không (kiểm tra trước commit).
+         * @return bool
+         */
+        public function transactionFailed()
+        {
+            return $this->transactionErrors > 0;
+        }
         /**
          * Transaction rollback function
          *
@@ -1333,6 +1354,7 @@ class PDODb
         {
             $this->pdo()->beginTransaction();
             $this->transaction = true;
+            $this->transactionErrors = 0;
             register_shutdown_function([$this, "checkTransactionStatus"]);
         }
         /**
@@ -1484,6 +1506,7 @@ class PDODb
             $status              = $stmt->execute();
             $this->lastError     = $stmt->errorInfo();
             $this->lastErrorCode = $stmt->errorCode();
+            $this->trackTransactionError();
             $wherelogs = json_encode($this->where);
             $this->createlogs(@$_SESSION[$login_admin]['username'],'update',$tableName,$wherelogs);
             $this->reset();

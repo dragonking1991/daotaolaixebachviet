@@ -215,6 +215,7 @@ function xd_roster_save($rows)
 			throw new RuntimeException('Không sao lưu được; chưa import học viên.');
 		$last = xd_roster_query('select max(lan_import) as last_import from #_xd_hocvien');
 		$sequence = max(time(), (int)($last[0]['last_import'] ?? 0) + 1);
+		$plan['ids'] = array();
 		foreach($plan['rows'] as $row)
 		{
 			$data = $row['financial'];
@@ -235,6 +236,7 @@ function xd_roster_save($rows)
 				foreach($data as $key => $value) { $sets[] = '`'.$key.'`=?'; $params[] = $value; }
 				$params[] = (int)$row['existing']['id'];
 				xd_roster_query('update #_xd_hocvien set '.implode(',', $sets).' where id=?', $params);
+				$plan['ids'][] = (int)$row['existing']['id'];
 			}
 			else
 			{
@@ -244,6 +246,7 @@ function xd_roster_save($rows)
 					'lan_import'=>$sequence, 'thu_tu_file'=>$row['row'], 'ngaytao'=>time(), 'user_tao'=>xd_username());
 				xd_roster_query('insert into #_xd_hocvien (`'.implode('`,`', array_keys($data)).'`) values ('.
 					implode(',', array_fill(0, count($data), '?')).')', array_values($data));
+				$plan['ids'][] = (int)$d->pdo()->lastInsertId();
 			}
 		}
 		if($d->commit() === false) throw new RuntimeException('Không thể hoàn tất import học viên XD.');
@@ -264,22 +267,45 @@ function xd_roster_upload($sheet = null, $highestRow = 0, $map = array(), $heade
 			$pending = $_SESSION['xd_roster_pending'] ?? null;
 			if(!$pending || !hash_equals($pending['token'], (string)$_POST['confirm_roster']))
 				throw new InvalidArgumentException('Bản xem trước không còn hợp lệ; vui lòng chọn file và xem trước lại.');
+			$snapshot = xd_backup_table_json('xd_hocvien', 'imp_hocvien_bc1');
+			if($snapshot === '') throw new RuntimeException('Không sao lưu được dữ liệu trước khi import; chưa lưu dòng nào.');
 			$result = xd_roster_save($pending['rows']);
+			$historyId = xd_import_history_done('hocvien_bc1', array('filename' => (string)($pending['filename'] ?? ''), 'so_them' => (int)$result['new'],
+				'so_capnhat' => (int)$result['updated'], 'backup' => $snapshot, 'ids' => $result['ids'] ?? array()));
+			ik_history_update($historyId, array('link' => 'index.php?com=xangdau&act=hocvien&import='.$historyId));
 			unset($_SESSION['xd_roster_pending']);
 		}
 		else
 		{
 			unset($_SESSION['xd_roster_pending']);
+			$GLOBALS['xd_roster_financial'] = true;
 			$rows = xd_roster_parse($sheet, $highestRow, $map, $headerRow,
 				array('khoa'=>$_POST['khoa_mac_dinh'] ?? '', 'nhom'=>$_POST['nhom_mac_dinh'] ?? ''));
 			$xd_roster_preview = xd_roster_plan($rows);
 			$token = bin2hex(random_bytes(24));
-			$_SESSION['xd_roster_pending'] = array('token'=>$token, 'rows'=>$rows);
+			$_SESSION['xd_roster_pending'] = array('token'=>$token, 'rows'=>$rows, 'filename'=>(string)($_FILES['file-excel']['name'] ?? ''));
 			$xd_roster_preview['token'] = $token;
+			$xd_roster_preview['filename'] = (string)($_FILES['file-excel']['name'] ?? '');
+			$xd_roster_preview['mapping'] = xd_roster_preview_mapping($sheet, $headerRow, $map);
 			return true;
 		}
 	}
 	catch(Exception $error) { xd_hocvien_import_error(nl2br(htmlspecialchars($error->getMessage(), ENT_QUOTES, 'UTF-8')), $back); }
 	$func->transfer('Đã thêm '.$result['new'].' và cập nhật '.$result['updated'].' học viên XD; đổi nhóm '.$result['group_changes'].' hồ sơ theo Excel. Giữ nguyên lịch sử thanh toán. Sao lưu: '.$result['backup'],
 		'index.php?com=xangdau&act=hocvien');
+}
+
+/* Bảng "Cột Excel → trường hệ thống" cho trang xem trước mẫu BC1. */
+function xd_roster_preview_mapping($sheet, $headerRow, $map)
+{
+	$labels = array_merge(array('ten' => 'Họ và tên *', 'cccd' => 'Số CMND/HC *', 'khoa' => 'Khóa', 'ngaysinh' => 'Ngày sinh', 'nhom' => 'Hệ đào tạo / Nhóm',
+		'gv' => 'Giáo viên', 'nguoinop' => 'Người nộp hồ sơ', 'ngay_nop_ho_so' => 'Ngày nộp hồ sơ'), xd_student_financial_fields());
+	$out = array();
+	foreach($labels as $field => $label)
+	{
+		$hasCol = isset($map[$field]);
+		$out[] = array('label' => $label, 'col' => $hasCol ? PHPExcel_Cell::stringFromColumnIndex((int)$map[$field]) : '',
+			'header' => $hasCol ? (string)xd_roster_value($sheet, $map[$field], $headerRow) : '');
+	}
+	return $out;
 }

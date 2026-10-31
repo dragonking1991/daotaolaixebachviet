@@ -13,6 +13,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import file DAT của Cục</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.dat'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-warning">Chống trùng theo <strong>Mã phiên học</strong>: chỉ nạp phiên chưa có, báo số phiên đã tồn tại bị bỏ qua. Ghép học viên theo Mã học viên.</div>
 				<div class="form-group">
 					<label>Khóa <span class="text-muted">(tùy chọn)</span></label>

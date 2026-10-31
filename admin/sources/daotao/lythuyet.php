@@ -169,7 +169,6 @@ function dt_lythuyet_upload_excel()
 		$cccd = dt_normalize_cccd($cccdRaw);
 		if(strlen($cccd) < 9)
 		{
-			if($cccdRaw === '' && ++$emptyStreak >= 40) break;
 			continue; // bỏ qua dòng đánh dấu / sub-header
 		}
 		$emptyStreak = 0;
@@ -206,6 +205,7 @@ function dt_lythuyet_upload_excel()
 		$ok++;
 	}
 
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	dt_audit('import', 'lythuyet:'.$mon, $ok, $file['name']);
 	dt_log_import('lythuyet:'.$mon, $file['name'], $ok, $err);

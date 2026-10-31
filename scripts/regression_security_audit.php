@@ -66,7 +66,7 @@ foreach(array('daotao', 'xangdau') as $com)
 	{
 		if($act === '') continue;
 		sa_check(in_array($act, $routes, true), "Read-only act $com/$act is not a real route");
-		sa_check(!preg_match('/delete|save|sync|Excel$|mark|toggle|duyet|kiemTra|reset|restore|thanhLy|DatAll|import|cap|remove|add|create|undo|pass|xoa|clear/i', $act) || preg_match('/^(export|xuat|upload[A-Z][a-z]+$|khoaAdd|kythiUpload|htkh(Print|PrintKy|ExcelKy|WordKy)|ceInvoiceTemplate|xemGiaoVien|locKiemTra|locDuyet|locDaThanhToan|backupDownload|sathachPending|uploadHtkh|uploadHocvien$)/', $act), "Suspicious read-only act $com/$act");
+		sa_check(!preg_match('/delete|save|sync|Excel$|mark|toggle|duyet|kiemTra|reset|restore|thanhLy|DatAll|import|cap|remove|add|create|undo|pass|xoa|clear/i', $act) || preg_match('/^(export|xuat|upload[A-Z][a-z]+$|khoaAdd|kythiUpload|htkh(Print|PrintKy|ExcelKy|WordKy)|ceInvoiceTemplate|xemGiaoVien|locKiemTra|locDuyet|locDaThanhToan|backupDownload|sathachPending|uploadHtkh|uploadHocvien$|import(Template|History|Errors))/', $act), "Suspicious read-only act $com/$act");
 	}
 	foreach($routes as $act) if(!in_array($act, $readOnly, true)) sa_check(admin_csrf_required($com, $act, 'GET'), "Write act $com/$act must need a token");
 }

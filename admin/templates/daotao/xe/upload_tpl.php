@@ -13,6 +13,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import danh sách xe (sheet XE)</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.xe'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-warning">Đọc cột theo tên tiêu đề: <strong>Biển số xe, Hạng xe tập lái, Giáo viên</strong>... Nạp lại sẽ cập nhật theo biển số.</div>
 				<div class="form-group">
 					<label>File Excel (.xlsx, .xls) — có thể chọn/thả nhiều file</label>

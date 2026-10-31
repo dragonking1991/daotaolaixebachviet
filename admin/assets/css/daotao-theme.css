@@ -647,25 +647,25 @@ body.com-hoadon .dt-import-notice-close, body.com-xangdau .dt-import-notice-clos
 }
 
 /* ===== Dropzone import (kéo-thả + nhiều file) ===== */
-body.com-daotao .dt-dropzone { border: 2px dashed #cbd5e1; border-radius: 12px; background: #fbfcfe; transition: border-color .15s, background .15s; }
-body.com-daotao .dt-dropzone.is-drag { border-color: var(--dt-blue-2, #2563eb); background: #eff5ff; }
-body.com-daotao .dt-dropzone.has-files { border-style: solid; border-color: #dfe4ee; }
-body.com-daotao .dt-dz-area { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 96px; margin: 0; padding: 18px; text-align: center; color: #64748b; cursor: pointer; }
-body.com-daotao .dt-dz-area:hover { color: #334155; }
-body.com-daotao .dt-dz-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
-body.com-daotao .dt-dz-hint { font-size: .84rem; line-height: 1.5; }
-body.com-daotao .dt-dz-hint i { font-size: 1.4rem; color: #94a3b8; margin-right: 8px; vertical-align: -2px; }
-body.com-daotao .dt-dz-hint b { color: var(--dt-blue-2, #2563eb); }
-body.com-daotao .dt-dz-list { list-style: none; margin: 0; padding: 0 12px 12px; }
-body.com-daotao .dt-dz-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; margin-top: 6px; background: #fff; border: 1px solid #eef1f6; border-radius: 8px; font-size: .82rem; }
-body.com-daotao .dt-dz-item i { color: #1f9d55; }
-body.com-daotao .dt-dz-name { flex: 0 1 auto; min-width: 60px; max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; }
-body.com-daotao .dt-dz-spacer { flex: 1 1 auto; }
-body.com-daotao .dt-dz-size { color: #94a3b8; font-size: .74rem; white-space: nowrap; }
-body.com-daotao .dt-dz-mon { flex: 0 0 auto; width: auto; max-width: 230px; height: 30px; font-size: .78rem; border-color: #cbd5e1; }
-body.com-daotao .dt-dz-mon.is-empty { border-color: #e0a800; background: #fffdf5; }
-body.com-daotao .dt-dz-remove { border: none; background: #f1f4f9; color: #64748b; width: 22px; height: 22px; line-height: 1; border-radius: 6px; cursor: pointer; font-size: 1rem; flex-shrink: 0; }
-body.com-daotao .dt-dz-remove:hover { background: #fdeaec; color: #c92a37; }
+body.com-daotao .dt-dropzone, body.com-xangdau .dt-dropzone { border: 2px dashed #cbd5e1; border-radius: 12px; background: #fbfcfe; transition: border-color .15s, background .15s; }
+body.com-daotao .dt-dropzone.is-drag, body.com-xangdau .dt-dropzone.is-drag { border-color: var(--dt-blue-2, #2563eb); background: #eff5ff; }
+body.com-daotao .dt-dropzone.has-files, body.com-xangdau .dt-dropzone.has-files { border-style: solid; border-color: #dfe4ee; }
+body.com-daotao .dt-dz-area, body.com-xangdau .dt-dz-area { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 96px; margin: 0; padding: 18px; text-align: center; color: #64748b; cursor: pointer; }
+body.com-daotao .dt-dz-area:hover, body.com-xangdau .dt-dz-area:hover { color: #334155; }
+body.com-daotao .dt-dz-input, body.com-xangdau .dt-dz-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+body.com-daotao .dt-dz-hint, body.com-xangdau .dt-dz-hint { font-size: .84rem; line-height: 1.5; }
+body.com-daotao .dt-dz-hint i, body.com-xangdau .dt-dz-hint i { font-size: 1.4rem; color: #94a3b8; margin-right: 8px; vertical-align: -2px; }
+body.com-daotao .dt-dz-hint b, body.com-xangdau .dt-dz-hint b { color: var(--dt-blue-2, #2563eb); }
+body.com-daotao .dt-dz-list, body.com-xangdau .dt-dz-list { list-style: none; margin: 0; padding: 0 12px 12px; }
+body.com-daotao .dt-dz-item, body.com-xangdau .dt-dz-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; margin-top: 6px; background: #fff; border: 1px solid #eef1f6; border-radius: 8px; font-size: .82rem; }
+body.com-daotao .dt-dz-item i, body.com-xangdau .dt-dz-item i { color: #1f9d55; }
+body.com-daotao .dt-dz-name, body.com-xangdau .dt-dz-name { flex: 0 1 auto; min-width: 60px; max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; }
+body.com-daotao .dt-dz-spacer, body.com-xangdau .dt-dz-spacer { flex: 1 1 auto; }
+body.com-daotao .dt-dz-size, body.com-xangdau .dt-dz-size { color: #94a3b8; font-size: .74rem; white-space: nowrap; }
+body.com-daotao .dt-dz-mon, body.com-xangdau .dt-dz-mon { flex: 0 0 auto; width: auto; max-width: 230px; height: 30px; font-size: .78rem; border-color: #cbd5e1; }
+body.com-daotao .dt-dz-mon.is-empty, body.com-xangdau .dt-dz-mon.is-empty { border-color: #e0a800; background: #fffdf5; }
+body.com-daotao .dt-dz-remove, body.com-xangdau .dt-dz-remove { border: none; background: #f1f4f9; color: #64748b; width: 22px; height: 22px; line-height: 1; border-radius: 6px; cursor: pointer; font-size: 1rem; flex-shrink: 0; }
+body.com-daotao .dt-dz-remove:hover, body.com-xangdau .dt-dz-remove:hover { background: #fdeaec; color: #c92a37; }
 
 /* Overlay tiến trình upload nhiều file */
 .dt-dz-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .5); z-index: 20000; display: flex; align-items: center; justify-content: center; padding: 16px; }

@@ -13,6 +13,7 @@
 		<div class="card card-info card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import danh sách học viên vào kỳ: <?=htmlspecialchars($ky['ten'] ?: '')?></strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.kythi'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<input type="hidden" name="roster_mode" value="append">
 				<div class="form-group"><label class="mb-0"><input type="checkbox" name="roster_mode" value="replace" checked> Thay thế danh sách hiện tại</label></div>
 				<div class="form-group">

@@ -119,7 +119,7 @@ function xd_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array(), $req
 	}
 	if($sheet === null) $sheet = $objPHPExcel->getSheet(0);
 
-	$highestRow = (int)$sheet->getHighestRow();
+	$highestRow = method_exists($sheet, 'getHighestDataRow') ? (int)$sheet->getHighestDataRow() : (int)$sheet->getHighestRow();
 	$highestColIndex = PHPExcel_Cell::columnIndexFromString($sheet->getHighestColumn());
 
 	xd_cleanup_converted($convertedFile);

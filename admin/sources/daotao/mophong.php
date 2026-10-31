@@ -86,7 +86,7 @@ function dt_mophong_upload_excel()
 		$row = dt_read_row($sheet, $r, $highestCol);
 		$cccdRaw = dt_val($row, $map, 'cccd');
 		$progressRaw = dt_val($row, $map, 'tien_do');
-		if($cccdRaw === '' && $progressRaw === '') { if(++$emptyStreak >= 40) break; continue; }
+		if($cccdRaw === '' && $progressRaw === '') { continue; }
 		$emptyStreak = 0;
 		$cccd = dt_normalize_cccd($cccdRaw);
 		if(strlen($cccd) < 9 || $progressRaw === '')
@@ -111,6 +111,7 @@ function dt_mophong_upload_excel()
 		$d->rawQuery("insert into #_dt_lythuyet (id_khoa, cccd, mon, tien_do, diem_kt, dat, ngaytao) values (?, ?, 'mophong', ?, 0, ?, ?) on duplicate key update tien_do = values(tien_do), diem_kt = 0, dat = values(dat)", array($data['id_khoa'], $data['cccd'], $progress, $data['dat'], time()));
 		$ok++;
 	}
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	dt_audit('import', 'mophong', $ok, $file['name']);
 	dt_log_import('mophong', $file['name'], $ok, $err);

@@ -187,7 +187,7 @@ function dt_khoa_upload_excel()
 	{
 		$row = dt_read_row($sheet, $r, $highestCol);
 		$maKhoa = trim(preg_replace('/\s+/', ' ', dt_val($row, $map, 'ma_khoa')));
-		if($maKhoa === '') { if(++$emptyStreak >= 30) break; continue; }
+		if($maKhoa === '') { continue; }
 		$emptyStreak = 0;
 
 		$tenKhoa = dt_val($row, $map, 'ten_khoa');
@@ -199,8 +199,15 @@ function dt_khoa_upload_excel()
 			'ngay_khaigiang' => null,
 			'ngay_manhoa' => null,
 		);
-		$kg = dt_parse_date(dt_val($row, $map, 'ngay_khaigiang'));
-		$mh = dt_parse_date(dt_val($row, $map, 'ngay_manhoa'));
+		$kgRaw = dt_val($row, $map, 'ngay_khaigiang'); $mhRaw = dt_val($row, $map, 'ngay_manhoa');
+		$kg = dt_parse_date($kgRaw);
+		$mh = dt_parse_date($mhRaw);
+		if(($kgRaw !== '' && !$kg) || ($mhRaw !== '' && !$mh))
+		{
+			$err++;
+			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: ngày ".($kgRaw !== '' && !$kg ? "khai giảng '$kgRaw'" : "mãn khóa '$mhRaw'")." không tồn tại hoặc sai định dạng";
+			continue;
+		}
 		if($kg) $data['ngay_khaigiang'] = $kg;
 		if($mh) $data['ngay_manhoa'] = $mh;
 
@@ -213,9 +220,10 @@ function dt_khoa_upload_excel()
 			$d->insert('dt_khoa', $data); $them++;
 		}
 	}
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	dt_audit('import', 'khoa', $them + $capnhat, $file['name']);
 	dt_log_import('khoa', $file['name'], $them + $capnhat, $err);
-	dt_import_notice("Import khóa: thêm mới $them, cập nhật $capnhat".($err ? ", $err lỗi" : ""), "index.php?com=daotao&act=khoa", (($them + $capnhat) > 0 || $err === 0));
+	dt_import_notice("Import khóa: thêm mới $them, cập nhật $capnhat".($err ? ", $err lỗi: ".implode("; ", $errMsgs) : ""), "index.php?com=daotao&act=khoa", (($them + $capnhat) > 0 || $err === 0));
 }
 

@@ -11,6 +11,7 @@
     require_once LIBRARIES.'autoload.php';
     new AutoLoad();
     require_once LIBRARIES.'admin_csrf.php';
+    require_once LIBRARIES.'import_kit.php';
     $d = new PDODb($config['database']);
     $seo = new Seo($d);
     $emailer = new Email($d);
@@ -62,6 +63,7 @@
 	<link href="assets/css/adminlte.css" rel="stylesheet">
 	<link href="assets/css/adminlte-style.css" rel="stylesheet">
 	<link href="assets/css/daotao-theme.css?v=<?=@filemtime(__DIR__.'/assets/css/daotao-theme.css')?>" rel="stylesheet">
+	<link href="assets/css/import-kit.css?v=<?=@filemtime(__DIR__.'/assets/css/import-kit.css')?>" rel="stylesheet">
 	<link href="assets/css/hoadon-theme.css" rel="stylesheet">
 	<link href="assets/lucide/lucide-shim.css" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
@@ -90,7 +92,9 @@
 	<script src="assets/js/adminlte.js"></script>
 	<script src="assets/js/daotao.js?v=<?=@filemtime(__DIR__.'/assets/js/daotao.js')?>"></script>
 	<script src="assets/js/course-select.js?v=<?=filemtime(__DIR__.'/assets/js/course-select.js')?>"></script>
+	<script>window.IK_MAX_UPLOAD = <?=(int)ik_upload_limit_bytes()?>;</script>
 	<script src="assets/js/daotao-import.js?v=<?=@filemtime(__DIR__.'/assets/js/daotao-import.js')?>"></script>
+	<script src="assets/js/import-kit.js?v=<?=@filemtime(__DIR__.'/assets/js/import-kit.js')?>"></script>
 	<script src="assets/lucide/lucide.min.js"></script>
 	<script src="assets/lucide/lucide-shim.js"></script>
 	<!-- Ckeditor - Elfinder -->
@@ -203,13 +207,7 @@
 						</div>
 					</section>
 				<?php } ?>
-				<?php if(isset($_SESSION['dt_import_notice']) && is_array($_SESSION['dt_import_notice'])) { $dtImportNotice = $_SESSION['dt_import_notice']; unset($_SESSION['dt_import_notice']); ?>
-				<div id="dt-import-notice" class="dt-import-notice alert <?=$dtImportNotice['success'] ? 'alert-success' : 'alert-danger'?>" role="status" aria-live="polite">
-					<i class="fas <?=$dtImportNotice['success'] ? 'fa-check-circle' : 'fa-exclamation-circle'?>"></i>
-					<div class="dt-import-notice-message"><?=nl2br(htmlspecialchars($dtImportNotice['message'], ENT_QUOTES, 'UTF-8'))?></div>
-					<button type="button" class="dt-import-notice-close" aria-label="Đóng thông báo" title="Đóng">&times;</button>
-				</div>
-				<?php } ?>
+				<?php if(isset($_SESSION['dt_import_notice']) && is_array($_SESSION['dt_import_notice'])) { $ikNotice = $_SESSION['dt_import_notice']; unset($_SESSION['dt_import_notice']); include TEMPLATE.LAYOUT.'import_result.php'; } ?>
 				<?php include TEMPLATE.$template."_tpl.php"; ?>
 			</div>
 			<?php include TEMPLATE.LAYOUT."footer.php"; ?>

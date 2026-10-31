@@ -10,13 +10,14 @@
 	if($xd_filter_trangthai !== '') $xd_ret_q['trangthai'] = $xd_filter_trangthai;
 	if($xd_filter_tt_from !== '') $xd_ret_q['tt_from'] = $xd_filter_tt_from;
 	if($xd_filter_tt_to !== '') $xd_ret_q['tt_to'] = $xd_filter_tt_to;
+	if(($xd_filter_import ?? '') !== '') $xd_ret_q['import'] = $xd_filter_import;
 	$xd_ret_q['p'] = (int)$curPage;
 	$xd_ret = rawurlencode('index.php?'.http_build_query($xd_ret_q));
 	$xd_can_edit_info = (function_exists('xd_can_import') && xd_can_import()) || (function_exists('xd_can_kiem_tra') && xd_can_kiem_tra());
 	if(empty($_SESSION['xd_dat_csrf'])) $_SESSION['xd_dat_csrf'] = bin2hex(random_bytes(24));
 ?>
 <?php
-	$xdFilterQuery = array('keyword' => $xd_filter_keyword, 'nhom' => $xd_filter_nhom, 'khoa' => $xd_filter_khoa, 'gv' => $xd_filter_gv, 'trangthai' => $xd_filter_trangthai, 'tt_from' => $xd_filter_tt_from, 'tt_to' => $xd_filter_tt_to);
+	$xdFilterQuery = array('import' => (string)($xd_filter_import ?? ''), 'keyword' => $xd_filter_keyword, 'nhom' => $xd_filter_nhom, 'khoa' => $xd_filter_khoa, 'gv' => $xd_filter_gv, 'trangthai' => $xd_filter_trangthai, 'tt_from' => $xd_filter_tt_from, 'tt_to' => $xd_filter_tt_to);
 	$xdFilterQuery = array_filter($xdFilterQuery, function($value) { return $value !== ''; });
 	$xdHasFilter = !empty($xdFilterQuery);
 	$xdCourseNames = array();
@@ -30,6 +31,7 @@
 	$xdTeacherNames = array();
 	foreach(($xd_hocvien_teachers ?? array()) as $teacher) $xdTeacherNames[(string)$teacher['gv_key']] = $teacher['gv_hoten'] !== '' ? $teacher['gv_hoten'] : $teacher['gv_key'];
 	$xdChipLabels = array(
+		'import' => 'Lượt import',
 		'keyword' => 'Tìm',
 		'nhom' => 'Nhóm',
 		'khoa' => 'Khóa',
@@ -38,7 +40,9 @@
 		'tt_from' => 'TT từ',
 		'tt_to' => 'TT đến',
 	);
-	$xdChipValue = function($key, $value) use ($xdCourseNames, $xdTeacherNames) {
+	$xdImportRow = $xd_filter_import_row ?? null;
+	$xdChipValue = function($key, $value) use ($xdCourseNames, $xdTeacherNames, $xdImportRow) {
+		if($key === 'import') return $xdImportRow ? $xdImportRow['filename'].' · '.date('d/m H:i', (int)$xdImportRow['created']) : '#'.$value;
 		if($key === 'khoa') return ($xdCourseNames[$value] ?? '') !== '' ? $xdCourseNames[$value].' ('.$value.')' : $value;
 		if($key === 'gv') return $xdTeacherNames[$value] ?? $value;
 		if($key === 'trangthai') return $value === 'da' ? 'Đã thanh toán' : 'Chưa thanh toán';
@@ -88,13 +92,15 @@
 		<div class="card-body py-2">
 			<div class="xd-hv-toolbar">
 				<a class="btn btn-sm bg-gradient-success text-white" href="<?=$linkUpload?>"><i class="fas fa-upload mr-1"></i>Import học viên</a>
-				<?php if(xd_can_import()) { ?><a class="btn btn-sm bg-gradient-info text-white" href="index.php?com=xangdau&act=syncTrainingDat" onclick="return confirm('Thêm học viên đã đạt DAT từ Đào tạo vào Học viên XD cho mọi hạng, kể cả CE? Toàn bộ hồ sơ XD đã có được giữ nguyên.');" title="Lấy học viên đã đạt DAT từ Đào tạo"><i class="fas fa-rotate mr-1"></i>Đồng bộ HV đạt DAT</a><?php } ?>
+				<?php if(xd_can_import()) { $xdLastSync = function_exists('xd_sync_last') ? xd_sync_last() : null; ?><a class="btn btn-sm bg-gradient-info text-white" href="index.php?com=xangdau&act=syncTrainingDatPreview" title="Xem trước số học viên sẽ thêm/cập nhật rồi mới đồng bộ"><i class="fas fa-rotate mr-1"></i>Đồng bộ HV đạt DAT</a>
+				<?php if($xdLastSync) { ?><span class="ik-last-sync" title="Lần đồng bộ thủ công gần nhất"><i class="fas <?=$xdLastSync['ok'] ? 'fa-circle-check text-success' : 'fa-circle-exclamation text-danger'?> mr-1"></i>Đồng bộ gần nhất <?=date('H:i d/m', (int)$xdLastSync['time'])?> · +<?=(int)$xdLastSync['added']?> HV</span><?php } ?>
+				<a class="btn btn-sm btn-link px-1" href="index.php?com=xangdau&act=importHistory" title="Lịch sử import, tải lỗi, hoàn tác"><i class="fas fa-history mr-1"></i>Lịch sử import</a><?php } ?>
 				<span class="xd-hv-spacer"></span>
 				<div class="btn-group">
 					<a class="btn btn-sm btn-outline-secondary" href="index.php?com=xangdau&act=ce"><i class="fas fa-truck-moving mr-1"></i>Danh sách CE</a>
 					<a class="btn btn-sm btn-outline-primary" href="index.php?com=xangdau&act=loc"><i class="fas fa-filter mr-1"></i>Lọc thanh toán</a>
 				</div>
-				<?php if(xd_can_duyet() || xd_can_kiem_tra()) { $exportBase = 'index.php?com=xangdau&act=xuatHocvienExcel&'.http_build_query(array_diff_key($xdFilterQuery, array('trangthai' => 1))); ?>
+				<?php if(xd_can_duyet() || xd_can_kiem_tra()) { $exportBase = 'index.php?com=xangdau&act=xuatHocvienExcel&'.http_build_query(array_diff_key($xdFilterQuery, array('trangthai' => 1, 'import' => 1))); ?>
 				<div class="btn-group">
 					<button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Xuất theo bộ lọc hiện tại"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</button>
 					<div class="dropdown-menu dropdown-menu-right">
@@ -143,6 +149,7 @@
 			<form method="get" action="index.php" class="xd-hv-filters" role="search" aria-label="Lọc học viên">
 				<input type="hidden" name="com" value="xangdau">
 				<input type="hidden" name="act" value="hocvien">
+				<?php if(($xd_filter_import ?? '') !== '') { ?><input type="hidden" name="import" value="<?=htmlspecialchars($xd_filter_import)?>"><?php } ?>
 				<div>
 					<label for="xd-f-keyword">Tìm kiếm</label>
 					<input id="xd-f-keyword" class="form-control form-control-sm" type="search" name="keyword" placeholder="Tên / CCCD HV / Tên GV" value="<?=htmlspecialchars($xd_filter_keyword)?>">

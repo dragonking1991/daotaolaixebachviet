@@ -392,6 +392,32 @@ Lưu ý — hệ thống **không** tự làm các việc sau:
 
 ---
 
+### Import & đồng bộ — luồng chung
+
+Mọi trang import (Đào tạo và Xăng dầu) dùng cùng một bố cục:
+
+1. **Thanh 4 bước**: Chọn file → Xem trước/Kiểm tra → Ghi dữ liệu → Kết quả.
+2. **Tải file mẫu** (Khóa, Học viên, Giáo viên, Xe, HTKH, Học viên XD BC1, Hóa đơn XD): cột bắt buộc tô vàng, có dòng ví dụ và sheet *Huong dan*. Nút **Xem quy tắc cột** mở checklist cột bắt buộc/tùy chọn; file xuất từ phần mềm (Lý thuyết, Cabin, DAT, Sát hạch) chỉ có checklist.
+3. **Kiểm tra file ngay khi chọn**: sai đuôi, file rỗng, quá dung lượng máy chủ cho phép hoặc trùng tên được báo ngay dưới khung kéo-thả và chặn gửi.
+4. **Xem trước** (Học viên, Giáo viên Đào tạo; Học viên XD BC1): bảng *Cột Excel → trường hệ thống*, tab lọc Tất cả / Thêm / Cập nhật / Lỗi (XD thêm *Đổi nhóm*). Bấm **Xác nhận import** là ghi luôn file vừa xem — không phải chọn lại (file giữ tạm 2 giờ trong `backups/import_stage/`, bị chặn truy cập web).
+5. **Thẻ kết quả cố định** thay cho trang tự chuyển 1 giây: số dòng, từng dòng lỗi (thu gọn khi dài), nút **Xem dữ liệu vừa import**, **Tải danh sách lỗi (CSV)**, **Lịch sử import**.
+6. **Lịch sử import** (`act=importHistory` ở mỗi phân hệ): thời gian, loại, file, người import, thành công/lỗi, trạng thái; tải lỗi từng lượt; **Hoàn tác** lượt import gần nhất trong 7 ngày:
+   - Đào tạo (chỉ quản trị viên): khôi phục bản sao lưu `dt_imp_*` trước lượt import; hồ sơ đã đồng bộ sang XD không bị xóa.
+   - Xăng dầu (cần quyền xóa + import): khôi phục ảnh chụp bảng trước import; **bị chặn** nếu sau đó đã có thanh toán, kiểm tra, duyệt hoặc bảng kê. Hệ thống sao lưu hiện trạng trước khi hoàn tác.
+7. **Đồng bộ HV đạt DAT** mở trang **chạy thử**: hệ thống chạy toàn bộ quy tắc rồi hoàn tác, hiện số sẽ thêm / đổi mã khóa / đổi nhóm DAT→BT/CK / giữ nguyên; bấm *Đồng bộ ngay* mới ghi. Danh sách Học viên XD hiện *Đồng bộ gần nhất* (giờ, người, số HV thêm).
+8. **Học viên XD vừa import**: lọc theo lượt import (`&import=<id>`, chip *Lượt import*), gồm cả hồ sơ thêm mới và cập nhật.
+9. Hóa đơn XD nhận **nhiều file cùng lúc**; các file trong cùng một lần tải lên được coi là cùng kỳ, không bị chặn “kỳ đã import”.
+
+Quy tắc dữ liệu sau đợt rà soát:
+
+- Lỗi ghi CSDL ở bất kỳ dòng nào trong một file làm hoàn tác cả file (trước đây có thể báo thành công dù ghi hỏng).
+- Ngày không tồn tại (vd `31/02/2026`) bị báo lỗi theo dòng thay vì lưu thành `0000-00-00`.
+- Import đọc tới dòng dữ liệu cuối cùng, không dừng khi gặp nhiều dòng trống.
+- Xem trước học viên Đào tạo dùng đúng quy tắc của import thật: theo (khóa, CCCD); mã khóa chưa có ghi “(khóa mới)”.
+- Import mẫu cũ Học viên XD **không** đổi khóa, giáo viên, liên kết Đào tạo và thứ tự ưu tiên của hồ sơ *Đồng bộ DAT*; vẫn cập nhật nhóm, họ tên, ngày sinh, người nộp.
+- *Đồng bộ lại* hóa đơn chuyển hóa đơn chưa quyết toán sang kỳ đang nhập.
+- Kiểm thử: `docker compose exec -T web php scripts/regression_import_kit.php --local-db` (chỉ dùng bảng tạm, tự dọn file sao lưu sinh ra).
+
 ### Bảo mật & vận hành
 
 - **Chống CSRF:** mọi thao tác ghi/xóa trong Đào tạo và Xăng dầu cần token phiên; token được `admin/assets/js/admin-csrf.js` tự gắn vào form và link nội bộ. Link cũ lưu sẵn/bookmark tới thao tác xóa sẽ báo “Phiên thao tác không hợp lệ” — mở lại trang rồi bấm nút. Khi thêm `act` chỉ đọc mới phải khai báo trong `libraries/admin_csrf.php`, nếu không act đó mặc định yêu cầu token.

@@ -164,8 +164,9 @@ function dt_parse_date($v)
 	$v = trim((string)$v);
 	if($v === '') return null;
 	if(preg_match('/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/', $v, $m))
-		return sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]);
-	if(preg_match('/^\d{4}-\d{2}-\d{2}/', $v)) return substr($v, 0, 10);
+		return checkdate((int)$m[2], (int)$m[1], (int)$m[3]) ? sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]) : null;
+	if(preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $v, $m))
+		return checkdate((int)$m[2], (int)$m[3], (int)$m[1]) ? substr($v, 0, 10) : null;
 	if(is_numeric($v) && (float)$v > 0)
 	{
 		require_once LIBRARIES.'PHPExcel.php';
@@ -451,4 +452,18 @@ function dt_cam_ket_info($nam, $tuNgay)
 	elseif($conNgay >= 365) $conText = round($conNgay / 365, 1).' năm';
 	else $conText = $conNgay.' ngày';
 	return array('con_hieu_luc' => $conHieuLuc, 'nam' => $nam, 'tu_ngay' => date('d/m/Y', $start), 'den_ngay' => date('d/m/Y', $end), 'con_ngay' => $conNgay, 'con_text' => $conText);
+}
+
+/* Bảng "Cột Excel → trường hệ thống" cho trang xem trước import. */
+function dt_preview_mapping($sheet, $headerRow, $highestCol, $map, $labels)
+{
+	$cells = dt_read_row($sheet, $headerRow, $highestCol);
+	$out = array();
+	foreach($labels as $field => $label)
+	{
+		$hasCol = isset($map[$field]);
+		$out[] = array('label' => $label, 'col' => $hasCol ? PHPExcel_Cell::stringFromColumnIndex((int)$map[$field]) : '',
+			'header' => $hasCol ? (string)($cells[$map[$field]] ?? '') : '');
+	}
+	return $out;
 }

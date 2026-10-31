@@ -136,7 +136,7 @@ function dt_dat_upload_excel()
 		$row = dt_read_row($sheet, $r, $highestCol);
 		$maPhien = dt_val($row, $map, 'ma_phien');
 		$maHv = dt_val($row, $map, 'ma_hv');
-		if($maPhien === '' && $maHv === '') { if(++$emptyStreak >= 40) break; continue; }
+		if($maPhien === '' && $maHv === '') { continue; }
 		$emptyStreak = 0;
 		if($maPhien === '') continue;
 
@@ -188,6 +188,7 @@ function dt_dat_upload_excel()
 		}
 	}
 
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	$syncTotals = array('xd_added' => 0, 'xd_course_updated' => 0, 'ce_added' => 0, 'existing' => 0);
 	$syncErrors = array();

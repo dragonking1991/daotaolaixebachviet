@@ -93,7 +93,7 @@ function xd_ce_save_invoice()
 		 values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		array($idKhoa, $course['ma_khoa'], $invoiceNo, $invoiceDate, (float)$amount, $teacher, $teacherKey, $period, time(), xd_username())
 	);
-	if($ok === false) $func->transfer("Không lưu được hóa đơn CE. Vui lòng kiểm tra dữ liệu và thử lại.", $back, false);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không lưu được hóa đơn CE. Vui lòng kiểm tra dữ liệu và thử lại.", $back, false);
 	$func->transfer("Đã lưu hóa đơn CE cho khóa ".htmlspecialchars($course['ma_khoa']).".", $back, true);
 }
 
@@ -147,7 +147,6 @@ function xd_ce_upload_invoices()
 		$period = trim(xd_cell($sheet, $map['period'], $row));
 		if($courseCode === '' && $invoiceNo === '' && $teacher === '')
 		{
-			if(++$emptyStreak >= 40) break;
 			continue;
 		}
 		$emptyStreak = 0;
@@ -191,6 +190,7 @@ function xd_ce_upload_invoices()
 		$rows[] = array((int)$course['id'], $course['ma_khoa'], $invoiceNo, $date, $amount, $teacher, $teacherKey, $period);
 	}
 	if(empty($rows) && empty($errors)) $errors[] = 'File không có dòng hóa đơn CE hợp lệ.';
+	if(!empty($errors) && function_exists('xd_import_record_failure')) xd_import_record_failure('ce', implode('<br>', $errors), false);
 	if(!empty($errors))
 		$func->transfer("Không import hóa đơn CE; file được kiểm tra toàn bộ trước khi lưu:<br>".implode('<br>', array_slice($errors, 0, 30)), $back, false);
 
@@ -203,13 +203,14 @@ function xd_ce_upload_invoices()
 			 values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			array($r[0], $r[1], $r[2], $r[3], $r[4], $r[5], $r[6], $r[7], time(), $username)
 		);
-		if($ok === false)
+		if($ok === false || $d->getLastErrorCode() !== '00000')
 		{
 			$d->rollback();
 			$func->transfer("Import hóa đơn CE thất bại khi ghi dữ liệu; đã hoàn tác toàn bộ file.", $back, false);
 		}
 	}
 	$d->commit();
+	if(function_exists('xd_import_history_done')) xd_import_history_done('ce', array('filename' => (string)$file['name'], 'so_them' => count($rows), 'link' => $back));
 	$func->transfer("Đã import ".count($rows)." hóa đơn CE theo khóa.", $back, true);
 }
 
@@ -219,7 +220,7 @@ function xd_ce_delete_invoice()
 	$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 	if($id <= 0) $func->transfer("Không xác định được hóa đơn CE.", "index.php?com=xangdau&act=ce", false);
 	$ok = $d->rawQuery("delete from #_xd_ce_hoadon where id = ?", array($id));
-	if($ok === false) $func->transfer("Không xóa được hóa đơn CE.", "index.php?com=xangdau&act=ce", false);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không xóa được hóa đơn CE.", "index.php?com=xangdau&act=ce", false);
 	$func->transfer("Đã xóa hóa đơn CE.", "index.php?com=xangdau&act=ce", true);
 }
 

@@ -569,4 +569,14 @@ function dt_log_import($module, $filename, $soDong, $soLoi)
 		'user' => dt_username(),
 		'ngaytao' => time(),
 	));
+	if(function_exists('ik_history_add'))
+	{
+		$spec = ik_spec(dt_import_spec_key($module));
+		$link = $spec['list'] ?? '';
+		$idKhoa = (int)($_REQUEST['id_khoa'] ?? 0);
+		if($link !== '' && $idKhoa > 0) $link .= '&id_khoa='.$idKhoa;
+		ik_history_add('daotao', (string)$module, array('filename' => (string)$filename, 'so_them' => (int)$soDong, 'so_loi' => (int)$soLoi,
+			'backup' => (string)($GLOBALS['dt_import_backup'] ?? ''), 'link' => $link));
+		ik_clear_staged();
+	}
 }

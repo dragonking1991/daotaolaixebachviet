@@ -88,6 +88,7 @@ function xd_upload_hoadon_excel()
 
 	// Thu thập các dòng hợp lệ
 	$rows = array();
+	$dateErrors = array();
 	$emptyStreak = 0;
 	for($row = $headerRow + 1; $row <= $highestRow; $row++)
 	{
@@ -100,7 +101,6 @@ function xd_upload_hoadon_excel()
 
 		if($ma === '' && $gvten === '')
 		{
-			if(++$emptyStreak > 50) break;
 			continue; // dòng trống
 		}
 		$emptyStreak = 0;
@@ -111,6 +111,11 @@ function xd_upload_hoadon_excel()
 		}
 
 		$ngay = xd_date_from_cell($sheet, $map['ngay'], $row);
+		if($ngay === null && trim((string)xd_cell_raw($sheet, $map['ngay'], $row)) !== '')
+		{
+			$dateErrors[] = "Dòng $row: ngày hóa đơn '".htmlspecialchars(trim((string)xd_cell_raw($sheet, $map['ngay'], $row)))."' không tồn tại hoặc sai định dạng.";
+			continue;
+		}
 		$tien = xd_money_from_cell($sheet, $map['tien'], $row);
 		$gvkey = xd_gv_key($gvten);
 		$hopLe = xd_hople_from_cell($sheet, $map, $row);
@@ -122,12 +127,18 @@ function xd_upload_hoadon_excel()
 		);
 	}
 
+	if(!empty($dateErrors) && function_exists('xd_import_record_failure')) xd_import_record_failure('hoadon', implode('<br>', $dateErrors), false);
+	if(!empty($dateErrors))
+		$func->transfer("Không import file vì có ngày không hợp lệ (chưa lưu hóa đơn nào):<br>".implode("<br>", array_slice($dateErrors, 0, 20)), $backUrl, false);
 	if(empty($rows)) $func->transfer("File không có dòng hóa đơn hợp lệ nào.", $backUrl, false);
 
 	// Chặn import đè kỳ đã tồn tại dữ liệu (nếu có nhập kỳ) — trừ khi chọn "Đồng bộ lại"
 	// để cập nhật cờ hợp lệ/Note 1 cho hóa đơn chưa quyết toán (dedup đảm bảo không tạo bản ghi trùng).
 	$resync = !empty($_POST['resync']);
-	if($kyForm !== '' && !$resync)
+	/* Nhiều file cùng một lần tải lên (cùng upload_session) được coi là cùng một lượt kỳ. */
+	$uploadSession = preg_replace('/[^a-f0-9]/', '', (string)($_POST['upload_session'] ?? ''));
+	$sameBatch = $uploadSession !== '' && isset($_SESSION['xd_hd_batch'][$uploadSession]) && $_SESSION['xd_hd_batch'][$uploadSession] === $kyForm;
+	if($kyForm !== '' && !$resync && !$sameBatch)
 	{
 		$existKy = $d->rawQueryOne("select count(*) as num from #_xd_hoadon where ky = ?", array($kyForm));
 		if($existKy && (int)$existKy['num'] > 0)
@@ -139,11 +150,15 @@ function xd_upload_hoadon_excel()
 	$updatedFixed = 0;
 	$skippedDup = 0;
 	$skippedLocked = 0;
+	$movedKy = 0;
 	$errors = array();
 	$seenKeys = array();
 	$hopLeCount = 0;
 	$khongHopLeCount = 0;
 
+	$snapshot = xd_backup_table_json('xd_hoadon', 'imp_hoadon');
+	if($snapshot === '') $func->transfer("Không sao lưu được dữ liệu trước khi import; chưa lưu hóa đơn nào.", $backUrl, false);
+	$affectedIds = array();
 	$d->startTransaction();
 	foreach($rows as $r)
 	{
@@ -154,7 +169,7 @@ function xd_upload_hoadon_excel()
 
 		// Kiểm tra trùng (ma_hoa_don + ngay_hoa_don + gv_key)
 		$exists = $d->rawQueryOne(
-			"select id, da_quyettoan, hop_le, note_1 from #_xd_hoadon where ma_hoa_don = ? and (ngay_hoa_don <=> ?) and gv_key = ? limit 0,1",
+			"select id, da_quyettoan, hop_le, note_1, ky from #_xd_hoadon where ma_hoa_don = ? and (ngay_hoa_don <=> ?) and gv_key = ? limit 0,1",
 			array($r['ma'], $r['ngay'], $r['gvkey'])
 		);
 		if($exists && isset($exists['id']))
@@ -162,10 +177,13 @@ function xd_upload_hoadon_excel()
 			if((int)$exists['da_quyettoan'] === 1) { $skippedLocked++; continue; }
 			// HĐ đã có nhưng chưa quyết toán: đồng bộ lại cờ "Hợp lệ" + Note 1 theo file
 			// (sửa được dữ liệu cũ bị nhận diện sai mà không tạo bản ghi trùng).
-			if((int)$exists['hop_le'] !== (int)$r['hople'] || (string)$exists['note_1'] !== (string)$r['note1'])
+			$newKy = ($resync && $kyForm !== '') ? $kyForm : (string)$exists['ky'];
+			if((int)$exists['hop_le'] !== (int)$r['hople'] || (string)$exists['note_1'] !== (string)$r['note1'] || (string)$exists['ky'] !== $newKy)
 			{
-				$d->rawQuery("update #_xd_hoadon set hop_le = ?, note_1 = ? where id = ?", array($r['hople'], $r['note1'], $exists['id']));
+				$d->rawQuery("update #_xd_hoadon set hop_le = ?, note_1 = ?, ky = ? where id = ? and da_quyettoan = 0", array($r['hople'], $r['note1'], $newKy, $exists['id']));
+				if((string)$exists['ky'] !== $newKy) $movedKy++;
 				$updatedFixed++;
+				$affectedIds[] = (int)$exists['id'];
 			}
 			else $skippedDup++;
 			continue;
@@ -175,12 +193,12 @@ function xd_upload_hoadon_excel()
 			"insert into #_xd_hoadon (gv_cccd, gv_hoten, gv_key, note_1, ma_hoa_don, thong_tin_ban_hang, chi_tiet, ngay_hoa_don, tong_tien, bien_so, ky, da_quyettoan, hop_le, id_bangke, ngaytao, user_tao) values ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?)",
 			array($r['gvten'], $r['gvkey'], $r['note1'], $r['ma'], $r['ttbanhang'], $r['chitiet'], $r['ngay'], $r['tien'], $r['bienso'], $kyForm, $r['hople'], time(), $username)
 		);
-		if($ok === false)
+		if($ok === false || $d->getLastErrorCode() !== '00000')
 		{
 			$err = $d->getLastError();
 			$errors[] = "Dòng ".$r['row'].": lỗi lưu dữ liệu".(is_array($err) && isset($err[2]) ? ' ('.$err[2].')' : '');
 		}
-		else { $inserted++; if((int)$r['hople'] === 1) $hopLeCount++; else $khongHopLeCount++; }
+		else { $inserted++; $affectedIds[] = (int)$d->pdo()->lastInsertId(); if((int)$r['hople'] === 1) $hopLeCount++; else $khongHopLeCount++; }
 	}
 
 	if(!empty($errors))
@@ -189,11 +207,19 @@ function xd_upload_hoadon_excel()
 		$func->transfer("Import thất bại:<br>".implode("<br>", array_slice($errors, 0, 10)), $backUrl, false);
 	}
 
+	if($d->transactionFailed())
+	{
+		$d->rollback();
+		$func->transfer("Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file.", $backUrl, false);
+	}
 	$d->commit();
+	if($uploadSession !== '' && $kyForm !== '') $_SESSION['xd_hd_batch'][$uploadSession] = $kyForm;
+	xd_import_history_done('hoadon', array('filename' => (string)$file['name'], 'so_them' => $inserted, 'so_capnhat' => $updatedFixed,
+		'backup' => $snapshot, 'ids' => $affectedIds, 'link' => 'index.php?com=xangdau&act=hoadon'.($kyForm !== '' ? '&ky='.urlencode($kyForm) : '')));
 
 	$msg = "Import thành công $inserted hóa đơn.";
-	if($updatedFixed > 0) $msg .= "<br>Đã đồng bộ lại $updatedFixed hóa đơn chưa quyết toán (cập nhật cờ Hợp lệ / Note 1).";
-	if($skippedDup > 0) $msg .= "<br>Bỏ qua $skippedDup hóa đơn trùng (Mã HĐ + Ngày HĐ).";
+	if($updatedFixed > 0) $msg .= "<br>Đã đồng bộ lại $updatedFixed hóa đơn chưa quyết toán (cập nhật cờ Hợp lệ / Note 1".($movedKy > 0 ? " / chuyển $movedKy hóa đơn sang kỳ ".htmlspecialchars($kyForm) : "").").";
+	if($skippedDup > 0) $msg .= "<br>Bỏ qua $skippedDup hóa đơn đã có, không thay đổi (trùng Mã HĐ + Ngày HĐ + Giáo viên).";
 	if($skippedLocked > 0) $msg .= "<br>Bỏ qua $skippedLocked hóa đơn đã quyết toán (bị khóa).";
 	if($hopLeHeaderText !== null) $msg .= "<br><em>Cột \"Hợp lệ\" nhận diện từ tiêu đề: \"".htmlspecialchars($hopLeHeaderText)."\" — $hopLeCount hợp lệ, $khongHopLeCount không hợp lệ.</em>";
 	else $msg .= "<br><em>Không tìm thấy cột \"Hợp lệ\"/Note1 trong file — tất cả được coi là hợp lệ mặc định.</em>";

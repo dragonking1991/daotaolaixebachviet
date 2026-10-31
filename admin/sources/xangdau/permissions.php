@@ -75,7 +75,7 @@ function xd_act_denied($act)
 {
 	$configActs = array('config', 'saveConfig', 'xoaDieuChinhHocVien');
 	$deleteActs = array('deleteKhoa','deleteHoadon', 'deleteHoadonSelected', 'deleteAllHoadon', 'deleteHocvien', 'deleteHocvienSelected', 'deleteHocvienByGv', 'deleteAllHocvien', 'ceInvoiceDelete');
-	$importActs = array('saveKhoa','uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel', 'syncTrainingDat', 'ceInvoiceSave', 'ceInvoiceUpload');
+	$importActs = array('saveKhoa','uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel', 'syncTrainingDat', 'syncTrainingDatPreview', 'ceInvoiceSave', 'ceInvoiceUpload', 'importTemplate', 'importHistory', 'importErrors');
 	$kiemtraActs = array('kiemTraGiaoVien', 'huyKiemTraGiaoVien', 'toggleKiemTraHoadon', 'toggleHopLeHoadon');
 	$duyetActs = array('duyetGiaoVien', 'duyetTatCaGiaoVien', 'huyDuyetGiaoVien');
 	$exportActs = array('xuatBangKeGiaoVien', 'xuatBangKeDaDuyetGiaoVien', 'xuatTongHopGiaoVien', 'xuatTongHopDaDuyet', 'xuatDaKiemTraGiaoVien', 'xuatTatCaBangKe', 'xuatToanBoDanhSachHocVien', 'xuatBangKe', 'xuatHoadonExcel', 'xuatHocvienExcel');
@@ -87,6 +87,7 @@ function xd_act_denied($act)
 	if(in_array($act, $kiemtraActs, true)) return !xd_can_kiem_tra();
 	if(in_array($act, $duyetActs, true)) return !xd_can_duyet();
 	if(in_array($act, $exportActs, true)) return !(xd_can_duyet() || xd_can_kiem_tra());
+	if($act === 'importUndo') return !(xd_can_xoa() && xd_can_import());
 	if($act === 'updateHocvienStatus') return !(xd_can_import() || xd_can_kiem_tra());
 	if($act === 'updateHocvienInfo') return !(xd_can_import() || xd_can_kiem_tra());
 	if(in_array($act, $viewActs, true)) return false; // đã qua kiểm tra hasAny ở trên, cho xem tự do

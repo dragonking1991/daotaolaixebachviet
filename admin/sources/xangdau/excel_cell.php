@@ -42,15 +42,19 @@ function xd_parse_date($rawValue)
 		}
 	}
 
-	if(preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $rawValue)) return $rawValue;
+	if(preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $rawValue, $iso))
+		return checkdate((int)$iso[2], (int)$iso[3], (int)$iso[1]) ? $rawValue : null;
 
 	// Chuỗi ngày kiểu Việt Nam D/M/Y (vd '13/05/1990') — chấp nhận '/', '-', '.'
 	if(preg_match('#^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$#', $rawValue, $m))
 	{
 		$day = (int)$m[1]; $mon = (int)$m[2];
-		if($day >= 1 && $day <= 31 && $mon >= 1 && $mon <= 12)
+		/* Ngày không tồn tại (vd 31/02) bị từ chối thay vì lưu thành 0000-00-00. */
+		if(checkdate($mon, $day, (int)$m[3]))
 			return $m[3].'-'.str_pad($mon, 2, '0', STR_PAD_LEFT).'-'.str_pad($day, 2, '0', STR_PAD_LEFT);
+		return null;
 	}
+	if(preg_match('#^\d{1,4}[/\-.]\d{1,2}[/\-.]\d{1,4}$#', $rawValue)) return null;
 
 	$tmp = str_replace('.', '/', $rawValue);
 	$tmp = preg_replace('/\s+/', ' ', $tmp);

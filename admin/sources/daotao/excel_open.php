@@ -50,7 +50,8 @@ function dt_open_upload_sheet($file, $ext, $backUrl, $sheetHints = array())
 		return null;
 	}
 
-	$highestRow = $sheet->getHighestRow();
+	/* Dòng có dữ liệu cuối cùng (không dừng sớm khi giữa file có nhiều dòng trống). */
+	$highestRow = method_exists($sheet, 'getHighestDataRow') ? (int)$sheet->getHighestDataRow() : (int)$sheet->getHighestRow();
 	$highestColIndex = PHPExcel_Cell::columnIndexFromString($sheet->getHighestColumn()) - 1;
 	if($highestRow > 20000) $highestRow = 20000; // an toàn với file khai báo dòng khổng lồ
 

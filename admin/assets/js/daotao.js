@@ -222,8 +222,18 @@
 		};
 		var btn = n.querySelector('.dt-import-notice-close');
 		if(btn) btn.addEventListener('click', dismiss);
-		if(n.classList.contains('alert-success')) setTimeout(dismiss, 6000);
+		if(n.classList.contains('alert-success') && !n.classList.contains('is-import')) setTimeout(dismiss, 6000);
 	}
 	if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initFlash);
 	else initFlash();
 })();
+
+/* Thẻ kết quả import: mở rộng/thu gọn danh sách dòng chi tiết. */
+document.addEventListener('click', function(e){
+	var btn = e.target.closest ? e.target.closest('.ik-result-toggle') : null;
+	if(!btn) return;
+	var list = btn.parentNode.querySelector('.ik-result-lines');
+	if(!list) return;
+	var collapsed = list.classList.toggle('is-collapsed');
+	btn.textContent = collapsed ? btn.getAttribute('data-more') : btn.getAttribute('data-less');
+});

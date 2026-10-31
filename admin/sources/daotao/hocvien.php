@@ -132,7 +132,7 @@ function dt_hocvien_upload_excel()
 		if(!dt_backup_tables(array('dt_hocvien','dt_khoa'), 'imp_hocvien'))dt_import_notice('Không thể sao lưu trước khi nhập học viên.',$back,false);
 		$d->startTransaction();
 	}
-	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0;
+	$ok = 0; $err = 0; $errMsgs = array(); $emptyStreak = 0; $writeFailRows = array(); $previewKhoaIds = array();
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
 		$row = dt_read_row($sheet, $r, $highestCol);
@@ -142,7 +142,7 @@ function dt_hocvien_upload_excel()
 		$khoaCode = dt_val($row, $map, 'khoa');
 		$hangRow = dt_val($row, $map, 'hang');
 
-		if($maHv === '' && $cccdRaw === '' && $hoten === '' && $khoaCode === '') { if(++$emptyStreak >= 30) break; continue; }
+		if($maHv === '' && $cccdRaw === '' && $hoten === '' && $khoaCode === '') { continue; }
 		$emptyStreak = 0;
 
 		$cccd = dt_normalize_cccd($cccdRaw);
@@ -195,7 +195,21 @@ function dt_hocvien_upload_excel()
 
 		if($preview)
 		{
-			$exist = $idKhoaSel ? $d->rawQueryOne("select id from #_dt_hocvien where cccd = ? limit 0,1", array($cccd)) : null;
+			/* Cùng quy tắc với import thật: khóa theo cột Khóa (tra mã khóa, chưa tạo) hoặc khóa đã chọn, rồi tìm theo (khóa, CCCD). */
+			$previewKhoaId = 0;
+			if($hasKhoaCol && $khoaCode !== '')
+			{
+				$codeKey = dt_mb_lower(trim(preg_replace('/\s+/', ' ', $khoaCode)));
+				if(!array_key_exists($codeKey, $previewKhoaIds))
+				{
+					$khoaRow = $d->rawQueryOne("select id from #_dt_khoa where ma_khoa = ? limit 0,1", array(trim(preg_replace('/\s+/', ' ', $khoaCode))));
+					$previewKhoaIds[$codeKey] = $khoaRow ? (int)$khoaRow['id'] : 0;
+				}
+				$previewKhoaId = $previewKhoaIds[$codeKey];
+				if(!$previewKhoaId) $data['khoa'] = $khoaCode.' (khóa mới)';
+			}
+			else $previewKhoaId = (int)$idKhoaSel;
+			$exist = $previewKhoaId ? $d->rawQueryOne("select id from #_dt_hocvien where id_khoa = ? and cccd = ? limit 0,1", array($previewKhoaId, $cccd)) : null;
 			$isUpdate = ($exist && $exist['id']);
 			$isUpdate ? $updCnt++ : $insCnt++;
 			$previewRows[] = array('r'=>$r, 'action'=>$isUpdate?'update':'insert', 'data'=>$data);
@@ -204,8 +218,15 @@ function dt_hocvien_upload_excel()
 		}
 
 		$exist = $d->rawQueryOne("select id from #_dt_hocvien where id_khoa = ? and cccd = ? limit 0,1", array($idKhoa, $cccd));
-		if($exist && $exist['id']) { $d->where('id', $exist['id']); $d->update('dt_hocvien', $data); }
-		else { $data['ngaytao'] = time(); $d->insert('dt_hocvien', $data); }
+		if($exist && $exist['id']) { $d->where('id', $exist['id']); $written = $d->update('dt_hocvien', $data); }
+		else { $data['ngaytao'] = time(); $written = $d->insert('dt_hocvien', $data); }
+		if($written === false || $d->getLastErrorCode() !== '00000')
+		{
+			$err++;
+			$writeFailRows[] = $r;
+			if(count($errMsgs) < 12) $errMsgs[] = "Dòng $r: lỗi ghi cơ sở dữ liệu";
+			continue;
+		}
 		$ok++;
 		$syncKhoaIds[(int)$idKhoa] = (int)$idKhoa;
 	}
@@ -218,12 +239,16 @@ function dt_hocvien_upload_excel()
 			'cols' => array('ma_hv'=>'Mã HV','hoten'=>'Họ và tên','cccd'=>'CCCD','ngaysinh'=>'Ngày sinh','hang'=>'Hạng','khoa'=>'Khóa','gv_hoten'=>'Giáo viên','nguoi_gioithieu'=>'Người GT'),
 			'rows' => $previewRows, 'insert' => $insCnt, 'update' => $updCnt, 'err' => $err, 'errMsgs' => $errMsgs,
 			'reupload' => 'index.php?com=daotao&act=uploadHocvien'.($idKhoaSel ? '&id_khoa='.$idKhoaSel : ''),
-			'submit' => '#', 'hidden' => array(),
+			'submit' => 'index.php?com=daotao&act=uploadHocvienExcel', 'hidden' => array(),
+			'staged_token' => ik_stage_upload('daotao.hocvien'), 'filename' => $file['name'],
+			'mapping' => dt_preview_mapping($sheet, $headerRow, $highestCol, $map, array('ma_hv' => 'Mã đăng ký *', 'cccd' => 'Số CCCD *', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'hang' => 'Hạng', 'khoa' => 'Khóa', 'giaovien' => 'Giáo viên', 'nguoi_gioithieu' => 'Người nộp hồ sơ', 'he_daotao' => 'Hệ đào tạo', 'hoc_phi_da_dong' => 'Số tiền đã đóng', 'hoc_phi_con_thieu' => 'Số tiền còn thiếu')),
+			'note' => (!$hasKhoaCol && $idKhoaSel) ? 'Khóa lấy theo lựa chọn trên form.' : 'Khóa lấy theo cột Khóa trong file; mã khóa chưa có sẽ được tạo mới khi import.',
 		);
 		$template = 'daotao/import_preview';
 		return;
 	}
 
+	if($writeFailRows || $d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu'.($writeFailRows ? ' ở dòng '.implode(', ', array_slice($writeFailRows, 0, 15)) : '').'; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	$syncTotals = array('xd_added' => 0, 'ce_added' => 0, 'existing' => 0);
 	$syncErrors = array();

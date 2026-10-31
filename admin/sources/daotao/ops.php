@@ -24,6 +24,17 @@ function dt_import_notice($message, $url, $success = true)
 {
 	global $func;
 
+	/* Thông báo của một lượt import (có file upload): ghi lịch sử + thẻ kết quả có liên kết. */
+	$isImport = !empty($_FILES['file-excel']['name']) && empty($_REQUEST['preview']);
+	if($isImport && function_exists('ik_history_add'))
+	{
+		$historyId = (int)($GLOBALS['ik_history_id'] ?? 0);
+		$errorLines = ik_error_lines($message);
+		if($historyId > 0) ik_history_update($historyId, array('message' => mb_substr(strip_tags((string)$message), 0, 5000), 'errors' => $errorLines, 'status' => $success ? 'done' : 'failed'));
+		else ik_history_add('daotao', dt_import_module_from_act(), array('filename' => (string)($_FILES['file-excel']['name'] ?? ''), 'status' => 'failed', 'so_loi' => max(1, count($errorLines)),
+			'message' => mb_substr(strip_tags((string)$message), 0, 5000), 'errors' => $errorLines ?: array('Dòng 0: '.strip_tags((string)$message))));
+	}
+
 	if(!empty($_POST['dt_ajax']))
 	{
 		if(!headers_sent()) header('Content-Type: application/json; charset=utf-8');
@@ -31,12 +42,33 @@ function dt_import_notice($message, $url, $success = true)
 		exit;
 	}
 
-	$_SESSION['dt_import_notice'] = array(
+	if($isImport && function_exists('ik_notice')) ik_notice('daotao', $message, $success);
+	else $_SESSION['dt_import_notice'] = array(
 		'message' => (string)$message,
 		'success' => (bool)$success,
 		'time' => time(),
 	);
 	$func->redirect($url);
+}
+
+/* Tên module lịch sử theo act upload (dùng khi import thất bại trước khi ghi nhật ký). */
+function dt_import_module_from_act()
+{
+	$act = (string)($_GET['act'] ?? '');
+	$map = array('uploadKhoaExcel' => 'khoa', 'uploadHocvienExcel' => 'hocvien', 'uploadXeExcel' => 'xe', 'uploadGiaovienExcel' => 'giaovien',
+		'uploadLythuyetExcel' => 'lythuyet', 'uploadCabinExcel' => 'cabin', 'uploadDatExcel' => 'dat', 'kythiImportExcel' => 'ky_thi',
+		'kythiImportRoster' => 'ky_thi_roster', 'uploadHtkhExcel' => 'htkh', 'uploadSathachExcel' => 'sat_hach_tong_hop');
+	return $map[$act] ?? $act;
+}
+
+/* Khóa đặc tả import (file mẫu/hướng dẫn) tương ứng module trong nhật ký. */
+function dt_import_spec_key($module)
+{
+	$module = (string)$module;
+	if(strpos($module, 'lythuyet') === 0 || $module === 'mophong') return 'daotao.lythuyet';
+	if(strpos($module, 'ky_thi') === 0) return 'daotao.kythi';
+	if(strpos($module, 'sat_hach') === 0) return 'daotao.sathach';
+	return 'daotao.'.$module;
 }
 
 /* ===== Cấu hình key-value cho phân hệ đào tạo (table_dt_setting) ===== */
@@ -126,12 +158,15 @@ function dt_backup_tables($tables, $tag = 'daotao')
 	}
 	if(!fclose($fh)) { @unlink($file); return ''; }
 	dt_backup_prune($dir);
+	if(strpos((string)$tag, 'imp_') === 0) $GLOBALS['dt_import_backup'] = $file;
 	return $file;
 }
 
 /* Giữ tối đa 15 file backup gần nhất, xóa file cũ hơn. */
 function dt_backup_prune($dir, $keep = 15)
 {
+	if(isset($GLOBALS['dt_backup_keep'])) $keep = (int)$GLOBALS['dt_backup_keep'];
+	if($keep <= 0) return;
 	$files = glob($dir.'/dt_*.sql');
 	if(!$files || count($files) <= $keep) return;
 	usort($files, function($a, $b){ return filemtime($b) - filemtime($a); });
@@ -359,4 +394,63 @@ function dt_backup_download_action()
 	}
 	readfile($path);
 	exit;
+}
+
+/* ===== Lịch sử import, tải lỗi, hoàn tác lượt import gần nhất ===== */
+
+function dt_import_history_page()
+{
+	global $ikHistoryRows, $ikScope, $ikUndoableId, $ikCanUndo, $ikModuleTitles;
+	$ikScope = 'daotao';
+	$ikHistoryRows = ik_history_list('daotao', 150);
+	$ikCanUndo = dt_is_admin();
+	$latest = ik_latest_done_id('daotao');
+	$ikUndoableId = 0;
+	foreach($ikHistoryRows as $row)
+		if((int)$row['id'] === $latest && dt_import_undo_blocker($row) === '') $ikUndoableId = $latest;
+	$ikModuleTitles = array();
+	foreach($ikHistoryRows as $row)
+	{
+		$spec = ik_spec(dt_import_spec_key($row['module']));
+		$ikModuleTitles[$row['module']] = $spec ? $spec['title'].(strpos($row['module'], 'lythuyet:') === 0 ? ' · '.substr($row['module'], 9) : '') : $row['module'];
+	}
+}
+
+function dt_import_errors_download()
+{
+	global $func;
+	$row = ik_history_get((int)($_GET['id'] ?? 0), 'daotao');
+	if(!$row) $func->transfer('Không tìm thấy lượt import.', 'index.php?com=daotao&act=importHistory', false);
+	ik_errors_csv($row);
+	exit;
+}
+
+/* Lý do không thể hoàn tác ('' = được phép). */
+function dt_import_undo_blocker($row)
+{
+	if(($row['status'] ?? '') !== 'done') return 'Chỉ hoàn tác lượt import đã ghi thành công.';
+	if((int)$row['id'] !== ik_latest_done_id('daotao')) return 'Chỉ hoàn tác được lượt import gần nhất của Đào tạo.';
+	if((int)$row['created'] < time() - 7 * 86400) return 'Đã quá 7 ngày kể từ lúc import.';
+	if(($row['backup'] ?? '') === '' || dt_backup_safe_path($row['backup']) === '') return 'Không còn file sao lưu trước import.';
+	return '';
+}
+
+function dt_import_undo()
+{
+	global $func;
+	$back = 'index.php?com=daotao&act=importHistory';
+	if(strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'POST') $func->transfer('Vui lòng hoàn tác từ trang Lịch sử import.', $back, false);
+	$row = ik_history_get((int)($_POST['id'] ?? 0), 'daotao');
+	if(!$row) $func->transfer('Không tìm thấy lượt import.', $back, false);
+	$blocker = dt_import_undo_blocker($row);
+	if($blocker !== '') { ik_notice('daotao', 'Không thể hoàn tác: '.$blocker, false, array('title' => 'Hoàn tác import', 'steps' => false)); $func->redirect($back); }
+	list($ok, $message) = dt_backup_restore($row['backup']);
+	if($ok)
+	{
+		ik_history_update((int)$row['id'], array('status' => 'undone', 'undone_at' => time(), 'undone_by' => dt_username()));
+		dt_audit('import_undo', $row['module'], 0, 'Hoàn tác import '.$row['filename'].' từ '.$row['backup']);
+		$message = 'Đã hoàn tác lượt import "'.$row['filename'].'". '.$message."\nHồ sơ đã đồng bộ sang Xăng dầu sau lượt import không bị xóa; kiểm tra lại ở Học viên XD nếu cần.";
+	}
+	ik_notice('daotao', $message, $ok, array('title' => 'Hoàn tác import', 'steps' => false));
+	$func->redirect($back);
 }

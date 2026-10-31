@@ -544,7 +544,7 @@ function dt_htkh_upload_excel()
 		$cccd = dt_normalize_cccd(dt_val($row, $map, 'cccd'));
 		$maHv = dt_val($row, $map, 'ma_hv');
 		$soGiay = dt_htkh_norm_so_giay(dt_val($row, $map, 'so_giay'));
-		if($cccd === '' && $maHv === '') { if(++$emptyStreak >= 30) break; continue; }
+		if($cccd === '' && $maHv === '') { continue; }
 		$emptyStreak = 0;
 		if($soGiay === '') continue;
 
@@ -566,6 +566,7 @@ function dt_htkh_upload_excel()
 		else { $data['ngaytao'] = time(); $d->insert('dt_htkh', $data); }
 		$ok++;
 	}
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	dt_audit('import', 'htkh', $ok, $file['name']);
 	dt_log_import('htkh', $file['name'], $ok, $err);

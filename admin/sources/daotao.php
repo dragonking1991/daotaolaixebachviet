@@ -83,8 +83,29 @@ function dt_sathach_can_manage()
 
 admin_csrf_guard('daotao', $act);
 
+/* Quyền import bất kỳ mục nào (xem lịch sử import, tải lỗi). */
+function dt_import_any_perms()
+{
+	$perms = array();
+	foreach(ik_specs() as $key => $spec) if(strpos($key, 'daotao.') === 0) $perms = array_merge($perms, dt_p($spec['section'], 'import'));
+	return array_values(array_unique($perms));
+}
+
+/* Xác nhận import sau bước xem trước: dùng lại file đã giữ, không bắt chọn lại. */
+if($act === 'uploadHocvienExcel') ik_restore_staged('daotao.hocvien');
+if($act === 'uploadGiaovienExcel') ik_restore_staged('daotao.giaovien');
+
 switch($act)
 {
+	case 'importTemplate':
+		$ikTplSpec = ik_spec('daotao.'.preg_replace('/[^a-z]/', '', (string)($_GET['type'] ?? '')));
+		if(!$ikTplSpec) $func->transfer('Không có file mẫu cho loại import này.', 'index.php?com=daotao', false);
+		dt_guard(dt_p($ikTplSpec['section'], 'import'));
+		ik_template_output('daotao.'.preg_replace('/[^a-z]/', '', (string)$_GET['type']));
+		exit;
+	case 'importHistory': dt_guard(dt_import_any_perms()); dt_import_history_page(); $template = 'import/history'; break;
+	case 'importErrors': dt_guard(dt_import_any_perms()); dt_import_errors_download(); break;
+	case 'importUndo': dt_guard(dt_import_any_perms()); dt_admin_guard(); dt_import_undo(); break;
 	case 'dieukienDat': dt_guard(dt_p('lythuyet','view')); dt_dat_entry_list(); $template='daotao/dat_eligibility/items'; break;
 	case 'exportDieukienDat': dt_guard(dt_p('lythuyet','export')); dt_dat_entry_export(); break;
 	case 'taichinh': dt_guard(dt_p('taichinh','view')); dt_finance_list(); $template='daotao/taichinh/items'; break;

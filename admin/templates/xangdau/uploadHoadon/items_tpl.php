@@ -1,5 +1,6 @@
 <?php
 	$linkUploadExcel = "index.php?com=xangdau&act=uploadHoadonExcel";
+	$ikExtraHtml = 'Giáo viên liên kết theo <strong>tên</strong> ở cột GV. Số tiền dạng số (vd 608.75) hiểu là nghìn đồng (608.750đ); chuỗi có dấu ngăn cách (vd "1.000.000") là số đầy đủ. Chống trùng theo <strong>Mã HĐ + Ngày HĐ + Giáo viên</strong>; hóa đơn đã quyết toán không bị sửa. Hỗ trợ .xlsx, .xls, .xlsb.';
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -15,33 +16,32 @@
 
 <section class="content">
 	<form method="post" action="<?=$linkUploadExcel?>" enctype="multipart/form-data" id="upload-form">
+		<input type="hidden" name="upload_session" value="<?=bin2hex(random_bytes(8))?>">
 		<div class="card card-primary card-outline text-sm mb-0">
-			<div class="card-header"><h3 class="card-title"><strong>Import danh sách hóa đơn XD hợp lệ</strong></h3></div>
+			<div class="card-header"><h3 class="card-title"><strong>Import danh sách hóa đơn XD</strong></h3></div>
 			<div class="card-body">
-				<div class="alert alert-warning mb-3">
-					<strong>Cột theo mẫu:</strong> STT | Số hóa đơn | Ngày | Thông tin bán hàng | Chi tiết | Số tiền HĐ | Biển số xe | HĐ từ trang thuế | <strong>GV</strong> (tên giáo viên) | Note.<br>
-					Giáo viên được liên kết theo <strong>tên</strong> ở cột GV. Số tiền dạng số (ví dụ 608.75) được hiểu là đơn vị nghìn (608.750đ).<br>
-					<strong>Chống trùng:</strong> theo (Mã HĐ + Ngày HĐ); không cho import đè kỳ đã tồn tại hoặc hóa đơn đã quyết toán.<br>
-					<strong>Import bổ sung/cập nhật:</strong> file được thêm vào hệ thống mà không xóa dữ liệu cũ; chỉ cập nhật các bản ghi trùng theo khóa nhận diện, tránh xóa toàn bộ dữ liệu hiện có.<br>
-					<strong>Hỗ trợ định dạng:</strong> .xlsx, .xls, .xlsb.
-				</div>
-
-				<div class="form-group">
-					<label for="ky">Kỳ tổng hợp (tùy chọn, ghi đè cột Kỳ trong file)</label>
-					<input type="text" class="form-control" name="ky" id="ky" placeholder="VD: T5, T6..." style="max-width:220px;">
-				</div>
-
-				<div class="form-group">
-					<div class="custom-control custom-checkbox">
-						<input type="checkbox" class="custom-control-input" name="resync" id="resync" value="1">
-						<label class="custom-control-label" for="resync">Đồng bộ lại kỳ đã import — cập nhật cờ "Hợp lệ" &amp; Note 1 cho hóa đơn chưa quyết toán (không tạo bản ghi trùng).</label>
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'xangdau.hoadon'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
+				<div class="form-row">
+					<div class="form-group col-md-4">
+						<label for="ky">Kỳ tổng hợp <span class="text-muted font-weight-normal">(tùy chọn)</span></label>
+						<input type="text" class="form-control form-control-sm" name="ky" id="ky" placeholder="VD: T5, T6..." aria-describedby="ky-help">
+						<small id="ky-help" class="text-muted">Ghi đè cột Kỳ trong file. Kỳ đã import sẽ bị chặn để tránh trùng.</small>
+					</div>
+					<div class="form-group col-md-8 d-flex align-items-center">
+						<div class="custom-control custom-checkbox mt-md-3">
+							<input type="checkbox" class="custom-control-input" name="resync" id="resync" value="1">
+							<label class="custom-control-label" for="resync"><strong>Đồng bộ lại kỳ đã import</strong> — cập nhật cờ Hợp lệ, Note 1 và kỳ cho hóa đơn chưa quyết toán, không tạo bản ghi trùng.</label>
+						</div>
 					</div>
 				</div>
-
 				<div class="form-group mb-0">
-					<div class="custom-file my-custom-file">
-						<input type="file" class="custom-file-input" name="file-excel" id="file-excel" accept=".xls,.xlsx,.xlsb" required>
-						<label class="custom-file-label" for="file-excel" id="file-label">Chọn file...</label>
+					<label>File Excel — có thể chọn/thả nhiều file, hệ thống import lần lượt từng file</label>
+					<div class="dt-dropzone" data-back="index.php?com=xangdau&act=hoadon" data-accept="xlsx,xls,xlsb">
+						<label class="dt-dz-area">
+							<input type="file" class="dt-dz-input" name="file-excel" accept=".xlsx,.xls,.xlsb" multiple>
+							<span class="dt-dz-hint"><i class="fas fa-cloud-upload-alt"></i>Kéo &amp; thả hoặc <b>bấm để chọn</b> file .xlsx/.xls/.xlsb</span>
+						</label>
+						<ul class="dt-dz-list"></ul>
 					</div>
 				</div>
 			</div>
@@ -52,11 +52,3 @@
 		</div>
 	</form>
 </section>
-
-<script type="text/javascript">
-$(document).ready(function(){
-	$('#file-excel').change(function(){
-		if(this.files.length > 0) $('#file-label').text(this.files[0].name);
-	});
-});
-</script>

@@ -114,7 +114,7 @@ function dt_giaovien_upload_excel()
 		$tenGv = dt_val($row, $map, 'tengv');
 		$hoten = trim($hoTenDem.' '.$tenGv);
 
-		if($cccd === '' && $hoten === '') { if(++$emptyStreak >= 30) break; continue; }
+		if($cccd === '' && $hoten === '') { continue; }
 		$emptyStreak = 0;
 		if($cccd === '') { $err++; continue; }
 
@@ -167,12 +167,15 @@ function dt_giaovien_upload_excel()
 			'cols' => array('hoten'=>'Họ và tên','cccd'=>'CCCD','ngaysinh'=>'Ngày sinh','hang_gplx'=>'GPLX','hang_daotao_phep'=>'Được phép','so_gplx'=>'Số GPLX','sdt'=>'Điện thoại'),
 			'rows' => $previewRows, 'insert' => $insCnt, 'update' => $updCnt, 'err' => $err, 'errMsgs' => array(),
 			'reupload' => 'index.php?com=daotao&act=uploadGiaovien',
-			'submit' => '#', 'hidden' => array(),
+			'submit' => 'index.php?com=daotao&act=uploadGiaovienExcel', 'hidden' => array(),
+			'staged_token' => ik_stage_upload('daotao.giaovien'), 'filename' => $file['name'],
+			'mapping' => dt_preview_mapping($sheet, $headerRow, $highestCol, $map, array('cccd' => 'Số CCCD *', 'hotendem' => 'Họ tên đệm', 'tengv' => 'Tên GV', 'ngaysinh' => 'Ngày sinh', 'gioitinh' => 'Giới tính', 'hang_gplx' => 'Hạng GPLX', 'so_gplx' => 'Số GPLX', 'ngay_hh_gplx' => 'Ngày HH GPLX', 'sdt' => 'Số điện thoại', 'hang_phep' => 'Hạng được phép đào tạo')),
 		);
 		$template = 'daotao/import_preview';
 		return;
 	}
 
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	dt_audit('import', 'giaovien', $ok, $file['name']);
 	dt_log_import('giaovien', $file['name'], $ok, $err);

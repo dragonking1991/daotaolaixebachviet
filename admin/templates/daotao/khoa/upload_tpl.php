@@ -13,6 +13,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import danh sách khóa đào tạo</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.khoa'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-info">File cần có cột <strong>Mã khóa</strong> (hoặc <strong>Khóa</strong>). Các cột tùy chọn: Tên khóa, Hạng, Ngày khai giảng, Ngày mãn khóa, Hệ đào tạo. Khóa đã tồn tại (trùng mã) sẽ được cập nhật.</div>
 				<div class="form-group">
 					<label>File Excel (.xlsx, .xls) — có thể chọn/thả nhiều file</label>

@@ -16,11 +16,11 @@ function admin_csrf_modules()
 			'giaovien', 'exportGiaovien', 'uploadGiaovien', 'lythuyet', 'exportLythuyet', 'uploadLythuyet',
 			'cabinkq', 'exportCabin', 'uploadCabin', 'hinh', 'exportHinh', 'dat', 'exportDat', 'uploadDat',
 			'tonghop', 'exportTonghop', 'kythi', 'kythiDetail', 'exportKythi', 'kythiUpload', 'kythiRoster', 'kythiTracuu',
-			'ketquadaotao', 'exportKetqua', 'htkh', 'uploadHtkh', 'exportHtkh', 'htkhPrint', 'htkhPrintKy', 'htkhExcelKy', 'htkhWordKy',
+			'ketquadaotao', 'exportKetqua', 'htkh', 'uploadHtkh', 'exportHtkh', 'htkhPrint', 'htkhPrintKy', 'htkhExcelKy', 'htkhWordKy', 'importTemplate', 'importHistory', 'importErrors',
 			'sathach', 'sathachTracuu', 'uploadSathach', 'exportSathach', 'audit', 'backup', 'backupDownload', 'congGvConfig',
 		),
 		'xangdau' => array(
-			'', 'khoa', 'config', 'hoadon', 'uploadHoadon', 'hocvien', 'ce', 'ceInvoiceTemplate', 'uploadHocvien',
+			'', 'khoa', 'config', 'hoadon', 'uploadHoadon', 'hocvien', 'ce', 'ceInvoiceTemplate', 'uploadHocvien', 'importTemplate', 'importHistory', 'importErrors',
 			'loc', 'xemGiaoVien', 'locKiemTra', 'locDuyet', 'locDaThanhToan',
 			'xuatToanBoDanhSachHocVien', 'xuatTongHopDaDuyet', 'xuatHoadonExcel', 'xuatHocvienExcel', 'xuatTatCaBangKe',
 			'xuatTongHopGiaoVien', 'xuatDaKiemTraGiaoVien', 'xuatBangKeGiaoVien', 'xuatBangKeDaDuyetGiaoVien', 'xuatBangKe',

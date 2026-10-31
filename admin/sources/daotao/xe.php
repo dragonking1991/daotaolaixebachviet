@@ -124,7 +124,7 @@ function dt_xe_upload_excel()
 	{
 		$row = dt_read_row($sheet, $r, $highestCol);
 		$bienSo = preg_replace('/\s+/', '', dt_val($row, $map, 'bien_so'));
-		if($bienSo === '') { if(++$emptyStreak >= 30) break; continue; }
+		if($bienSo === '') { continue; }
 		$emptyStreak = 0;
 
 		$gvHoten = dt_val($row, $map, 'giaovien');
@@ -158,6 +158,7 @@ function dt_xe_upload_excel()
 		$ok++;
 	}
 
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	dt_audit('import', 'xe', $ok, $file['name']);
 	dt_log_import('xe', $file['name'], $ok, $err);

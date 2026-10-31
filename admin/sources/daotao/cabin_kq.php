@@ -82,7 +82,7 @@ function dt_cabin_upload_excel()
 	{
 		$row = dt_read_row($sheet, $r, $highestCol);
 		$maHv = dt_val($row, $map, 'ma_hv');
-		if($maHv === '') { if(++$emptyStreak >= 40) break; continue; }
+		if($maHv === '') { continue; }
 		$emptyStreak = 0;
 
 		$khoaCode = dt_val($row, $map, 'khoa');
@@ -124,6 +124,7 @@ function dt_cabin_upload_excel()
 		$ok++;
 	}
 
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	dt_audit('import', 'cabin', $ok, $file['name']);
 	dt_log_import('cabin', $file['name'], $ok, $err);

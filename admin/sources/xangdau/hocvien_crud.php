@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_hocvien()
 {
-	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers, $xd_filter_khoa, $xd_filter_gv, $xd_hocvien_khoas, $xd_hocvien_khoa_groups, $xd_hocvien_total, $xd_hocvien_offset, $xd_hocvien_all_total;
+	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers, $xd_filter_khoa, $xd_filter_gv, $xd_hocvien_khoas, $xd_hocvien_khoa_groups, $xd_hocvien_total, $xd_hocvien_offset, $xd_hocvien_all_total, $xd_filter_import, $xd_filter_import_row;
 
 	$where = "";
 	$params = array();
@@ -16,6 +16,16 @@ function xd_get_hocvien()
 	$xd_filter_tt_to = '';
 	$xd_filter_khoa = isset($_REQUEST['khoa']) ? trim((string)$_REQUEST['khoa']) : '';
 	$xd_filter_gv = isset($_REQUEST['gv']) ? trim((string)$_REQUEST['gv']) : '';
+	/* Lọc theo một lượt import (nút "Xem dữ liệu vừa import"). */
+	$xd_filter_import = isset($_REQUEST['import']) ? (string)(int)$_REQUEST['import'] : '';
+	$xd_filter_import_row = null;
+	$importIds = array();
+	if($xd_filter_import !== '' && $xd_filter_import !== '0' && function_exists('ik_history_get'))
+	{
+		$xd_filter_import_row = ik_history_get((int)$xd_filter_import, 'xangdau');
+		if($xd_filter_import_row) $importIds = array_values(array_filter(array_map('intval', explode(',', (string)$xd_filter_import_row['ids']))));
+	}
+	else $xd_filter_import = '';
 
 	if(isset($_REQUEST['keyword']) && trim($_REQUEST['keyword']) !== '')
 	{
@@ -40,6 +50,11 @@ function xd_get_hocvien()
 
 	$scope = ($xd_filter_trangthai === 'da') ? 'paid' : (($xd_filter_trangthai === 'chua') ? 'unpaid' : 'all');
 	list($where, $params) = xd_hocvien_where_and_params($scope, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_tt_from, $xd_filter_tt_to, $xd_filter_khoa, $xd_filter_gv);
+	if($xd_filter_import !== '')
+	{
+		if($importIds) { $where .= ' and id in ('.implode(',', $importIds).')'; }
+		else $where .= ' and 1 = 0';
+	}
 	$per_page = 20;
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$sql = "select * from #_xd_hocvien where $where order by ".xd_hocvien_order_clause(true)." limit ".$startpoint.",".$per_page;
@@ -80,6 +95,7 @@ function xd_get_hocvien()
 	if($xd_filter_trangthai !== '') $url .= '&trangthai='.urlencode($xd_filter_trangthai);
 	if($xd_filter_tt_from !== '') $url .= '&tt_from='.urlencode($xd_filter_tt_from);
 	if($xd_filter_tt_to !== '') $url .= '&tt_to='.urlencode($xd_filter_tt_to);
+	if($xd_filter_import !== '') $url .= '&import='.urlencode($xd_filter_import);
 	$paging = $func->pagination($total, $per_page, $curPage, $url);
 }
 
@@ -214,7 +230,7 @@ function xd_delete_hocvien_selected()
 	if($canDelete === 0) $func->transfer("Các học viên đã chọn đều đã thanh toán hoặc thuộc bảng kê, không thể xóa.", $ret, false);
 
 	$ok = $d->rawQuery("delete from #_xd_hocvien where id in ($in) and ngay_thanh_toan is null and id_bangke = 0", $ids);
-	if($ok === false) $func->transfer("Không thể xóa học viên đã chọn.", $ret, false);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể xóa học viên đã chọn.", $ret, false);
 	$msg = "Đã xóa $canDelete học viên.";
 	if($kept > 0) $msg .= " Giữ lại $kept học viên đã thanh toán hoặc thuộc bảng kê.";
 	$func->transfer($msg, $ret);
@@ -249,7 +265,7 @@ function xd_delete_hocvien_by_gv()
 	if($backup === '') $func->transfer("Không thể sao lưu dữ liệu; đã hủy thao tác xóa theo giáo viên.", $redirect, false);
 	$d->startTransaction();
 	$ok = $d->rawQuery("delete from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and id_bangke = 0", array($gvKey));
-	if($ok === false)
+	if($ok === false || $d->getLastErrorCode() !== '00000')
 	{
 		$d->rollback();
 		$func->transfer("Không thể xóa học viên theo giáo viên.", $redirect, false);
@@ -300,7 +316,7 @@ function xd_update_hocvien_status()
 		$message = "Đã cập nhật học viên thành chưa thanh toán";
 	}
 
-	if($ok === false) $func->transfer("Không thể cập nhật trạng thái học viên", $redirect, false);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể cập nhật trạng thái học viên", $redirect, false);
 	$func->transfer($message, $redirect);
 }
 
@@ -335,6 +351,6 @@ function xd_delete_all_hocvien()
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien");
 	$ok = $d->rawQuery("delete from #_xd_hocvien");
 	$n = isset($count['num']) ? (int)$count['num'] : 0;
-	if($ok === false) $func->transfer("Không thể xóa toàn bộ học viên", "index.php?com=xangdau&act=hocvien", false);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể xóa toàn bộ học viên", "index.php?com=xangdau&act=hocvien", false);
 	$func->transfer("Đã xóa toàn bộ $n học viên. Sao lưu: $backup", "index.php?com=xangdau&act=hocvien");
 }

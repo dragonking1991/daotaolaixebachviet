@@ -241,7 +241,6 @@ function dt_kythi_import_roster()
 		{
 			if($hoten !== '' || $cccd !== '')
 				dt_import_notice("Dòng $r thiếu hoặc sai CCCD. Chưa thay đổi danh sách.", $back, false);
-			if(++$emptyStreak >= 30) break;
 			continue;
 		}
 		$emptyStreak = 0;
@@ -504,7 +503,6 @@ function dt_kythi_import_excel()
 		$hoten = dt_val($row, $map, 'hoten');
 		if(strlen($cccd) < 9)
 		{
-			if($hoten === '' && ++$emptyStreak >= 30) break;
 			continue;
 		}
 		$emptyStreak = 0;
@@ -556,6 +554,7 @@ function dt_kythi_import_excel()
 			$moi++;
 		}
 	}
+	if($d->transactionFailed()) { $d->rollback(); dt_import_notice('Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file, chưa lưu dòng nào. Vui lòng kiểm tra dữ liệu (độ dài, định dạng) rồi thử lại.', $back, false); }
 	$d->commit();
 	dt_audit('import', 'ky_thi_hv', $ok + $moi, $file['name']);
 	dt_log_import('ky_thi', $file['name'], $ok + $moi, 0);

@@ -14,6 +14,7 @@
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header"><h3 class="card-title"><strong>Import kết quả sát hạch tổng hợp</strong></h3></div>
 			<div class="card-body">
+				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.sathach'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
 				<div class="alert alert-info">Kết quả được lưu riêng trong mục này, tự chia theo ngày và loại xe; không tạo hay cập nhật học viên/khóa ở các mục Đào tạo khác.</div>
 				<div class="form-group">
 					<label>File tổng hợp Excel (.xlsx, .xls, .xlsm)</label>

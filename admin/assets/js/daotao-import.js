@@ -19,13 +19,33 @@
 		if(n < 1048576) return (n/1024).toFixed(1) + ' KB';
 		return (n/1048576).toFixed(1) + ' MB';
 	}
-	function isExcel(f){ return /\.(xlsx|xls|xlsm)$/i.test(f.name); }
+	function acceptList(zone){ return (zone.getAttribute('data-accept') || 'xlsx,xls,xlsm').toLowerCase().split(/[\s,]+/).filter(Boolean); }
+	function isExcel(f, zone){ var ext = (f.name.split('.').pop() || '').toLowerCase(); return acceptList(zone).indexOf(ext) !== -1; }
+	/* Kiểm tra file ngay trên trình duyệt: đuôi, dung lượng, file rỗng, trùng tên. */
+	function fileProblems(files, zone){
+		var max = window.IK_MAX_UPLOAD || 0, seen = {}, problems = [];
+		files.forEach(function(f, i){
+			var msg = '';
+			if(!isExcel(f, zone)) msg = 'không phải file ' + acceptList(zone).map(function(e){ return '.' + e; }).join('/');
+			else if(f.size === 0) msg = 'file rỗng (0 KB)';
+			else if(max && f.size > max) msg = 'quá dung lượng cho phép (' + humanSize(f.size) + ' > ' + humanSize(max) + ')';
+			else if(seen[f.name.toLowerCase()]) msg = 'trùng tên với file đã chọn';
+			seen[f.name.toLowerCase()] = true;
+			if(msg) problems.push({ index: i, text: f.name + ': ' + msg });
+		});
+		return problems;
+	}
 
 	function setupZone(zone){
 		var input = zone.querySelector('.dt-dz-input');
 		var list = zone.querySelector('.dt-dz-list');
 		var form = zone.closest ? zone.closest('form') : null;
 		if(!input || !list) return;
+		var errorBox = document.createElement('ul');
+		errorBox.className = 'ik-dz-errors';
+		errorBox.setAttribute('role', 'alert');
+		list.insertAdjacentElement('afterend', errorBox);
+		var problems = [];
 
 		var monOpts = null;
 		try { var rawMon = zone.getAttribute('data-mon'); if(rawMon) monOpts = JSON.parse(rawMon); } catch(e){ monOpts = null; }
@@ -61,9 +81,13 @@
 		function render(){
 			var files = currentFiles();
 			list.innerHTML = '';
+			problems = fileProblems(files, zone);
+			var badIndex = {};
+			problems.forEach(function(p){ badIndex[p.index] = true; });
+			errorBox.innerHTML = problems.map(function(p){ return '<li><i class="fas fa-exclamation-triangle mr-1"></i>' + escapeHtml(p.text) + '</li>'; }).join('');
 			files.forEach(function(f, idx){
 				var li = document.createElement('li');
-				li.className = 'dt-dz-item';
+				li.className = 'dt-dz-item' + (badIndex[idx] ? ' is-invalid' : '');
 				li.innerHTML = '<i class="fas fa-file-excel"></i><span class="dt-dz-name">' + escapeHtml(f.name) + '</span>';
 
 				if(monOpts){
@@ -107,9 +131,9 @@
 			zone.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); zone.classList.remove('is-drag'); });
 		});
 		zone.addEventListener('drop', function(e){
-			var dropped = Array.prototype.slice.call(e.dataTransfer.files || []).filter(isExcel);
+			var dropped = Array.prototype.slice.call(e.dataTransfer.files || []);
 			if(!dropped.length) return;
-			setFiles(currentFiles().concat(dropped));
+			setFiles(input.multiple ? currentFiles().concat(dropped) : dropped.slice(0, 1));
 		});
 
 		if(!form) return;
@@ -120,9 +144,16 @@
 
 			if(files.length === 0){
 				e.preventDefault();
-				notify(false, 'Vui lòng chọn ít nhất 1 file Excel (.xlsx/.xls/.xlsm).');
+				notify(false, 'Vui lòng chọn ít nhất 1 file Excel (' + acceptList(zone).map(function(x){ return '.' + x; }).join('/') + ').');
 				return;
 			}
+			if(problems.length){
+				e.preventDefault();
+				errorBox.scrollIntoView({ block: 'center', behavior: 'smooth' });
+				notify(false, 'Vui lòng bỏ hoặc thay các file không hợp lệ trước khi import.');
+				return;
+			}
+			if(!input.multiple) return; // một file: submit thường (giữ luồng xem trước của server)
 
 			// Lý thuyết: mỗi file một môn (tự nhận theo tên, có thể chỉnh) → luôn gửi tuần tự kèm môn riêng.
 			if(monOpts){
