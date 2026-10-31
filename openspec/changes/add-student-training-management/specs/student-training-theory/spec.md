@@ -1,5 +1,25 @@
 ## ADDED Requirements
 
+### Requirement: Read-only eligibility to begin DAT study
+
+The system SHALL provide a separate “Đủ điều kiện học DAT” menu page under training, protected by existing theory view/export permissions. Eligibility SHALL require all four subjects `ky_thuat`, `phan_1`, `phan_2`, `phan_3`, each with numeric progress >=70% AND test score >=5. It SHALL preserve the existing progress import formula, legacy theory pass rule and practical DAT evaluation, and SHALL NOT write training results, set DAT overrides or synchronize XD.
+
+#### Scenario: Inclusive threshold for all four subjects
+- **WHEN** each of the four subjects has progress exactly 70% and test score exactly 5
+- **THEN** the student SHALL be eligible, irrespective of stored pass flags or unrelated subject results.
+
+#### Scenario: Missing or insufficient subject
+- **WHEN** any required subject is missing, progress is below 70%, or test score is missing or below 5
+- **THEN** the student SHALL be pending and the page SHALL identify the missing requirement. Students without results SHALL remain visible by default.
+
+#### Scenario: Course isolation and filtered export
+- **WHEN** users filter by course, identity, teacher or eligibility and export the list
+- **THEN** list/export SHALL agree, results SHALL join by both course and CCCD, CCCDs SHALL remain text, and eligible/pending counts SHALL be calculated before the status filter.
+
+#### Scenario: Existing theory behavior
+- **WHEN** users inspect ordinary theory or practical DAT results after using the new page
+- **THEN** those existing calculations and all persisted records SHALL remain unchanged.
+
 ### Requirement: Import kết quả từng môn lý thuyết
 
 Hệ thống SHALL cho phép admin nạp kết quả 6 môn lý thuyết (Cấu tạo sửa chữa, Kỹ thuật lái xe, Phần 1, Phần 2, Phần 3, Đạo đức người lái xe), mỗi môn một file `.xlsx`, đọc cột theo tên tiêu đề.

@@ -2,6 +2,7 @@
 if(!defined('SOURCES')) die("Error");
 
 require_once LIBRARIES.'daotao_lib.php';
+require_once LIBRARIES.'daotao_gv_auth.php';
 
 function dt_gv_badge($ok)
 {
@@ -32,23 +33,40 @@ if(!function_exists('dt_gv_date_key'))
 }
 
 /* ----- Xử lý hành động ----- */
+$dtGvLoggedIn = isset($_SESSION['dt_gv']);
+if($dtAct !== '' && $dtAct !== 'login' && $dtAct !== 'resetpass' && !dt_gv_csrf_valid())
+{
+	$dtGvErr = 'Phiên thao tác đã hết hạn. Vui lòng tải lại trang rồi thử lại.';
+	$dtAct = '';
+}
 if($dtAct === 'login')
 {
 	$cccd = dt_normalize_cccd($_POST['cccd'] ?? '');
 	$pass = (string)($_POST['password'] ?? '');
+	$lockedMinutes = dt_gv_attempt_locked('login', $cccd);
 	$variants = dt_cccd_variants($cccd);
 	$gv = null;
-	if(!empty($variants))
+	if(!$lockedMinutes && !empty($variants))
 	{
 		$in = implode(',', array_fill(0, count($variants), '?'));
 		$gv = $d->rawQueryOne("select * from #_dt_giaovien where cccd in ($in) limit 0,1", $variants);
 	}
-	if($gv && $gv['matkhau'] !== '' && $gv['matkhau'] === dt_gv_hash($pass))
+	if($lockedMinutes) $dtGvErr = 'Đăng nhập sai quá nhiều lần. Vui lòng thử lại sau '.$lockedMinutes.' phút.';
+	elseif($gv && dt_gv_verify($pass, $gv['matkhau']))
 	{
-		$_SESSION['dt_gv'] = array('id' => (int)$gv['id'], 'cccd' => $gv['cccd'], 'hoten' => $gv['hoten'], 'gv_key' => $gv['gv_key']);
+		dt_gv_attempt_clear('login', $cccd);
+		if(dt_gv_needs_rehash($gv['matkhau'])) { $d->where('id', (int)$gv['id']); $d->update('dt_giaovien', array('matkhau' => dt_gv_hash($pass))); }
+		session_regenerate_id(true);
+		$_SESSION['dt_gv'] = array('id' => (int)$gv['id'], 'cccd' => $gv['cccd'], 'hoten' => $gv['hoten'], 'gv_key' => $gv['gv_key'],
+			'must_change' => dt_gv_is_default_password($gv['cccd'], $gv['matkhau']) ? 1 : 0);
+		unset($_SESSION['dt_gv_csrf']);
 		$func->redirect('cong-giao-vien');
 	}
-	$dtGvErr = 'CCCD hoặc mật khẩu không đúng.';
+	else
+	{
+		dt_gv_attempt_fail('login', $cccd);
+		$dtGvErr = 'CCCD hoặc mật khẩu không đúng.';
+	}
 }
 elseif($dtAct === 'resetpass')
 {
@@ -56,40 +74,56 @@ elseif($dtAct === 'resetpass')
 	$dobIn = dt_gv_date_key($_POST['ngaysinh'] ?? '');
 	$phoneIn = preg_replace('/\D+/', '', (string)($_POST['sdt'] ?? ''));
 	$new = (string)($_POST['new_pass'] ?? '');
+	$lockedMinutes = dt_gv_attempt_locked('reset', $cccd);
 	$variants = dt_cccd_variants($cccd);
 	$gv = null;
-	if(!empty($variants))
+	if(!$lockedMinutes && !empty($variants))
 	{
 		$in = implode(',', array_fill(0, count($variants), '?'));
 		$gv = $d->rawQueryOne("select * from #_dt_giaovien where cccd in ($in) limit 0,1", $variants);
 	}
-	if(!$gv) $dtGvErr = 'Không tìm thấy giáo viên với CCCD này.';
-	elseif(strlen($new) < 4) $dtGvErr = 'Mật khẩu mới tối thiểu 4 ký tự.';
+	$policy = dt_gv_password_policy($new, $cccd);
+	$dobDb = $gv ? dt_gv_date_key($gv['ngaysinh']) : '';
+	$phoneDb = $gv ? preg_replace('/\D+/', '', (string)$gv['sdt']) : '';
+	if($lockedMinutes) $dtGvErr = 'Thử xác minh sai quá nhiều lần. Vui lòng thử lại sau '.$lockedMinutes.' phút hoặc liên hệ trung tâm.';
+	elseif($policy !== '') $dtGvErr = $policy;
+	/* Cần đủ cả ngày sinh và số điện thoại trong hồ sơ; thông báo chung để không lộ CCCD nào tồn tại. */
+	elseif(!$gv || $dobDb === '' || $phoneDb === '' || $dobIn !== $dobDb || $phoneIn !== $phoneDb)
+	{
+		dt_gv_attempt_fail('reset', $cccd);
+		$dtGvErr = 'Thông tin xác minh không khớp hoặc hồ sơ chưa đủ ngày sinh và số điện thoại. Vui lòng liên hệ trung tâm để được cấp lại mật khẩu.';
+	}
 	else
 	{
-		$dobDb = dt_gv_date_key($gv['ngaysinh']);
-		$phoneDb = preg_replace('/\D+/', '', (string)$gv['sdt']);
-		$checks = 0; $passed = 0;
-		if($dobDb !== '') { $checks++; if($dobIn !== '' && $dobIn === $dobDb) $passed++; }
-		if($phoneDb !== '') { $checks++; if($phoneIn !== '' && $phoneIn === $phoneDb) $passed++; }
-		if($checks === 0) $dtGvErr = 'Hồ sơ chưa có ngày sinh/số điện thoại để xác minh. Vui lòng liên hệ trung tâm để được cấp lại mật khẩu.';
-		elseif($passed < $checks) $dtGvErr = 'Thông tin xác minh (ngày sinh/số điện thoại) không khớp hồ sơ.';
-		else { $d->where('id', (int)$gv['id']); $d->update('dt_giaovien', array('matkhau' => dt_gv_hash($new))); $dtGvMsg = 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.'; }
+		dt_gv_attempt_clear('reset', $cccd);
+		$d->where('id', (int)$gv['id']); $d->update('dt_giaovien', array('matkhau' => dt_gv_hash($new)));
+		$dtGvMsg = 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.';
 	}
 }
 elseif($dtAct === 'logout')
 {
-	unset($_SESSION['dt_gv']);
+	unset($_SESSION['dt_gv'], $_SESSION['dt_gv_csrf']);
+	session_regenerate_id(true);
 	$func->redirect('cong-giao-vien');
 }
-elseif($dtAct === 'changepass' && isset($_SESSION['dt_gv']))
+elseif($dtAct === 'changepass' && $dtGvLoggedIn)
 {
 	$old = (string)($_POST['old_pass'] ?? '');
 	$new = (string)($_POST['new_pass'] ?? '');
 	$gv = $d->rawQueryOne("select * from #_dt_giaovien where id = ? limit 0,1", array((int)$_SESSION['dt_gv']['id']));
-	if(!$gv || $gv['matkhau'] !== dt_gv_hash($old)) $dtGvErr = 'Mật khẩu hiện tại không đúng.';
-	elseif(strlen($new) < 4) $dtGvErr = 'Mật khẩu mới tối thiểu 4 ký tự.';
-	else { $d->where('id', (int)$gv['id']); $d->update('dt_giaovien', array('matkhau' => dt_gv_hash($new))); $dtGvMsg = 'Đã đổi mật khẩu thành công.'; }
+	$policy = $gv ? dt_gv_password_policy($new, $gv['cccd']) : '';
+	if(!$gv || !dt_gv_verify($old, $gv['matkhau'])) $dtGvErr = 'Mật khẩu hiện tại không đúng.';
+	elseif($policy !== '') $dtGvErr = $policy;
+	else
+	{
+		$d->where('id', (int)$gv['id']); $d->update('dt_giaovien', array('matkhau' => dt_gv_hash($new)));
+		$_SESSION['dt_gv']['must_change'] = 0;
+		$dtGvMsg = 'Đã đổi mật khẩu thành công.';
+	}
+}
+elseif($dtAct === 'savehinh' && $dtGvLoggedIn && !empty($_SESSION['dt_gv']['must_change']))
+{
+	$dtGvErr = 'Vui lòng đổi mật khẩu mặc định trước khi nhập dữ liệu.';
 }
 elseif($dtAct === 'savehinh' && isset($_SESSION['dt_gv']))
 {

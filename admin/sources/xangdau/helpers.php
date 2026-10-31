@@ -86,3 +86,31 @@ function xd_hople_from_cell($sheet, $map, $row)
 	$validValues = array('co', 'có', '1', 'yes', 'true', 'dat', 'đạt', 'ok');
 	return in_array($clean, $validValues, true) ? 1 : 0;
 }
+
+/* Sao lưu toàn bộ bảng XD ra JSON (thư mục backups/ bị chặn truy cập web) trước khi xóa hàng loạt. */
+function xd_backup_table_json($table, $tag)
+{
+	global $d;
+	if(!in_array($table, array('xd_hocvien', 'xd_hoadon'), true)) return '';
+	$directory = dirname(dirname(dirname(__DIR__))).'/backups';
+	if(!is_dir($directory) && !mkdir($directory, 0775, true)) return '';
+	$rows = $d->rawQuery('select * from #_'.$table.' order by id');
+	if(!is_array($rows)) return '';
+	$file = $directory.'/xd_'.$tag.'_'.date('Ymd_His').'_'.bin2hex(random_bytes(4)).'.json';
+	$json = json_encode(array('action' => 'delete_all', 'table' => $table, 'rows' => $rows), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+	if($json === false || file_put_contents($file, $json, LOCK_EX) !== strlen($json)) return '';
+	@chmod($file, 0600);
+	return basename($file);
+}
+
+/* Hiển thị ngày theo dd/mm/yyyy cho mọi định dạng đã lưu (yyyy-mm-dd, d/m/yyyy, d-m-yyyy); giá trị lạ giữ nguyên. */
+function xd_display_date($value)
+{
+	$value = trim((string)$value);
+	if($value === '' || strpos($value, '0000-00-00') === 0) return '';
+	if(preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T].*)?$/', $value, $m) && checkdate((int)$m[2], (int)$m[3], (int)$m[1]))
+		return sprintf('%02d/%02d/%04d', $m[3], $m[2], $m[1]);
+	if(preg_match('/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/', $value, $m) && checkdate((int)$m[2], (int)$m[1], (int)$m[3]))
+		return sprintf('%02d/%02d/%04d', $m[1], $m[2], $m[3]);
+	return $value;
+}

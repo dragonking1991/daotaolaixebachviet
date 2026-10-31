@@ -82,7 +82,7 @@
 						<td><?=htmlspecialchars($student['ma_hv'])?></td>
 						<td><?=htmlspecialchars($student['ho_ten'])?></td>
 						<td><?=htmlspecialchars($student['cccd'])?></td>
-						<td><?=htmlspecialchars($student['ngaysinh'])?></td>
+						<td><?=htmlspecialchars(xd_display_date($student['ngaysinh']))?></td>
 						<td><?=htmlspecialchars($student['gv_hoten'])?></td>
 						<td><?=!empty($student['ngay_dat']) ? date('d/m/Y', strtotime($student['ngay_dat'])) : '—'?></td>
 					</tr>

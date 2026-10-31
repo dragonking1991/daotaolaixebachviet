@@ -86,3 +86,15 @@
 - [x] 12.2 Xóa kết quả lý thuyết/mô phỏng, cabin, hình theo học viên đã chọn; giữ luồng xóa phiên DAT hiện có.
 - [x] 12.3 Hiển thị thống kê Đạt/Chưa đạt trên từng trang module và Tổng hợp; tính mô phỏng một lần trong Lý thuyết và bỏ qua Cabin không yêu cầu.
 - [x] 12.4 Regression cho bulk pass/delete, đồng bộ mô phỏng, ràng buộc học viên theo khóa; lint và regression đào tạo/Xăng dầu đạt.
+
+## 13. Điều kiện bắt đầu học DAT
+
+- [x] 13.1 Thêm mục riêng chỉ đọc trong menu Đào tạo với quyền xem/xuất Lý thuyết, bộ lọc khóa/học viên/GV/trạng thái và thống kê đủ/chưa đủ.
+- [x] 13.2 Xét đủ cả bốn môn Kỹ thuật lái xe, Pháp luật phần 1/2/3: mỗi môn tiến độ >=70% và điểm kiểm tra >=5; giữ cách tính tiến độ và toàn bộ quy tắc lý thuyết/DAT hiện có.
+- [x] 13.3 Kiểm thử ngưỡng, thiếu dữ liệu, tách khóa, bộ lọc, xuất Excel, quyền và không ghi dữ liệu; cập nhật tài liệu và ZIP.
+
+## 14. Menu đào tạo theo chủ đề
+
+- [x] 14.1 Gom menu thành năm nhóm thu gọn (Hồ sơ & nguồn lực, Quá trình học, Kiểm tra & hoàn tất, Tài chính, Quản trị); để Tổng quan riêng, giữ đủ đường dẫn và quyền cũ, ẩn nhóm rỗng.
+- [x] 14.2 Tự mở và đánh dấu mục hiện tại cả ở trang con/import/CRUD; chỉnh icon, khoảng cách và xuống dòng để tên dài dễ đọc, tái dùng treeview AdminLTE.
+- [x] 14.3 Kiểm thử phân quyền, đường dẫn và thao tác thu/mở trên trình duyệt; cập nhật tài liệu và ZIP.

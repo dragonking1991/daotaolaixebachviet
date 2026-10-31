@@ -25,7 +25,7 @@ function dt_ketqua_filters()
 }
 
 /* Lấy danh sách học viên theo bộ lọc, gắn dữ liệu đào tạo + kết quả kiểm tra. */
-function dt_ketqua_rows($f)
+function dt_ketqua_rows($f, $limit = 1000, &$matched = null)
 {
 	global $d;
 	$where = "1"; $params = array();
@@ -34,7 +34,10 @@ function dt_ketqua_rows($f)
 	if($f['hoten'] !== '') { $where .= " and h.hoten like ?"; $params[] = '%'.$f['hoten'].'%'; }
 	if($f['ma_khoa'] !== '') { $where .= " and k.ma_khoa like ?"; $params[] = '%'.$f['ma_khoa'].'%'; }
 
-	$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc limit 0,1000", $params);
+	$count = $d->rawQueryOne("select count(*) as c from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where", $params);
+	$matched = (int)($count['c'] ?? 0);
+	$limitSql = (int)$limit > 0 ? ' limit 0,'.(int)$limit : '';
+	$hvs = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc".$limitSql, $params);
 	$out = array();
 	foreach($hvs as $hv)
 	{
@@ -47,12 +50,13 @@ function dt_ketqua_rows($f)
 
 function dt_ketqua_list()
 {
-	global $items, $ds_khoa, $filters, $total_items;
+	global $items, $ds_khoa, $filters, $total_items, $ketqua_matched;
 	$ds_khoa = dt_khoa_options();
 	$filters = dt_ketqua_filters();
 	$has = ($filters['id_khoa'] || $filters['cccd'] !== '' || $filters['hoten'] !== '' || $filters['ma_khoa'] !== '');
-	$items = $has ? dt_ketqua_rows($filters) : array();
-	$total_items = count($items);
+	$ketqua_matched = 0;
+	$items = $has ? dt_ketqua_rows($filters, 1000, $ketqua_matched) : array();
+	$total_items = $has ? $ketqua_matched : 0;
 }
 
 /* Xuất Excel kết quả đào tạo (đào tạo + kết quả kiểm tra). */
@@ -60,7 +64,7 @@ function dt_ketqua_export()
 {
 	global $func;
 	$f = dt_ketqua_filters();
-	$rows = dt_ketqua_rows($f);
+	$rows = dt_ketqua_rows($f, 0);
 
 	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',
 		'Hình (giờ)','Hình (km)','DAT (giờ)','DAT (km)',

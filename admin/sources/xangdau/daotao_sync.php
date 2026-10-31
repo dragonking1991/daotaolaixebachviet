@@ -37,6 +37,9 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 
 	$result = array('ok' => true, 'xd_added' => 0, 'xd_course_updated' => 0, 'xd_group_updated' => 0, 'xd_group_updated_bt' => 0, 'xd_group_updated_ck' => 0, 'ce_added' => 0, 'existing' => 0, 'not_passed' => 0, 'unsupported' => 0, 'errors' => array());
 	$now = time();
+	/* Toàn bộ lượt đồng bộ là một transaction: có lỗi thì hoàn tác, tránh danh sách XD đồng bộ dở dang. */
+	$ownTransaction = !$d->pdo()->inTransaction();
+	if($ownTransaction) $d->startTransaction();
 	foreach($rows as $student)
 	{
 		$studentCccd = preg_replace('/\D+/', '', (string)$student['cccd']);
@@ -114,13 +117,27 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '')
 		else $result['xd_added']++;
 	}
 
-	if(!empty($result['errors'])) $result['ok'] = false;
+	if(!empty($result['errors']))
+	{
+		$result['ok'] = false;
+		if($ownTransaction)
+		{
+			$d->rollback();
+			$result['rolled_back'] = true;
+		}
+	}
+	elseif($ownTransaction && $d->commit() === false)
+	{
+		$result['ok'] = false;
+		$result['errors'][] = 'không thể hoàn tất transaction';
+		$result['rolled_back'] = true;
+	}
 	return $result;
 }
 
 function xd_sync_training_notice($result)
 {
-	if(empty($result['ok'])) return ' Đồng bộ gặp lỗi: '.implode('; ', $result['errors'] ?? array($result['error'] ?? 'lỗi không xác định')).'.';
+	if(empty($result['ok'])) return ' Đồng bộ gặp lỗi: '.implode('; ', array_slice($result['errors'] ?? array($result['error'] ?? 'lỗi không xác định'), 0, 10)).'.'.(!empty($result['rolled_back']) ? ' Toàn bộ thay đổi của lượt đồng bộ này đã được hoàn tác; dữ liệu XD giữ nguyên như trước.' : '');
 	return ' Đã thêm '.$result['xd_added'].' học viên đạt DAT vào XD; cập nhật mã khóa cho '.$result['xd_course_updated'].' hồ sơ XD đã có; sửa nhóm DAT → BT cho '.$result['xd_group_updated_bt'].' hồ sơ, DAT → CK cho '.$result['xd_group_updated_ck'].' hồ sơ đồng bộ cũ; '.$result['existing'].' hồ sơ không cần cập nhật được giữ nguyên.';
 }
 

@@ -22,13 +22,13 @@
 			<a href="javascript:void(0)" onclick="var f=document.getElementById('dt-forgot');f.style.display=(f.style.display==='none'?'block':'none');" style="font-size:13px;color:#2954f2;text-decoration:none;">Quên mật khẩu?</a>
 		</div>
 		<div id="dt-forgot" style="display:<?=(isset($dtAct)&&$dtAct==='resetpass')?'block':'none'?>;margin-top:14px;border-top:1px solid #eee;padding-top:14px;">
-			<div style="font-size:13px;color:#555;margin-bottom:10px;">Xác minh danh tính bằng thông tin đã đăng ký với trung tâm để đặt lại mật khẩu.</div>
+			<div style="font-size:13px;color:#555;margin-bottom:10px;">Xác minh bằng ngày sinh và số điện thoại đã đăng ký với trung tâm. Nếu hồ sơ chưa có đủ hai thông tin này, vui lòng liên hệ trung tâm để được cấp lại mật khẩu.</div>
 			<form method="post" action="cong-giao-vien">
 				<input type="hidden" name="dt_act" value="resetpass">
 				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Số CCCD</label><input type="text" name="cccd" required style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
-				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Ngày sinh <span style="color:#888;">(dd/mm/yyyy)</span></label><input type="text" name="ngaysinh" placeholder="dd/mm/yyyy" style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
-				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Số điện thoại</label><input type="text" name="sdt" style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
-				<div style="margin-bottom:12px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Mật khẩu mới <span style="color:#888;">(tối thiểu 4 ký tự)</span></label><input type="password" name="new_pass" required style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
+				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Ngày sinh <span style="color:#888;">(dd/mm/yyyy)</span></label><input type="text" name="ngaysinh" placeholder="dd/mm/yyyy" required style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
+				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Số điện thoại</label><input type="tel" name="sdt" required style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
+				<div style="margin-bottom:12px;"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;">Mật khẩu mới <span style="color:#888;">(tối thiểu 8 ký tự)</span></label><input type="password" name="new_pass" minlength="8" autocomplete="new-password" required style="width:100%;height:40px;padding:0 12px;border:1px solid #ccc;border-radius:6px;"></div>
 				<button type="submit" style="width:100%;height:42px;border:none;border-radius:6px;background:#1e9e4a;color:#fff;font-weight:700;cursor:pointer;">Đặt lại mật khẩu</button>
 			</form>
 		</div>
@@ -39,19 +39,23 @@
 			<div><strong style="font-size:16px;">Xin chào, <?=htmlspecialchars($dtGv['hoten'])?></strong> <span style="color:#888;">(CCCD: <?=htmlspecialchars($dtGv['cccd'])?>)</span></div>
 			<div>
 				<button type="button" onclick="document.getElementById('dt-changepass').style.display=(document.getElementById('dt-changepass').style.display==='none'?'block':'none')" style="height:36px;padding:0 14px;border:1px solid #2954f2;background:#fff;color:#2954f2;border-radius:6px;cursor:pointer;">Đổi mật khẩu</button>
-				<form method="post" action="cong-giao-vien" style="display:inline;"><input type="hidden" name="dt_act" value="logout"><button type="submit" style="height:36px;padding:0 14px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;">Đăng xuất</button></form>
+				<form method="post" action="cong-giao-vien" style="display:inline;"><input type="hidden" name="dt_act" value="logout"><input type="hidden" name="dt_csrf" value="<?=htmlspecialchars(dt_gv_csrf_token())?>"><button type="submit" style="height:36px;padding:0 14px;border:none;background:#c0392b;color:#fff;border-radius:6px;cursor:pointer;">Đăng xuất</button></form>
 			</div>
 		</div>
 
-		<div id="dt-changepass" style="display:none;max-width:420px;margin:0 0 16px;border:1px solid #ddd;border-radius:10px;padding:16px;">
+		<?php $dtMustChange = !empty($dtGv['must_change']); ?>
+		<?php if($dtMustChange): ?><div style="max-width:420px;margin:0 0 10px;padding:10px 14px;background:#fff7e6;border:1px solid #f0ad4e;border-radius:8px;color:#8a5a00;">Bạn đang dùng mật khẩu mặc định (CCCD). Vui lòng đổi mật khẩu để tiếp tục sử dụng cổng giáo viên.</div><?php endif; ?>
+		<div id="dt-changepass" style="display:<?=$dtMustChange?'block':'none'?>;max-width:420px;margin:0 0 16px;border:1px solid #ddd;border-radius:10px;padding:16px;">
 			<form method="post" action="cong-giao-vien">
 				<input type="hidden" name="dt_act" value="changepass">
+				<input type="hidden" name="dt_csrf" value="<?=htmlspecialchars(dt_gv_csrf_token())?>">
 				<div style="margin-bottom:10px;"><label style="display:block;font-size:13px;color:#555;">Mật khẩu hiện tại</label><input type="password" name="old_pass" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;"></div>
-				<div style="margin-bottom:12px;"><label style="display:block;font-size:13px;color:#555;">Mật khẩu mới</label><input type="password" name="new_pass" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;"></div>
+				<div style="margin-bottom:12px;"><label style="display:block;font-size:13px;color:#555;">Mật khẩu mới <span style="color:#888;">(tối thiểu 8 ký tự, không dùng CCCD)</span></label><input type="password" name="new_pass" minlength="8" autocomplete="new-password" required style="width:100%;height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;"></div>
 				<button type="submit" style="height:38px;padding:0 16px;border:none;background:#2954f2;color:#fff;border-radius:6px;cursor:pointer;">Lưu mật khẩu</button>
 			</form>
 		</div>
 
+		<?php if(!$dtMustChange): ?>
 		<?php
 			$showLt = !empty($dtCfg['show_lythuyet']); $showCabin = !empty($dtCfg['show_cabin']);
 			$showHinh = !empty($dtCfg['show_hinh']); $showDat = !empty($dtCfg['show_dat']);
@@ -165,6 +169,7 @@
 							<summary><i class="fas fa-pen" aria-hidden="true"></i> Cập nhật Giờ/Km</summary>
 							<form method="post" action="cong-giao-vien" class="dt-gv-hinh-form">
 								<input type="hidden" name="dt_act" value="savehinh">
+								<input type="hidden" name="dt_csrf" value="<?=htmlspecialchars(dt_gv_csrf_token())?>">
 								<input type="hidden" name="cccd" value="<?=htmlspecialchars($hv['cccd'])?>">
 								<input type="hidden" name="id_khoa" value="<?=(int)$hv['id_khoa']?>">
 								<input type="hidden" name="khoa" value="<?=(int)$dtFilterKhoa?>">
@@ -191,6 +196,7 @@
 			</tbody>
 		</table>
 		</div>
+		<?php endif; ?>
 	</div>
 	<?php endif; ?>
 </div>

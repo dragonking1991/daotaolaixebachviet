@@ -11,6 +11,7 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Thông tin kết quả đào tạo</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
+			<?php if((int)$total_items > count($items)): ?><div class="alert alert-warning py-1 px-2 mb-0 mt-2 small w-100">Đang hiển thị <?=number_format(count($items))?> / <?=number_format((int)$total_items)?> học viên. Thu hẹp bộ lọc (khóa, CCCD, họ tên) hoặc bấm Xuất Excel để lấy đầy đủ.</div><?php endif; ?>
 			<div class="card-tools"><?php if(dt_can('ketqua','export')): ?><a href="<?=dt_export_link('exportKetqua', array('id_khoa','cccd','hoten','ma_khoa'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php endif; ?></div>
 		</div>
 		<div class="card-body">

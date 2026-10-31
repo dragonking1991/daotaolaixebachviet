@@ -29,6 +29,8 @@ require_once SOURCES.'xangdau/export_excel.php';
 require_once SOURCES.'xangdau/so_thanh_chu.php';
 require_once SOURCES.'xangdau/export_tonghop.php';
 
+admin_csrf_guard('xangdau', $act);
+
 switch($act)
 {
 	case 'khoa':

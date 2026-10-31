@@ -5,7 +5,7 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_hocvien()
 {
-	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers, $xd_filter_khoa, $xd_filter_gv, $xd_hocvien_khoas, $xd_hocvien_khoa_groups;
+	global $d, $func, $curPage, $items, $paging, $xd_filter_keyword, $xd_filter_nhom, $xd_filter_trangthai, $xd_filter_tt_from, $xd_filter_tt_to, $xd_hocvien_teachers, $xd_filter_khoa, $xd_filter_gv, $xd_hocvien_khoas, $xd_hocvien_khoa_groups, $xd_hocvien_total, $xd_hocvien_offset, $xd_hocvien_all_total;
 
 	$where = "";
 	$params = array();
@@ -47,6 +47,10 @@ function xd_get_hocvien()
 
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien where $where", $params);
 	$total = isset($count['num']) ? (int)$count['num'] : 0;
+	$xd_hocvien_total = $total;
+	$xd_hocvien_offset = max(0, $startpoint);
+	$allCount = $d->rawQueryOne("select count(*) as num from #_xd_hocvien");
+	$xd_hocvien_all_total = (int)($allCount['num'] ?? 0);
 	$xd_hocvien_teachers = $d->rawQuery(
 		"select gv_key, max(gv_hoten) as gv_hoten,
 			 sum(case when ngay_thanh_toan is null and id_bangke = 0 then 1 else 0 end) as can_delete,
@@ -241,6 +245,8 @@ function xd_delete_hocvien_by_gv()
 	if(empty($summary) || (int)($summary['can_delete'] ?? 0) === 0)
 		$func->transfer("Không có học viên chưa thanh toán để xóa cho giáo viên này.", $redirect, false);
 
+	$backup = xd_backup_table_json('xd_hocvien', 'gv');
+	if($backup === '') $func->transfer("Không thể sao lưu dữ liệu; đã hủy thao tác xóa theo giáo viên.", $redirect, false);
 	$d->startTransaction();
 	$ok = $d->rawQuery("delete from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and id_bangke = 0", array($gvKey));
 	if($ok === false)
@@ -255,6 +261,7 @@ function xd_delete_hocvien_by_gv()
 	$name = trim((string)($summary['gv_hoten'] ?? $gvKey));
 	$message = "Đã xóa $deleted học viên chưa thanh toán của giáo viên $name.";
 	if($protected > 0) $message .= " Giữ lại $protected học viên đã thanh toán hoặc thuộc bảng kê.";
+	$message .= " Sao lưu: $backup";
 	$func->transfer($message, $redirect);
 }
 
@@ -323,9 +330,11 @@ function xd_update_hocvien_info()
 function xd_delete_all_hocvien()
 {
 	global $d, $func;
+	$backup = xd_backup_table_json('xd_hocvien', 'all_hocvien');
+	if($backup === '') $func->transfer("Không thể sao lưu dữ liệu; đã hủy thao tác xóa toàn bộ học viên.", "index.php?com=xangdau&act=hocvien", false);
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien");
 	$ok = $d->rawQuery("delete from #_xd_hocvien");
 	$n = isset($count['num']) ? (int)$count['num'] : 0;
 	if($ok === false) $func->transfer("Không thể xóa toàn bộ học viên", "index.php?com=xangdau&act=hocvien", false);
-	$func->transfer("Đã xóa toàn bộ $n học viên.", "index.php?com=xangdau&act=hocvien");
+	$func->transfer("Đã xóa toàn bộ $n học viên. Sao lưu: $backup", "index.php?com=xangdau&act=hocvien");
 }

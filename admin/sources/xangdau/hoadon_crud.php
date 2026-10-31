@@ -150,11 +150,13 @@ function xd_delete_hoadon_selected()
 function xd_delete_all_hoadon()
 {
 	global $d, $func;
+	$backup = xd_backup_table_json('xd_hoadon', 'all_hoadon');
+	if($backup === '') $func->transfer("Không thể sao lưu dữ liệu; đã hủy thao tác xóa toàn bộ hóa đơn.", "index.php?com=xangdau&act=hoadon", false);
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hoadon");
 	$ok = $d->rawQuery("delete from #_xd_hoadon");
 	$n = isset($count['num']) ? (int)$count['num'] : 0;
 	if($ok === false) $func->transfer("Không thể xóa toàn bộ hóa đơn", "index.php?com=xangdau&act=hoadon", false);
-	$func->transfer("Đã xóa toàn bộ $n hóa đơn.", "index.php?com=xangdau&act=hoadon");
+	$func->transfer("Đã xóa toàn bộ $n hóa đơn. Sao lưu: $backup", "index.php?com=xangdau&act=hoadon");
 }
 
 function xd_toggle_kiem_tra_hoadon()

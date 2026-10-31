@@ -1,5 +1,10 @@
 RewriteEngine on
 
+# Không cho truy cập web tới bản sao lưu, script nội bộ, tài liệu và file dump/đóng gói.
+RewriteRule ^(backups|scripts|openspec|logs|\.git|\.github)(/|$) - [F,L,NC]
+RewriteRule \.sql$ - [F,L,NC]
+RewriteRule ^[^/]+\.(zip|md|yml|yaml|toml|sh)$ - [F,L,NC]
+
 #RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
 #RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 #RewriteCond %{HTTPS} !on

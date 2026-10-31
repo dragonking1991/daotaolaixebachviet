@@ -14,3 +14,8 @@ assets/magiczoomplus/
 assets/simplyscroll/
 assets/sliderengine/
 assets/photobox/
+
+# Không đóng gói dữ liệu nhạy cảm vào image
+backups/
+*.zip
+openspec/

@@ -20,6 +20,7 @@ function xd_excel_gv_key($name)
 }
 
 $rawInput = isset($_GET['cccd']) ? trim((string)$_GET['cccd']) : '';
+if($rawInput === '' || strlen($rawInput) > 50) exit('Vui lòng nhập số CCCD hoặc mã tra cứu.');
 $cccd = xd_excel_norm_cccd($rawInput);
 $variants = array($cccd);
 if(strlen($cccd) === 11) $variants[] = '0'.$cccd;
@@ -27,7 +28,7 @@ if(strlen($cccd) === 12 && substr($cccd, 0, 1) === '0') $variants[] = substr($cc
 $variants = array_values(array_unique(array_filter($variants, function($value){ return $value !== ''; })));
 $whereCccd = !empty($variants) ? 'cccd IN ('.implode(',', array_fill(0, count($variants), '?')).') OR ' : '';
 $params = $variants; $params[] = $rawInput;
-$emp = $d->rawQueryOne("select ten$lang as ten from #_product where type = 'nhan-vien' and hienthi = 1 and ($whereCccd ma_tra_cuu = ?) limit 0,1", $params);
+$emp = $d->rawQueryOne("select ten$lang as ten from #_product where type = 'nhan-vien' and hienthi = 1 and ($whereCccd (ma_tra_cuu <> '' and ma_tra_cuu = ?)) limit 0,1", $params);
 if(empty($emp['ten'])) exit('Không tìm thấy giáo viên.');
 $gvName = $emp['ten']; $gvKey = xd_excel_gv_key($gvName);
 $fromDate = (isset($_GET['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['from_date'])) ? $_GET['from_date'] : '';

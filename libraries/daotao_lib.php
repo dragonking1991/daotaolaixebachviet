@@ -242,7 +242,6 @@ if(!function_exists('dt_mb_lower'))
 		);
 	}
 
-	function dt_gv_hash($plain) { return md5('dt_gv_'.$plain.'_bachviet'); }
 
 	/* Cấu hình hiển thị cổng giáo viên (đọc table_dt_setting key 'cong_gv', hợp nhất mặc định). */
 	function dt_portal_conggv()

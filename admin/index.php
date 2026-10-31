@@ -10,6 +10,7 @@
 	require_once LIBRARIES."config.php";
     require_once LIBRARIES.'autoload.php';
     new AutoLoad();
+    require_once LIBRARIES.'admin_csrf.php';
     $d = new PDODb($config['database']);
     $seo = new Seo($d);
     $emailer = new Email($d);
@@ -67,6 +68,10 @@
 
 	<!-- JS -->
 	<script src="assets/js/jquery.min.js"></script>
+	<?php if(!empty($_SESSION[$login_admin]['active'])): ?>
+	<script>window.ADMIN_CSRF = <?=json_encode(array('token' => admin_csrf_token(), 'readOnly' => admin_csrf_modules()), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)?>;</script>
+	<script src="assets/js/admin-csrf.js?v=<?=@filemtime(__DIR__.'/assets/js/admin-csrf.js')?>"></script>
+	<?php endif; ?>
 	<script src="assets/js/moment.min.js"></script>
 	<script src="assets/sweetalert2/sweetalert2.js"></script>
 	<script src="assets/select2/select2.full.js"></script>

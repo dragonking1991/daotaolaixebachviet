@@ -4,6 +4,10 @@ Trung tâm cần một phần mềm quản lý **toàn bộ quá trình đào t�
 
 ## What Changes
 
+- **Menu đào tạo theo chủ đề (bổ sung)**: gom mục vào năm nhóm thu gọn, Tổng quan riêng; tự mở nhóm của trang hiện tại, giữ nguyên đường dẫn và phân quyền, ẩn nhóm rỗng và làm nhãn dài dễ đọc.
+
+- **Đủ điều kiện học DAT (bổ sung)**: mục riêng chỉ đọc trong menu Đào tạo, đủ cả bốn môn Kỹ thuật lái xe và Pháp luật phần 1/2/3 với tiến độ >=70% và điểm kiểm tra >=5 từng môn; giữ nguyên cách tính tiến độ, kết quả lý thuyết cũ và điều kiện đạt DAT thực hành. Có thống kê, bộ lọc và xuất Excel theo quyền Lý thuyết.
+
 - **Dữ liệu nền**: Import và tra cứu danh sách **xe** (biển số, hạng xe tập lái, giáo viên phụ trách) và **giáo viên** (CCCD, hạng được phép dạy) từ file `.xlsx` theo mẫu.
 - **Khóa học & học viên**: Admin tạo khóa với 5 thông tin (hạng, khóa, mã khóa học, ngày khai giảng, ngày mãn khóa) rồi import danh sách học viên (mẫu 2) có **cả mã học viên trung tâm và CCCD** để lập bảng ánh xạ dùng chung cho mọi module.
 - **Module Lý thuyết**: Import 6 môn (Cấu tạo, Kỹ thuật lái, Phần 1, Phần 2, Phần 3, Đạo đức) theo CCCD; đạt khi **tiến độ hoàn thành > 70 VÀ điểm kiểm tra > 5**.

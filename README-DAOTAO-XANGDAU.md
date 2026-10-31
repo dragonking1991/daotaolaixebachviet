@@ -131,6 +131,34 @@ flowchart TD
 
 ### 3.5 Lý thuyết · Cabin · Thực hành hình · DAT
 
+**Menu Đào tạo theo chủ đề:** Tổng quan để riêng; bấm tên nhóm để mở/thu gọn. Nhóm của trang đang xem (kể cả trang import, chi tiết hoặc sửa) tự mở và mục hiện tại được đánh dấu.
+
+| Nhóm | Các mục |
+|---|---|
+| Hồ sơ & nguồn lực | Khóa đào tạo, Học viên, Giáo viên, Xe tập lái |
+| Quá trình học | Lý thuyết, Đủ điều kiện học DAT, Cabin (kết quả), Thực hành hình, DAT (trên đường) |
+| Kiểm tra & hoàn tất | Tổng hợp, Ngày kiểm tra, Kết quả đào tạo, Số giấy HTKH, Kết quả sát hạch |
+| Tài chính | Học phí, tạm ứng, thanh toán |
+| Quản trị | Nhật ký thao tác, Sao lưu & khôi phục, Cấu hình cổng GV |
+
+Các nhóm chỉ hiện mục có quyền truy cập; nhóm không có mục phù hợp sẽ ẩn. Tổng quan và Quản trị giữ quyền quản trị đào tạo như trước. Đường dẫn/chức năng không đổi; dùng Tab để chuyển mục và Enter để mở/đóng nhóm. Khi cập nhật cần chép cả partial `admin/templates/layout/daotao_menu.php` và CSS `admin/assets/css/daotao-theme.css` cùng `menu.php`.
+
+**Mục riêng: Đào tạo → Đủ điều kiện học DAT**
+
+- Trang chỉ đọc, dùng quyền **xem/xuất Lý thuyết**. Chọn khóa (có mã, tên, số HV), tìm tên/CCCD/mã học viên hoặc giáo viên, lọc đủ/chưa đủ điều kiện; xuất Excel theo đúng bộ lọc.
+- Phải đủ **cả 4 môn** dưới đây, mỗi môn có **tiến độ >=70% VÀ điểm kiểm tra >=5**. Đúng 70% và đúng 5 được tính đạt; thiếu môn/thiếu điểm là chưa đủ. Áp dụng cùng bốn môn cho danh sách tra cứu, không tự miễn môn theo hạng.
+
+| Môn | Cách tính tiến độ giữ nguyên khi import |
+|---|---|
+| Kỹ thuật lái xe | (Xem giáo trình + Ôn luyện + Kiểm tra) / 20 × 100 |
+| Pháp luật - Phần 1 | (Tổng ba cột thời gian) / 25 × 100 |
+| Pháp luật - Phần 2 | (Tổng ba cột thời gian) / 40 × 100 |
+| Pháp luật - Phần 3 | (Tổng ba cột thời gian) / 25 × 100 |
+
+- Nếu file không có ba cột thời gian, importer vẫn dùng cột tiến độ hoàn thành như trước. Trang mới xét từ tiến độ và điểm đã lưu, không yêu cầu import lại, không dựa vào cờ “Đạt” lưu sẵn.
+- Mặc định hiển thị cả học viên chưa có kết quả; từng môn ghi rõ thiếu tiến độ, điểm hoặc kết quả. Thống kê đủ/chưa đủ được tính trước lọc trạng thái để đối chiếu.
+- **Đủ điều kiện bắt đầu học DAT khác với đã đạt DAT thực hành.** Trang không sửa kết quả lý thuyết cũ, không đánh dấu DAT, không thêm phiên và không đồng bộ học viên sang XD.
+
 Bốn mục cùng cách dùng: **chọn khóa** (hoặc nhập tên/CCCD để tra toàn bộ) → lọc theo giáo viên / trạng thái → xem / import / xuất Excel.
 
 | Mục | Nguồn dữ liệu | Điều kiện Đạt |
@@ -211,7 +239,9 @@ sequenceDiagram
 ```
 
 - GV chỉ **xem** Lý thuyết / Cabin / DAT, chỉ được **nhập Thực hành hình** (nếu admin cho phép).
-- Quên mật khẩu: tự đặt lại bằng CCCD + ngày sinh/SĐT đã khai, hoặc admin bấm **Reset mật khẩu**.
+- Lần đầu (hoặc sau khi admin **Reset mật khẩu**) đăng nhập bằng CCCD; cổng **bắt buộc đổi mật khẩu** trước khi xem danh sách hay nhập dữ liệu. Mật khẩu mới tối thiểu 8 ký tự, không dùng CCCD.
+- Quên mật khẩu: tự đặt lại khi nhập đúng **cả ngày sinh và số điện thoại** đã khai; hồ sơ thiếu một trong hai thì liên hệ trung tâm để admin reset.
+- Sai mật khẩu/xác minh 5 lần trong 15 phút sẽ tạm khóa 15 phút (theo CCCD và theo máy). Mật khẩu lưu bằng bcrypt; mật khẩu cũ được nâng cấp tự động ở lần đăng nhập đúng kế tiếp.
 
 ### 3.11 Tổng quan · Nhật ký · Sao lưu
 
@@ -254,6 +284,11 @@ flowchart TD
 - Chỉ hóa đơn **Hợp lệ** mới được tính khi lọc thanh toán.
 
 ### 4.4 Học viên XD
+
+- **Bố cục trang:** hàng nút chính (Import, Đồng bộ HV đạt DAT) bên trái; Danh sách CE, Lọc thanh toán, Xuất Excel (theo bộ lọc hiện tại) bên phải. Thao tác nguy hiểm gom trong **Quản trị dữ liệu** (không phụ thuộc bộ lọc): *Xóa học viên theo giáo viên* và *Xóa toàn bộ học viên* (phải gõ `XOA TOAN BO`; sao lưu JSON trước khi xóa).
+- **Bộ lọc** gọn một khối, ngày thanh toán chọn theo khoảng *từ – đến*; các điều kiện đang áp dụng hiện thành chip **Đang lọc**, bấm × để bỏ từng điều kiện. Không có kết quả do bộ lọc thì có nút **Bỏ lọc**.
+- **Thanh thao tác hàng loạt** ngay trên bảng: đếm số học viên đã chọn; *Đạt DAT / Xóa mục đã chọn* chỉ bật khi đã chọn. Khi đang lọc một khóa, thêm *Đạt DAT toàn khóa / Xóa toàn khóa* ghi rõ “mọi trang, bỏ qua bộ lọc khác”.
+- Bảng gọn hơn: cột Khóa hiện **tên khóa** (mã nhỏ bên dưới), ngày sinh/ngày nộp hồ sơ thống nhất `dd/mm/yyyy`, cột Thanh toán gộp trạng thái và ngày, STT đánh tiếp qua các trang, có dòng “Hiển thị X–Y / Z học viên”, tiêu đề bảng cố định khi cuộn.
 
 - **Xóa toàn khóa để đồng bộ lại:** chọn khóa XD, bấm **Xóa toàn khóa** rồi xác nhận. Nút này áp dụng mọi trang trong khóa, bỏ qua bộ lọc tên/nhóm/giáo viên/trạng thái/ngày; không cần chọn từng ô. Chỉ tài khoản có quyền xóa được thao tác, có kiểm tra phiên và sao lưu trước khi xóa. Giữ hồ sơ có ngày/số tiền thanh toán, bảng kê hoặc cờ duyệt/kiểm tra; không xóa dữ liệu Đào tạo. Sau đó bấm **Đồng bộ HV đạt DAT** để tạo lại hồ sơ đủ điều kiện; đồng bộ không khôi phục tiền nguồn hay ngày nộp hồ sơ, cần import lại Excel cho các dữ liệu này.
 
@@ -354,6 +389,19 @@ Lưu ý — hệ thống **không** tự làm các việc sau:
 | Import nhiều file | Kéo-thả nhiều file vào khung; hệ thống chạy lần lượt và báo từng file thành công / lỗi |
 | Xem trước import | Bấm **Xem trước**: hiện số dòng thêm / cập nhật / lỗi, chưa ghi dữ liệu (sau đó chọn lại file và bấm Import) |
 | Thông báo lỗi import | Đọc **từng dòng lỗi** trong thông báo (vd "Dòng 15: CCCD chưa có"), không chỉ dòng tiêu đề |
+
+---
+
+### Bảo mật & vận hành
+
+- **Chống CSRF:** mọi thao tác ghi/xóa trong Đào tạo và Xăng dầu cần token phiên; token được `admin/assets/js/admin-csrf.js` tự gắn vào form và link nội bộ. Link cũ lưu sẵn/bookmark tới thao tác xóa sẽ báo “Phiên thao tác không hợp lệ” — mở lại trang rồi bấm nút. Khi thêm `act` chỉ đọc mới phải khai báo trong `libraries/admin_csrf.php`, nếu không act đó mặc định yêu cầu token.
+- **Thông báo/chuyển trang** escape toàn bộ nội dung (chỉ giữ `<br>`, `<strong>`, `<em>`, `<b>`) và chỉ chuyển về `index.php…` nội bộ.
+- **Chặn truy cập web** tới `backups/`, `scripts/`, `openspec/`, `logs/`, mọi file `.sql`, và `.zip/.md/.yml/.toml/.sh` ở thư mục gốc (`.htaccess`). File sao lưu không còn tải trực tiếp qua URL.
+- Xóa toàn bộ dữ liệu Đào tạo (`crudDeleteAll&entity=all`) bị tắt như xóa khóa. Xóa toàn bộ / theo giáo viên ở XD sao lưu JSON trước.
+- Tra cứu Excel xăng dầu công khai từ chối khi không nhập CCCD/mã tra cứu.
+- Duyệt thanh toán và Đồng bộ HV đạt DAT chạy trong transaction: lỗi giữa chừng thì hoàn tác toàn bộ lượt đó.
+- Kết quả đào tạo hiển thị tối đa 1.000 dòng và báo rõ khi bị cắt; Xuất Excel lấy đầy đủ.
+- Kiểm thử: `docker compose exec -T web php scripts/regression_security_audit.php --local-db`.
 
 ---
 

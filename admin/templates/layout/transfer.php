@@ -1,9 +1,18 @@
+<?php
+/* Chỉ cho phép URL nội bộ tương đối và vài thẻ định dạng thông báo; mọi dữ liệu còn lại được escape. */
+$page_transfer = (string)$page_transfer;
+if($page_transfer !== '' && (strpos($page_transfer, 'index.php') !== 0 || preg_match('/[\x00-\x1F\x7F]/', $page_transfer))) $page_transfer = 'index.php';
+$transfer_url = htmlspecialchars("admin/".$page_transfer, ENT_QUOTES, 'UTF-8');
+$transfer_full_url = htmlspecialchars($basehref."admin/".$page_transfer, ENT_QUOTES, 'UTF-8');
+$transfer_text = htmlspecialchars(html_entity_decode((string)@$showtext, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+$transfer_text = preg_replace('#&lt;(/?)(br|strong|em|b)\s*/?&gt;#i', '<$1$2>', $transfer_text);
+?>
 <HTML>
 <HEAD>
     <TITLE>:: Thông Báo ::</TITLE>
     <base href="<?=$basehref?>"/>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta http-equiv="REFRESH" content="1; url=<?=$basehref."admin/".$page_transfer?>">
+    <meta http-equiv="REFRESH" content="1; url=<?=$transfer_full_url?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="robots" content="noodp,noindex,nofollow" />
     <link rel="stylesheet" href="assets/bootstrap/bootstrap.css">
@@ -43,8 +52,8 @@
     <div id="alert">
         <i class="fas <?=($stt)?'fa-check-circle fasuccess':'fa-exclamation-triangle fadanger'?>"></i>
         <div class="title">Thông báo</div>
-        <div class="message alert <?=($stt) ? 'alert-success' : 'alert-danger'?>"><?=@$showtext?></div>
-        <div class="rlink">(<a href="<?="admin/".$page_transfer?>" >Click vào đây nếu không muốn đợi lâu</a>)</div>
+        <div class="message alert <?=($stt) ? 'alert-success' :         'alert-danger'?>"><?=$transfer_text?></div>
+                <div class="rlink">(<a href="<?=$transfer_url?>" >Click vào đây nếu không muốn đợi lâu</a>)</div>
         <div class="progress"><div id="process-bar" class="progress-bar progress-bar-striped progress-bar-<?=($stt) ? 'success' : 'danger'?> active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div></div>
     </div>
     <script type="text/javascript">

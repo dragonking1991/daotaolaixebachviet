@@ -11,6 +11,7 @@ require_once SOURCES.'daotao/hocvien.php';
 require_once SOURCES.'daotao/xe.php';
 require_once SOURCES.'daotao/giaovien.php';
 require_once SOURCES.'daotao/lythuyet.php';
+require_once SOURCES.'daotao/dat_eligibility.php';
 require_once SOURCES.'daotao/mophong.php';
 require_once SOURCES.'daotao/cabin_kq.php';
 require_once SOURCES.'daotao/thuchanh_hinh.php';
@@ -80,8 +81,12 @@ function dt_sathach_can_manage()
 	return !dt_permission_denied(array('daotao_man','daotao_sathach','daotao_sathach_edit','daotao_sathach_delete','daotao_sathach_export'));
 }
 
+admin_csrf_guard('daotao', $act);
+
 switch($act)
 {
+	case 'dieukienDat': dt_guard(dt_p('lythuyet','view')); dt_dat_entry_list(); $template='daotao/dat_eligibility/items'; break;
+	case 'exportDieukienDat': dt_guard(dt_p('lythuyet','export')); dt_dat_entry_export(); break;
 	case 'taichinh': dt_guard(dt_p('taichinh','view')); dt_finance_list(); $template='daotao/taichinh/items'; break;
 	case 'createSathachPeriod': dt_guard(dt_p('sathach','edit')); dt_sathach_create_period(); break;
 	case 'deleteSathachPeriod': dt_guard(dt_p('sathach','delete')); dt_sathach_delete_period(); break;
@@ -109,7 +114,7 @@ switch($act)
 	case "modulePassSelected": dt_guard(dt_p(dt_crud_section(),'edit')); dt_module_pass_selected(); break;
 	case "moduleDeleteSelected": dt_guard(dt_p(dt_crud_section(),'delete')); dt_module_delete_selected(); break;
 	case "crudUndo":   dt_guard(dt_p(dt_crud_section(),'edit')); dt_crud_undo(); break;
-	case "crudDeleteAll": dt_guard(dt_p(dt_crud_section(),'delete')); dt_admin_guard(); if(preg_replace('/[^a-z]/','', isset($_REQUEST['entity'])?$_REQUEST['entity']:'') === 'khoa') $func->transfer("Chức năng xóa khóa đào tạo đã được tắt", "index.php?com=daotao&act=khoa", false); dt_crud_delete_all(); break;
+	case "crudDeleteAll": dt_guard(dt_p(dt_crud_section(),'delete')); dt_admin_guard(); if(in_array(preg_replace('/[^a-z]/','', isset($_GET['entity'])?$_GET['entity']:''), array('khoa','all'), true)) $func->transfer("Chức năng xóa khóa đào tạo / toàn bộ dữ liệu đã được tắt", "index.php?com=daotao&act=khoa", false); dt_crud_delete_all(); break;
 
 	/* ---------- Học viên ---------- */
 	case "hocvien":            dt_guard(dt_p('hocvien','view'));   dt_hocvien_list();   $template = "daotao/hocvien/items"; break;

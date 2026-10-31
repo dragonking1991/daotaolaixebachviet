@@ -1,10 +1,60 @@
 /* ==========================================================================
    Đào tạo admin theme
-   Scoped to <body class="com-daotao"> so it never leaks into other modules.
+   Content scoped to <body class="com-daotao">; training navigation scoped
+   separately so its grouping stays consistent on every admin page.
    Goals:
    - Fix breadcrumb/content overlap (floated breadcrumb collapsing its row)
    - Modern blue tone + card arrangement matching the reference dashboard
    ========================================================================== */
+
+.dt-sidebar-menu .nav-link {
+	display: flex;
+	align-items: center;
+	width: auto !important;
+}
+.dt-sidebar-menu .nav-link p {
+	flex: 1;
+	min-width: 0;
+	white-space: normal !important;
+	line-height: 1.4;
+}
+.dt-sidebar-menu > .nav-treeview {
+	margin: 4px 0;
+}
+.dt-sidebar-menu .dt-training-group > .nav-link {
+	margin: 3px 6px;
+	padding: .6rem .65rem;
+	border-radius: 7px;
+	font-weight: 600;
+}
+.dt-sidebar-menu .dt-training-group > .nav-link p {
+	padding-right: 1rem;
+}
+.dt-sidebar-menu .dt-training-group > .nav-link.active {
+	background: rgba(59, 130, 246, .16) !important;
+	color: #bfdbfe !important;
+	box-shadow: none;
+}
+.dt-sidebar-menu .dt-training-items {
+	margin: 2px 10px 8px 24px;
+	padding-left: 8px;
+	border-left: 1px solid rgba(148, 163, 184, .25);
+}
+.dt-sidebar-menu .dt-training-items > .nav-item > .nav-link {
+	margin: 2px 0;
+	padding: .45rem .5rem;
+	border-radius: 6px;
+}
+.dt-sidebar-menu .dt-training-items .nav-icon {
+	flex: 0 0 12px;
+	width: 12px;
+	margin: 0 8px 0 0;
+	font-size: .4rem !important;
+}
+.dt-sidebar-menu .nav-link:focus-visible {
+	outline: 2px solid #93c5fd;
+	outline-offset: -2px;
+}
 
 body.com-daotao {
 	--dt-blue: #1e3a8a;
@@ -635,4 +685,3 @@ body.com-daotao .dt-dz-remove:hover { background: #fdeaec; color: #c92a37; }
 .dt-dz-p-name { flex: 0 0 auto; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; font-weight: 600; }
 .dt-dz-p-msg { flex: 1 1 auto; min-width: 0; color: #64748b; font-size: .78rem; }
 .dt-dz-panel-foot { margin-top: 16px; display: flex; justify-content: flex-end; align-items: center; }
-

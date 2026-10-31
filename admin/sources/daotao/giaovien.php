@@ -1,11 +1,7 @@
 <?php
 if(!defined('SOURCES')) die("Error");
 
-/* Băm mật khẩu giáo viên cho cổng đăng nhập. */
-function dt_gv_hash($plain)
-{
-	return md5('dt_gv_'.$plain.'_bachviet');
-}
+require_once LIBRARIES.'daotao_gv_auth.php';
 
 function dt_giaovien_list()
 {

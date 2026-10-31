@@ -1,5 +1,18 @@
 ## ADDED Requirements
 
+### Requirement: Themed collapsible training navigation
+
+Training navigation SHALL retain all existing child URLs and permissions, show Overview separately, and organize the remaining items into five collapsible groups: Hồ sơ & nguồn lực; Quá trình học; Kiểm tra & hoàn tất; Tài chính; Quản trị. Group styling SHALL be scoped to training navigation on every admin page, with readable wrapping labels and keyboard focus.
+
+#### Scenario: Open a training page or subpage
+- **WHEN** a user opens a primary training page, import/detail page or entity CRUD form
+- **THEN** the corresponding permitted child link SHALL be highlighted and its group expanded automatically, while unrelated groups remain initially collapsed. Users SHALL be able to expand and collapse groups using the existing AdminLTE treeview.
+
+#### Scenario: Restricted menu visibility
+- **WHEN** a user has access only to some training sections
+- **THEN** only the existing permitted links SHALL be rendered and empty groups SHALL be omitted; theory permissions SHALL retain access to DAT entry eligibility and cabin-only permissions SHALL NOT expose other sections.
+- **AND** overview and administration tools SHALL remain restricted to training administrators.
+
 ### Requirement: Tổng hợp Đạt/Không đạt 4 module
 
 Hệ thống SHALL tổng hợp kết quả 4 module (Lý thuyết, Cabin, Thực hành trong hình, DAT) của mỗi học viên và kết luận đủ/chưa đủ điều kiện kiểm tra.

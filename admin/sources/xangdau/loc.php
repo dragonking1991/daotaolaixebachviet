@@ -54,6 +54,39 @@ function xd_huy_kiem_tra_giao_vien()
 	$func->transfer("Đã chuyển giáo viên về trạng thái chưa kiểm tra.", xd_loc_params_url(), true);
 }
 
+/* Duyệt một giáo viên trong một transaction: tạo bảng kê, ghi thanh toán học viên và quyết toán hóa đơn; lỗi bất kỳ bước nào thì hoàn tác toàn bộ. */
+function xd_loc_approve_teacher($gvKey, $students, $ky, $fromDate, $toDate)
+{
+	global $d;
+	$today = date('Y-m-d'); $username = xd_username(); $total = 0;
+	foreach($students as $student) $total += (float)$student['so_tien_thanh_toan'];
+	$run = function($sql, $params) use ($d) { $d->rawQuery($sql, $params); return (string)$d->getLastErrorCode() === '00000'; };
+	$d->startTransaction();
+	try
+	{
+		if(!$run("insert into #_xd_bangke (ngay_lap, ky, tong_hocvien, tong_tien, user_tao, ngaytao) values (?, ?, ?, ?, ?, ?)", array($today, $ky, count($students), $total, $username, time())))
+			throw new RuntimeException('bangke');
+		$idBangke = (int)$d->getLastInsertId();
+		if($idBangke <= 0) throw new RuntimeException('bangke id');
+		foreach($students as $student)
+			if(!$run("update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = ?, quan_ly_duyet = 1 where id = ? and ngay_thanh_toan is null", array($today, $student['dinh_muc'], $student['so_tien_thanh_toan'], $idBangke, (int)$student['id'])))
+				throw new RuntimeException('hocvien');
+		$invoiceWhere = 'gv_key = ? and da_quyettoan = 0 and hop_le = 1'; $params = array($idBangke, $gvKey);
+		if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $params[] = $ky; }
+		if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $params[] = $fromDate; }
+		if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $params[] = $toDate; }
+		if(!$run("update #_xd_hoadon set da_quyettoan = 1, ngay_thanh_toan = ?, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", array_merge(array($today), $params)))
+			throw new RuntimeException('hoadon');
+		$d->commit();
+		return true;
+	}
+	catch(Exception $error)
+	{
+		$d->rollback();
+		return false;
+	}
+}
+
 function xd_duyet_giao_vien()
 {
 	global $d, $func;
@@ -69,18 +102,8 @@ function xd_duyet_giao_vien()
 	list($selected, $summary, $config) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
 	$selectedTeacher = array(); foreach($selected as $student) if($student['gv_key'] === $gvKey) $selectedTeacher[] = $student;
 	if(empty($selectedTeacher)) $func->transfer("Không có học viên đủ điều kiện để duyệt cho giáo viên này.", xd_loc_params_url(), false);
-	$today = date('Y-m-d'); $username = xd_username(); $total = 0; foreach($selectedTeacher as $student) $total += (float)$student['so_tien_thanh_toan'];
-	$d->startTransaction();
-	$ok = $d->rawQuery("insert into #_xd_bangke (ngay_lap, ky, tong_hocvien, tong_tien, user_tao, ngaytao) values (?, ?, ?, ?, ?, ?)", array($today, $ky, count($selectedTeacher), $total, $username, time()));
-	if($ok === false) { $d->rollback(); $func->transfer("Không tạo được đợt duyệt.", xd_loc_params_url(), false); }
-	$idBangke = (int)$d->getLastInsertId();
-	foreach($selectedTeacher as $student) $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = ?, quan_ly_duyet = 1 where id = ? and ngay_thanh_toan is null", array($today, $student['dinh_muc'], $student['so_tien_thanh_toan'], $idBangke, (int)$student['id']));
-	$invoiceWhere = 'gv_key = ? and da_quyettoan = 0 and hop_le = 1'; $params = array($idBangke, $gvKey);
-	if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $params[] = $ky; }
-	if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $params[] = $fromDate; }
-	if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $params[] = $toDate; }
-	$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, ngay_thanh_toan = ?, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", array_merge(array($today), $params));
-	$d->commit();
+	if(!xd_loc_approve_teacher($gvKey, $selectedTeacher, $ky, $fromDate, $toDate))
+		$func->transfer("Không thể duyệt giáo viên; dữ liệu đã được hoàn tác, chưa ghi nhận thanh toán nào.", xd_loc_params_url(), false);
 	$func->transfer("Đã duyệt và ghi nhận thanh toán cho giáo viên.", xd_loc_params_url(), true);
 }
 
@@ -91,28 +114,18 @@ function xd_duyet_tat_ca_giao_vien()
 	$fromDate = (isset($_REQUEST['from_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['from_date'])) ? $_REQUEST['from_date'] : '';
 	$toDate = (isset($_REQUEST['to_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_REQUEST['to_date'])) ? $_REQUEST['to_date'] : '';
 	$rows = $d->rawQuery("select distinct gv_key from #_xd_hoadon where gv_key <> '' and da_quyettoan = 0 and ke_toan_kiem_tra = 1", array());
-	$approved = 0;
+	$approved = 0; $failed = 0;
+	list($selected, $summary, $config) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
 	foreach($rows as $row)
 	{
 		$gvKey = $row['gv_key'];
 		$notCheckedStudents = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
 		if($notCheckedStudents && (int)$notCheckedStudents['total'] > 0) continue;
-		list($selected, $summary, $config) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
 		$students = array(); foreach($selected as $student) if($student['gv_key'] === $gvKey) $students[] = $student;
 		if(empty($students)) continue;
-		$today = date('Y-m-d'); $username = xd_username(); $total = 0; foreach($students as $student) $total += (float)$student['so_tien_thanh_toan'];
-		$d->startTransaction();
-		$ok = $d->rawQuery("insert into #_xd_bangke (ngay_lap, ky, tong_hocvien, tong_tien, user_tao, ngaytao) values (?, ?, ?, ?, ?, ?)", array($today, $ky, count($students), $total, $username, time()));
-		if($ok === false) { $d->rollback(); continue; }
-		$idBangke = (int)$d->getLastInsertId();
-		foreach($students as $student) $d->rawQuery("update #_xd_hocvien set ngay_thanh_toan = ?, dinh_muc = ?, so_tien_thanh_toan = ?, id_bangke = ?, quan_ly_duyet = 1 where id = ? and ngay_thanh_toan is null", array($today, $student['dinh_muc'], $student['so_tien_thanh_toan'], $idBangke, (int)$student['id']));
-		$invoiceWhere = 'gv_key = ? and da_quyettoan = 0 and hop_le = 1'; $invoiceParams = array($idBangke, $gvKey);
-		if($ky !== '') { $invoiceWhere .= ' and ky = ?'; $invoiceParams[] = $ky; }
-		if($fromDate !== '') { $invoiceWhere .= ' and ngay_hoa_don >= ?'; $invoiceParams[] = $fromDate; }
-		if($toDate !== '') { $invoiceWhere .= ' and ngay_hoa_don <= ?'; $invoiceParams[] = $toDate; }
-		$d->rawQuery("update #_xd_hoadon set da_quyettoan = 1, ngay_thanh_toan = ?, quan_ly_duyet = 1, id_bangke = ? where $invoiceWhere", array_merge(array($today), $invoiceParams));
-		$d->commit(); $approved++;
+		if(xd_loc_approve_teacher($gvKey, $students, $ky, $fromDate, $toDate)) $approved++; else $failed++;
 	}
+	if($failed > 0) $func->transfer("Đã duyệt $approved giáo viên; $failed giáo viên lỗi đã được hoàn tác, vui lòng thử lại.", xd_loc_params_url(), false);
 	$func->transfer("Đã duyệt $approved giáo viên.", xd_loc_params_url(), true);
 }
 

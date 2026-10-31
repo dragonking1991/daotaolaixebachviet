@@ -27,6 +27,20 @@
 
 ## Decisions
 
+### Menu đào tạo theo chủ đề (bổ sung)
+
+- Để Tổng quan riêng, nhóm 18 mục còn lại thành năm nhóm thu gọn: Hồ sơ & nguồn lực; Quá trình học; Kiểm tra & hoàn tất; Tài chính; Quản trị. Giữ nguyên nhãn và URL con, không thay đổi quyền truy cập.
+- Tách phần menu đào tạo thành partial cùng thư mục layout để render/kiểm thử riêng. Áp dụng bộ quyền mục hiện có trước khi render, bỏ nhóm không còn mục được phép xem; Tổng quan/Quản trị vẫn chỉ dành cho quản trị đào tạo.
+- Tái dùng treeview lồng nhau của AdminLTE, không thêm thư viện/toggle mới. Nhóm trang hiện tại mở sẵn; dùng template trang để xác định mục ở trang con và entity cho CRUD/mô phỏng. Không tự mở các nhóm khác.
+- CSS chỉ áp dụng `.dt-sidebar-menu` trên mọi trang admin, không đổi menu phân hệ khác. Icon theo chủ đề, nhánh con có đường dẫn thị giác; nhãn dài xuống dòng trong sidebar, giữ focus bàn phím và trạng thái `aria-current` trên link hiện tại.
+
+### Điều kiện bắt đầu học DAT (bổ sung)
+
+- Thêm trang chỉ đọc `dieukienDat` và xuất `exportDieukienDat`, dùng quyền xem/xuất Lý thuyết, mục riêng sau Lý thuyết trong menu Đào tạo.
+- Xét đúng bốn môn `ky_thuat`, `phan_1`, `phan_2`, `phan_3`: mỗi môn phải có tiến độ >=70% và điểm kiểm tra >=5. Không dùng cờ `dat` lưu sẵn thay cho hai ngưỡng; thiếu dữ liệu là chưa đủ. Áp dụng cùng bốn môn cho danh sách được tra cứu, không tự miễn môn theo hạng.
+- Dùng `tien_do` đã tính bởi importer hiện có: tổng ba cột thời gian / mẫu số *100, mẫu số lần lượt 20/25/40/25; giữ nguyên fallback cột tiến độ nếu file không có ba cột. Không đổi importer, kết quả lý thuyết cũ hoặc đánh giá đạt DAT trên đường.
+- Bộ lọc khóa, tên/CCCD/mã HV, giáo viên và trạng thái; mặc định gồm cả học viên thiếu kết quả. Nối theo cả khóa và CCCD, thống kê trước lọc trạng thái. Xuất Excel dùng cùng danh sách, giữ CCCD kiểu chuỗi. Không ghi bảng, đánh dấu đạt, thêm phiên hay đồng bộ XD.
+
 ### 1. Bảng riêng `table_dt_*`, không dùng lại `table_product`
 
 DAT lưu **từng phiên học** và lý thuyết lưu **kết quả từng môn** — quá phức tạp để nhét vào một dòng `table_product`. Dùng bộ bảng chuyên biệt:
