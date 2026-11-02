@@ -1,5 +1,5 @@
 <?php
-	$linkSave = "index.php";
+	$linkSave = "index.php?com=xangdau&act=saveConfig";
 	$nhomInfo = array(
 		'bt'  => array('label' => 'BT', 'badge' => 'badge-primary', 'border' => 'border-left-primary'),
 		'ck'  => array('label' => 'CK', 'badge' => 'badge-info', 'border' => 'border-left-info'),
@@ -33,8 +33,6 @@
 
 <section class="content">
 	<form class="validation-form" novalidate method="post" action="<?=$linkSave?>">
-		<input type="hidden" name="com" value="xangdau">
-		<input type="hidden" name="act" value="saveConfig">
 		<?php if(isset($_GET['danh_sach_dieu_chinh']) && $_GET['danh_sach_dieu_chinh'] === '1'): ?><input type="hidden" name="danh_sach_dieu_chinh" value="1"><?php endif; ?>
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header">

@@ -267,6 +267,16 @@ switch($act)
 		xd_ensure_tables();
 		xd_huy_duyet_giao_vien();
 		break;
+	case "huyDuyetGiaoVienChon":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_huy_duyet_giao_vien_chon();
+		break;
+	case "locBulkAction":
+		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		xd_ensure_tables();
+		xd_loc_bulk_action();
+		break;
 	case "locKiemTra":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		xd_ensure_tables();

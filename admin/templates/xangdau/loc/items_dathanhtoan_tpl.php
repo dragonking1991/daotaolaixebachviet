@@ -1,4 +1,8 @@
 <?php
+	$xdPaidReturnParams = array();
+	foreach(array('keyword','paid_from','paid_to') as $key)
+		if(isset($_REQUEST[$key]) && is_scalar($_REQUEST[$key]) && (string)$_REQUEST[$key] !== '') $xdPaidReturnParams[$key] = (string)$_REQUEST[$key];
+	$xdPaidReturnUrl = rawurlencode('index.php?com=xangdau&act=locDaThanhToan'.($xdPaidReturnParams ? '&'.http_build_query($xdPaidReturnParams) : ''));
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -36,10 +40,20 @@
 			<a class="btn btn-sm btn-success" href="<?=$exportUrl?>" title="Xuất tổng hợp giáo viên đã quyết toán"><i class="fas fa-file-excel mr-1"></i>Xuất tổng hợp</a>
 			<?php } ?>
 		</div>
+		<?php if(xd_can_duyet() && !empty($xd_loc_dathanhtoan_data)) { ?>
+		<div class="card-body py-2 border-bottom">
+			<form id="xd-paid-bulk-form" method="post" action="index.php?com=xangdau&act=huyDuyetGiaoVienChon" class="form-inline" style="gap:.5rem;" onsubmit="return confirm('Hủy duyệt đúng các giáo viên/ngày thanh toán đã chọn? Những ngày khác được giữ nguyên.');">
+				<input type="hidden" name="ret" value="<?=$xdPaidReturnUrl?>">
+				<button class="btn btn-sm btn-danger" type="submit"><i class="fas fa-undo mr-1"></i>Bỏ duyệt các mục đã chọn</button>
+				<span class="small text-muted">Mỗi dòng tương ứng một giáo viên và một ngày thanh toán.</span>
+			</form>
+		</div>
+		<?php } ?>
 		<div class="card-body table-responsive p-0">
 			<table class="table table-hover">
 				<thead>
 					<tr>
+						<?php if(xd_can_duyet()): ?><th class="text-center" style="width:34px"><input type="checkbox" class="xd-bulk-all" data-form="xd-paid-bulk-form" title="Chọn tất cả đợt thanh toán"></th><?php endif; ?>
 						<th>STT</th>
 						<th>Giáo viên</th>
 						<th class="text-center">Số HĐ đã quyết toán</th>
@@ -52,6 +66,13 @@
 				<tbody>
 					<?php if(!empty($xd_loc_dathanhtoan_data)) { $i = 0; foreach($xd_loc_dathanhtoan_data as $gv) { $i++; ?>
 					<tr>
+						<?php if(xd_can_duyet()): ?><td class="text-center">
+							<?php if((int)$gv['so_bangke'] > 0): ?>
+							<input type="checkbox" class="xd-bulk-item" form="xd-paid-bulk-form" name="rows[<?=$i?>][selected]" value="1" aria-label="Chọn <?=htmlspecialchars($gv['gv_hoten'], ENT_QUOTES, 'UTF-8')?> ngày <?=htmlspecialchars($gv['ngay_thanh_toan'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" form="xd-paid-bulk-form" name="rows[<?=$i?>][gv_key]" value="<?=htmlspecialchars($gv['gv_key'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" form="xd-paid-bulk-form" name="rows[<?=$i?>][payment_date]" value="<?=htmlspecialchars($gv['ngay_thanh_toan'], ENT_QUOTES, 'UTF-8')?>">
+							<?php endif; ?>
+						</td><?php endif; ?>
 						<td><?=$i?></td>
 						<td><?=htmlspecialchars($gv['gv_hoten'] !== '' ? $gv['gv_hoten'] : $gv['gv_key'])?></td>
 						<td class="text-center"><?=(int)$gv['so_hd']?></td>
@@ -75,7 +96,7 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="7" class="text-center text-muted">Chưa có giáo viên nào đã thanh toán.</td></tr>
+					<tr><td colspan="<?=xd_can_duyet()?8:7?>" class="text-center text-muted">Chưa có giáo viên nào đã thanh toán.</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

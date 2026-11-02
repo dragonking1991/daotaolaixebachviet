@@ -249,7 +249,7 @@ if(!function_exists('dt_mb_lower'))
 		global $d;
 		$cfg = array(
 			'show_lythuyet' => 1, 'show_cabin' => 1, 'show_hinh' => 1, 'show_dat' => 1, 'show_ketluan' => 1,
-			'show_detail' => 1, 'allow_hinh_input' => 1,
+			'show_sathach' => 0, 'show_detail' => 1, 'allow_hinh_input' => 1,
 		);
 		$row = null;
 		try { $row = $d->rawQueryOne("select sval from #_dt_setting where skey = 'cong_gv' limit 0,1"); }
@@ -260,6 +260,61 @@ if(!function_exists('dt_mb_lower'))
 			if(is_array($saved)) foreach($cfg as $k => $v) if(isset($saved[$k])) $cfg[$k] = (int)$saved[$k];
 		}
 		return $cfg;
+	}
+
+	function dt_portal_sathach_cccd_key($value)
+	{
+		$cccd = dt_normalize_cccd($value);
+		if(strlen($cccd) === 11) return '0'.$cccd;
+		return $cccd;
+	}
+
+	function dt_portal_sathach_date_key($value)
+	{
+		$value = trim((string)$value);
+		if(preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $value, $match))
+			return checkdate((int)$match[2], (int)$match[3], (int)$match[1]) ? sprintf('%04d-%02d-%02d', $match[1], $match[2], $match[3]) : '';
+		if(preg_match('/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/', $value, $match))
+			return checkdate((int)$match[2], (int)$match[1], (int)$match[3]) ? sprintf('%04d-%02d-%02d', $match[3], $match[2], $match[1]) : '';
+		return '';
+	}
+
+	function dt_portal_sathach_display_date($value)
+	{
+		$date = dt_portal_sathach_date_key($value);
+		return $date !== '' ? date('d/m/Y', strtotime($date)) : '—';
+	}
+
+	function dt_portal_sathach_pass($value)
+	{
+		$value = dt_strip_diacritics(trim((string)$value));
+		if(preg_match('/rot|truot|vang|khong/', $value)) return false;
+		return $value === 'd' || strpos($value, 'dat') !== false;
+	}
+
+	function dt_portal_sathach_latest_map($students)
+	{
+		global $d;
+		$variants = array();
+		foreach($students as $student)
+			foreach(dt_cccd_variants($student['hv']['cccd'] ?? '') as $variant) $variants[] = $variant;
+		$variants = array_values(array_unique($variants));
+		if(!$variants) return array();
+		$marks = implode(',', array_fill(0, count($variants), '?'));
+		try { $rows = $d->rawQuery("select id,cccd,hang,ngay_sh,so_gplx,lt,mp,hinh,duong,ket_qua,ket_luan from #_dt_sat_hach where cccd in ($marks) order by id desc", $variants); }
+		catch(Exception $error) { return array(); }
+		if(!is_array($rows) || $d->getLastErrorCode() !== '00000') return array();
+		$latest = array();
+		foreach($rows as $row)
+		{
+			$key = dt_portal_sathach_cccd_key($row['cccd'] ?? '');
+			if($key === '') continue;
+			$rowDate = dt_portal_sathach_date_key($row['ngay_sh'] ?? '');
+			$row['_date_key'] = $rowDate;
+			if(!isset($latest[$key]) || $rowDate > $latest[$key]['_date_key'] || ($rowDate === $latest[$key]['_date_key'] && (int)$row['id'] > (int)$latest[$key]['id']))
+				$latest[$key] = $row;
+		}
+		return $latest;
 	}
 
 	/* Trạng thái từng môn lý thuyết (gồm mô phỏng) của học viên: dat|chua_dat|chua_kiem_tra|chua_du_lieu. */

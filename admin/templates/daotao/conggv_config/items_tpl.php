@@ -17,7 +17,7 @@
 				<h6 class="text-muted text-uppercase" style="letter-spacing:.5px;">Cột hiển thị</h6>
 				<div class="row">
 					<?php
-						$cols = array('show_lythuyet'=>'Lý thuyết (7 môn)','show_cabin'=>'Cabin','show_hinh'=>'Thực hành trong hình','show_dat'=>'DAT (trên đường)','show_ketluan'=>'Kết luận (đủ điều kiện)');
+						$cols = array('show_lythuyet'=>'Lý thuyết (7 môn)','show_cabin'=>'Cabin','show_hinh'=>'Thực hành trong hình','show_dat'=>'DAT (trên đường)','show_sathach'=>'Kết quả sát hạch (lần gần nhất)','show_ketluan'=>'Kết luận (đủ điều kiện)');
 						foreach($cols as $k=>$lbl):
 					?>
 					<div class="col-md-4 mb-2"><div class="custom-control custom-checkbox">

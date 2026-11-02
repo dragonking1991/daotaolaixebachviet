@@ -194,8 +194,29 @@ sa_temp_copy('xd_hoadon');
 sa_check(xd_loc_approve_teacher('thay b', $selected, '', '', ''), 'Valid approval must succeed');
 $after = $d->rawQueryOne('select ngay_thanh_toan, id_bangke, so_tien_thanh_toan from #_xd_hocvien where id = ?', array((int)$student['id']));
 sa_check($after['ngay_thanh_toan'] !== null && (int)$after['id_bangke'] > 0 && (int)$after['so_tien_thanh_toan'] === 250000, 'Approval must record payment');
+$d->rawQuery("insert into #_xd_hocvien (ho_ten, cccd, khoa, nhom, gv_hoten, gv_key, lan_import, thu_tu_file) values ('HV Bulk Check', '991999999998', 'K', 'DAT', 'Thầy Bulk', 'thay bulk', 1, 2)");
+$d->rawQuery("insert into #_xd_hoadon (gv_hoten, gv_key, ma_hoa_don, ngay_hoa_don, tong_tien, ky, hop_le) values ('Thầy Bulk', 'thay bulk', 'BULK-CHECK', '2026-10-28', 100000, 'T10', 1)");
+$_SERVER['REQUEST_METHOD'] = 'POST'; $_SESSION['xd_loc_bulk_csrf'] = 'bulk-test-token';
+$_POST = array('csrf'=>'bulk-test-token','gv_keys'=>array('thay bulk'));
+try { xd_loc_bulk_check(true,'index.php?com=xangdau&act=loc'); } catch(RuntimeException $error) { sa_check(strpos($error->getMessage(),'Đã đánh dấu kiểm tra 1 giáo viên')!==false,'Bulk check feedback'); }
+$bulkInvoice = $d->rawQueryOne("select ke_toan_kiem_tra,ngay_kiem_tra from #_xd_hoadon where ma_hoa_don='BULK-CHECK'");
+$bulkStudent = $d->rawQueryOne("select ke_toan_kiem_tra from #_xd_hocvien where cccd='991999999998'");
+sa_check((int)$bulkInvoice['ke_toan_kiem_tra']===1 && !empty($bulkInvoice['ngay_kiem_tra']) && (int)$bulkStudent['ke_toan_kiem_tra']===1,'Bulk check must update unpaid invoices and students');
+try { xd_loc_bulk_check(false,'index.php?com=xangdau&act=loc'); } catch(RuntimeException $error) { sa_check(strpos($error->getMessage(),'Đã bỏ kiểm tra 1 giáo viên')!==false,'Bulk uncheck feedback'); }
+$bulkInvoice = $d->rawQueryOne("select ke_toan_kiem_tra,ngay_kiem_tra from #_xd_hoadon where ma_hoa_don='BULK-CHECK'");
+$bulkStudent = $d->rawQueryOne("select ke_toan_kiem_tra from #_xd_hocvien where cccd='991999999998'");
+sa_check((int)$bulkInvoice['ke_toan_kiem_tra']===0 && $bulkInvoice['ngay_kiem_tra']===null && (int)$bulkStudent['ke_toan_kiem_tra']===0,'Bulk uncheck must clear unpaid invoice/student status');
+$approvedDate = $after['ngay_thanh_toan'];
+$d->rawQuery("insert into #_xd_bangke (ngay_lap,ky,tong_hocvien,tong_tien,user_tao,ngaytao) values ('2026-10-30','T10',1,125000,'audit',1)");
+$otherBatch = (int)$d->getLastInsertId();
+$d->rawQuery("insert into #_xd_hocvien (ho_ten,cccd,khoa,nhom,gv_hoten,gv_key,so_tien_thanh_toan,dinh_muc,ngay_thanh_toan,id_bangke,quan_ly_duyet,lan_import,thu_tu_file) values ('HV Another Day','991999999997','K','DAT','Thầy B','thay b',125000,10,'2026-10-30',?,1,1,3)",array($otherBatch));
+$_POST = array('rows'=>array(1=>array('selected'=>'1','gv_key'=>'thay b','payment_date'=>$approvedDate)));
+try { xd_huy_duyet_giao_vien_chon(); } catch(RuntimeException $error) { sa_check(strpos($error->getMessage(),'Đã hủy duyệt 1/1 đợt thanh toán')!==false,'Bulk unapproval feedback'); }
+$firstPayment = $d->rawQueryOne("select ngay_thanh_toan,id_bangke from #_xd_hocvien where cccd='991999999999'");
+$otherPayment = $d->rawQueryOne("select ngay_thanh_toan,id_bangke from #_xd_hocvien where cccd='991999999997'");
+sa_check($firstPayment['ngay_thanh_toan']===null && (int)$firstPayment['id_bangke']===0 && $otherPayment['ngay_thanh_toan']==='2026-10-30' && (int)$otherPayment['id_bangke']===$otherBatch,'Selected unapproval must leave other payment dates unchanged');
 foreach(array('xd_hocvien', 'dt_khoa', 'dt_hocvien', 'xd_bangke', 'xd_hoadon') as $table) $d->rawQuery('drop temporary table if exists #_'.$table);
-echo "PASS payment approval commits atomically and rolls back on failure\n";
+echo "PASS payment approval rollback, selected check/uncheck and date-scoped unapproval\n";
 
 /* 7. HTTP: tra cứu công khai và chặn file nhạy cảm (đọc, không ghi). */
 function sa_http($path)

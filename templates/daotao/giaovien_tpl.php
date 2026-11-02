@@ -59,9 +59,9 @@
 		<?php
 			$showLt = !empty($dtCfg['show_lythuyet']); $showCabin = !empty($dtCfg['show_cabin']);
 			$showHinh = !empty($dtCfg['show_hinh']); $showDat = !empty($dtCfg['show_dat']);
-			$showKl = !empty($dtCfg['show_ketluan']); $showDetail = !empty($dtCfg['show_detail']);
+			$showExam = !empty($dtCfg['show_sathach']); $showKl = !empty($dtCfg['show_ketluan']); $showDetail = !empty($dtCfg['show_detail']);
 			$allowHinh = !empty($dtCfg['allow_hinh_input']);
-			$colCount = 2 + ($showLt?1:0) + ($showCabin?1:0) + ($showHinh?1:0) + ($showDat?1:0) + ($showKl?1:0);
+			$colCount = 2 + ($showLt?1:0) + ($showCabin?1:0) + ($showHinh?1:0) + ($showDat?1:0) + ($showExam?1:0) + ($showKl?1:0);
 		?>
 		<form method="get" action="cong-giao-vien" class="dt-gv-filter" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;">
 			<select name="khoa" style="height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;min-width:200px;">
@@ -120,11 +120,13 @@
 				<?php if($showCabin): ?><th style="padding:10px;border:1px solid #e0e0e0;"><i class="fas fa-car dt-gv-head-icon" aria-hidden="true"></i>Cabin</th><?php endif; ?>
 				<?php if($showHinh): ?><th style="padding:10px;border:1px solid #e0e0e0;"><i class="fas fa-road dt-gv-head-icon" aria-hidden="true"></i>Thực hành trong hình</th><?php endif; ?>
 				<?php if($showDat): ?><th style="padding:10px;border:1px solid #e0e0e0;"><i class="fas fa-route dt-gv-head-icon" aria-hidden="true"></i>DAT</th><?php endif; ?>
+				<?php if($showExam): ?><th style="padding:10px;border:1px solid #e0e0e0;"><i class="fas fa-clipboard-check dt-gv-head-icon" aria-hidden="true"></i>Sát hạch gần nhất</th><?php endif; ?>
 				<?php if($showKl): ?><th style="padding:10px;border:1px solid #e0e0e0;"><i class="fas fa-clipboard-check dt-gv-head-icon" aria-hidden="true"></i>Kết luận</th><?php endif; ?>
 			</tr></thead>
 			<tbody>
 				<?php
 				if(!empty($dtStudents)): foreach($dtStudents as $it): $hv=$it['hv']; $s=$it['sum'];
+					$shResult = $showExam ? ($dtExamResults[dt_portal_sathach_cccd_key($hv['cccd'])] ?? null) : null;
 					$ltMiss = $showDetail && $showLt ? dt_portal_lythuyet_cell($hv, $s['ly_thuyet']['dat']) : array();
 					// DAT: luôn hiển thị nội dung còn thiếu (giống cột DAT ở màn Tổng hợp admin), không phụ thuộc show_detail.
 					$datMiss = $showDat && empty($s['dat']['dat']) && !empty($s['dat']['thieu']) ? $s['dat']['thieu'] : array();
@@ -169,6 +171,15 @@
 					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['dat']['dat'])?>
 						<?php $dagg = isset($s['dat']['agg']) ? $s['dat']['agg'] : null; if($dagg): ?><div class="dt-gv-dat-agg">A <?=$dagg['a']?>h · B <?=$dagg['b']?>h · C <?=$dagg['c']?>h · D <?=$dagg['d']?>h · E <?=$dagg['e']?> km</div><?php endif; ?>
 						<?php if(!empty($datMiss)): ?><div class="dt-gv-dat-missing"><?php foreach($datMiss as $m): ?><div class="dt-gv-dat-missing-item"><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span><?=htmlspecialchars($m)?></span></div><?php endforeach; ?></div><?php endif; ?>
+					</td>
+					<?php endif; ?>
+					<?php if($showExam): ?>
+					<td class="dt-gv-status-cell">
+						<?php if($shResult): $examLabel = trim((string)($shResult['ket_luan'] ?: $shResult['ket_qua'])); $examPassed = dt_portal_sathach_pass($examLabel); ?>
+						<div><?=htmlspecialchars(dt_portal_sathach_display_date($shResult['ngay_sh']))?></div>
+						<div class="dt-gv-exam-result"><span class="dt-gv-badge <?=$examPassed?'is-pass':'is-pending'?>"><?=htmlspecialchars($examLabel !== '' ? $examLabel : 'Chưa có kết luận')?></span> <span class="text-muted"><?=htmlspecialchars($shResult['hang'])?></span></div>
+						<?php if(!empty($shResult['so_gplx'])): ?><div class="dt-gv-student-meta">GPLX: <?=htmlspecialchars($shResult['so_gplx'])?></div><?php endif; ?>
+						<?php else: ?><span class="dt-gv-badge is-pending">Chưa có KQ</span><?php endif; ?>
 					</td>
 					<?php endif; ?>
 					<?php if($showKl): ?><td class="dt-gv-conclusion-cell"><span class="dt-gv-conclusion <?=$s['du_dieu_kien']?'is-ready':'is-not-ready'?>"><?=$s['du_dieu_kien']?'Đủ ĐK':'Chưa đủ'?></span></td><?php endif; ?>

@@ -91,10 +91,27 @@
 
 	<div class="card card-info card-outline text-sm mb-3">
 		<div class="card-header"><h3 class="card-title">Tổng hợp theo giáo viên</h3></div>
+		<?php if((xd_can_kiem_tra() || xd_can_duyet()) && !empty($xd_loc_summary)): ?>
+		<div class="card-body py-2 border-bottom">
+			<form id="xd-loc-bulk-form" method="post" action="index.php?com=xangdau&act=locBulkAction" class="form-inline" style="gap:.5rem;" onsubmit="return this.elements['operation'].value !== 'approve' || confirm('Duyệt thanh toán cho các giáo viên đã chọn?');">
+				<input type="hidden" name="csrf" value="<?=htmlspecialchars(xd_loc_bulk_csrf_token(), ENT_QUOTES, 'UTF-8')?>">
+				<input type="hidden" name="ret" value="<?=htmlspecialchars(rawurlencode(xd_loc_params_url('', 'loc')), ENT_QUOTES, 'UTF-8')?>">
+				<?php foreach(array('ky'=>$xd_loc_ky,'from_date'=>$xd_loc_from,'to_date'=>$xd_loc_to,'gv_keyword'=>$xd_loc_gv_keyword,'ma_hoa_don'=>$xd_loc_ma_hoa_don,'sort'=>$xd_loc_sort) as $filter=>$value): ?><input type="hidden" name="<?=$filter?>" value="<?=htmlspecialchars($value, ENT_QUOTES, 'UTF-8')?>"><?php endforeach; ?>
+				<select class="form-control form-control-sm" name="operation" required>
+					<option value="">Thao tác đã chọn…</option>
+					<?php if(xd_can_kiem_tra()): ?><option value="check">Đánh dấu đã kiểm tra</option><option value="uncheck">Bỏ kiểm tra</option><?php endif; ?>
+					<?php if(xd_can_duyet()): ?><option value="approve">Duyệt thanh toán</option><?php endif; ?>
+				</select>
+				<button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-play mr-1"></i>Thực hiện</button>
+				<span class="small text-muted">Chọn một hoặc nhiều giáo viên trong danh sách.</span>
+			</form>
+		</div>
+		<?php endif; ?>
 		<div class="card-body table-responsive p-0">
 			<table class="table table-hover">
 				<thead>
 					<tr>
+						<?php if(xd_can_kiem_tra() || xd_can_duyet()): ?><th class="text-center" style="width:34px"><input type="checkbox" class="xd-bulk-all" data-form="xd-loc-bulk-form" title="Chọn tất cả giáo viên"></th><?php endif; ?>
 						<th>STT</th>
 						<th>Giáo viên</th>
 						<th class="text-center">Số HĐ</th>
@@ -112,6 +129,7 @@
 				<tbody>
 					<?php if(!empty($xd_loc_summary)) { $i = 0; foreach($xd_loc_summary as $g) { $i++; ?>
 					<tr>
+						<?php if(xd_can_kiem_tra() || xd_can_duyet()): ?><td class="text-center"><input type="checkbox" class="xd-bulk-item" form="xd-loc-bulk-form" name="gv_keys[]" value="<?=htmlspecialchars($g['gv_key'], ENT_QUOTES, 'UTF-8')?>"></td><?php endif; ?>
 						<td><?=$i?></td>
 						<td><?=htmlspecialchars($g['gv_hoten'] !== '' ? $g['gv_hoten'] : $g['gv_key'])?></td>
 						<td class="text-center"><?=(int)$g['so_hd']?></td>
@@ -136,7 +154,7 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="12" class="text-center text-muted">Chưa có dữ liệu. Chọn kỳ/khoảng ngày rồi bấm "Chạy lọc".</td></tr>
+					<tr><td colspan="<?= (xd_can_kiem_tra() || xd_can_duyet()) ? 13 : 12 ?>" class="text-center text-muted">Chưa có dữ liệu. Chọn kỳ/khoảng ngày rồi bấm "Chạy lọc".</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>
@@ -155,6 +173,7 @@
 						<th>STT</th>
 						<th>Họ tên</th>
 						<th>CCCD</th>
+						<th>Tên khóa</th>
 						<th>Nhóm</th>
 						<th>Giáo viên</th>
 						<th class="text-right">Định mức XD</th>
@@ -167,13 +186,14 @@
 						<td><?=$i?></td>
 						<td><?=htmlspecialchars($hv['ho_ten'])?></td>
 						<td><?=htmlspecialchars($hv['cccd'])?></td>
+						<td><?=htmlspecialchars($hv['khoa_ten'] ?? $hv['khoa'] ?? '—')?></td>
 						<td><span class="badge <?=$badge?>"><?=htmlspecialchars($hv['nhom'])?></span></td>
 						<td><?=htmlspecialchars($hv['gv_hoten'] !== '' ? $hv['gv_hoten'] : $hv['gv_key'])?></td>
 						<td class="text-right"><?=number_format((float)$hv['dinh_muc'], 0, ',', '.')?></td>
 						<td class="text-right"><?=number_format((float)$hv['so_tien_thanh_toan'], 0, ',', '.')?></td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="7" class="text-center text-muted">Không có học viên nào đủ điều kiện.</td></tr>
+					<tr><td colspan="8" class="text-center text-muted">Không có học viên nào đủ điều kiện.</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

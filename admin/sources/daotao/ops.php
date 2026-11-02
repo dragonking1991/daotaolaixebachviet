@@ -93,7 +93,7 @@ function dt_conggv_defaults()
 {
 	return array(
 		'show_lythuyet' => 1, 'show_cabin' => 1, 'show_hinh' => 1, 'show_dat' => 1, 'show_ketluan' => 1,
-		'show_detail' => 1, 'allow_hinh_input' => 1,
+		'show_sathach' => 0, 'show_detail' => 1, 'allow_hinh_input' => 1,
 	);
 }
 

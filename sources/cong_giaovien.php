@@ -167,6 +167,7 @@ elseif($dtAct === 'savehinh' && isset($_SESSION['dt_gv']))
 $dtGv = isset($_SESSION['dt_gv']) ? $_SESSION['dt_gv'] : null;
 $dtCfg = dt_portal_conggv();
 $dtStudents = array();
+$dtExamResults = array();
 $dtKhoaList = array();
 $dtHistory = array();
 $dtFilterKhoa = isset($_REQUEST['khoa']) ? (int)$_REQUEST['khoa'] : 0;
@@ -190,4 +191,5 @@ if($dtGv)
 	{
 		$dtStudents[] = array('hv' => $hv, 'sum' => dt_student_summary($hv));
 	}
+	if(!empty($dtCfg['show_sathach'])) $dtExamResults = dt_portal_sathach_latest_map($dtStudents);
 }
