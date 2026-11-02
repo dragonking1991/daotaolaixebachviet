@@ -14,7 +14,12 @@ function dt_giaovien_list()
 	$items = $d->rawQuery("select g.*, (select count(*) from #_dt_hocvien h where h.gv_key = g.gv_key or (h.gv_key = '' and h.gv_hoten = g.hoten)) as so_hoc_vien from #_dt_giaovien g where 1 $where order by substring_index(g.hoten, ' ', -1) asc, g.hoten asc limit $startpoint,$per_page", $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_giaovien where 1 $where", $params);
 	$total_items = (int)$count['num'];
-	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=giaovien");
+	$baseUrl = "index.php?com=daotao&act=giaovien";
+	$filterQuery = array();
+	foreach(array('keyword','gioitinh','hang_gplx','hang','tt_tl','expiry') as $key)
+		if(isset($_REQUEST[$key]) && trim((string)$_REQUEST[$key]) !== '') $filterQuery[$key] = trim((string)$_REQUEST[$key]);
+	if($filterQuery) $baseUrl .= '&'.http_build_query($filterQuery);
+	$paging = $func->pagination($count['num'], $per_page, $curPage, $baseUrl);
 	$gv_expiry_stats = dt_giaovien_expiry_stats();
 }
 
@@ -37,16 +42,17 @@ function dt_giaovien_expiry_stats()
 function dt_giaovien_thanh_ly()
 {
 	global $d, $func;
+	$back = dt_crud_back(dt_crud_context('giaovien'), dt_crud_ret_query());
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 	$huy = isset($_GET['huy']) && $_GET['huy'] == '1';
-	if(!$id) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=giaovien", false);
+	if(!$id) $func->transfer("Không nhận được dữ liệu", $back, false);
 	$gv = $d->rawQueryOne("select id, hoten from #_dt_giaovien where id = ? limit 0,1", array($id));
-	if(!$gv) $func->transfer("Giáo viên không tồn tại", "index.php?com=daotao&act=giaovien", false);
+	if(!$gv) $func->transfer("Giáo viên không tồn tại", $back, false);
 
 	$d->where('id', $id);
 	$d->update('dt_giaovien', array('thanh_ly' => $huy ? 0 : 1, 'ngay_thanh_ly' => $huy ? '' : date('d/m/Y')));
 	if(function_exists('dt_audit')) dt_audit($huy ? 'huy_thanh_ly' : 'thanh_ly', 'giaovien', 1, 'id='.$id.' '.$gv['hoten']);
-	$func->transfer($huy ? "Đã hủy thanh lý giáo viên" : "Đã đánh dấu giáo viên đã thanh lý (nghỉ việc)", "index.php?com=daotao&act=giaovien");
+	$func->transfer($huy ? "Đã hủy thanh lý giáo viên" : "Đã đánh dấu giáo viên đã thanh lý (nghỉ việc)", $back);
 }
 
 function dt_giaovien_upload_excel()
@@ -200,11 +206,12 @@ function dt_gv_fmt_date($v)
 function dt_giaovien_reset_pass()
 {
 	global $d, $func;
+	$back = dt_crud_back(dt_crud_context('giaovien'), dt_crud_ret_query());
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-	if(!$id) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=giaovien", false);
+	if(!$id) $func->transfer("Không nhận được dữ liệu", $back, false);
 	$gv = $d->rawQueryOne("select cccd from #_dt_giaovien where id = ? limit 0,1", array($id));
-	if(!$gv || !$gv['cccd']) $func->transfer("Giáo viên không tồn tại", "index.php?com=daotao&act=giaovien", false);
+	if(!$gv || !$gv['cccd']) $func->transfer("Giáo viên không tồn tại", $back, false);
 	$d->where('id', $id);
 	$d->update('dt_giaovien', array('matkhau' => dt_gv_hash($gv['cccd'])));
-	$func->transfer("Đã đặt lại mật khẩu về mặc định (= CCCD)", "index.php?com=daotao&act=giaovien");
+	$func->transfer("Đã đặt lại mật khẩu về mặc định (= CCCD)", $back);
 }

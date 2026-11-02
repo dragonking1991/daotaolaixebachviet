@@ -9,8 +9,8 @@ function dt_crud_configs()
 			'id_khoa' => 'Khóa', 'ma_hv' => 'Mã học viên', 'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'hang' => 'Hạng', 'gv_hoten' => 'Giáo viên', 'nguoi_gioithieu' => 'Người giới thiệu', 'he_daotao' => 'Hệ đào tạo'
 		)),
 		'xe' => array('title' => 'Xe tập lái', 'table' => 'dt_xe', 'back' => 'xe', 'fields' => array(
-			'bien_so' => 'Biển số', 'hang_xe' => 'Hạng xe', 'hang_dt' => 'Hạng đào tạo', 'so_dangky' => 'Số đăng ký', 'so_khung' => 'Số khung', 'so_may' => 'Số máy', 'loai_xe' => 'Loại xe', 'nhan_hieu' => 'Nhãn hiệu', 'gv_hoten' => 'Giáo viên', 'ngay_hethan' => 'Ngày hết hạn GPLX xe tập lái',
-			'ma_csdt' => 'Mã CSĐT', 'nam_sx' => 'Năm sản xuất', 'so_gpxtl' => 'Số GP xe tập lái', 'ngay_cap_gpxtl' => 'Ngày cấp GPXTL', 'ngay_cap_gcnkd' => 'Ngày cấp GCNKĐ', 'ngay_hethan_gcnkd' => 'Ngày hết hạn GCNKĐ', 'so_huu' => 'Sở hữu (1/0)', 'so_imei' => 'Số IMEI', 'so_seri' => 'Số Seri', 'ghi_chu' => 'Ghi chú'
+			'bien_so' => 'Biển số', 'hang_xe' => 'Hạng xe', 'hang_dt' => 'Hạng đào tạo', 'so_dangky' => 'Số đăng ký', 'so_khung' => 'Số khung', 'so_may' => 'Số máy', 'loai_xe' => 'Loại xe', 'nhan_hieu' => 'Nhãn hiệu', 'gv_hoten' => 'Giáo viên',
+			'ma_csdt' => 'Mã CSĐT', 'nam_sx' => 'Năm sản xuất', 'so_gpxtl' => 'Số GP xe tập lái', 'ngay_cap_gpxtl' => 'Ngày cấp GPXTL', 'ngay_hethan' => 'Ngày hết hạn GPLX xe tập lái', 'ngay_cap_gcnkd' => 'Ngày cấp GCNKĐ', 'ngay_hethan_gcnkd' => 'Ngày hết hạn GCNKĐ', 'so_huu' => 'Sở hữu (1/0)', 'so_imei' => 'Số IMEI', 'so_seri' => 'Số Seri', 'ghi_chu' => 'Ghi chú'
 		)),
 		'giaovien' => array('title' => 'Giáo viên', 'table' => 'dt_giaovien', 'back' => 'giaovien', 'fields' => array(
 			'ma_csdt' => 'Mã CSĐT', 'cccd' => 'CCCD', 'hoten' => 'Họ và tên', 'ngaysinh' => 'Ngày sinh', 'gioitinh' => 'Giới tính', 'sdt' => 'Điện thoại', 'dia_chi' => 'Địa chỉ',
@@ -50,11 +50,14 @@ function dt_crud_back($config, $query = '')
 function dt_crud_ret_url()
 {
 	$ret = isset($_REQUEST['ret']) ? trim((string)$_REQUEST['ret']) : '';
-	if($ret === '') return '';
-	$ret = rawurldecode($ret);
-	if(strpos($ret, "\n") !== false || strpos($ret, "\r") !== false) return '';
-	if(strpos($ret, 'index.php?com=daotao') !== 0) return '';
-	return $ret;
+	if($ret !== '')
+	{
+		$ret = rawurldecode($ret);
+		if(strpos($ret, "\n") === false && strpos($ret, "\r") === false && strpos($ret, 'index.php?com=daotao') === 0) return $ret;
+	}
+	$entity = preg_replace('/[^a-z]/', '', (string)($_REQUEST['entity'] ?? ''));
+	$config = dt_crud_context($entity);
+	return $config ? dt_crud_back($config, dt_crud_ret_query()) : '';
 }
 
 function dt_crud_form()
@@ -196,7 +199,7 @@ function dt_crud_undo()
 function dt_crud_ret_query()
 {
 	$q = array();
-	foreach(array('id_khoa','keyword','hang','loai_xe','nhan_hieu','gioitinh','hang_gplx','gv','he','p') as $k)
+	foreach(array('id_khoa','keyword','hang','loai_xe','nhan_hieu','gioitinh','hang_gplx','gv','he','tt_tl','expiry','trang_thai','du_lieu','tu_ngay','toi_ngay','p') as $k)
 		if(isset($_GET[$k]) && $_GET[$k] !== '') $q[$k] = $_GET[$k];
 	return empty($q) ? '' : '&'.http_build_query($q);
 }
@@ -226,15 +229,16 @@ function dt_khoa_delete_id($id)
 function dt_khoa_delete_selected()
 {
 	global $d, $func;
+	$back = dt_crud_ret_url() ?: 'index.php?com=daotao&act=khoa';
 	$ids = isset($_POST['ids']) && is_array($_POST['ids']) ? array_values(array_unique(array_filter(array_map('intval', $_POST['ids'])))) : array();
-	if(!$ids) $func->transfer('Vui lòng chọn ít nhất một khóa', 'index.php?com=daotao&act=khoa', false);
+	if(!$ids) $func->transfer('Vui lòng chọn ít nhất một khóa', $back, false);
 
 	$placeholders = implode(',', array_fill(0, count($ids), '?'));
 	$rows = $d->rawQuery("select id from #_dt_khoa where id in ($placeholders)", $ids);
 	$ids = array_map('intval', array_column($rows, 'id'));
-	if(!$ids) $func->transfer('Không tìm thấy khóa đã chọn', 'index.php?com=daotao&act=khoa', false);
+	if(!$ids) $func->transfer('Không tìm thấy khóa đã chọn', $back, false);
 	if(dt_backup_tables(array('dt_khoa','dt_hocvien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_dat_override','dt_thuchanh_hinh'), 'del_khoa') === '')
-		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', 'index.php?com=daotao&act=khoa', false);
+		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', $back, false);
 
 	$affected = 0;
 	$d->startTransaction();
@@ -249,7 +253,7 @@ function dt_khoa_delete_selected()
 	}
 	$d->commit();
 	dt_audit('delete_selected', 'khoa', $affected, 'Khóa: '.implode(',', $ids));
-	$func->transfer('Đã xóa '.count($ids).' khóa và dữ liệu liên quan ('.$affected.' bản ghi)', 'index.php?com=daotao&act=khoa');
+	$func->transfer('Đã xóa '.count($ids).' khóa và dữ liệu liên quan ('.$affected.' bản ghi)', $back);
 }
 
 function dt_crud_delete_all()

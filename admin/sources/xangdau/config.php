@@ -58,6 +58,7 @@ function xd_save_config()
 
 	$redirect = "index.php?com=xangdau&act=config";
 	if($cccd !== '') $redirect .= '&cccd='.urlencode($cccd);
+	if(isset($_POST['danh_sach_dieu_chinh']) && $_POST['danh_sach_dieu_chinh'] === '1') $redirect .= '&danh_sach_dieu_chinh=1';
 	$func->transfer("Cập nhật định mức XD thành công", $redirect);
 }
 

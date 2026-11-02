@@ -15,7 +15,12 @@ function dt_khoa_list()
 	$items = $d->rawQuery($sql, $params);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_khoa k where k.hienthi >= 0 $where", $params);
 	$total_items = (int)$count['num'];
-	$paging = $func->pagination($count['num'], $per_page, $curPage, "index.php?com=daotao&act=khoa");
+	$baseUrl = "index.php?com=daotao&act=khoa";
+	$filterQuery = array();
+	foreach(array('keyword','hang','he','tu_ngay','toi_ngay') as $key)
+		if(isset($_REQUEST[$key]) && trim((string)$_REQUEST[$key]) !== '') $filterQuery[$key] = trim((string)$_REQUEST[$key]);
+	if($filterQuery) $baseUrl .= '&'.http_build_query($filterQuery);
+	$paging = $func->pagination($count['num'], $per_page, $curPage, $baseUrl);
 }
 
 /* Danh sách tất cả khóa (dùng cho dropdown chọn khóa ở các module). */
@@ -40,8 +45,8 @@ function dt_khoa_form()
 function dt_khoa_save()
 {
 	global $d, $func, $login_admin;
-
-	if(empty($_POST['data'])) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=khoa", false);
+	$back = dt_crud_ret_url() ?: 'index.php?com=daotao&act=khoa';
+	if(empty($_POST['data'])) $func->transfer("Không nhận được dữ liệu", $back, false);
 	$p = $_POST['data'];
 
 	$data = array(
@@ -55,48 +60,45 @@ function dt_khoa_save()
 	);
 	if($data['ngay_khaigiang'] === '') $data['ngay_khaigiang'] = null;
 	if($data['ngay_manhoa'] === '') $data['ngay_manhoa'] = null;
-
-	if($data['ma_khoa'] === '') $func->transfer("Vui lòng nhập mã khóa học", "index.php?com=daotao&act=khoa", false);
-
+	if($data['ma_khoa'] === '') $func->transfer("Vui lòng nhập mã khóa học", $back, false);
 	if($data['ngay_khaigiang'] && $data['ngay_manhoa'] && strtotime($data['ngay_manhoa']) < strtotime($data['ngay_khaigiang']))
-		$func->transfer("Ngày mãn khóa phải lớn hơn hoặc bằng ngày khai giảng", "index.php?com=daotao&act=khoa", false);
+		$func->transfer("Ngày mãn khóa phải lớn hơn hoặc bằng ngày khai giảng", $back, false);
 
 	$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-
 	$dup = $d->rawQueryOne("select id from #_dt_khoa where ma_khoa = ? and id <> ? limit 0,1", array($data['ma_khoa'], $id));
-	if($dup && $dup['id']) $func->transfer("Mã khóa học đã tồn tại", "index.php?com=daotao&act=khoa", false);
+	if($dup && $dup['id']) $func->transfer("Mã khóa học đã tồn tại", $back, false);
 
 	if($id)
 	{
 		$d->where('id', $id);
-		if($d->update('dt_khoa', $data) !== false) $func->transfer("Cập nhật khóa thành công", "index.php?com=daotao&act=khoa");
-		$func->transfer("Cập nhật khóa bị lỗi", "index.php?com=daotao&act=khoa", false);
+		if($d->update('dt_khoa', $data) !== false) $func->transfer("Cập nhật khóa thành công", $back);
+		$func->transfer("Cập nhật khóa bị lỗi", $back, false);
 	}
 	else
 	{
 		$data['ngaytao'] = time();
 		$data['user_tao'] = isset($_SESSION[$login_admin]['username']) ? $_SESSION[$login_admin]['username'] : '';
 		$data['hienthi'] = 1;
-		if($d->insert('dt_khoa', $data)) $func->transfer("Lưu khóa thành công", "index.php?com=daotao&act=khoa");
-		$func->transfer("Lưu khóa bị lỗi", "index.php?com=daotao&act=khoa", false);
+		if($d->insert('dt_khoa', $data)) $func->transfer("Lưu khóa thành công", $back);
+		$func->transfer("Lưu khóa bị lỗi", $back, false);
 	}
 }
 
 function dt_khoa_delete()
 {
 	global $d, $func;
+	$back = dt_crud_ret_url() ?: 'index.php?com=daotao&act=khoa';
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-	if(!$id) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=khoa", false);
-	if(dt_backup_tables(array('dt_khoa','dt_hocvien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_thuchanh_hinh'), 'del_khoa') === '')
-		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', 'index.php?com=daotao&act=khoa', false);
+	if(!$id) $func->transfer("Không nhận được dữ liệu", $back, false);
+	if(dt_backup_tables(array('dt_khoa','dt_hocvien','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_dat_override','dt_thuchanh_hinh'), 'del_khoa') === '')
+		$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', $back, false);
 
 	$d->startTransaction();
 	dt_khoa_delete_id($id);
 	$d->commit();
 	if(function_exists('dt_audit')) dt_audit('delete', 'khoa', 1, 'id='.$id.' (+dữ liệu liên quan)');
-	$func->transfer("Xóa khóa và dữ liệu liên quan thành công", "index.php?com=daotao&act=khoa");
+	$func->transfer("Xóa khóa và dữ liệu liên quan thành công", $back);
 }
-
 /**
  * Tìm khóa theo mã; nếu chưa có thì tự tạo. Trả về id_khoa (0 nếu mã rỗng).
  * Dùng chung cho các importer để "khóa thiếu thì tự thêm".

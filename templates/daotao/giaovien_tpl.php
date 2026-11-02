@@ -63,23 +63,6 @@
 			$allowHinh = !empty($dtCfg['allow_hinh_input']);
 			$colCount = 2 + ($showLt?1:0) + ($showCabin?1:0) + ($showHinh?1:0) + ($showDat?1:0) + ($showKl?1:0);
 		?>
-		<details class="dt-gv-history" <?=!empty($dtHistory)?'open':''?>>
-			<summary><i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Lịch sử cập nhật gần đây <span class="dt-gv-history-sub">(30 ngày)</span><span class="dt-gv-history-count"><?=count($dtHistory)?></span></summary>
-			<?php if(!empty($dtHistory)): ?>
-			<ul class="dt-gv-history-list">
-				<?php foreach($dtHistory as $h): ?>
-				<li>
-					<span class="dt-gv-history-time"><i class="far fa-calendar" aria-hidden="true"></i><?=date('d/m/Y H:i', (int)$h['ngaytao'])?></span>
-					<span class="dt-gv-history-hv"><i class="fas fa-user-graduate" aria-hidden="true"></i><?=htmlspecialchars($h['hv_hoten'] ?: ('CCCD '.$h['hv_cccd']))?></span>
-					<span class="dt-gv-history-act"><?=htmlspecialchars($h['noi_dung'])?></span>
-				</li>
-				<?php endforeach; ?>
-			</ul>
-			<?php else: ?>
-			<div class="dt-gv-history-empty">Chưa có cập nhật nào trong 30 ngày qua.</div>
-			<?php endif; ?>
-		</details>
-
 		<form method="get" action="cong-giao-vien" class="dt-gv-filter" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;">
 			<select name="khoa" style="height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;min-width:200px;">
 				<option value="0">— Tất cả khóa —</option>
@@ -196,6 +179,22 @@
 			</tbody>
 		</table>
 		</div>
+		<details class="dt-gv-history">
+			<summary><i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Lịch sử cập nhật gần đây <span class="dt-gv-history-sub">(30 ngày)</span><span class="dt-gv-history-count"><?=count($dtHistory)?></span></summary>
+			<?php if(!empty($dtHistory)): ?>
+			<ul class="dt-gv-history-list">
+				<?php foreach($dtHistory as $h): ?>
+				<li>
+					<span class="dt-gv-history-time"><i class="far fa-calendar" aria-hidden="true"></i><?=date('d/m/Y H:i', (int)$h['ngaytao'])?></span>
+					<span class="dt-gv-history-hv"><i class="fas fa-user-graduate" aria-hidden="true"></i><?=htmlspecialchars($h['hv_hoten'] ?: ('CCCD '.$h['hv_cccd']))?></span>
+					<span class="dt-gv-history-act"><?=htmlspecialchars($h['noi_dung'])?></span>
+				</li>
+				<?php endforeach; ?>
+			</ul>
+			<?php else: ?>
+			<div class="dt-gv-history-empty">Chưa có cập nhật nào trong 30 ngày qua.</div>
+			<?php endif; ?>
+		</details>
 		<?php endif; ?>
 	</div>
 	<?php endif; ?>

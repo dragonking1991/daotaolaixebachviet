@@ -115,11 +115,12 @@ switch($act)
 		break;
 	case "syncTrainingDat":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		$syncBack = xd_safe_ret($_GET['ret'] ?? '', 'index.php?com=xangdau&act=hocvien');
 		$syncResult = xd_sync_training_students();
 		xd_sync_remember($syncResult);
 		ik_notice('xangdau', trim(xd_sync_training_notice($syncResult)), !empty($syncResult['ok']), array('title' => 'Đồng bộ học viên đạt DAT', 'steps' => false,
-			'links' => array(array('label' => 'Xem học viên XD', 'url' => 'index.php?com=xangdau&act=hocvien', 'icon' => 'fa-users', 'primary' => true))));
-		$func->redirect("index.php?com=xangdau&act=hocvien");
+			'links' => array(array('label' => 'Xem học viên XD', 'url' => $syncBack, 'icon' => 'fa-users', 'primary' => true))));
+		$func->redirect($syncBack);
 		break;
 	case "syncTrainingDatPreview":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);

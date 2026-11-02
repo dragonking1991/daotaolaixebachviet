@@ -1,3 +1,9 @@
+<?php
+	$xdCeRetQuery = array('com' => 'xangdau', 'act' => 'ce');
+	if(!empty($xd_ce_filter_khoa)) $xdCeRetQuery['id_khoa'] = (int)$xd_ce_filter_khoa;
+	if(!empty($xd_ce_filter_keyword)) $xdCeRetQuery['keyword'] = $xd_ce_filter_keyword;
+	$xdCeRet = rawurlencode('index.php?'.http_build_query($xdCeRetQuery));
+?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<div class="row">
@@ -31,12 +37,13 @@
 				<input class="form-control form-control-sm" type="search" name="keyword" value="<?=htmlspecialchars($xd_ce_filter_keyword ?? '')?>" placeholder="Tên, CCCD, mã khóa, giáo viên/hóa đơn">
 				<button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-search mr-1"></i>Lọc</button>
 				<a class="btn btn-sm btn-secondary" href="index.php?com=xangdau&act=ce">Bỏ lọc</a>
-				<?php if(xd_can_import()): ?><a class="btn btn-sm btn-info" href="index.php?com=xangdau&act=syncTrainingDat" onclick="return confirm('Đồng bộ học viên DAT đạt? Học viên CE sẽ vào danh sách CE riêng. Hồ sơ đã có sẽ không bị gỡ nếu dữ liệu DAT sau đó thay đổi.');"><i class="fas fa-rotate mr-1"></i>Đồng bộ DAT</a><?php endif; ?>
+				<?php if(xd_can_import()): ?><a class="btn btn-sm btn-info" href="index.php?com=xangdau&act=syncTrainingDat&ret=<?=$xdCeRet?>" onclick="return confirm('Đồng bộ học viên DAT đạt? Học viên CE sẽ vào danh sách CE riêng. Hồ sơ đã có sẽ không bị gỡ nếu dữ liệu DAT sau đó thay đổi.');"><i class="fas fa-rotate mr-1"></i>Đồng bộ DAT</a><?php endif; ?>
 			</form>
 			<?php if(xd_can_import()): ?>
 			<div class="row">
 				<div class="col-lg-7">
 					<form method="post" action="index.php?com=xangdau&act=ceInvoiceSave" class="border rounded p-3 mb-3">
+						<input type="hidden" name="ret" value="<?=$xdCeRet?>">
 						<strong class="d-block mb-2">Nhập thủ công hóa đơn CE</strong>
 						<div class="form-row">
 							<div class="form-group col-md-6">
@@ -57,6 +64,7 @@
 				</div>
 				<div class="col-lg-5">
 					<form method="post" action="index.php?com=xangdau&act=ceInvoiceUpload" enctype="multipart/form-data" class="border rounded p-3 mb-3">
+						<input type="hidden" name="ret" value="<?=$xdCeRet?>">
 						<strong class="d-block mb-2">Import hóa đơn CE từ Excel</strong>
 						<div class="small text-muted mb-2">Cột bắt buộc: Mã khóa CE, Số hóa đơn, Ngày hóa đơn, Số tiền, Giáo viên, Kỳ. Với số tiền trong Excel, ô số thuần nhỏ hơn 100.000 được hiểu theo đơn vị nghìn (ví dụ 608,75 = 608.750đ); chuỗi có dấu phân tách được đọc theo giá trị đầy đủ.</div>
 						<div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
@@ -107,7 +115,7 @@
 						<td class="text-right"><?=number_format((float)$invoice['tong_tien'], 0, ',', '.')?></td>
 						<td><?=htmlspecialchars($invoice['gv_hoten'])?></td>
 						<td><?=htmlspecialchars($invoice['ky'])?></td>
-						<td><?php if(xd_can_xoa()): ?><form method="post" action="index.php?com=xangdau&act=ceInvoiceDelete" class="d-inline" onsubmit="return confirm('Xóa hóa đơn CE này?');"><input type="hidden" name="id" value="<?=(int)$invoice['id']?>"><button class="btn btn-sm btn-danger" type="submit" aria-label="Xóa hóa đơn CE"><i class="fas fa-trash-alt"></i></button></form><?php endif; ?></td>
+						<td><?php if(xd_can_xoa()): ?><form method="post" action="index.php?com=xangdau&act=ceInvoiceDelete" class="d-inline" onsubmit="return confirm('Xóa hóa đơn CE này?');"><input type="hidden" name="id" value="<?=(int)$invoice['id']?>"><input type="hidden" name="ret" value="<?=$xdCeRet?>"><button class="btn btn-sm btn-danger" type="submit" aria-label="Xóa hóa đơn CE"><i class="fas fa-trash-alt"></i></button></form><?php endif; ?></td>
 					</tr>
 					<?php endforeach; else: ?>
 					<tr><td colspan="8" class="text-center text-muted">Chưa có hóa đơn CE trong bộ lọc.</td></tr>

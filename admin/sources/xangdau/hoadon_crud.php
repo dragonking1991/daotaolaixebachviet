@@ -86,7 +86,7 @@ function xd_toggle_hop_le_hoadon()
 {
 	global $d, $func, $curPage;
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-	$redirect = "index.php?com=xangdau&act=hoadon&p=".(int)$curPage;
+	$redirect = xd_safe_ret($_GET['ret'] ?? '', "index.php?com=xangdau&act=hoadon&p=".(int)$curPage);
 	if($id <= 0) $func->transfer("Không xác định được hóa đơn.", $redirect, false);
 
 	$row = $d->rawQueryOne("select da_quyettoan, hop_le from #_xd_hoadon where id = ? limit 0,1", array($id));
@@ -104,7 +104,7 @@ function xd_delete_hoadon()
 	global $d, $func, $curPage;
 
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-	$redirect = "index.php?com=xangdau&act=hoadon&p=".$curPage;
+	$redirect = xd_safe_ret($_GET['ret'] ?? '', "index.php?com=xangdau&act=hoadon&p=".(int)$curPage);
 
 	if($id > 0)
 	{
@@ -150,22 +150,24 @@ function xd_delete_hoadon_selected()
 function xd_delete_all_hoadon()
 {
 	global $d, $func;
+	$redirect = xd_safe_ret($_GET['ret'] ?? '', 'index.php?com=xangdau&act=hoadon');
 	$backup = xd_backup_table_json('xd_hoadon', 'all_hoadon');
-	if($backup === '') $func->transfer("Không thể sao lưu dữ liệu; đã hủy thao tác xóa toàn bộ hóa đơn.", "index.php?com=xangdau&act=hoadon", false);
+	if($backup === '') $func->transfer("Không thể sao lưu dữ liệu; đã hủy thao tác xóa toàn bộ hóa đơn.", $redirect, false);
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hoadon");
 	$ok = $d->rawQuery("delete from #_xd_hoadon");
 	$n = isset($count['num']) ? (int)$count['num'] : 0;
-	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể xóa toàn bộ hóa đơn", "index.php?com=xangdau&act=hoadon", false);
-	$func->transfer("Đã xóa toàn bộ $n hóa đơn. Sao lưu: $backup", "index.php?com=xangdau&act=hoadon");
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể xóa toàn bộ hóa đơn", $redirect, false);
+	$func->transfer("Đã xóa toàn bộ $n hóa đơn. Sao lưu: $backup", $redirect);
 }
 
 function xd_toggle_kiem_tra_hoadon()
 {
 	global $d, $func, $curPage;
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-	if($id <= 0) $func->transfer("Không xác định được hóa đơn.", "index.php?com=xangdau&act=hoadon", false);
+	$redirect = xd_safe_ret($_GET['ret'] ?? '', "index.php?com=xangdau&act=hoadon&p=".(int)$curPage);
+	if($id <= 0) $func->transfer("Không xác định được hóa đơn.", $redirect, false);
 	$row = $d->rawQueryOne("select ke_toan_kiem_tra, ngay_kiem_tra from #_xd_hoadon where id = ? limit 0,1", array($id));
-	if(empty($row)) $func->transfer("Không tìm thấy hóa đơn cần cập nhật.", "index.php?com=xangdau&act=hoadon", false);
+	if(empty($row)) $func->transfer("Không tìm thấy hóa đơn cần cập nhật.", $redirect, false);
 	$checked = (int)$row['ke_toan_kiem_tra'] === 1;
 	$today = date('Y-m-d');
 	$d->rawQuery(
@@ -174,5 +176,5 @@ function xd_toggle_kiem_tra_hoadon()
 			: "update #_xd_hoadon set ke_toan_kiem_tra = 1, ngay_kiem_tra = ? where id = ?",
 		$checked ? array($id) : array($today, $id)
 	);
-	$func->transfer($checked ? "Đã bỏ xác nhận kiểm tra hóa đơn." : "Đã xác nhận kiểm tra hóa đơn.", "index.php?com=xangdau&act=hoadon&p=".(int)$curPage, true);
+	$func->transfer($checked ? "Đã bỏ xác nhận kiểm tra hóa đơn." : "Đã xác nhận kiểm tra hóa đơn.", $redirect, true);
 }

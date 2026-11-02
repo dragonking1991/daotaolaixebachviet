@@ -105,35 +105,15 @@ b,strong,h1,h2,h3,h4,h5,h6{font-family: 'tieude';}
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	gap:24px;
 }
-.thongtin a{
-	background:#ffffff;
-	font-family:'tieude';
-	color:var(--color-red);
-	padding:6px 15px;
-	border-radius:4px;
-	text-transform:uppercase;
-	text-align: center;
+.thongtin p{
+	margin-bottom:0;
 }
 .thongtin p i{
 	display:inline-block;
 	vertical-align:middle;
 	margin-right:7px;
-}
-.thongtin-actions{
-	display:flex;
-	align-items:center;
-	gap:18px;
-	flex-shrink:0;
-}
-.thongtin .header-account{
-	background:transparent;
-	color:#fff;
-	padding:6px 0;
-	text-transform:none;
-}
-.header-account i{
-	margin-right:5px;
 }
 .logo,.banner{
 	line-height: 0;

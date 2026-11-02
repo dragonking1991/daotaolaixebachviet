@@ -13,6 +13,7 @@
 	if(($xd_filter_import ?? '') !== '') $xd_ret_q['import'] = $xd_filter_import;
 	$xd_ret_q['p'] = (int)$curPage;
 	$xd_ret = rawurlencode('index.php?'.http_build_query($xd_ret_q));
+	$linkUpload .= '&ret='.$xd_ret;
 	$xd_can_edit_info = (function_exists('xd_can_import') && xd_can_import()) || (function_exists('xd_can_kiem_tra') && xd_can_kiem_tra());
 	if(empty($_SESSION['xd_dat_csrf'])) $_SESSION['xd_dat_csrf'] = bin2hex(random_bytes(24));
 ?>
@@ -118,7 +119,7 @@
 						<h6 class="dropdown-header">Không phụ thuộc bộ lọc</h6>
 						<a class="dropdown-item text-danger" href="#xd-delete-gv-panel" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="xd-delete-gv-panel"><i class="fas fa-user-times mr-2"></i>Xóa học viên theo giáo viên…</a>
 						<div class="dropdown-divider"></div>
-						<a class="dropdown-item text-danger" id="xd-delete-all-btn" href="index.php?com=xangdau&act=deleteAllHocvien"><i class="fas fa-trash-alt mr-2"></i>Xóa toàn bộ học viên…</a>
+						<a class="dropdown-item text-danger" id="xd-delete-all-btn" href="index.php?com=xangdau&act=deleteAllHocvien&ret=<?=$xd_ret?>"><i class="fas fa-trash-alt mr-2"></i>Xóa toàn bộ học viên…</a>
 					</div>
 				</div>
 				<?php } ?>
@@ -270,10 +271,10 @@
 						<td class="text-right text-nowrap"><?=number_format((float)$it['so_tien_thanh_toan'], 0, ',', '.')?></td>
 						<td class="text-nowrap">
 							<?php if($it['ngay_thanh_toan'] !== null) { ?>
-								<a class="badge badge-success" href="index.php?com=xangdau&act=updateHocvienStatus&id=<?=(int)$it['id']?>&status=chua&p=<?=(int)$curPage?>" title="Bấm để chuyển về chưa thanh toán" onclick="return confirm('Chuyển học viên <?=htmlspecialchars($it['ho_ten'], ENT_QUOTES, 'UTF-8')?> (CCCD: <?=htmlspecialchars($it['cccd'], ENT_QUOTES, 'UTF-8')?>) về chưa thanh toán?');">Đã TT</a>
+								<a class="badge badge-success" href="index.php?com=xangdau&act=updateHocvienStatus&id=<?=(int)$it['id']?>&status=chua&p=<?=(int)$curPage?>&ret=<?=$xd_ret?>" title="Bấm để chuyển về chưa thanh toán" onclick="return confirm('Chuyển học viên <?=htmlspecialchars($it['ho_ten'], ENT_QUOTES, 'UTF-8')?> (CCCD: <?=htmlspecialchars($it['cccd'], ENT_QUOTES, 'UTF-8')?>) về chưa thanh toán?');">Đã TT</a>
 								<span class="xd-hv-sub"><?=date('d/m/Y', strtotime($it['ngay_thanh_toan']))?></span>
 							<?php } else { ?>
-								<a class="badge badge-light border" href="index.php?com=xangdau&act=updateHocvienStatus&id=<?=(int)$it['id']?>&status=da&p=<?=(int)$curPage?>" title="Bấm để xác nhận đã thanh toán" onclick="return confirm('Xác nhận học viên <?=htmlspecialchars($it['ho_ten'], ENT_QUOTES, 'UTF-8')?> (CCCD: <?=htmlspecialchars($it['cccd'], ENT_QUOTES, 'UTF-8')?>) đã thanh toán?');">Chưa TT</a>
+								<a class="badge badge-light border" href="index.php?com=xangdau&act=updateHocvienStatus&id=<?=(int)$it['id']?>&status=da&p=<?=(int)$curPage?>&ret=<?=$xd_ret?>" title="Bấm để xác nhận đã thanh toán" onclick="return confirm('Xác nhận học viên <?=htmlspecialchars($it['ho_ten'], ENT_QUOTES, 'UTF-8')?> (CCCD: <?=htmlspecialchars($it['cccd'], ENT_QUOTES, 'UTF-8')?>) đã thanh toán?');">Chưa TT</a>
 							<?php } ?>
 						</td>
 						<td class="text-right text-nowrap">
@@ -290,7 +291,7 @@
 								</details>
 								<?php } ?>
 								<?php if(xd_can_xoa()) { ?>
-								<a class="btn btn-xs btn-danger" href="index.php?com=xangdau&act=deleteHocvien&id=<?=(int)$it['id']?>&p=<?=$curPage?>" onclick="return confirm('Xóa học viên này?');"><i class="far fa-trash-alt"></i></a>
+								<a class="btn btn-xs btn-danger" href="index.php?com=xangdau&act=deleteHocvien&id=<?=(int)$it['id']?>&p=<?=$curPage?>&ret=<?=$xd_ret?>" onclick="return confirm('Xóa học viên này?');"><i class="far fa-trash-alt"></i></a>
 							<?php } ?>
 						</td>
 					</tr>
@@ -351,7 +352,7 @@
 			var disabled = gvKey === '' || canDelete === '0';
 			button.classList.toggle('disabled', disabled);
 			button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
-			button.href = gvKey === '' ? '#' : 'index.php?com=xangdau&act=deleteHocvienByGv&gv_key=' + encodeURIComponent(gvKey) + (window.ADMIN_CSRF ? '&_csrf=' + encodeURIComponent(window.ADMIN_CSRF.token) : '');
+			button.href = gvKey === '' ? '#' : 'index.php?com=xangdau&act=deleteHocvienByGv&gv_key=' + encodeURIComponent(gvKey) + '&ret=<?=$xd_ret?>' + (window.ADMIN_CSRF ? '&_csrf=' + encodeURIComponent(window.ADMIN_CSRF.token) : '');
 			button.onclick = function() {
 				if (disabled) return false;
 				var message = 'Xóa ' + canDelete + ' học viên chưa thanh toán của giáo viên ' + name + ' (mọi khóa, không theo bộ lọc)?';

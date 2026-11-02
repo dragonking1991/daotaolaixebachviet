@@ -1,4 +1,4 @@
-<?php if(!defined('SOURCES')) die("Error"); $isEdit = !empty($item['id']); ?>
+<?php if(!defined('SOURCES')) die("Error"); $isEdit = !empty($item['id']); $khoaRet = function_exists('dt_crud_ret_url') ? dt_crud_ret_url() : ''; $khoaBack = $khoaRet !== '' ? $khoaRet : 'index.php?com=daotao&act=khoa'; ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<ol class="breadcrumb float-sm-left">
@@ -11,6 +11,7 @@
 <section class="content">
 	<form method="post" action="index.php?com=daotao&act=khoaSave">
 		<input type="hidden" name="id" value="<?=$isEdit ? (int)$item['id'] : 0?>">
+		<?php if($khoaRet !== ''): ?><input type="hidden" name="ret" value="<?=htmlspecialchars($khoaRet, ENT_QUOTES, 'UTF-8')?>"><?php endif; ?>
 		<div class="card card-primary card-outline text-sm" style="max-width:720px">
 			<div class="card-header"><h3 class="card-title"><strong><?=$isEdit ? 'Sửa khóa đào tạo' : 'Thêm khóa đào tạo'?></strong></h3></div>
 			<div class="card-body">
@@ -51,7 +52,7 @@
 			</div>
 			<div class="card-footer">
 				<button type="submit" class="btn btn-sm bg-gradient-success"><i class="fas fa-save mr-1"></i>Lưu</button>
-				<a href="index.php?com=daotao&act=khoa" class="btn btn-sm bg-gradient-secondary text-white">Quay lại</a>
+				<a href="<?=htmlspecialchars($khoaBack, ENT_QUOTES, 'UTF-8')?>" class="btn btn-sm bg-gradient-secondary text-white">Quay lại</a>
 			</div>
 		</div>
 	</form>

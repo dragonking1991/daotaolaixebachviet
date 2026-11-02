@@ -1,4 +1,9 @@
-<?php if(!defined('SOURCES')) die("Error"); ?>
+<?php if(!defined('SOURCES')) die("Error");
+	$khoaRetQuery = array();
+	foreach(array('keyword','hang','he','tu_ngay','toi_ngay','p') as $k)
+		if(isset($_GET[$k]) && is_scalar($_GET[$k]) && (string)$_GET[$k] !== '') $khoaRetQuery[$k] = (string)$_GET[$k];
+	$khoaRet = rawurlencode('index.php?com=daotao&act=khoa'.($khoaRetQuery ? '&'.http_build_query($khoaRetQuery) : ''));
+?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
 		<ol class="breadcrumb float-sm-left">
@@ -12,7 +17,7 @@
 		<div class="card-header">
 			<h3 class="card-title"><strong>Danh sách khóa đào tạo</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
 			<div class="card-tools">
-				<?php if(dt_can('khoa','edit')): ?><a href="index.php?com=daotao&act=khoaAdd" class="btn btn-sm bg-gradient-success"><i class="fas fa-plus mr-1"></i>Thêm khóa</a><?php endif; ?>
+				<?php if(dt_can('khoa','edit')): ?><a href="index.php?com=daotao&act=khoaAdd&ret=<?=$khoaRet?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-plus mr-1"></i>Thêm khóa</a><?php endif; ?>
 				<?php if(dt_can('khoa','import')): ?><a href="index.php?com=daotao&act=uploadKhoa" class="btn btn-sm bg-gradient-primary"><i class="fas fa-upload mr-1"></i>Import khóa</a><?php endif; ?>
 				<?php if(dt_can('khoa','export')): ?><a href="<?=dt_export_link('exportKhoa', array('keyword','hang','he','tu_ngay','toi_ngay'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php endif; ?>
 				<?php if(dt_can('khoa','delete')): ?><button type="submit" form="dt-khoa-delete-form" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa khóa đã chọn</button><?php endif; ?>
@@ -33,7 +38,7 @@
 				<a href="index.php?com=daotao&act=khoa" class="btn btn-sm btn-outline-secondary mb-1">Xóa lọc</a>
 			</form>
 		</div>
-		<form id="dt-khoa-delete-form" method="post" action="index.php?com=daotao&act=khoaDeleteSelected" class="dt-khoa-delete-form">
+		<form id="dt-khoa-delete-form" method="post" action="index.php?com=daotao&act=khoaDeleteSelected" class="dt-khoa-delete-form"><input type="hidden" name="ret" value="<?=$khoaRet?>">
 		<div class="card-body p-0">
 			<table class="table dt-list table-hover mb-0">
 				<thead>
@@ -56,7 +61,7 @@
 						<td class="dt-sub"><i class="far fa-calendar-alt"></i><?=$it['ngay_khaigiang'] ? date('d/m/Y', strtotime($it['ngay_khaigiang'])) : '—'?> <span class="dt-sep">→</span> <?=$it['ngay_manhoa'] ? date('d/m/Y', strtotime($it['ngay_manhoa'])) : '—'?></td>
 						<td class="text-center"><a href="index.php?com=daotao&act=hocvien&id_khoa=<?=$it['id']?>" class="dt-tag"><?=(int)$it['so_hoc_vien']?> HV</a></td>
 						<td class="dt-actions">
-							<?php if(dt_can('khoa','edit')): ?><a href="index.php?com=daotao&act=khoaEdit&id=<?=$it['id']?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a><?php else: ?><span class="text-muted">—</span><?php endif; ?>
+							<?php if(dt_can('khoa','edit')): ?><a href="index.php?com=daotao&act=khoaEdit&id=<?=$it['id']?>&ret=<?=$khoaRet?>" class="btn btn-xs bg-gradient-info"><i class="fas fa-edit"></i></a><?php else: ?><span class="text-muted">—</span><?php endif; ?>
 						</td>
 					</tr>
 					<?php endforeach; else: ?>

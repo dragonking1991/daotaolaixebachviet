@@ -57,16 +57,17 @@ function dt_xe_expiry_stats()
 function dt_xe_thanh_ly()
 {
 	global $d, $func;
+	$back = dt_crud_back(dt_crud_context('xe'), dt_crud_ret_query());
 	$id = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
 	$huy = isset($_REQUEST['huy']) && $_REQUEST['huy'] == '1';
-	if(!$id) $func->transfer("Không nhận được dữ liệu", "index.php?com=daotao&act=xe", false);
+	if(!$id) $func->transfer("Không nhận được dữ liệu", $back, false);
 	$xe = $d->rawQueryOne("select id, bien_so from #_dt_xe where id = ? limit 0,1", array($id));
-	if(!$xe) $func->transfer("Xe không tồn tại", "index.php?com=daotao&act=xe", false);
+	if(!$xe) $func->transfer("Xe không tồn tại", $back, false);
 
 	$d->where('id', $id);
 	$d->update('dt_xe', array('thanh_ly' => $huy ? 0 : 1, 'ngay_thanh_ly' => $huy ? '' : date('d/m/Y')));
 	if(function_exists('dt_audit')) dt_audit($huy ? 'huy_thanh_ly' : 'thanh_ly', 'xe', 1, 'id='.$id.' '.$xe['bien_so']);
-	$func->transfer($huy ? "Đã hủy thanh lý xe" : "Đã thanh lý xe", "index.php?com=daotao&act=xe");
+	$func->transfer($huy ? "Đã hủy thanh lý xe" : "Đã thanh lý xe", $back);
 }
 
 function dt_xe_upload_excel()

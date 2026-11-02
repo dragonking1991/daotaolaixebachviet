@@ -1,5 +1,6 @@
 <?php
 	$linkUploadExcel = "index.php?com=xangdau&act=uploadHocvienExcel";
+	$xdUploadReturn = xd_safe_ret($_GET['ret'] ?? '', 'index.php?com=xangdau&act=hocvien');
 	$ikExtraHtml = '<p class="mb-1"><strong>Mẫu cũ (không có cột tiền):</strong> STT | HỌ VÀ TÊN | KHÓA | Ngày sinh | Số CCCD | NGƯỜI NỘP | PHÂN XE / GIÁO VIÊN | GHI CHÚ / Nhóm (BT/CK/DAT). Ghi thẳng, không có bước xem trước; hồ sơ đã thanh toán được bỏ qua; hồ sơ đồng bộ DAT giữ nguyên khóa, giáo viên và liên kết Đào tạo.</p>'
 		.'<p class="mb-1"><strong>Mẫu BC1 có tài chính:</strong> không import vào Đào tạo, không tạo giao dịch hay thay đổi trạng thái thanh toán XD. Hồ sơ đã có giữ nguyên khóa, lịch sử thanh toán và liên kết DAT; nhóm mới chỉ áp dụng cho tính toán XD về sau. Cột tiền không có trong file được giữ nguyên; ô tiền trống trong cột có sẵn được nhập là 0.</p>'
 		.'<p class="mb-0"><strong>Ngày nộp hồ sơ:</strong> nhận dd-mm-yyyy (10-07-2026), dd/mm/yyyy, yyyy-mm-dd hoặc ngày Excel; ngày đứng trước tháng. Ô lỗi công thức (#REF!) phải sửa và lưu lại file trước khi import.</p>';
@@ -9,7 +10,7 @@
 		<div class="row">
 			<ol class="breadcrumb float-sm-left">
 				<li class="breadcrumb-item"><a href="index.php" title="Bảng điều khiển">Bảng điều khiển</a></li>
-				<li class="breadcrumb-item"><a href="index.php?com=xangdau&act=hocvien">Học viên xăng dầu</a></li>
+				<li class="breadcrumb-item"><a href="<?=htmlspecialchars($xdUploadReturn, ENT_QUOTES, 'UTF-8')?>">Học viên xăng dầu</a></li>
 				<li class="breadcrumb-item active">Import học viên</li>
 			</ol>
 		</div>
@@ -18,6 +19,7 @@
 
 <section class="content">
 	<form method="post" action="<?=$linkUploadExcel?>" enctype="multipart/form-data" id="upload-form">
+		<input type="hidden" name="ret" value="<?=htmlspecialchars(rawurlencode($xdUploadReturn), ENT_QUOTES, 'UTF-8')?>">
 		<div class="card card-primary card-outline text-sm mb-0">
 			<div class="card-header"><h3 class="card-title"><strong>Import học viên xăng dầu</strong></h3></div>
 			<div class="card-body">
@@ -51,7 +53,7 @@
 		</div>
 		<div class="card-footer text-sm">
 			<button type="submit" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-2"></i>Tải lên &amp; kiểm tra</button>
-			<a class="btn btn-sm bg-gradient-secondary text-white" href="index.php?com=xangdau&act=hocvien"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
+			<a class="btn btn-sm bg-gradient-secondary text-white" href="<?=htmlspecialchars($xdUploadReturn, ENT_QUOTES, 'UTF-8')?>"><i class="fas fa-arrow-left mr-2"></i>Quay lại</a>
 		</div>
 	</form>
 </section>

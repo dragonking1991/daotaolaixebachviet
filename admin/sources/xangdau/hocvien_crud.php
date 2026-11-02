@@ -181,7 +181,7 @@ function xd_delete_hocvien()
 	global $d, $func, $curPage;
 
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-	$redirect = "index.php?com=xangdau&act=hocvien&p=".$curPage;
+	$redirect = xd_safe_ret($_GET['ret'] ?? '', "index.php?com=xangdau&act=hocvien&p=".(int)$curPage);
 
 	if($id > 0)
 	{
@@ -248,7 +248,7 @@ function xd_delete_hocvien_by_gv()
 	global $d, $func;
 
 	$gvKey = isset($_GET['gv_key']) ? trim((string)$_GET['gv_key']) : '';
-	$redirect = "index.php?com=xangdau&act=hocvien";
+	$redirect = xd_safe_ret($_GET['ret'] ?? '', "index.php?com=xangdau&act=hocvien");
 	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", $redirect, false);
 
 	$summary = $d->rawQueryOne(
@@ -287,7 +287,7 @@ function xd_update_hocvien_status()
 
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 	$status = isset($_GET['status']) ? trim((string)$_GET['status']) : '';
-	$redirect = "index.php?com=xangdau&act=hocvien&p=".(int)$curPage;
+	$redirect = xd_safe_ret($_GET['ret'] ?? '', "index.php?com=xangdau&act=hocvien&p=".(int)$curPage);
 	if($id <= 0 || !in_array($status, array('da', 'chua'), true))
 		$func->transfer("Trạng thái học viên không hợp lệ", $redirect, false);
 
@@ -346,11 +346,12 @@ function xd_update_hocvien_info()
 function xd_delete_all_hocvien()
 {
 	global $d, $func;
+	$redirect = xd_safe_ret($_GET['ret'] ?? '', 'index.php?com=xangdau&act=hocvien');
 	$backup = xd_backup_table_json('xd_hocvien', 'all_hocvien');
-	if($backup === '') $func->transfer("Không thể sao lưu dữ liệu; đã hủy thao tác xóa toàn bộ học viên.", "index.php?com=xangdau&act=hocvien", false);
+	if($backup === '') $func->transfer("Không thể sao lưu dữ liệu; đã hủy thao tác xóa toàn bộ học viên.", $redirect, false);
 	$count = $d->rawQueryOne("select count(*) as num from #_xd_hocvien");
 	$ok = $d->rawQuery("delete from #_xd_hocvien");
 	$n = isset($count['num']) ? (int)$count['num'] : 0;
-	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể xóa toàn bộ học viên", "index.php?com=xangdau&act=hocvien", false);
-	$func->transfer("Đã xóa toàn bộ $n học viên. Sao lưu: $backup", "index.php?com=xangdau&act=hocvien");
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không thể xóa toàn bộ học viên", $redirect, false);
+	$func->transfer("Đã xóa toàn bộ $n học viên. Sao lưu: $backup", $redirect);
 }

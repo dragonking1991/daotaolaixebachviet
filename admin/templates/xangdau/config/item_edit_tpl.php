@@ -35,6 +35,7 @@
 	<form class="validation-form" novalidate method="post" action="<?=$linkSave?>">
 		<input type="hidden" name="com" value="xangdau">
 		<input type="hidden" name="act" value="saveConfig">
+		<?php if(isset($_GET['danh_sach_dieu_chinh']) && $_GET['danh_sach_dieu_chinh'] === '1'): ?><input type="hidden" name="danh_sach_dieu_chinh" value="1"><?php endif; ?>
 		<div class="card card-primary card-outline text-sm">
 			<div class="card-header">
 				<h3 class="card-title"><i class="fas fa-gas-pump mr-2 text-primary"></i>Tham số thanh toán chi phí xăng dầu</h3>

@@ -56,7 +56,7 @@ function xd_ce_save_invoice()
 {
 	global $d, $func;
 
-	$back = "index.php?com=xangdau&act=ce";
+	$back = xd_safe_ret($_POST['ret'] ?? '', 'index.php?com=xangdau&act=ce');
 	$idKhoa = isset($_POST['id_khoa']) ? (int)$_POST['id_khoa'] : 0;
 	$invoiceNo = isset($_POST['ma_hoa_don']) ? trim((string)$_POST['ma_hoa_don']) : '';
 	$invoiceDate = isset($_POST['ngay_hoa_don']) ? trim((string)$_POST['ngay_hoa_don']) : '';
@@ -100,7 +100,7 @@ function xd_ce_save_invoice()
 function xd_ce_upload_invoices()
 {
 	global $d, $func;
-	$back = "index.php?com=xangdau&act=ce";
+	$back = xd_safe_ret($_POST['ret'] ?? '', 'index.php?com=xangdau&act=ce');
 	if(!isset($_FILES['file-excel']) || (int)$_FILES['file-excel']['error'] !== UPLOAD_ERR_OK)
 		$func->transfer("Vui lòng chọn file Excel hóa đơn CE hợp lệ.", $back, false);
 
@@ -217,11 +217,12 @@ function xd_ce_upload_invoices()
 function xd_ce_delete_invoice()
 {
 	global $d, $func;
+	$back = xd_safe_ret($_POST['ret'] ?? '', 'index.php?com=xangdau&act=ce');
 	$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-	if($id <= 0) $func->transfer("Không xác định được hóa đơn CE.", "index.php?com=xangdau&act=ce", false);
+	if($id <= 0) $func->transfer("Không xác định được hóa đơn CE.", $back, false);
 	$ok = $d->rawQuery("delete from #_xd_ce_hoadon where id = ?", array($id));
-	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không xóa được hóa đơn CE.", "index.php?com=xangdau&act=ce", false);
-	$func->transfer("Đã xóa hóa đơn CE.", "index.php?com=xangdau&act=ce", true);
+	if($ok === false || $d->getLastErrorCode() !== '00000') $func->transfer("Không xóa được hóa đơn CE.", $back, false);
+	$func->transfer("Đã xóa hóa đơn CE.", $back, true);
 }
 
 function xd_ce_invoice_template()

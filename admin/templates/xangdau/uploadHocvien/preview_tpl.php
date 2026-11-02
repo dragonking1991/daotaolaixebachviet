@@ -1,6 +1,7 @@
 <?php
 if(!defined('SOURCES')) die("Error");
 $escape = function($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); };
+$xdPreviewReturn = xd_safe_ret($xd_roster_preview['ret'] ?? '', 'index.php?com=xangdau&act=hocvien');
 $xdPrevGroup = 0;
 foreach($xd_roster_preview['rows'] as $xdPrevRow) if($xdPrevRow['existing'] && $xdPrevRow['existing']['nhom'] !== $xdPrevRow['nhom']) $xdPrevGroup++;
 $xdPrevTotal = count($xd_roster_preview['rows']);
@@ -9,7 +10,7 @@ $xdPrevTotal = count($xd_roster_preview['rows']);
 	<div class="container-fluid">
 		<div class="row"><ol class="breadcrumb float-sm-left">
 			<li class="breadcrumb-item"><a href="index.php">Bảng điều khiển</a></li>
-			<li class="breadcrumb-item"><a href="index.php?com=xangdau&act=hocvien">Học viên xăng dầu</a></li>
+			<li class="breadcrumb-item"><a href="<?=$escape($xdPreviewReturn)?>">Học viên xăng dầu</a></li>
 			<li class="breadcrumb-item active">Xem trước import</li>
 		</ol></div>
 	</div>
@@ -59,9 +60,10 @@ $xdPrevTotal = count($xd_roster_preview['rows']);
 		<div class="card-footer">
 			<form method="post" action="index.php?com=xangdau&act=uploadHocvienExcel" class="ik-confirm-bar">
 				<input type="hidden" name="confirm_roster" value="<?=$escape($xd_roster_preview['token'])?>">
+				<input type="hidden" name="ret" value="<?=$escape(rawurlencode($xdPreviewReturn))?>">
 				<button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check mr-1"></i>Xác nhận import <?=$xdPrevTotal?> dòng</button>
 				<span class="ik-file"><i class="far fa-file-excel text-success mr-1"></i><?=$escape($xd_roster_preview['filename'] ?? '')?> — sao lưu trước khi ghi, có thể hoàn tác trong Lịch sử import.</span>
-				<a href="index.php?com=xangdau&act=uploadHocvien" class="btn btn-sm btn-outline-secondary ml-auto"><i class="fas fa-upload mr-1"></i>Chọn file khác</a>
+				<a href="index.php?com=xangdau&act=uploadHocvien&ret=<?=rawurlencode($xdPreviewReturn)?>" class="btn btn-sm btn-outline-secondary ml-auto"><i class="fas fa-upload mr-1"></i>Chọn file khác</a>
 			</form>
 		</div>
 	</div>

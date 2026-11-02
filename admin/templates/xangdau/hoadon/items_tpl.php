@@ -5,6 +5,7 @@
 	foreach(array('keyword' => $xd_filter_keyword, 'gv' => $xd_filter_gv, 'from_date' => $xd_filter_from, 'to_date' => $xd_filter_to, 'ky' => $xd_filter_ky, 'kt_from' => $xd_filter_kt_from, 'kt_to' => $xd_filter_kt_to) as $__k => $__v) if($__v !== '') $xd_ret_q[$__k] = $__v;
 	$xd_ret_q['p'] = (int)$curPage;
 	$xd_ret = rawurlencode('index.php?'.http_build_query($xd_ret_q));
+	$linkUpload .= '&ret='.$xd_ret;
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -36,7 +37,7 @@
 				</div>
 			</div>
 			<?php } ?>
-			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHoadon" onclick="return confirm('Xóa TOÀN BỘ hóa đơn, bao gồm cả hóa đơn đã quyết toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
+			<?php if(xd_can_xoa()) { ?><a class="btn btn-sm btn-danger mr-3" href="index.php?com=xangdau&act=deleteAllHoadon&ret=<?=$xd_ret?>" onclick="return confirm('Xóa TOÀN BỘ hóa đơn, bao gồm cả hóa đơn đã quyết toán? Dữ liệu đã xóa không thể khôi phục.');"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ</a><?php } ?>
 			<div class="w-100"></div>
 			<div class="form-group mb-0 d-flex flex-column align-items-start">
 				<label class="mb-1 small text-muted">Tìm kiếm</label>
@@ -103,7 +104,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<?php if(!empty($items)) { $i = 0; foreach($items as $it) { $i++; ?>
+					<?php if(!empty($items)) { $i = (max(1, (int)$curPage) - 1) * 20; foreach($items as $it) { $i++; ?>
 					<tr>
 						<td class="text-center"><?php if(xd_can_xoa() && (int)$it['da_quyettoan'] === 0) { ?><input type="checkbox" class="xd-bulk-item" form="xd-bulk-hoadon" name="ids[]" value="<?=(int)$it['id']?>"><?php } ?></td>
 						<td><?=$i?></td>
@@ -140,18 +141,18 @@
 							<?php } ?>
 						</td>
 						<td class="text-right">
-							<?php if(xd_can_kiem_tra()) { $toggleUrl = 'index.php?com=xangdau&act=toggleKiemTraHoadon&id='.(int)$it['id'].'&p='.$curPage; ?>
-								<a class="btn btn-xs <?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'btn-secondary' : 'btn-warning'?>" href="<?=$toggleUrl?>" onclick="return confirm('<?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'Bỏ xác nhận kiểm tra cho hóa đơn này?' : 'Xác nhận kiểm tra hóa đơn này?';?>');">
+							<?php if(xd_can_kiem_tra()) { $toggleUrl = 'index.php?com=xangdau&act=toggleKiemTraHoadon&id='.(int)$it['id'].'&p='.$curPage.'&ret='.$xd_ret; ?>
+								<a class="btn btn-xs <?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'btn-secondary' : 'btn-warning'?>" href="<?=$toggleUrl?>" title="<?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'Hủy xác nhận kiểm tra hóa đơn' : 'Xác nhận đã kiểm tra hóa đơn'?>" aria-label="<?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'Hủy xác nhận kiểm tra hóa đơn' : 'Xác nhận đã kiểm tra hóa đơn'?>" onclick="return confirm('<?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'Bỏ xác nhận kiểm tra cho hóa đơn này?' : 'Xác nhận kiểm tra hóa đơn này?';?>');">
 									<i class="fas fa-<?=((int)($it['ke_toan_kiem_tra'] ?? 0) === 1) ? 'undo' : 'check'?>"></i>
 								</a>
 							<?php } ?>
-								<?php if(xd_can_kiem_tra() && (int)$it['da_quyettoan'] === 0) { $toggleValidUrl = 'index.php?com=xangdau&act=toggleHopLeHoadon&id='.(int)$it['id'].'&p='.$curPage; ?>
-									<a class="btn btn-xs <?=((int)($it['hop_le'] ?? 1) === 1) ? 'btn-success' : 'btn-outline-danger'?>" href="<?=$toggleValidUrl?>" onclick="return confirm('<?=((int)($it['hop_le'] ?? 1) === 1) ? 'Đánh dấu hóa đơn này là không hợp lệ?' : 'Đánh dấu hóa đơn này là hợp lệ?';?>');">
+								<?php if(xd_can_kiem_tra() && (int)$it['da_quyettoan'] === 0) { $toggleValidUrl = 'index.php?com=xangdau&act=toggleHopLeHoadon&id='.(int)$it['id'].'&p='.$curPage.'&ret='.$xd_ret; ?>
+									<a class="btn btn-xs <?=((int)($it['hop_le'] ?? 1) === 1) ? 'btn-success' : 'btn-outline-danger'?>" href="<?=$toggleValidUrl?>" title="<?=((int)($it['hop_le'] ?? 1) === 1) ? 'Đánh dấu hóa đơn không hợp lệ' : 'Đánh dấu hóa đơn hợp lệ'?>" aria-label="<?=((int)($it['hop_le'] ?? 1) === 1) ? 'Đánh dấu hóa đơn không hợp lệ' : 'Đánh dấu hóa đơn hợp lệ'?>" onclick="return confirm('<?=((int)($it['hop_le'] ?? 1) === 1) ? 'Đánh dấu hóa đơn này là không hợp lệ?' : 'Đánh dấu hóa đơn này là hợp lệ?';?>');">
 										<i class="fas fa-<?=((int)($it['hop_le'] ?? 1) === 1) ? 'thumbs-up' : 'exclamation-triangle'?>"></i>
 									</a>
 								<?php } ?>
 								<?php if(xd_can_xoa() && (int)$it['da_quyettoan'] === 0) { ?>
-								<a class="btn btn-xs btn-danger" href="index.php?com=xangdau&act=deleteHoadon&id=<?=(int)$it['id']?>&p=<?=$curPage?>" onclick="return confirm('Xóa hóa đơn này?');"><i class="far fa-trash-alt"></i></a>
+								<a class="btn btn-xs btn-danger" href="index.php?com=xangdau&act=deleteHoadon&id=<?=(int)$it['id']?>&p=<?=$curPage?>&ret=<?=$xd_ret?>" title="Xóa hóa đơn" aria-label="Xóa hóa đơn" onclick="return confirm('Xóa hóa đơn này?');"><i class="far fa-trash-alt"></i></a>
 							<?php } ?>
 						</td>
 					</tr>

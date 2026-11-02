@@ -10,7 +10,8 @@ function xd_upload_hoadon_excel()
 	@ini_set('memory_limit', '1024M');
 	@set_time_limit(300);
 
-	$backUrl = "index.php?com=xangdau&act=uploadHoadon";
+	$returnUrl = xd_safe_ret($_POST['ret'] ?? '', 'index.php?com=xangdau&act=hoadon');
+	$backUrl = "index.php?com=xangdau&act=uploadHoadon&ret=".rawurlencode($returnUrl);
 
 	if(!isset($_FILES['file-excel']) || (int)$_FILES['file-excel']['error'] !== UPLOAD_ERR_OK)
 		$func->transfer("Vui lòng chọn file Excel hợp lệ", $backUrl, false);
@@ -223,5 +224,5 @@ function xd_upload_hoadon_excel()
 	if($skippedLocked > 0) $msg .= "<br>Bỏ qua $skippedLocked hóa đơn đã quyết toán (bị khóa).";
 	if($hopLeHeaderText !== null) $msg .= "<br><em>Cột \"Hợp lệ\" nhận diện từ tiêu đề: \"".htmlspecialchars($hopLeHeaderText)."\" — $hopLeCount hợp lệ, $khongHopLeCount không hợp lệ.</em>";
 	else $msg .= "<br><em>Không tìm thấy cột \"Hợp lệ\"/Note1 trong file — tất cả được coi là hợp lệ mặc định.</em>";
-	$func->transfer($msg, "index.php?com=xangdau&act=hoadon");
+	$func->transfer($msg, $returnUrl);
 }

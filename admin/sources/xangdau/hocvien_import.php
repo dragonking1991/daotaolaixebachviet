@@ -10,7 +10,8 @@ function xd_upload_hocvien_excel()
 	@ini_set('memory_limit', '1024M');
 	@set_time_limit(300);
 
-	$backUrl = "index.php?com=xangdau&act=uploadHocvien";
+	$returnUrl = xd_safe_ret($_POST['ret'] ?? '', 'index.php?com=xangdau&act=hocvien');
+	$backUrl = "index.php?com=xangdau&act=uploadHocvien&ret=".rawurlencode($returnUrl);
 	if(isset($_POST['confirm_roster'])) return xd_roster_upload();
 
 	if(!isset($_FILES['file-excel']) || (int)$_FILES['file-excel']['error'] !== UPLOAD_ERR_OK)
@@ -302,7 +303,7 @@ function xd_upload_hocvien_excel()
 	if(!empty($skippedPaidRows)) $msg .= "; bỏ qua ".count($skippedPaidRows)." học viên đã thanh toán";
 	$msg .= ".";
 	if($paidCount > 0) $msg .= " Trong đó $paidCount học viên đã thanh toán (cột \"đã tt\" = r).";
-	$func->transfer($msg, "index.php?com=xangdau&act=hocvien");
+	$func->transfer($msg, $returnUrl);
 }
 
 function xd_hocvien_import_error($message, $backUrl)
