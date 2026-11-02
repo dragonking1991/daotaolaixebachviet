@@ -25,7 +25,7 @@ function dt_sathach_summary_date($value, $date1904 = false)
 	return sprintf('%04d-%02d-%02d', $year, $month, $day);
 }
 
-function dt_sathach_summary_read($file)
+function dt_sathach_summary_read($file, $periodContext = null)
 {
 	require_once LIBRARIES.'PHPExcel.php';
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -90,7 +90,9 @@ function dt_sathach_summary_read($file)
 	if(!isset($map['ngay_sh']) && ($map['hoten'] ?? -1)===1 && ($map['cccd'] ?? -1)===2
 		&& ($map['lt'] ?? -1)===6 && ($map['hinh'] ?? -1)===7 && ($map['ket_qua'] ?? -1)===8
 		&& dt_norm_header($headers[1] ?? '')==='ho' && dt_norm_header($headers[2] ?? '')==='socmndhc' && trim($headers[9] ?? '')==='') $map['ngay_sh']=9;
-	foreach(array('hoten','cccd','hang','lt','hinh','ket_qua','ngay_sh') as $field)
+	$requiredFields = array('hoten','cccd','hang','lt','hinh','ket_qua');
+	if(!$periodContext) $requiredFields[] = 'ngay_sh';
+	foreach($requiredFields as $field)
 		if(!isset($map[$field])) throw new InvalidArgumentException('File tổng hợp thiếu cột '.$field.'.');
 	$rows = array(); $groups = array(); $seen = array(); $records = array(); $duplicates=0;
 	for($rowNumber = $headerRow + 1; $rowNumber <= $highestRow; $rowNumber++)
@@ -104,8 +106,18 @@ function dt_sathach_summary_read($file)
 		$records[]=array('row'=>$rowNumber,'raw'=>$raw,'data'=>$mapped,'date1904'=>$date1904,'status'=>'pending','reason'=>'','identity'=>'');
 		try
 		{
+			if($periodContext)
+			{
+				$fileDate = trim((string)($mapped['ngay_sh'] ?? ''));
+				if($fileDate !== '' && dt_sathach_summary_date($fileDate, $date1904) !== $periodContext['ngay'])
+					throw new InvalidArgumentException('Ngày sát hạch trong file không khớp ngày đã chọn.');
+				$mapped['ngay_sh'] = $periodContext['ngay'];
+				$records[$recordIndex]['data'] = $mapped;
+			}
 			$data=dt_sathach_summary_validate($mapped,$date1904);
 			$kind=stripos($data['hang'],'A')===0?'moto':'oto';
+			if($periodContext && $kind !== $periodContext['loai'])
+				throw new InvalidArgumentException('Hạng '.$data['hang'].' không khớp kỳ '.($periodContext['loai']==='moto'?'mô tô':'ô tô').' đã chọn.');
 			if($kind==='oto' && !isset($map['duong'])) throw new InvalidArgumentException('File ô tô thiếu cột Đường.');
 			$key=$data['ngay_sh'].'|'.$kind; $identity=$key.'|'.$data['cccd'];
 			$records[$recordIndex]['identity']=$identity;
@@ -181,14 +193,23 @@ function dt_sathach_summary_query($sql, $params = array())
 
 function dt_sathach_summary_import()
 {
-	$back = 'index.php?com=daotao&act=uploadSathach';
+	global $d;
+	$periodId = (int)($_POST['id_ky'] ?? 0);
+	$back = 'index.php?com=daotao&act=uploadSathach'.($periodId > 0 ? '&id_ky='.$periodId : '');
 	if(empty($_SESSION['dt_sh_csrf']) || !hash_equals($_SESSION['dt_sh_csrf'], (string)($_POST['csrf'] ?? '')))
 		dt_import_notice('Phiên import không hợp lệ; vui lòng tải lại trang.', $back, false);
 	$file = $_FILES['file-excel'] ?? array();
 	if(!$file || (int)($file['error'] ?? -1) !== UPLOAD_ERR_OK) dt_import_notice('Vui lòng chọn file Excel.', $back, false);
 	try
 	{
-		$parsed = dt_sathach_summary_read($file);
+		$periodContext = null;
+		if($periodId > 0)
+		{
+			$periods = dt_sathach_summary_query('select id,ngay,loai from #_dt_sh_ky where id=? limit 1', array($periodId));
+			if(!$periods) throw new InvalidArgumentException('Ngày sát hạch đã chọn không còn tồn tại.');
+			$periodContext = $periods[0];
+		}
+		$parsed = dt_sathach_summary_read($file, $periodContext);
 		$hash=hash_file('sha256',$file['tmp_name']);
 		if($hash===false)throw new RuntimeException('Không đọc được dấu vết file nguồn.');
 		$counts=dt_sh_summary_store($parsed,$file['name'],$hash);
@@ -197,6 +218,6 @@ function dt_sathach_summary_import()
 	dt_audit('import','sat_hach',count($parsed['rows']),'summary '.$file['name'].' pending='.$counts['pending']);
 	dt_log_import('sat_hach_tong_hop',$file['name'],count($parsed['rows']),$counts['pending']);
 	$message='Đã nhập '.$counts['added'].' kết quả mới, cập nhật '.$counts['updated'].' theo '.$counts['periods'].' kỳ trong mục sát hạch; không tạo hồ sơ Học viên/khóa đào tạo; gộp '.$counts['duplicates'].' dòng trùng; '.$counts['pending'].' dòng lỗi/chờ bổ sung.';
-	$url=$counts['pending']>0?'index.php?com=daotao&act=sathachPending&file_hash='.$hash:'index.php?com=daotao&act=sathach&ngay_sh='.$counts['last_date'];
+	$url=$counts['pending']>0?'index.php?com=daotao&act=sathachPending&file_hash='.$hash:($periodId>0?'index.php?com=daotao&act=sathach&id_ky='.$periodId.'#sh-results':'index.php?com=daotao&act=sathach&ngay_sh='.$counts['last_date']);
 	dt_import_notice($message,$url,count($parsed['rows'])>0);
 }

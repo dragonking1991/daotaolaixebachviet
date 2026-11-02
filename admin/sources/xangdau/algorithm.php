@@ -20,8 +20,8 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 	if($toDate !== '') { $hoadonWhere .= " and ngay_hoa_don <= ?"; $hoadonParams[] = $toDate; }
 
 	$sumRows = $d->rawQuery(
-		"select gv_key, max(gv_hoten) as gv_hoten, sum(tong_tien) as s_hd, count(*) as so_hd
-		 from #_xd_hoadon where gv_key <> '' $hoadonWhere group by gv_key",
+		"select gv_key, max(gv_hoten) as gv_hoten, sum(tong_tien) as s_hd, count(*) as so_hd, max(ngay_hoa_don) as ngay_hd_gan_nhat
+		 from #_xd_hoadon where gv_key <> '' $hoadonWhere group by gv_key order by max(gv_hoten) asc",
 		$hoadonParams
 	);
 
@@ -38,6 +38,7 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 		$row = array(
 			'gv_key' => $gvKey,
 			'gv_hoten' => $g['gv_hoten'],
+			'ngay_hd_gan_nhat' => $g['ngay_hd_gan_nhat'],
 			's_hd' => $sHd,
 			'so_hd' => (int)$g['so_hd'],
 			'n_max' => 0,

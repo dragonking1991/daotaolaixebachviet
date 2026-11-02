@@ -21,7 +21,7 @@ require LIBRARIES.'admin_csrf.php';
 require LIBRARIES.'import_kit.php';
 require_once LIBRARIES.'course_options.php';
 foreach(array('schema','config_daotao','helpers','ops','excel_open','khoa','hocvien','xe','giaovien','htkh','taichinh','dat','lythuyet','cabin_kq','thuchanh_hinh') as $module) require_once SOURCES.'daotao/'.$module.'.php';
-foreach(array('classes','permissions','schema','daotao_sync','helpers','excel_cell','config','excel_convert','excel_stream','excel_open','hoadon_import','hocvien_crud','khoa','hocvien_import','hocvien_financial_import','import_kit') as $module) require_once SOURCES.'xangdau/'.$module.'.php';
+foreach(array('classes','permissions','schema','daotao_sync','helpers','excel_cell','config','excel_convert','excel_stream','excel_open','hoadon_import','hocvien_crud','khoa','hocvien_import','hocvien_financial_import','import_kit','loc') as $module) require_once SOURCES.'xangdau/'.$module.'.php';
 function dt_p($section, $action = 'view') { return array('daotao_man'); }
 function dt_can($section, $action = 'view') { return true; }
 
@@ -262,9 +262,34 @@ ik_check($func->last['success'] === false && strpos($func->last['message'], 'đ�
 ik_reset_request(array('ky' => 'T10', 'resync' => '1')); ik_attach($tpl, 'hd4.xlsx');
 ik_run('xd_upload_hoadon_excel');
 ik_check($d->rawQueryOne("select ky from #_xd_hoadon where ma_hoa_don = '0001234'")['ky'] === 'T10' && strpos($func->last['message'], 'chuyển 1 hóa đơn sang kỳ T10') !== false, 'Resync moves unsettled invoice to the new period');
-echo "PASS invoice resync updates period; multi-file batch allowed\n";
+$d->rawQuery("insert into #_xd_hoadon (gv_hoten, gv_key, ma_hoa_don, ngay_hoa_don, tong_tien, ky, da_quyettoan, hop_le) values ('GV Cũ', 'gv cu', 'OLD-REPLACE', '2026-10-11', 100000, 'T_REPLACE', 0, 1)");
+$d->rawQuery("insert into #_xd_hoadon (gv_hoten, gv_key, ma_hoa_don, ngay_hoa_don, tong_tien, ky, da_quyettoan, ngay_thanh_toan, hop_le) values ('GV Đã TT', 'gv da tt', 'SETTLED-KEEP', '2026-10-11', 100000, 'T_REPLACE', 1, '2026-10-20', 1)");
+$replacement = ik_xlsx(array(
+	array('STT', 'Số hóa đơn', 'Ngày', 'Thông tin bán hàng', 'Chi tiết', 'Số tiền HĐ', 'Biển số xe', 'HĐ từ trang thuế', 'GV', 'Hợp lệ', 'Note 1', 'Note 2'),
+	array('1', 'NEW-REPLACE', '2026-10-15', 'Thay thế', 'x', '120', '51A-00001', 'x', 'GV Mới', 'x', '', '')
+));
+ik_reset_request(array('ky' => 'T_REPLACE', 'replace_period' => '1', 'upload_session' => 'replace123')); ik_attach($replacement, 'replace.xlsx');
+ik_run('xd_upload_hoadon_excel');
+ik_check(!$d->rawQueryOne("select id from #_xd_hoadon where ma_hoa_don = 'OLD-REPLACE'") && $d->rawQueryOne("select id from #_xd_hoadon where ma_hoa_don = 'SETTLED-KEEP' and da_quyettoan = 1") && $d->rawQueryOne("select id from #_xd_hoadon where ma_hoa_don = 'NEW-REPLACE' and ky = 'T_REPLACE'") && strpos($func->last['message'], 'Đã thay thế 1 hóa đơn') !== false, 'Replace period removes unsettled rows, keeps settled rows, and imports the new list');
+echo "PASS invoice resync, confirmed period replacement, settled-row preservation, and multi-file batches\n";
 
-/* 10. Đồng bộ DAT chạy thử không thay đổi dữ liệu. */
+/* 10. Kiểm tra hàng loạt cập nhật hóa đơn + học viên và có thể bỏ kiểm tra lại. */
+$d->rawQuery("insert into #_xd_hocvien (cccd, ho_ten, gv_hoten, gv_key, nhom) values ('079399999991', 'HV TEST BULK', 'GV BULK TEST', 'gv bulk test', 'BT')");
+$d->rawQuery("insert into #_xd_hoadon (gv_hoten, gv_key, ma_hoa_don, ngay_hoa_don, tong_tien, ky, hop_le) values ('GV BULK TEST', 'gv bulk test', 'BULK-CHECK-1', '2026-10-15', 100000, 'T_BULK', 1)");
+$_SESSION['xd_loc_bulk_csrf'] = 'bulk-test-token';
+ik_reset_request(array('csrf' => 'bulk-test-token', 'gv_keys' => array('gv bulk test')));
+ik_run(function() { xd_loc_bulk_check(true); });
+$checkedInvoice = $d->rawQueryOne("select ke_toan_kiem_tra, ngay_kiem_tra from #_xd_hoadon where ma_hoa_don = 'BULK-CHECK-1'");
+$checkedStudent = $d->rawQueryOne("select ke_toan_kiem_tra from #_xd_hocvien where cccd = '079399999991'");
+ik_check((int)$checkedInvoice['ke_toan_kiem_tra'] === 1 && !empty($checkedInvoice['ngay_kiem_tra']) && (int)$checkedStudent['ke_toan_kiem_tra'] === 1, 'Bulk check updates pending invoice and student');
+ik_reset_request(array('csrf' => 'bulk-test-token', 'gv_keys' => array('gv bulk test')));
+ik_run(function() { xd_loc_bulk_check(false); });
+$uncheckedInvoice = $d->rawQueryOne("select ke_toan_kiem_tra, ngay_kiem_tra from #_xd_hoadon where ma_hoa_don = 'BULK-CHECK-1'");
+$uncheckedStudent = $d->rawQueryOne("select ke_toan_kiem_tra from #_xd_hocvien where cccd = '079399999991'");
+ik_check((int)$uncheckedInvoice['ke_toan_kiem_tra'] === 0 && $uncheckedInvoice['ngay_kiem_tra'] === null && (int)$uncheckedStudent['ke_toan_kiem_tra'] === 0, 'Bulk uncheck clears pending invoice date and student state');
+echo "PASS bulk check and uncheck are transactional and reversible\n";
+
+/* 11. Đồng bộ DAT chạy thử không thay đổi dữ liệu. */
 $before = $d->rawQueryOne('select count(*) c, coalesce(sum(crc32(concat_ws("|", id, khoa, nhom, gv_key))), 0) s from #_xd_hocvien');
 $dry = xd_sync_training_students(0, '', true);
 $after = $d->rawQueryOne('select count(*) c, coalesce(sum(crc32(concat_ws("|", id, khoa, nhom, gv_key))), 0) s from #_xd_hocvien');

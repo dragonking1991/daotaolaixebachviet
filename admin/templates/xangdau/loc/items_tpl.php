@@ -3,6 +3,9 @@
 	if($xd_loc_ky !== '') $q .= '&ky='.urlencode($xd_loc_ky);
 	if($xd_loc_from !== '') $q .= '&from_date='.urlencode($xd_loc_from);
 	if($xd_loc_to !== '') $q .= '&to_date='.urlencode($xd_loc_to);
+	if($xd_loc_gv_keyword !== '') $q .= '&gv_keyword='.urlencode($xd_loc_gv_keyword);
+	if($xd_loc_ma_hoa_don !== '') $q .= '&ma_hoa_don='.urlencode($xd_loc_ma_hoa_don);
+	if($xd_loc_sort !== '') $q .= '&sort='.urlencode($xd_loc_sort);
 	$nhomBadge = array('BT' => 'badge-primary', 'CK' => 'badge-info', 'DAT' => 'badge-warning');
 	$tongChon = 0;
 	$tongTien = 0.0;
@@ -41,6 +44,24 @@
 				<label class="mr-1">Đến ngày HĐ</label>
 				<input class="form-control form-control-sm text-sm" type="date" name="to_date" value="<?=htmlspecialchars($xd_loc_to)?>">
 			</div>
+			<div class="form-group mb-0 mr-2">
+				<label class="mr-1">Giáo viên</label>
+				<input class="form-control form-control-sm text-sm" type="search" name="gv_keyword" value="<?=htmlspecialchars($xd_loc_gv_keyword)?>" placeholder="Tên giáo viên">
+			</div>
+			<div class="form-group mb-0 mr-2">
+				<label class="mr-1">Số HĐ</label>
+				<input class="form-control form-control-sm text-sm" type="search" name="ma_hoa_don" value="<?=htmlspecialchars($xd_loc_ma_hoa_don)?>" placeholder="Nhập số hóa đơn">
+			</div>
+			<div class="form-group mb-0 mr-2">
+				<label class="mr-1">Sắp xếp</label>
+				<select class="form-control form-control-sm text-sm" name="sort">
+					<option value="teacher_asc" <?=$xd_loc_sort==='teacher_asc'?'selected':''?>>Tên GV A–Z</option>
+					<option value="invoice_desc" <?=$xd_loc_sort==='invoice_desc'?'selected':''?>>Số HĐ nhiều nhất</option>
+					<option value="invoice_asc" <?=$xd_loc_sort==='invoice_asc'?'selected':''?>>Số HĐ ít nhất</option>
+					<option value="date_desc" <?=$xd_loc_sort==='date_desc'?'selected':''?>>Ngày HĐ mới nhất</option>
+					<option value="date_asc" <?=$xd_loc_sort==='date_asc'?'selected':''?>>Ngày HĐ cũ nhất</option>
+				</select>
+			</div>
 			<button type="submit" class="btn btn-sm bg-gradient-primary text-white"><i class="fas fa-filter mr-1"></i>Chạy lọc</button>
 		</form>
 		<div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
@@ -62,7 +83,7 @@
 				<?php $paidList = 'index.php?com=xangdau&act=locDaThanhToan'; ?><a class="btn btn-outline-secondary" href="<?=$paidList?>" title="Danh sách đã thanh toán"><i class="fas fa-check-double mr-1"></i>Đã thanh toán</a>
 			</div>
 			<?php } ?>
-			<?php if(xd_can_duyet() && !empty($xd_loc_summary)) { $approveAll = 'index.php?com=xangdau&act=duyetTatCaGiaoVien&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+			<?php if(xd_can_duyet() && !empty($xd_loc_summary)) { $approveAll = xd_loc_params_url('', 'duyetTatCaGiaoVien'); ?>
 			<a class="btn btn-sm btn-success" href="<?=$approveAll?>" onclick="return confirm('Duyệt toàn bộ giáo viên đã được kế toán kiểm tra?');"><i class="fas fa-stamp mr-1"></i>Duyệt tất cả</a>
 			<?php } ?>
 		</div>
@@ -77,6 +98,7 @@
 						<th>STT</th>
 						<th>Giáo viên</th>
 						<th class="text-center">Số HĐ</th>
+						<th>HĐ gần nhất</th>
 						<th class="text-right">Tổng HĐ (S_HĐ)</th>
 						<th class="text-center">Đã thanh toán</th>
 						<th class="text-center">Chưa thanh toán</th>
@@ -93,6 +115,7 @@
 						<td><?=$i?></td>
 						<td><?=htmlspecialchars($g['gv_hoten'] !== '' ? $g['gv_hoten'] : $g['gv_key'])?></td>
 						<td class="text-center"><?=(int)$g['so_hd']?></td>
+						<td><?=!empty($g['ngay_hd_gan_nhat']) ? date('d/m/Y', strtotime($g['ngay_hd_gan_nhat'])) : '—'?></td>
 						<td class="text-right"><?=number_format((float)$g['s_hd'], 0, ',', '.')?></td>
 						<td class="text-center"><strong><?=(int)$g['so_hv_da_thanh_toan']?></strong></td>
 						<td class="text-center"><?=(int)$g['so_hv_chua_thanh_toan']?></td>
@@ -103,7 +126,7 @@
 							<?php if((int)$g['ke_toan_kiem_tra'] === 1) { ?><span class="badge badge-success">Đã kiểm tra</span><?php } else { ?><span class="badge badge-warning">Chưa kiểm tra</span><?php } ?>
 						</td>
 						<td class="text-right">
-							<?php $teacherView = 'index.php?com=xangdau&act=xemGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherCheck = 'index.php?com=xangdau&act=kiemTraGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherUncheck = 'index.php?com=xangdau&act=huyKiemTraGiaoVien&gv_key='.urlencode($g['gv_key']); $teacherApprove = 'index.php?com=xangdau&act=duyetGiaoVien&gv_key='.urlencode($g['gv_key']).'&ky='.urlencode($xd_loc_ky).'&from_date='.urlencode($xd_loc_from).'&to_date='.urlencode($xd_loc_to); ?>
+							<?php $teacherView = xd_loc_params_url($g['gv_key'], 'xemGiaoVien'); $teacherCheck = xd_loc_params_url($g['gv_key'], 'kiemTraGiaoVien'); $teacherUncheck = xd_loc_params_url($g['gv_key'], 'huyKiemTraGiaoVien'); $teacherApprove = xd_loc_params_url($g['gv_key'], 'duyetGiaoVien'); ?>
 							<a class="btn btn-xs btn-info" href="<?=$teacherView?>" title="Xem chi tiết"><i class="fas fa-eye"></i></a>
 							<?php if(xd_can_kiem_tra() && (int)$g['ke_toan_kiem_tra'] === 0) { ?><a class="btn btn-xs btn-warning" href="<?=$teacherCheck?>" title="Kế toán xác nhận đã kiểm tra" onclick="return confirm('Xác nhận đã kiểm tra giáo viên này?');"><i class="fas fa-check"></i></a><?php } ?>
 							<?php if(xd_can_kiem_tra() && (int)$g['ke_toan_kiem_tra'] === 1) { ?><a class="btn btn-xs btn-secondary" href="<?=$teacherUncheck?>" title="Chuyển về chưa kiểm tra" onclick="return confirm('Chuyển giáo viên này về trạng thái chưa kiểm tra?');"><i class="fas fa-undo"></i></a><?php } ?>
@@ -113,7 +136,7 @@
 						</td>
 					</tr>
 					<?php } } else { ?>
-					<tr><td colspan="11" class="text-center text-muted">Chưa có dữ liệu. Chọn kỳ/khoảng ngày rồi bấm "Chạy lọc".</td></tr>
+					<tr><td colspan="12" class="text-center text-muted">Chưa có dữ liệu. Chọn kỳ/khoảng ngày rồi bấm "Chạy lọc".</td></tr>
 					<?php } ?>
 				</tbody>
 			</table>

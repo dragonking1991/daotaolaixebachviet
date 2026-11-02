@@ -16,7 +16,7 @@
 </section>
 
 <section class="content">
-	<form method="post" action="<?=$linkUploadExcel?>" enctype="multipart/form-data" id="upload-form">
+	<form method="post" action="<?=$linkUploadExcel?>" enctype="multipart/form-data" id="upload-form" onsubmit="if(this.elements['replace_period'] && this.elements['replace_period'].checked){return confirm('Thay thế toàn bộ hóa đơn chưa quyết toán của kỳ ' + (this.elements['ky'].value.trim() || '(chưa gán kỳ)') + '? Hóa đơn đã quyết toán được giữ nguyên.');}return true;">
 		<input type="hidden" name="ret" value="<?=htmlspecialchars(rawurlencode($xdUploadReturn), ENT_QUOTES, 'UTF-8')?>">
 		<input type="hidden" name="upload_session" value="<?=bin2hex(random_bytes(8))?>">
 		<div class="card card-primary card-outline text-sm mb-0">
@@ -27,12 +27,18 @@
 					<div class="form-group col-md-4">
 						<label for="ky">Kỳ tổng hợp <span class="text-muted font-weight-normal">(tùy chọn)</span></label>
 						<input type="text" class="form-control form-control-sm" name="ky" id="ky" placeholder="VD: T5, T6..." aria-describedby="ky-help">
-						<small id="ky-help" class="text-muted">Ghi đè cột Kỳ trong file. Kỳ đã import sẽ bị chặn để tránh trùng.</small>
+						<small id="ky-help" class="text-muted">Ghi đè cột Kỳ trong file; dùng kỳ này làm phạm vi thay thế.</small>
 					</div>
 					<div class="form-group col-md-8 d-flex align-items-center">
 						<div class="custom-control custom-checkbox mt-md-3">
-							<input type="checkbox" class="custom-control-input" name="resync" id="resync" value="1">
-							<label class="custom-control-label" for="resync"><strong>Đồng bộ lại kỳ đã import</strong> — cập nhật cờ Hợp lệ, Note 1 và kỳ cho hóa đơn chưa quyết toán, không tạo bản ghi trùng.</label>
+							<input type="checkbox" class="custom-control-input" name="replace_period" id="replace_period" value="1" checked onchange="if(this.checked) document.getElementById('resync').checked=false;">
+							<label class="custom-control-label" for="replace_period"><strong>Thay thế danh sách hóa đơn kỳ này</strong> — mặc định bật; chỉ thay hóa đơn chưa quyết toán và có sao lưu.</label>
+						</div>
+					</div>
+					<div class="form-group col-12 mb-0">
+						<div class="custom-control custom-checkbox mt-md-3">
+							<input type="checkbox" class="custom-control-input" name="resync" id="resync" value="1" onchange="if(this.checked) document.getElementById('replace_period').checked=false;">
+							<label class="custom-control-label" for="resync"><strong>Chỉ đồng bộ thông tin trùng</strong> — không xóa các hóa đơn khác trong kỳ.</label>
 						</div>
 					</div>
 				</div>

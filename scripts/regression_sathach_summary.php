@@ -1,6 +1,7 @@
 <?php
 if(PHP_SAPI !== 'cli') { http_response_code(403); exit('CLI only'); }
-if(($argv[1] ?? '') !== '--local-db') exit("Usage: php scripts/regression_sathach_summary.php --local-db /path/to/summary.xlsx\n");
+$selectedPeriodOnly = ($argv[1] ?? '') === '--selected-period-only';
+if(!$selectedPeriodOnly && ($argv[1] ?? '') !== '--local-db') exit("Usage: php scripts/regression_sathach_summary.php --local-db /path/to/summary.xlsx [oto.xlsm moto.xlsm]\n       php scripts/regression_sathach_summary.php --selected-period-only oto.xlsm moto.xlsm\n");
 define('LIBRARIES', dirname(__DIR__).'/libraries/');
 define('SOURCES', dirname(__DIR__).'/admin/sources/');
 require LIBRARIES.'config.php';
@@ -29,9 +30,10 @@ class SummaryTestFunctions
 }
 $func=new SummaryTestFunctions();
 function summary_check($condition, $message) { if(!$condition) throw new RuntimeException($message); }
-function summary_import_test($path, $success=true)
+function summary_import_test($path, $success=true, $periodId=0)
 {
     $_POST=array('import_mode'=>'summary','csrf'=>'summary-test');
+    if((int)$periodId>0)$_POST['id_ky']=(int)$periodId;
     $_REQUEST=array();
     $_FILES=array('file-excel'=>array('name'=>basename($path),'tmp_name'=>$path,'error'=>0));
     try { dt_sathach_upload_excel(); throw new RuntimeException('Missing import outcome'); }
@@ -59,6 +61,39 @@ foreach(array('dt_sh_ky','dt_sat_hach','dt_hocvien','dt_khoa','dt_sh_import_row'
     $sql=preg_replace('/^CREATE TABLE /','CREATE TEMPORARY TABLE ',$definition[0]['Create Table']);
     $sql=preg_replace('/ AUTO_INCREMENT=\d+/','',$sql);
     dt_sathach_summary_query($sql);
+}
+if($selectedPeriodOnly)
+{
+    try
+    {
+        $samples=array(
+            array((string)($argv[2]??''),'2026-10-20','oto',776),
+            array((string)($argv[3]??''),'2026-10-29','moto',606)
+        );
+        $periodIds=array();
+        foreach($samples as $sample)
+        {
+            if($sample[0]==='' || !is_file($sample[0]))throw new RuntimeException('Workbook mẫu không tồn tại.');
+            dt_sathach_summary_query('insert into #_dt_sh_ky (ten,ngay,loai) values (?,?,?)',array('Template '.$sample[2],$sample[1],$sample[2]));
+            $periodId=(int)$d->getLastInsertId();$periodIds[$sample[2]]=$periodId;
+            summary_import_test($sample[0],true,$periodId);
+            $imported=dt_sathach_summary_query('select count(*) as num,min(ngay_sh) as ngay_min,max(ngay_sh) as ngay_max from #_dt_sat_hach where id_ky=?',array($periodId));
+            summary_check((int)$imported[0]['num']===$sample[3] && $imported[0]['ngay_min']===$sample[1] && $imported[0]['ngay_max']===$sample[1],'Selected-period import count/date mismatch for '.$sample[2]);
+            $wrongRank=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=? and '.($sample[2]==='moto'?"hang not like 'A%'":"hang like 'A%'").'',array($periodId));
+            summary_check((int)$wrongRank[0]['num']===0,'Selected-period import rank mismatch for '.$sample[2]);
+            echo 'PASS '.$sample[2].' template: '.$sample[3].' records on '.$sample[1]."\n";
+        }
+        $motoCountBefore=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=?',array($periodIds['moto']));
+        summary_import_test($samples[0][0],false,$periodIds['moto']);
+        $motoCountAfter=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=?',array($periodIds['moto']));
+        summary_check($motoCountBefore===$motoCountAfter,'Wrong vehicle type changed the selected period');
+        echo "PASS mismatched vehicle type is queued without modifying results\n";
+    }
+    finally
+    {
+        foreach(array('dt_sat_hach','dt_sh_ky','dt_hocvien','dt_khoa','dt_sh_import_row','dt_taichinh') as $table)$d->rawQuery('drop temporary table if exists table_'.$table);
+    }
+    exit(0);
 }
 $path=$argv[2] ?? '/tmp/bachviet-bc1-summary.xlsx';
 try
@@ -187,6 +222,33 @@ try
     summary_check(strpos($rendered,'value="Am" selected')!==false,'Profile editor would clear the imported motorcycle rank');
     echo "PASS pending correction and reviewed-source preservation without training links\n";
     echo "PASS standalone exam search, motorcycle rank retention and sparse data beyond row 20000\n";
+    $selectedSamples=array(
+        array((string)($argv[3]??''),'2026-10-20','oto',776),
+        array((string)($argv[4]??''),'2026-10-29','moto',606)
+    );
+    $selectedPeriodIds=array();
+    foreach($selectedSamples as $sample)
+    {
+        if($sample[0]==='')continue;
+        if(!is_file($sample[0]))throw new RuntimeException('Workbook mẫu không tồn tại: '.$sample[0]);
+        $kindLabel=$sample[2]==='moto'?'mô tô':'ô tô';
+        dt_sathach_summary_query('insert into #_dt_sh_ky (ten,ngay,loai) values (?,?,?)',array('Template '.$kindLabel,$sample[1],$sample[2]));
+        $periodId=(int)$d->getLastInsertId();$selectedPeriodIds[$sample[2]]=$periodId;
+        summary_import_test($sample[0],true,$periodId);
+        $imported=dt_sathach_summary_query('select count(*) as num,min(ngay_sh) as ngay_min,max(ngay_sh) as ngay_max from #_dt_sat_hach where id_ky=?',array($periodId));
+        summary_check((int)$imported[0]['num']===$sample[3] && $imported[0]['ngay_min']===$sample[1] && $imported[0]['ngay_max']===$sample[1],'Selected-period template import date/count mismatch: '.$kindLabel);
+        $wrongRank=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=? and '.($sample[2]==='moto'?"hang not like 'A%'":"hang like 'A%'").'',array($periodId));
+        summary_check((int)$wrongRank[0]['num']===0,'Selected-period template imported a mismatched vehicle rank: '.$kindLabel);
+        echo 'PASS selected '.$kindLabel.' template: '.$sample[3].' rows on '.$sample[1]."\n";
+    }
+    if(isset($selectedPeriodIds['moto']) && isset($selectedSamples[0][0]) && $selectedSamples[0][0]!=='' )
+    {
+        $motoCountBefore=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=?',array($selectedPeriodIds['moto']));
+        summary_import_test($selectedSamples[0][0],false,$selectedPeriodIds['moto']);
+        $motoCountAfter=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=?',array($selectedPeriodIds['moto']));
+        summary_check($motoCountBefore===$motoCountAfter,'Wrong vehicle type modified the selected exam period');
+        echo "PASS mismatched vehicle template is held for review without changing the selected period\n";
+    }
     foreach($originalTables as $table=>$before)summary_check($before===dt_sathach_summary_query('select count(*) as num from #_'.$table),'Import created false training progress or financial data in '.$table);
     echo "PASS no fabricated LT/Cabin/Hinh/DAT/payment/XD records\n";
     echo 'Peak memory '.round(memory_get_peak_usage(true)/1048576,1)." MB\n";

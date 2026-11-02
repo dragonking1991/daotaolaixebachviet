@@ -15,7 +15,16 @@
 
 <section class="content">
 	<div class="card card-warning card-outline text-sm">
-		<div class="card-header"><h3 class="card-title">Danh sách giáo viên cần kiểm tra</h3></div>
+		<div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem;">
+			<h3 class="card-title">Danh sách giáo viên cần kiểm tra</h3>
+			<?php if(xd_can_kiem_tra() && !empty($xd_loc_kiem_tra_data)) { ?>
+			<form method="post" action="index.php?com=xangdau&act=kiemTraTatCaGiaoVien" onsubmit="return confirm('Đánh dấu đã kiểm tra toàn bộ <?=count($xd_loc_kiem_tra_data)?> giáo viên trong danh sách?');">
+				<input type="hidden" name="csrf" value="<?=htmlspecialchars(xd_loc_bulk_csrf_token(), ENT_QUOTES, 'UTF-8')?>">
+				<?php foreach($xd_loc_kiem_tra_data as $gv): ?><input type="hidden" name="gv_keys[]" value="<?=htmlspecialchars($gv['gv_key'], ENT_QUOTES, 'UTF-8')?>"><?php endforeach; ?>
+				<button class="btn btn-sm btn-warning" type="submit"><i class="fas fa-check-double mr-1"></i>Kiểm tra tất cả (<?=count($xd_loc_kiem_tra_data)?>)</button>
+			</form>
+			<?php } ?>
+		</div>
 		<div class="card-body table-responsive p-0">
 			<table class="table table-hover">
 				<thead>

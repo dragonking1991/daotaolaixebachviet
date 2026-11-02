@@ -136,15 +136,21 @@ function xd_upload_hoadon_excel()
 	// Chặn import đè kỳ đã tồn tại dữ liệu (nếu có nhập kỳ) — trừ khi chọn "Đồng bộ lại"
 	// để cập nhật cờ hợp lệ/Note 1 cho hóa đơn chưa quyết toán (dedup đảm bảo không tạo bản ghi trùng).
 	$resync = !empty($_POST['resync']);
+	$replacePeriod = !empty($_POST['replace_period']);
 	/* Nhiều file cùng một lần tải lên (cùng upload_session) được coi là cùng một lượt kỳ. */
 	$uploadSession = preg_replace('/[^a-f0-9]/', '', (string)($_POST['upload_session'] ?? ''));
 	$sameBatch = $uploadSession !== '' && isset($_SESSION['xd_hd_batch'][$uploadSession]) && $_SESSION['xd_hd_batch'][$uploadSession] === $kyForm;
-	if($kyForm !== '' && !$resync && !$sameBatch)
+	$existingPeriodCount = 0;
+	$replaceableCount = 0;
+	if(!$sameBatch && ($kyForm !== '' || $replacePeriod))
 	{
 		$existKy = $d->rawQueryOne("select count(*) as num from #_xd_hoadon where ky = ?", array($kyForm));
-		if($existKy && (int)$existKy['num'] > 0)
-			$func->transfer("Kỳ <strong>".htmlspecialchars($kyForm)."</strong> đã được import trước đó. Không thể import đè để tránh trùng dữ liệu. Tích \"Đồng bộ lại\" nếu muốn cập nhật cờ hợp lệ cho kỳ này.", $backUrl, false);
+		$existingPeriodCount = (int)($existKy['num'] ?? 0);
+		$replaceableKy = $d->rawQueryOne("select count(*) as num from #_xd_hoadon where ky = ? and da_quyettoan = 0", array($kyForm));
+		$replaceableCount = (int)($replaceableKy['num'] ?? 0);
 	}
+	if($kyForm !== '' && !$resync && !$replacePeriod && !$sameBatch && $existingPeriodCount > 0)
+			$func->transfer("Kỳ <strong>".htmlspecialchars($kyForm)."</strong> đã được import trước đó. Không thể import đè để tránh trùng dữ liệu. Tích \"Đồng bộ lại\" nếu muốn cập nhật cờ hợp lệ cho kỳ này.", $backUrl, false);
 
 	$username = xd_username();
 	$inserted = 0;
@@ -161,6 +167,17 @@ function xd_upload_hoadon_excel()
 	if($snapshot === '') $func->transfer("Không sao lưu được dữ liệu trước khi import; chưa lưu hóa đơn nào.", $backUrl, false);
 	$affectedIds = array();
 	$d->startTransaction();
+	$replacedCount = 0;
+	if($replacePeriod && !$sameBatch && $replaceableCount > 0)
+	{
+		$deleteResult = $d->rawQuery("delete from #_xd_hoadon where ky = ? and da_quyettoan = 0", array($kyForm));
+		if($deleteResult === false || $d->getLastErrorCode() !== '00000')
+		{
+			$d->rollback();
+			$func->transfer("Không thể thay thế hóa đơn kỳ ".htmlspecialchars($kyForm)."; đã hoàn tác.", $backUrl, false);
+		}
+		$replacedCount = $replaceableCount;
+	}
 	foreach($rows as $r)
 	{
 		// Số HĐ có thể trùng giữa các giáo viên khác nhau -> khóa trùng gồm cả GV (Mã HĐ + Ngày HĐ + GV)
@@ -214,11 +231,12 @@ function xd_upload_hoadon_excel()
 		$func->transfer("Import thất bại khi ghi cơ sở dữ liệu; đã hoàn tác toàn bộ file.", $backUrl, false);
 	}
 	$d->commit();
-	if($uploadSession !== '' && $kyForm !== '') $_SESSION['xd_hd_batch'][$uploadSession] = $kyForm;
+	if($uploadSession !== '') $_SESSION['xd_hd_batch'][$uploadSession] = $kyForm;
 	xd_import_history_done('hoadon', array('filename' => (string)$file['name'], 'so_them' => $inserted, 'so_capnhat' => $updatedFixed,
 		'backup' => $snapshot, 'ids' => $affectedIds, 'link' => 'index.php?com=xangdau&act=hoadon'.($kyForm !== '' ? '&ky='.urlencode($kyForm) : '')));
 
 	$msg = "Import thành công $inserted hóa đơn.";
+	if($replacedCount > 0) $msg .= "<br>Đã thay thế $replacedCount hóa đơn chưa quyết toán trong kỳ ".htmlspecialchars($kyForm).".";
 	if($updatedFixed > 0) $msg .= "<br>Đã đồng bộ lại $updatedFixed hóa đơn chưa quyết toán (cập nhật cờ Hợp lệ / Note 1".($movedKy > 0 ? " / chuyển $movedKy hóa đơn sang kỳ ".htmlspecialchars($kyForm) : "").").";
 	if($skippedDup > 0) $msg .= "<br>Bỏ qua $skippedDup hóa đơn đã có, không thay đổi (trùng Mã HĐ + Ngày HĐ + Giáo viên).";
 	if($skippedLocked > 0) $msg .= "<br>Bỏ qua $skippedLocked hóa đơn đã quyết toán (bị khóa).";
