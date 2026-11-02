@@ -335,6 +335,11 @@ function dt_ensure_tables()
 		dt_ensure_update8_schema();
 		dt_migration_mark('update8_v1');
 	}
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('sh_import_stamp_v1'))
+	{
+		dt_ensure_sathach_import_stamp();
+		dt_migration_mark('sh_import_stamp_v1');
+	}
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('sh_roster_link_v1'))
 	{
 		dt_ensure_sh_link_schema();
@@ -391,6 +396,17 @@ function dt_ensure_update8_schema()
 		UNIQUE KEY uq_fin_request(id_hocvien,request_key), KEY idx_fin_hv(id_hocvien,loai)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể tạo sổ tài chính.');
+}
+
+/* Ngày giờ của lượt import sát hạch gần nhất trong kỳ. */
+function dt_ensure_sathach_import_stamp()
+{
+	global $d;
+	$exists = $d->rawQueryOne("select column_name from information_schema.columns where table_schema=database() and table_name='table_dt_sh_ky' and column_name='ngay_import' limit 0,1");
+	if(!$exists) $d->rawQuery('alter table table_dt_sh_ky add column ngay_import INT NOT NULL DEFAULT 0 AFTER ngaytao');
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể thêm thời điểm import kỳ sát hạch.');
+	$d->rawQuery('update table_dt_sh_ky k set k.ngay_import=coalesce((select max(r.ngaytao) from table_dt_sat_hach r where r.id_ky=k.id),0) where k.ngay_import=0');
+	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể khôi phục thời điểm import kỳ sát hạch cũ.');
 }
 
 /* Cột kiểu nâng hạng CE (c/d/d2) trên giấy HTKH. */

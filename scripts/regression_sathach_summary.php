@@ -62,6 +62,8 @@ foreach(array('dt_sh_ky','dt_sat_hach','dt_hocvien','dt_khoa','dt_sh_import_row'
     $sql=preg_replace('/ AUTO_INCREMENT=\d+/','',$sql);
     dt_sathach_summary_query($sql);
 }
+$importStampColumn=dt_sathach_summary_query("show columns from #_dt_sh_ky like 'ngay_import'");
+if(!$importStampColumn)dt_sathach_summary_query('alter table #_dt_sh_ky add column ngay_import INT NOT NULL DEFAULT 0 AFTER ngaytao');
 if($selectedPeriodOnly)
 {
     try
@@ -74,15 +76,19 @@ if($selectedPeriodOnly)
         foreach($samples as $sample)
         {
             if($sample[0]==='' || !is_file($sample[0]))throw new RuntimeException('Workbook mẫu không tồn tại.');
-            dt_sathach_summary_query('insert into #_dt_sh_ky (ten,ngay,loai) values (?,?,?)',array('Template '.$sample[2],$sample[1],$sample[2]));
+            dt_sathach_summary_query('insert into #_dt_sh_ky (ten,ngay,loai,ngaytao) values (?,?,?,?)',array('Template '.$sample[2],$sample[1],$sample[2],time()));
             $periodId=(int)$d->getLastInsertId();$periodIds[$sample[2]]=$periodId;
             summary_import_test($sample[0],true,$periodId);
             $imported=dt_sathach_summary_query('select count(*) as num,min(ngay_sh) as ngay_min,max(ngay_sh) as ngay_max from #_dt_sat_hach where id_ky=?',array($periodId));
             summary_check((int)$imported[0]['num']===$sample[3] && $imported[0]['ngay_min']===$sample[1] && $imported[0]['ngay_max']===$sample[1],'Selected-period import count/date mismatch for '.$sample[2]);
+            $stamp=dt_sathach_summary_query('select ngaytao,ngay_import from #_dt_sh_ky where id=?',array($periodId));
+            summary_check((int)$stamp[0]['ngaytao']>0 && (int)$stamp[0]['ngay_import']>=(int)$stamp[0]['ngaytao'],'Period creation/import timestamps were not stored for '.$sample[2]);
             $wrongRank=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=? and '.($sample[2]==='moto'?"hang not like 'A%'":"hang like 'A%'").'',array($periodId));
             summary_check((int)$wrongRank[0]['num']===0,'Selected-period import rank mismatch for '.$sample[2]);
             echo 'PASS '.$sample[2].' template: '.$sample[3].' records on '.$sample[1]."\n";
         }
+        $orderedPeriods=dt_sathach_summary_query('select id,loai from #_dt_sh_ky where id in (?,?) order by ngaytao asc,id asc',array($periodIds['oto'],$periodIds['moto']));
+        summary_check($orderedPeriods[0]['loai']==='oto' && $orderedPeriods[1]['loai']==='moto','Period order should show the one created first at the top');
         $motoCountBefore=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=?',array($periodIds['moto']));
         summary_import_test($samples[0][0],false,$periodIds['moto']);
         $motoCountAfter=dt_sathach_summary_query('select count(*) as num from #_dt_sat_hach where id_ky=?',array($periodIds['moto']));

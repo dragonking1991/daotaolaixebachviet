@@ -79,7 +79,7 @@ function dt_sathach_list()
 function dt_sathach_period_options()
 {
 	global $d, $sh_periods, $sh_period_sel;
-	$sh_periods = $d->rawQuery('select k.*,(select count(*) from #_dt_sat_hach r where r.id_ky=k.id) as so_hoc_vien from #_dt_sh_ky k order by k.ngay asc,k.id asc');
+	$sh_periods = $d->rawQuery('select k.*,(select count(*) from #_dt_sat_hach r where r.id_ky=k.id) as so_hoc_vien from #_dt_sh_ky k order by k.ngaytao asc,k.id asc');
 	$sh_period_sel = (int)dt_req('id_ky', 0);
 	if(empty($_SESSION['dt_sh_csrf'])) $_SESSION['dt_sh_csrf'] = bin2hex(random_bytes(24));
 }

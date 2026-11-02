@@ -94,6 +94,11 @@ function dt_sh_summary_store($parsed,$filename,$hash)
 			$results[$row['group'].'|'.$data['cccd']]=array('student'=>0,'result'=>$resultId);
 		}
 		dt_sh_save_source_rows($parsed,$filename,$hash,$results);
+		if($periodIds)
+		{
+			$periodIdList=array_values($periodIds);
+			dt_sathach_summary_query('update #_dt_sh_ky set ngay_import=? where id in ('.implode(',',array_fill(0,count($periodIdList),'?')).')',array_merge(array(time()),$periodIdList));
+		}
 		$pending=dt_sathach_summary_query("select count(*) as num from #_dt_sh_import_row where file_hash=? and trang_thai='pending'",array($hash));
 		$counts['pending']=(int)$pending[0]['num'];$counts['periods']=count($periodIds);
 		if($parsed['groups'])$counts['last_date']=max(array_column($parsed['groups'],'ngay'));
