@@ -105,7 +105,7 @@ function xd_xuat_toan_bo_danh_sach_hoc_vien()
 	{
 		$namSinh = (!empty($hv['ngaysinh']) && strtotime($hv['ngaysinh']) !== false) ? date('Y', strtotime($hv['ngaysinh'])) : '';
 		$ws->setCellValueExplicit('A'.$r, $stt, PHPExcel_Cell_DataType::TYPE_NUMERIC);
-		$ws->setCellValue('B'.$r, isset($hv['khoa']) ? $hv['khoa'] : '');
+		$ws->setCellValue('B'.$r, xd_course_print_name($hv['khoa'] ?? ''));
 		$ws->setCellValue('C'.$r, $hv['ho_ten']);
 		$ws->setCellValueExplicit('D'.$r, $hv['cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
 		$ws->setCellValue('E'.$r, $namSinh);

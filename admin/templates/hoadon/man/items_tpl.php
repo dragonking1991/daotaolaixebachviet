@@ -136,8 +136,10 @@
 	<div class="card-footer text-sm sticky-top">
 		<div class="d-flex flex-wrap align-items-end hoadon-toolbar">
 			<div class="mr-3 mb-2">
+				<?php if(hoadon_can_delete()): ?>
 				<a class="btn btn-sm bg-gradient-danger text-white" id="delete-all" data-url="<?=$linkDelete?>" title="Xóa đã chọn"><i class="far fa-trash-alt mr-2"></i>Xóa đã chọn</a>
 				<a class="btn btn-sm btn-danger" href="<?=$linkDeleteAll?>" onclick="return confirm('Bạn có chắc muốn xóa toàn bộ hóa đơn?');" title="Xóa toàn bộ"><i class="fas fa-trash-alt mr-2"></i>Xóa toàn bộ</a>
+				<?php endif; ?>
 			</div>
 
 			<div class="d-flex flex-wrap align-items-end mb-2 hoadon-filter-wrap">
@@ -311,7 +313,7 @@
 								<td class="hd-actions">
 									<textarea class="d-none hoadon-info-data" id="hoadon-info-<?=$items[$i]['id']?>"><?=$invoiceInfoJson?></textarea>
 									<a class="btn btn-xs bg-gradient-info text-white mr-2 btn-hoadon-detail" href="#" data-id="<?=$items[$i]['id']?>" title="Xem chi tiết">Chi tiết</a>
-									<a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a>
+									<?php if(hoadon_can_delete()): ?><a class="text-danger" id="delete-item" data-url="<?=$linkDelete?>&id=<?=$items[$i]['id']?>" title="Xóa"><i class="fas fa-trash-alt"></i></a><?php endif; ?>
 								</td>
 							</tr>
 						<?php } ?>

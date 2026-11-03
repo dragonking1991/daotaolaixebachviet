@@ -1066,6 +1066,40 @@
 
 	    <div class="card card-permission card-primary card-outline text-sm">
 	        <div class="card-header">
+	            <h3 class="card-title">Quản lý Hóa đơn</h3>
+	            <div class="card-tools">
+	                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+	            </div>
+	        </div>
+	        <div class="card-body">
+	            <div class="form-group row">
+	                <label class="d-inline-block align-middle mb-2 mr-2 text-md col-md-3">Danh sách hóa đơn:</label>
+	                <div class="col-md-7">
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-hoadon-view" value="hoadon_view" <?=(isset($ds_quyen) && in_array('hoadon_view', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-hoadon-view" class="custom-control-label font-weight-normal">Xem danh sách</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-hoadon-upload" value="hoadon_upload" <?=(isset($ds_quyen) && in_array('hoadon_upload', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-hoadon-upload" class="custom-control-label font-weight-normal">Import hóa đơn</label>
+	                    </div>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 mr-4 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-hoadon-delete" value="hoadon_delete" <?=(isset($ds_quyen) && in_array('hoadon_delete', $ds_quyen))?'checked':'';?>>
+	                        <label for="quyen-hoadon-delete" class="custom-control-label font-weight-normal">Xóa hóa đơn</label>
+	                    </div>
+	                    <?php if(isset($ds_quyen) && in_array('hoadon_man', $ds_quyen)): ?>
+	                    <div class="custom-control custom-checkbox d-inline-block align-middle mb-2 text-md">
+	                        <input type="checkbox" class="custom-control-input" name="dataQuyen[]" id="quyen-hoadon-man" value="hoadon_man" checked>
+	                        <label for="quyen-hoadon-man" class="custom-control-label font-weight-normal text-warning" title="Quyền cũ: bao gồm cả Chi phí xăng dầu. Bỏ tích và dùng các mục bên cạnh nếu chỉ cần quản lý hóa đơn.">Toàn quyền (quyền cũ)</label>
+	                    </div>
+	                    <?php endif; ?>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+
+	    <div class="card card-permission card-primary card-outline text-sm">
+	        <div class="card-header">
 	            <h3 class="card-title">Quản lý Kỳ Sát Hạch</h3>
 	            <div class="card-tools">
 	                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>

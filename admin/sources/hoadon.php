@@ -4,7 +4,7 @@ if(!defined('SOURCES')) die("Error");
 switch($act)
 {
 	case "man":
-		if(hoadon_permission_denied(array('hoadon_man', 'cabin_man', 'product_man_cabin', 'order_man'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		if(hoadon_permission_denied(array('hoadon_man', 'hoadon_view', 'hoadon_delete', 'cabin_man', 'product_man_cabin', 'order_man'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		hoadon_ensure_table();
 		get_items_hoadon();
 		$template = "hoadon/man/items";
@@ -20,12 +20,12 @@ switch($act)
 		uploadExcel_hoadon();
 		break;
 	case "delete":
-		if(hoadon_permission_denied(array('hoadon_man', 'cabin_man', 'product_man_cabin', 'order_man'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		if(hoadon_permission_denied(hoadon_delete_permissions())) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		hoadon_ensure_table();
 		delete_item_hoadon();
 		break;
 	case "deleteAll":
-		if(hoadon_permission_denied(array('hoadon_man', 'cabin_man', 'product_man_cabin', 'order_man'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		if(hoadon_permission_denied(hoadon_delete_permissions())) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		hoadon_ensure_table();
 		delete_all_hoadon();
 		break;
@@ -41,6 +41,16 @@ function hoadon_flash($msg, $url, $success = true)
 	$plain = trim(strip_tags($plain));
 	$_SESSION['dt_import_notice'] = array('message' => $plain, 'success' => (bool)$success, 'time' => time());
 	$func->redirect($url);
+}
+
+function hoadon_delete_permissions()
+{
+	return array('hoadon_man', 'hoadon_delete', 'cabin_man', 'product_man_cabin', 'order_man');
+}
+
+function hoadon_can_delete()
+{
+	return !hoadon_permission_denied(hoadon_delete_permissions());
 }
 
 function hoadon_permission_denied($permissions = array())

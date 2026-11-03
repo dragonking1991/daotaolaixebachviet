@@ -16,7 +16,7 @@ function xd_course_mutable($row)
 
 function xd_courses_page()
 {
-	global $func,$curPage,$xd_courses,$xd_course_name,$xd_course_students,$xd_course_paging,$xd_course_total;
+	global $func,$curPage,$xd_courses,$xd_course_name,$xd_course_students,$xd_course_paging,$xd_course_total,$xd_course_targets,$xd_merge_log,$xd_course_names;
 	if(empty($_SESSION['xd_course_csrf']))$_SESSION['xd_course_csrf']=bin2hex(random_bytes(24));
 	$keyword=trim((string)($_GET['keyword']??''));
 	$where="x.khoa<>''";$params=array();
@@ -45,6 +45,11 @@ function xd_courses_page()
 	foreach($xd_courses as &$course)$course['ten_khoa']=$courseNameByCode[$course['khoa']]??'';
 	unset($course);
 	xd_hocvien_attach_dat_counts($xd_courses);
+	xd_course_merge_ensure();
+	$xd_course_targets=xd_course_merge_targets();
+	$xd_merge_log=xd_course_query('select * from #_xd_khoa_merge order by id desc limit 15');
+	$xd_course_names=array();
+	foreach(xd_course_query("select ma_khoa,ten_khoa from #_dt_khoa where ma_khoa<>'' and ten_khoa<>''") as $row)$xd_course_names[$row['ma_khoa']]=$row['ten_khoa'];
 	$xd_course_name=trim((string)($_GET['khoa']??''));$xd_course_students=array();$xd_course_paging='';$xd_course_total=0;
 	if($xd_course_name==='')return;
 	$count=xd_course_query('select count(*) as num from #_xd_hocvien where khoa=?',array($xd_course_name));
@@ -87,6 +92,122 @@ function xd_course_change($oldName,$newName,$delete=false)
 	}
 	catch(Exception $error){if($transaction)$d->rollback();throw $error;}
 	finally{$d->rawQuery("select release_lock('bachviet_sh_xd_course_change')");}
+}
+
+function xd_course_merge_ensure()
+{
+	global $d;
+	$d->rawQuery("CREATE TABLE IF NOT EXISTS #_xd_khoa_merge (
+		id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+		khoa_nguon VARCHAR(100) NOT NULL,
+		khoa_dich VARCHAR(100) NOT NULL,
+		so_hv INT UNSIGNED NOT NULL DEFAULT 0,
+		ids_json LONGTEXT NOT NULL,
+		trang_thai VARCHAR(10) NOT NULL DEFAULT 'applied',
+		user_tao VARCHAR(100) NOT NULL DEFAULT '',
+		ngaytao INT UNSIGNED NOT NULL DEFAULT 0,
+		user_hoantac VARCHAR(100) NOT NULL DEFAULT '',
+		ngay_hoantac INT UNSIGNED NOT NULL DEFAULT 0,
+		so_hoantac INT UNSIGNED NOT NULL DEFAULT 0,
+		PRIMARY KEY (id)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+/* Danh sách khóa đích có thể gộp vào: khóa XD hiện có và khóa Đào tạo (value là giá trị lưu ở học viên XD). */
+function xd_course_merge_targets()
+{
+	$targets=array();
+	foreach(xd_course_query("select khoa,count(*) as so from #_xd_hocvien where khoa<>'' group by khoa order by khoa") as $row)
+		$targets[$row['khoa']]=array('label'=>xd_hocvien_course_label($row),'xd'=>(int)$row['so']);
+	foreach(xd_course_query("select k.ma_khoa,k.ten_khoa,(select count(*) from #_dt_hocvien h where h.id_khoa=k.id) as so_hoc_vien from #_dt_khoa k where k.ma_khoa<>'' order by k.ma_khoa") as $row)
+		if(!isset($targets[$row['ma_khoa']]))$targets[$row['ma_khoa']]=array('label'=>course_option_label(array('ma_khoa'=>$row['ma_khoa'],'ten_khoa'=>$row['ten_khoa'],'so_hoc_vien'=>0)).' · Đào tạo '.(int)$row['so_hoc_vien'].' HV · XD 0 HV','xd'=>0);
+	return $targets;
+}
+
+/* Gộp toàn bộ học viên của khóa nguồn sang khóa đích; ghi nhật ký (danh sách id) để hoàn tác. */
+function xd_course_merge($source,$target)
+{
+	global $d;
+	xd_course_merge_ensure();
+	$source=trim((string)$source);$target=trim((string)$target);
+	if($source===''||$target===''||$source===$target||mb_strlen($target,'UTF-8')>100)throw new RuntimeException('Chọn khóa đích khác với khóa nguồn.');
+	$lock=xd_course_query("select get_lock('bachviet_sh_xd_course_change',10) as acquired");
+	if((int)$lock[0]['acquired']!==1)throw new RuntimeException('Có lượt chỉnh sửa khóa đang chạy; vui lòng thử lại.');
+	$transaction=false;
+	try
+	{
+		$known=xd_course_merge_targets();
+		if(!isset($known[$target]))throw new RuntimeException('Khóa đích không tồn tại.');
+		$d->startTransaction();$transaction=true;
+		$rows=xd_course_query('select id from #_xd_hocvien where khoa=? order by id for update',array($source));
+		if(!$rows)throw new RuntimeException('Khóa nguồn không còn học viên.');
+		$before=xd_course_query('select count(*) as num from #_xd_hocvien where khoa=?',array($target));
+		$ids=array_map('intval',array_column($rows,'id'));
+		$logged=$d->insert('xd_khoa_merge',array('khoa_nguon'=>$source,'khoa_dich'=>$target,'so_hv'=>count($ids),'ids_json'=>json_encode($ids),'trang_thai'=>'applied','user_tao'=>xd_username(),'ngaytao'=>time(),'user_hoantac'=>'','ngay_hoantac'=>0,'so_hoantac'=>0));
+		if($logged===false)throw new RuntimeException('Không ghi được lịch sử gộp khóa; chưa thay đổi dữ liệu.');
+		$logId=(int)$d->getLastInsertId();
+		foreach(array_chunk($ids,500) as $chunk)
+			xd_course_query('update #_xd_hocvien set khoa=? where id in ('.implode(',',array_fill(0,count($chunk),'?')).')',array_merge(array($target),$chunk));
+		if($d->commit()===false)throw new RuntimeException('Không thể hoàn tất gộp khóa.');
+		$transaction=false;
+		return array('changed'=>count($ids),'log_id'=>$logId,'target_before'=>(int)$before[0]['num'],'target_after'=>(int)$before[0]['num']+count($ids));
+	}
+	catch(Exception $error){if($transaction)$d->rollback();throw $error;}
+	finally{$d->rawQuery("select release_lock('bachviet_sh_xd_course_change')");}
+}
+
+/* Hoàn tác một lần gộp: trả học viên về khóa nguồn (bỏ qua học viên đã được đổi khóa sau đó). */
+function xd_course_merge_undo($logId)
+{
+	global $d;
+	xd_course_merge_ensure();
+	$lock=xd_course_query("select get_lock('bachviet_sh_xd_course_change',10) as acquired");
+	if((int)$lock[0]['acquired']!==1)throw new RuntimeException('Có lượt chỉnh sửa khóa đang chạy; vui lòng thử lại.');
+	$transaction=false;
+	try
+	{
+		$d->startTransaction();$transaction=true;
+		$log=xd_course_query('select * from #_xd_khoa_merge where id=? for update',array((int)$logId));
+		if(!$log||$log[0]['trang_thai']==='undone')throw new RuntimeException('Lần gộp này không tồn tại hoặc đã được hoàn tác.');
+		$log=$log[0];$ids=json_decode($log['ids_json'],true);
+		if(!is_array($ids)||!$ids)throw new RuntimeException('Nhật ký gộp khóa không hợp lệ.');
+		$restored=0;
+		foreach(array_chunk(array_map('intval',$ids),500) as $chunk)
+		{
+			$marks=implode(',',array_fill(0,count($chunk),'?'));
+			$params=array_merge(array($log['khoa_dich']),$chunk);
+			$cnt=xd_course_query('select count(*) as num from #_xd_hocvien where khoa=? and id in ('.$marks.')',$params);
+			$restored+=(int)$cnt[0]['num'];
+			xd_course_query('update #_xd_hocvien set khoa=? where khoa=? and id in ('.$marks.')',array_merge(array($log['khoa_nguon']),$params));
+		}
+		$d->where('id',(int)$logId);
+		if($d->update('xd_khoa_merge',array('trang_thai'=>'undone','user_hoantac'=>xd_username(),'ngay_hoantac'=>time(),'so_hoantac'=>$restored))===false)throw new RuntimeException('Không cập nhật được lịch sử.');
+		if($d->commit()===false)throw new RuntimeException('Không thể hoàn tất hoàn tác.');
+		$transaction=false;
+		return array('restored'=>$restored,'total'=>count($ids),'source'=>$log['khoa_nguon']);
+	}
+	catch(Exception $error){if($transaction)$d->rollback();throw $error;}
+	finally{$d->rawQuery("select release_lock('bachviet_sh_xd_course_change')");}
+}
+
+function xd_course_merge_action($undo=false)
+{
+	global $func;
+	$back='index.php?com=xangdau&act=khoa';
+	if(!xd_can_import())$func->transfer('Bạn không có quyền thực hiện thao tác này.',$back,false);
+	if(empty($_SESSION['xd_course_csrf'])||!hash_equals($_SESSION['xd_course_csrf'],(string)($_POST['csrf']??'')))$func->transfer('Phiên thao tác không hợp lệ.',$back,false);
+	try
+	{
+		if($undo)
+		{
+			$r=xd_course_merge_undo((int)($_POST['log_id']??0));
+			$func->transfer('Đã hoàn tác: trả '.$r['restored'].'/'.$r['total'].' học viên về khóa "'.htmlspecialchars($r['source']).'".'.($r['restored']<$r['total']?'<br>Một số học viên đã đổi khóa sau lần gộp nên được giữ nguyên.':''),$back.'&khoa='.urlencode($r['source']));
+		}
+		$source=trim((string)($_POST['khoa']??''));$target=trim((string)($_POST['target']??''));
+		$r=xd_course_merge($source,$target);
+		$func->transfer('Đã gộp '.$r['changed'].' học viên từ "'.htmlspecialchars($source).'" sang "'.htmlspecialchars($target).'". Khóa đích XD: '.$r['target_before'].' → '.$r['target_after'].' HV. Có thể hoàn tác trong mục Lịch sử gộp khóa.',$back.'&khoa='.urlencode($target));
+	}
+	catch(Exception $error){$func->transfer($error->getMessage(),$back,false);}
 }
 
 function xd_course_save_action($delete=false)

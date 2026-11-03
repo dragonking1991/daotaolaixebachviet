@@ -75,7 +75,7 @@ function xd_act_denied($act)
 {
 	$configActs = array('config', 'saveConfig', 'xoaDieuChinhHocVien');
 	$deleteActs = array('deleteKhoa','deleteHoadon', 'deleteHoadonSelected', 'deleteAllHoadon', 'deleteHocvien', 'deleteHocvienSelected', 'deleteHocvienByGv', 'deleteAllHocvien', 'ceInvoiceDelete');
-	$importActs = array('saveKhoa','uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel', 'syncTrainingDat', 'syncTrainingDatPreview', 'ceInvoiceSave', 'ceInvoiceUpload', 'importTemplate', 'importHistory', 'importErrors');
+	$importActs = array('saveKhoa','mergeKhoa','undoMergeKhoa','uploadHoadon', 'uploadHoadonExcel', 'uploadHocvien', 'uploadHocvienExcel', 'syncTrainingDat', 'syncTrainingDatPreview', 'ceInvoiceSave', 'ceInvoiceUpload', 'importTemplate', 'importHistory', 'importErrors');
 	$kiemtraActs = array('kiemTraGiaoVien', 'huyKiemTraGiaoVien', 'kiemTraTatCaGiaoVien', 'huyKiemTraTatCaGiaoVien', 'toggleKiemTraHoadon', 'toggleHopLeHoadon');
 	$duyetActs = array('duyetGiaoVien', 'duyetTatCaGiaoVien', 'huyDuyetGiaoVien', 'huyDuyetGiaoVienChon');
 	$exportActs = array('xuatBangKeGiaoVien', 'xuatBangKeDaDuyetGiaoVien', 'xuatTongHopGiaoVien', 'xuatTongHopDaDuyet', 'xuatDaKiemTraGiaoVien', 'xuatTatCaBangKe', 'xuatToanBoDanhSachHocVien', 'xuatBangKe', 'xuatHoadonExcel', 'xuatHocvienExcel');

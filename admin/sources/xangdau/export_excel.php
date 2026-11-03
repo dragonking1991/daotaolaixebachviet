@@ -160,7 +160,7 @@ function xd_export_bangke_excel($d, $idBangke, $today, $ky, $onlyGvKey = '', $pr
 		{
 			$namSinh = (!empty($hv['ngaysinh']) && strtotime($hv['ngaysinh']) !== false) ? date('d/m/Y', strtotime($hv['ngaysinh'])) : (string)$hv['ngaysinh'];
 			$ws->setCellValueExplicit('A'.$r, $stt, PHPExcel_Cell_DataType::TYPE_NUMERIC);
-			$ws->setCellValue('B'.$r, isset($hv['khoa']) ? $hv['khoa'] : '');
+			$ws->setCellValue('B'.$r, xd_course_print_name($hv['khoa'] ?? ''));
 			$ws->setCellValueExplicit('C'.$r, $hv['cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
 			$ws->setCellValue('D'.$r, $hv['ho_ten']);
 			$ws->setCellValue('E'.$r, $namSinh);
@@ -266,7 +266,7 @@ function xd_xuat_hocvien_excel()
 	$labels = array('all' => 'TẤT CẢ', 'paid' => 'ĐÃ THANH TOÁN', 'unpaid' => 'CHƯA THANH TOÁN');
 	$headers = array_merge(array('STT', 'Họ tên', 'CCCD', 'Khóa', 'Ngày sinh', 'Nhóm', 'GV phụ trách', 'Số tiền TT XD', 'Ngày TT', 'Trạng thái'), array_values(xd_student_financial_fields()), array('Ngày nộp hồ sơ'));
 	xd_xuat_danh_sach_excel('DANH SÁCH HỌC VIÊN XĂNG DẦU - '.$labels[$scope], $headers, array('A'=>6, 'B'=>28, 'C'=>18, 'D'=>14, 'E'=>14, 'F'=>10, 'G'=>26, 'H'=>18, 'I'=>14, 'J'=>20, 'K'=>20, 'L'=>18, 'M'=>20, 'N'=>20, 'O'=>20, 'P'=>20, 'Q'=>20), $rows, function($row, $stt) {
-		$values = array($stt, $row['ho_ten'], $row['cccd'], $row['khoa'], $row['ngaysinh'], $row['nhom'], $row['gv_hoten'], (float)$row['so_tien_thanh_toan'], !empty($row['ngay_thanh_toan']) ? date('d/m/Y', strtotime($row['ngay_thanh_toan'])) : '', !empty($row['ngay_thanh_toan']) ? 'Đã thanh toán' : 'Chưa thanh toán');
+		$values = array($stt, $row['ho_ten'], $row['cccd'], xd_course_print_name($row['khoa']), $row['ngaysinh'], $row['nhom'], $row['gv_hoten'], (float)$row['so_tien_thanh_toan'], !empty($row['ngay_thanh_toan']) ? date('d/m/Y', strtotime($row['ngay_thanh_toan'])) : '', !empty($row['ngay_thanh_toan']) ? 'Đã thanh toán' : 'Chưa thanh toán');
 		foreach(xd_student_financial_fields() as $key => $label) $values[] = (int)($row[$key] ?? 0);
 		$values[] = !empty($row['ngay_nop_ho_so']) ? date('d/m/Y', strtotime($row['ngay_nop_ho_so'])) : '';
 		return $values;

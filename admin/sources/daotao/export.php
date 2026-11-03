@@ -27,11 +27,52 @@ function dt_export_link($act, $keys)
 	return 'index.php?'.htmlspecialchars(http_build_query($q));
 }
 
+/* File xuất chỉ hiển thị tên khóa: đổi mã -> tên, bỏ cột "Mã khóa" khi đã có "Tên khóa" (dịch chỉ số cột text/ô đỏ tương ứng). */
+function dt_xlsx_course_names(&$headers, &$rows, &$textCols, &$redCells)
+{
+	global $d;
+	$codeCol = array_search('Mã khóa', $headers, true);
+	if($codeCol === false) $codeCol = array_search('Khóa', $headers, true);
+	if($codeCol === false) return;
+	$nameCol = array_search('Tên khóa', $headers, true);
+	$codes = array();
+	foreach($rows as $row) if(isset($row[$codeCol]) && trim((string)$row[$codeCol]) !== '') $codes[trim((string)$row[$codeCol])] = true;
+	$names = array();
+	if($codes)
+	{
+		$codes = array_keys($codes);
+		$found = $d->rawQuery("select ma_khoa, ten_khoa from #_dt_khoa where ten_khoa <> '' and ma_khoa in (".implode(',', array_fill(0, count($codes), '?')).")", $codes);
+		foreach(is_array($found) ? $found : array() as $f) $names[$f['ma_khoa']] = $f['ten_khoa'];
+	}
+	foreach($rows as &$row)
+	{
+		$code = trim((string)($row[$codeCol] ?? ''));
+		$name = $names[$code] ?? $code;
+		if($nameCol === false) { $row[$codeCol] = $name; continue; }
+		if(trim((string)($row[$nameCol] ?? '')) === '') $row[$nameCol] = $name;
+		array_splice($row, $codeCol, 1);
+	}
+	unset($row);
+	if($nameCol === false) { $headers[$codeCol] = 'Khóa'; return; }
+	array_splice($headers, $codeCol, 1);
+	$headers[$nameCol - 1] = 'Khóa';
+	$textCols = array_values(array_filter(array_map(function($c) use ($codeCol) { return $c == $codeCol ? -1 : ($c > $codeCol ? $c - 1 : $c); }, $textCols), function($c) { return $c >= 0; }));
+	$shifted = array();
+	foreach($redCells as $key => $v)
+	{
+		list($ri, $c) = array_map('intval', explode(',', $key));
+		if($c == $codeCol) continue;
+		$shifted[$ri.','.($c > $codeCol ? $c - 1 : $c)] = $v;
+	}
+	$redCells = $shifted;
+}
+
 /* Xuất mảng dòng (mỗi dòng là mảng ô) ra file .xlsx rồi kết thúc.
  * $textCols: danh sách chỉ số cột (0-based) ép kiểu chuỗi để giữ số 0 đầu (CCCD, biển số...). */
 function dt_xlsx_simple($title, $filename, $headers, $rows, $textCols = array(), $redCells = array())
 {
 	require_once LIBRARIES.'PHPExcel.php';
+	dt_xlsx_course_names($headers, $rows, $textCols, $redCells);
 	$objPHPExcel = new PHPExcel();
 	$sheet = $objPHPExcel->getActiveSheet();
 	$sheet->setTitle(mb_substr($title, 0, 28));

@@ -86,6 +86,16 @@ function xd_course_display_name($courseCode, $nameMap = array())
 	return $name !== '' ? $name : $courseCode;
 }
 
+/* Tên khóa dùng trong file in/xuất (có cache theo request). */
+function xd_course_print_name($courseCode)
+{
+	static $cache = array();
+	$courseCode = trim((string)$courseCode);
+	if($courseCode === '') return '';
+	if(!array_key_exists($courseCode, $cache)) $cache += xd_course_name_map(array($courseCode));
+	return xd_course_display_name($courseCode, $cache);
+}
+
 /* Khóa định danh giáo viên theo TÊN (các file import không có CCCD giáo viên). */
 function xd_gv_key($name)
 {

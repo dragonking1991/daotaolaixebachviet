@@ -89,7 +89,7 @@ function dt_tonghop_export()
 		$sheet->setCellValueExplicit('E'.$r, $hv['cccd'], PHPExcel_Cell_DataType::TYPE_STRING);
 		$sheet->setCellValue('F'.$r, $hv['hang']);
 		$sheet->setCellValue('G'.$r, isset($hv['ma_khoa']) ? $hv['ma_khoa'] : '');
-		$sheet->setCellValue('H'.$r, isset($hv['ten_khoa']) ? $hv['ten_khoa'] : '');
+		$sheet->setCellValue('H'.$r, trim((string)($hv['ten_khoa'] ?? '')) !== '' ? $hv['ten_khoa'] : ($hv['ma_khoa'] ?? ''));
 		$sheet->setCellValue('I'.$r, isset($hv['gv_hoten']) ? $hv['gv_hoten'] : '');
 		$sheet->setCellValue('J'.$r, dt_lythuyet_cell_text($hv, $s['ly_thuyet']['dat']));
 		$sheet->setCellValue('K'.$r, $s['cabin']['dat'] ? 'Đạt' : (empty($s['cabin']['yeu_cau']) ? 'Không yêu cầu' : 'Chưa đạt'));
@@ -117,7 +117,9 @@ function dt_tonghop_export()
 		$r++; $stt++;
 	}
 
-	foreach(range('A','V') as $c) $sheet->getColumnDimension($c)->setAutoSize(true);
+	$sheet->setCellValue('H1', 'Khóa');
+	$sheet->removeColumn('G');
+	foreach(range('A','U') as $c) $sheet->getColumnDimension($c)->setAutoSize(true);
 
 	$filename = 'tonghop-daotao-'.date('Ymd_His').'.xlsx';
 	if(ob_get_length()) ob_end_clean();

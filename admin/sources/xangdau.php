@@ -45,6 +45,10 @@ switch($act)
 	case 'deleteKhoa':
 		if(xd_permission_denied($act)) $func->transfer('Bạn không có quyền vào trang này','index.php',false);
 		xd_ensure_tables();xd_course_save_action($act==='deleteKhoa');break;
+	case 'mergeKhoa':
+	case 'undoMergeKhoa':
+		if(xd_permission_denied($act)) $func->transfer('Bạn không có quyền vào trang này','index.php',false);
+		xd_ensure_tables();xd_course_merge_action($act==='undoMergeKhoa');break;
 	// ---- Cấu hình định mức ----
 	case "config":
 		if(xd_permission_denied($act)) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
