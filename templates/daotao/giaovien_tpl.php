@@ -134,7 +134,7 @@
 				?>
 				<tr>
 					<td class="dt-gv-student-cell"><?=htmlspecialchars($hv['hoten'])?><span class="dt-gv-student-meta">CCCD: <?=htmlspecialchars($hv['cccd'])?> <span>•</span> Hạng <?=htmlspecialchars($hv['hang'])?></span></td>
-					<td class="dt-gv-course-cell"><?=htmlspecialchars($hv['ma_khoa'])?></td>
+					<td class="dt-gv-course-cell"><?php if(!empty($hv['ten_khoa'])): ?><strong><?=htmlspecialchars($hv['ten_khoa'])?></strong><span class="dt-gv-course-code"><?=htmlspecialchars($hv['ma_khoa'])?></span><?php else: ?><?=htmlspecialchars($hv['ma_khoa'])?><?php endif; ?></td>
 					<?php if($showLt): ?>
 					<td class="dt-gv-status-cell"><?=dt_gv_badge($s['ly_thuyet']['dat'])?>
 						<?php if(!empty($ltMiss)): ?><div class="dt-gv-miss"><?php foreach($ltMiss as $m): ?><span><i class="fas fa-circle-exclamation" aria-hidden="true"></i><?=htmlspecialchars($m)?></span><?php endforeach; ?></div><?php endif; ?>

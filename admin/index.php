@@ -91,6 +91,7 @@
 	<script src="assets/js/bootstrap.bundle.js"></script>
 	<script src="assets/js/adminlte.js"></script>
 	<script src="assets/js/daotao.js?v=<?=@filemtime(__DIR__.'/assets/js/daotao.js')?>"></script>
+	<script src="assets/js/admin-bulk-bar.js?v=<?=@filemtime(__DIR__.'/assets/js/admin-bulk-bar.js')?>"></script>
 	<script src="assets/js/course-select.js?v=<?=filemtime(__DIR__.'/assets/js/course-select.js')?>"></script>
 	<script>window.IK_MAX_UPLOAD = <?=(int)ik_upload_limit_bytes()?>;</script>
 	<script src="assets/js/daotao-import.js?v=<?=@filemtime(__DIR__.'/assets/js/daotao-import.js')?>"></script>

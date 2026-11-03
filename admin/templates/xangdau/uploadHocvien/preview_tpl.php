@@ -2,6 +2,9 @@
 if(!defined('SOURCES')) die("Error");
 $escape = function($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); };
 $xdPreviewReturn = xd_safe_ret($xd_roster_preview['ret'] ?? '', 'index.php?com=xangdau&act=hocvien');
+$xdPreviewCourseCodes = array();
+foreach($xd_roster_preview['rows'] as $previewRow) if(!empty($previewRow['khoa'])) $xdPreviewCourseCodes[] = $previewRow['khoa'];
+$xdPreviewCourseNames = xd_course_name_map($xdPreviewCourseCodes);
 $xdPrevGroup = 0;
 foreach($xd_roster_preview['rows'] as $xdPrevRow) if($xdPrevRow['existing'] && $xdPrevRow['existing']['nhom'] !== $xdPrevRow['nhom']) $xdPrevGroup++;
 $xdPrevTotal = count($xd_roster_preview['rows']);
@@ -46,8 +49,8 @@ $xdPrevTotal = count($xd_roster_preview['rows']);
 			</div>
 			<div class="table-responsive"><table class="table table-sm table-bordered" id="xd-roster-preview">
 				<thead><tr><th>Dòng</th><th>Họ tên</th><th>CCCD/CMND</th><th>Khóa XD</th><th>Nhóm</th><th>Ngày nộp hồ sơ</th><th>Thao tác</th><?php foreach(xd_student_financial_fields() as $label): ?><th class="text-right"><?=$escape($label)?></th><?php endforeach; ?></tr></thead>
-				<tbody><?php foreach($xd_roster_preview['rows'] as $row): $xdKind = ($row['existing'] ? 'update' : 'insert').($row['existing'] && $row['existing']['nhom'] !== $row['nhom'] ? ' group' : ''); ?><tr data-kind="<?=$xdKind?>">
-					<td><?=(int)$row['row']?></td><td><?=$escape($row['ho_ten'])?></td><td><?=$escape($row['cccd'])?></td><td><?=$escape($row['khoa'])?></td><td><?php if($row['existing'] && $row['existing']['nhom'] !== $row['nhom']): ?><span class="badge badge-info"><?=$escape($row['existing']['nhom'])?> → <?=$escape($row['nhom'])?></span><?php else: ?><?=$escape($row['nhom'])?><?php endif; ?></td>
+				<tbody><?php foreach($xd_roster_preview['rows'] as $row): $xdKind = ($row['existing'] ? 'update' : 'insert').($row['existing'] && $row['existing']['nhom'] !== $row['nhom'] ? ' group' : ''); $xdCourseCode = trim((string)($row['khoa'] ?? '')); $xdCourseName = xd_course_display_name($xdCourseCode, $xdPreviewCourseNames); ?><tr data-kind="<?=$xdKind?>">
+					<td><?=(int)$row['row']?></td><td><?=$escape($row['ho_ten'])?></td><td><?=$escape($row['cccd'])?></td><td><strong><?=$escape($xdCourseName)?></strong><?php if($xdCourseCode !== '' && $xdCourseName !== $xdCourseCode): ?><small class="d-block text-muted"><?=$escape($xdCourseCode)?></small><?php endif; ?></td><td><?php if($row['existing'] && $row['existing']['nhom'] !== $row['nhom']): ?><span class="badge badge-info"><?=$escape($row['existing']['nhom'])?> → <?=$escape($row['nhom'])?></span><?php else: ?><?=$escape($row['nhom'])?><?php endif; ?></td>
 					<td><?=!empty($row['ngay_nop_ho_so']) ? date('d/m/Y', strtotime($row['ngay_nop_ho_so'])) : (!empty($row['existing']['ngay_nop_ho_so']) ? date('d/m/Y', strtotime($row['existing']['ngay_nop_ho_so'])).' (giữ nguyên)' : '')?></td>
 					<td><?=$row['existing'] ? '<span class="badge badge-warning">Cập nhật</span>' : '<span class="badge badge-success">Thêm mới</span>'?></td>
 					<?php foreach(xd_student_financial_fields() as $key => $label): ?><td class="text-right"><?=isset($row['financial'][$key]) ? number_format($row['financial'][$key], 0, ',', '.') : '<span class="text-muted">Giữ nguyên</span>'?></td><?php endforeach; ?>

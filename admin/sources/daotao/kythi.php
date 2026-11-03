@@ -439,6 +439,47 @@ function dt_kythi_export()
 	dt_xlsx_simple('Ky kiem tra', $fn, $headers, $out, array(1, 3, 4), $redCells);
 }
 
+/* Phân loại kết quả kiểm tra: dat | vang | rot | chua. */
+function dt_kythi_result_status($row)
+{
+	if((int)($row['co_ket_qua'] ?? 0) !== 1) return 'chua';
+	$text = dt_strip_diacritics(trim((string)($row['ket_qua_tong'] ?? '').' '.(string)($row['ket_luan'] ?? '').' '.(string)($row['lt'] ?? '')));
+	if(preg_match('/(^|[^a-z])vang([^a-z]|$)/', $text)) return 'vang';
+	return dt_htkh_ket_qua_dat($row) ? 'dat' : 'rot';
+}
+
+/* Xuất Excel kết quả kiểm tra của kỳ; kq=all|dat|vang|rot. */
+function dt_kythi_export_results()
+{
+	global $d, $func;
+	$id = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
+	$kq = dt_req('kq');
+	if(!in_array($kq, array('all', 'dat', 'vang', 'rot'), true)) $kq = 'all';
+	$ky = $d->rawQueryOne("select * from #_dt_ky_thi where id = ? limit 0,1", array($id));
+	if(!$ky) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
+	$rows = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? and co_ket_qua = 1 order by ma_khoa asc, substring_index(hoten, ' ', -1) asc, hoten asc", array($id));
+	$pick = array_flip(array_filter(array_map('intval', (array)($_GET['ids'] ?? array()))));
+	if($pick) $rows = array_values(array_filter($rows, function($r) use ($pick) { return isset($pick[(int)$r['id']]); }));
+
+	$labels = array('dat' => 'Đạt', 'vang' => 'Vắng', 'rot' => 'Rớt', 'chua' => 'Chưa có kết quả');
+	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',
+		'Điểm LT','LT','Điểm MP','MP','Điểm Hình','Hình','Điểm Đường','Đường','Chữ chi','Điểm chữ chi','Kết quả tổng','Kết luận','Phân loại');
+	$out = array(); $redCells = array(); $stt = 1; $ri = 0;
+	foreach($rows as $r)
+	{
+		$status = dt_kythi_result_status($r);
+		if($kq !== 'all' && $status !== $kq) continue;
+		$out[] = array($stt++, $r['ma_hv'], $r['hoten'], $r['nam_sinh'], $r['cccd'], $r['hang'], $r['ma_khoa'], $r['ten_khoa'], $r['giaovien'],
+			$r['diem_lt'], $r['lt'], $r['diem_mp'], $r['mp'], $r['diem_hinh'], $r['hinh'], $r['diem_duong'], $r['duong'],
+			$r['chu_chi'], $r['diem_chu_chi'], $r['ket_qua_tong'], $r['ket_luan'], $labels[$status]);
+		if($status !== 'dat') $redCells[$ri.',21'] = 1;
+		$ri++;
+	}
+	$suffix = $kq === 'all' ? '' : '-'.$kq;
+	$fn = 'ket-qua-kiem-tra'.$suffix.'-'.($ky['ngay_kt'] ? str_replace('-', '', $ky['ngay_kt']) : date('Ymd')).'.xlsx';
+	dt_xlsx_simple('Ket qua kiem tra', $fn, $headers, $out, array(1, 3, 4), $redCells);
+}
+
 /* Màn import kết quả TTSH. */
 function dt_kythi_upload_form()
 {

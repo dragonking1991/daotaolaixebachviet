@@ -163,9 +163,10 @@ function sa_render_list($request, $page)
 $list = sa_render_list(array('khoa' => '79044K26C1005'), 2);
 sa_check(preg_match('/<td class="text-muted">21<\/td>/', $list) && strpos($list, '<td class="text-muted">1</td>') === false, 'STT must continue across pages');
 sa_check(strpos($list, 'Hiển thị <strong>21–25</strong> / <strong>25</strong> học viên') !== false, 'Result range count');
-sa_check(strpos($list, '<strong>K13-C1</strong><small>79044K26C1005</small>') !== false, 'Course column must show name with code below');
+sa_check(strpos($list, '<strong>K13-C1</strong><small>79044K26C1005</small>') !== false, 'Training course codes must resolve to the official course name with code below');
+sa_check(xd_course_display_name('194BSS') === '194BSS' && xd_hocvien_course_label(array('khoa'=>'194BSS','so'=>62,'so_dong_bo'=>0,'ten_khoa'=>'B số sàn')) === '194BSS · 62 HV', 'Rank-like XD codes must remain the displayed course name');
 sa_check(substr_count($list, '05/03/2001') >= 5 && strpos($list, '2001-03-05') === false, 'Birth dates must render consistently');
-sa_check(strpos($list, 'Khóa: K13-C1 (79044K26C1005)') !== false && strpos($list, 'class="xd-hv-chip"') !== false, 'Active filter chips');
+sa_check(strpos($list, 'Khóa: K13-C1 (79044K26C1005)') !== false && strpos($list, 'class="xd-hv-chip"') !== false, 'Active filter chips show training course name with its code');
 sa_check(strpos($list, 'id="xd-hv-selected"') !== false && strpos($list, 'Đạt DAT toàn khóa') !== false && strpos($list, 'Xóa toàn khóa') !== false && strpos($list, 'mọi trang, bỏ qua bộ lọc khác') !== false, 'Bulk bar must group selected and whole-course actions with scope');
 sa_check(strpos($list, 'id="xd-delete-all-btn"') !== false && strpos($list, 'XOA TOAN BO') !== false && strpos($list, 'Xóa TOÀN BỘ 25 học viên XD') !== false, 'Delete all must require typed confirmation with count');
 sa_check(strpos($list, 'Ngày thanh toán (từ – đến)') !== false && strpos($list, 'Ngày TT đến') === false && strpos($list, 'Ngày nộp hồ sơ') !== false, 'Date range filter and submission column');

@@ -1,4 +1,13 @@
-<?php if(!defined('SOURCES')) die('Error'); ?>
+<?php if(!defined('SOURCES')) die('Error');
+    $financeSourceCourseNames = array();
+    foreach(($finance_source_courses ?? array()) as $course)
+    {
+        $code = trim((string)($course['khoa'] ?? ''));
+        if($code === '') continue;
+        $name = trim((string)($course['ten_khoa'] ?? ''));
+        $financeSourceCourseNames[$code] = xd_course_display_name($code, $name !== '' ? array($code=>$name) : array());
+    }
+?>
 <section class="content-header text-sm"><div class="container-fluid"><ol class="breadcrumb float-sm-left"><li class="breadcrumb-item"><a href="index.php">Bảng điều khiển</a></li><li class="breadcrumb-item active">Học phí, tạm ứng, thanh toán</li></ol></div></section>
 <section class="content">
 <div class="card card-primary card-outline text-sm">
@@ -14,10 +23,11 @@
             <button class="btn btn-sm bg-gradient-primary mr-2">Lọc tiền nguồn</button>
             <?php if(dt_can('taichinh','export')): ?><a class="btn btn-sm bg-gradient-info" href="<?=htmlspecialchars('index.php?'.http_build_query(array('com'=>'daotao','act'=>'exportTaichinh','source_export'=>'1','source_khoa'=>$finance_source_course)))?>"><i class="fas fa-file-excel mr-1"></i>Xuất tiền nguồn</a><?php endif; ?>
         </form>
-        <div class="table-responsive"><table class="table dt-list table-hover"><thead><tr><th>Học viên</th><th>Khóa XD / Nhóm</th><th>Giáo viên</th><?php foreach(xd_student_financial_fields() as $label): ?><th class="text-right"><?=htmlspecialchars($label)?><small class="d-block text-muted">Nguồn · VNĐ</small></th><?php endforeach; ?></tr></thead><tbody>
+        <div class="table-responsive"><table class="table dt-list table-hover"><thead><tr><th>Học viên</th><th>Tên khóa / Nhóm</th><th>Giáo viên</th><?php foreach(xd_student_financial_fields() as $label): ?><th class="text-right"><?=htmlspecialchars($label)?><small class="d-block text-muted">Nguồn · VNĐ</small></th><?php endforeach; ?></tr></thead><tbody>
         <?php foreach($finance_source['rows'] as $student): ?><tr>
             <td><div class="dt-title"><?=htmlspecialchars($student['ho_ten'])?></div><div class="dt-sub"><?=htmlspecialchars($student['cccd'])?></div></td>
-            <td><?=htmlspecialchars($student['khoa'].' / '.$student['nhom'])?></td><td><?=htmlspecialchars($student['gv_hoten'])?></td>
+            <?php $courseCode = trim((string)($student['khoa'] ?? '')); $courseName = $financeSourceCourseNames[$courseCode] ?? xd_course_display_name($courseCode); ?>
+            <td><strong><?=htmlspecialchars($courseName)?></strong><?php if($courseCode !== '' && $courseName !== $courseCode): ?><small class="d-block text-muted"><?=htmlspecialchars($courseCode)?></small><?php endif; ?><span class="dt-tag is-muted"><?=htmlspecialchars($student['nhom'])?></span></td><td><?=htmlspecialchars($student['gv_hoten'])?></td>
             <?php foreach(xd_student_financial_fields() as $key => $label): ?><td class="text-right"><?=number_format((float)$student[$key],0,',','.')?></td><?php endforeach; ?>
         </tr><?php endforeach; ?>
         <?php if(!$finance_source['rows']): ?><tr><td colspan="9" class="text-center text-muted">Chưa có dữ liệu tiền nguồn trong khóa đã chọn.</td></tr><?php endif; ?>

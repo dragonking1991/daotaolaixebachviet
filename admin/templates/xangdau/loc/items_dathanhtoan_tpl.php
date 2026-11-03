@@ -14,6 +14,7 @@
 		</div>
 	</div>
 </section>
+<script src="assets/js/xangdau-bulk.js?v=<?=@filemtime(__DIR__.'/../../../assets/js/xangdau-bulk.js')?>"></script>
 
 <section class="content">
 	<div class="card card-secondary card-outline text-sm">
@@ -42,10 +43,11 @@
 		</div>
 		<?php if(xd_can_duyet() && !empty($xd_loc_dathanhtoan_data)) { ?>
 		<div class="card-body py-2 border-bottom">
-			<form id="xd-paid-bulk-form" method="post" action="index.php?com=xangdau&act=huyDuyetGiaoVienChon" class="form-inline" style="gap:.5rem;" onsubmit="return confirm('Hủy duyệt đúng các giáo viên/ngày thanh toán đã chọn? Những ngày khác được giữ nguyên.');">
+			<form id="xd-paid-bulk-form" method="post" action="index.php?com=xangdau&act=huyDuyetGiaoVienChon" class="form-inline" style="gap:.5rem;" onsubmit="var m=document.getElementById('xd-paid-bulk-msg');if(!document.querySelector('[form=xd-paid-bulk-form]:checked')){m.textContent='Vui lòng tích chọn ít nhất một dòng cần bỏ duyệt.';m.style.display='block';return false;}m.style.display='none';return confirm('Hủy duyệt đúng các giáo viên/ngày thanh toán đã chọn? Những ngày khác được giữ nguyên.');">
 				<input type="hidden" name="ret" value="<?=$xdPaidReturnUrl?>">
 				<button class="btn btn-sm btn-danger" type="submit"><i class="fas fa-undo mr-1"></i>Bỏ duyệt các mục đã chọn</button>
 				<span class="small text-muted">Mỗi dòng tương ứng một giáo viên và một ngày thanh toán.</span>
+				<div id="xd-paid-bulk-msg" class="alert alert-danger py-1 px-2 mb-0 w-100" style="display:none" role="alert"></div>
 			</form>
 		</div>
 		<?php } ?>

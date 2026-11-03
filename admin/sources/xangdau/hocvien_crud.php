@@ -138,9 +138,7 @@ function xd_hocvien_course_group($course)
 {
 	$name=trim((string)$course['khoa']);
 	$total=(int)$course['so'];$synced=(int)($course['so_dong_bo']??0);
-	$ranks=array('bss'=>'B số sàn','btd'=>'B tự động','c1'=>'C1','c'=>'C','ce'=>'CE');
-	$key=strtolower($name);
-	if($synced>0&&isset($ranks[$key]))return 'rank';
+	if($synced>0&&xd_course_rank_label($name)!=='')return 'rank';
 	if($synced===$total&&$total>0)return 'synced';
 	if($synced>0)return 'mixed';
 	return 'stored';
@@ -149,14 +147,10 @@ function xd_hocvien_course_group($course)
 function xd_hocvien_course_label($course)
 {
 	$name=trim((string)$course['khoa']);
-	$total=(int)$course['so'];$synced=(int)($course['so_dong_bo']??0);
+	$total=(int)$course['so'];
 	$trainingName=trim((string)($course['ten_khoa']??''));
-	$ranks=array('bss'=>'B số sàn','btd'=>'B tự động','c1'=>'C1','c'=>'C','ce'=>'CE');
-	$key=strtolower($name);
-	$group=xd_hocvien_course_group($course);
-	if($group==='rank')
-		return course_option_label(array('khoa'=>$name,'ten_khoa'=>$ranks[$key],'so'=>$total));
-	$label=course_option_label($course);
+	$displayName=xd_course_rank_label($name)!==''?$name:($trainingName!==''?$trainingName:$name);
+	$label=course_option_label(array('khoa'=>$name,'ten_khoa'=>$displayName!==$name?$displayName:'','so'=>$total));
 	if(isset($course['so_dat'])) $label.=' · '.(int)$course['so_dat'].' đạt DAT';
 	return $label;
 }

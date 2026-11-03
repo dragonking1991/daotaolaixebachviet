@@ -6,20 +6,22 @@ $transfer_url = htmlspecialchars("admin/".$page_transfer, ENT_QUOTES, 'UTF-8');
 $transfer_full_url = htmlspecialchars($basehref."admin/".$page_transfer, ENT_QUOTES, 'UTF-8');
 $transfer_text = htmlspecialchars(html_entity_decode((string)@$showtext, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
 $transfer_text = preg_replace('#&lt;(/?)(br|strong|em|b)\s*/?&gt;#i', '<$1$2>', $transfer_text);
+// Thông báo lỗi giữ lâu hơn để người dùng kịp đọc.
+$transfer_delay = $stt ? 2 : 8;
 ?>
 <HTML>
 <HEAD>
     <TITLE>:: Thông Báo ::</TITLE>
     <base href="<?=$basehref?>"/>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta http-equiv="REFRESH" content="1; url=<?=$transfer_full_url?>">
+    <meta http-equiv="REFRESH" content="<?=$transfer_delay?>; url=<?=$transfer_full_url?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="robots" content="noodp,noindex,nofollow" />
     <link rel="stylesheet" href="assets/bootstrap/bootstrap.css">
 
     <style type="text/css">
         body{background:#eee}
-        #alert{background:#fff;padding:20px;margin:30px auto;border-radius:3px;-webkit-box-shadow:0px 0px 3px 0px rgba(50,50,50,0.3);-moz-box-shadow:0px 0px 3px 0px rgba(50,50,50,0.3);box-shadow:0px 0px 3px 0px rgba(50,50,50,0.3);margin-top:100px;text-align:center;width:100%;max-width:400px;}
+        #alert{background:#fff;padding:20px;margin:30px auto;border-radius:3px;-webkit-box-shadow:0px 0px 3px 0px rgba(50,50,50,0.3);-moz-box-shadow:0px 0px 3px 0px rgba(50,50,50,0.3);box-shadow:0px 0px 3px 0px rgba(50,50,50,0.3);margin-top:100px;text-align:center;width:100%;max-width:560px;}
         #alert .fas{font-size:60px;}
         #alert .rlink{margin:10px 0px;}
         #alert .title{text-transform:uppercase;font-weight:bold;margin:10px;}
@@ -60,7 +62,7 @@ $transfer_text = preg_replace('#&lt;(/?)(br|strong|em|b)\s*/?&gt;#i', '<$1$2>', 
         var elem = document.getElementById("process-bar"); 
         var pos = 0;
         setInterval(function(){
-            pos+=8; 
+            pos+=<?=round(100 / ($transfer_delay * 25), 2)?>; 
             elem.style.width = pos + '%'; 
         },40);
     </script>

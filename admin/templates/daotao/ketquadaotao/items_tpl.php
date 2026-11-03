@@ -44,7 +44,7 @@
 					<tr>
 						<td><div class="dt-title"><?=htmlspecialchars($hv['hoten'])?></div><div class="dt-sub"><i class="fas fa-id-card"></i><?=htmlspecialchars($hv['cccd'])?></div></td>
 						<td><?=htmlspecialchars($hv['hang'])?></td>
-						<td><?=htmlspecialchars(isset($hv['ma_khoa'])?$hv['ma_khoa']:'')?></td>
+						<td><?php if(!empty($hv['ten_khoa'])): ?><strong><?=htmlspecialchars($hv['ten_khoa'])?></strong><small class="d-block text-muted"><?=htmlspecialchars($hv['ma_khoa'] ?? '')?></small><?php else: ?><?=htmlspecialchars($hv['ma_khoa'] ?? '—')?><?php endif; ?></td>
 						<td><?=htmlspecialchars(isset($hv['gv_hoten'])?$hv['gv_hoten']:'—')?></td>
 						<td><?=htmlspecialchars($s['hinh']['gio'])?></td>
 						<td><?=htmlspecialchars($s['hinh']['km'])?></td>

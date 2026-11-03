@@ -93,17 +93,18 @@
 		<div class="card-header"><h3 class="card-title">Tổng hợp theo giáo viên</h3></div>
 		<?php if((xd_can_kiem_tra() || xd_can_duyet()) && !empty($xd_loc_summary)): ?>
 		<div class="card-body py-2 border-bottom">
-			<form id="xd-loc-bulk-form" method="post" action="index.php?com=xangdau&act=locBulkAction" class="form-inline" style="gap:.5rem;" onsubmit="return this.elements['operation'].value !== 'approve' || confirm('Duyệt thanh toán cho các giáo viên đã chọn?');">
+			<form id="xd-loc-bulk-form" method="post" action="index.php?com=xangdau&act=locBulkAction" class="form-inline" style="gap:.5rem;" onsubmit="var f=this,m=document.getElementById('xd-loc-bulk-msg'),e='';if(!f.elements['operation'].value)e='Vui lòng chọn thao tác cần thực hiện.';else if(!document.querySelector('.xd-bulk-item[form=xd-loc-bulk-form]:checked'))e='Vui lòng tích chọn ít nhất một giáo viên trong danh sách.';if(e){m.textContent=e;m.style.display='block';m.scrollIntoView({block:'nearest'});return false;}m.style.display='none';return f.elements['operation'].value !== 'approve' || confirm('Duyệt thanh toán cho các giáo viên đã chọn?');">
 				<input type="hidden" name="csrf" value="<?=htmlspecialchars(xd_loc_bulk_csrf_token(), ENT_QUOTES, 'UTF-8')?>">
 				<input type="hidden" name="ret" value="<?=htmlspecialchars(rawurlencode(xd_loc_params_url('', 'loc')), ENT_QUOTES, 'UTF-8')?>">
 				<?php foreach(array('ky'=>$xd_loc_ky,'from_date'=>$xd_loc_from,'to_date'=>$xd_loc_to,'gv_keyword'=>$xd_loc_gv_keyword,'ma_hoa_don'=>$xd_loc_ma_hoa_don,'sort'=>$xd_loc_sort) as $filter=>$value): ?><input type="hidden" name="<?=$filter?>" value="<?=htmlspecialchars($value, ENT_QUOTES, 'UTF-8')?>"><?php endforeach; ?>
-				<select class="form-control form-control-sm" name="operation" required>
+				<select class="form-control form-control-sm" name="operation">
 					<option value="">Thao tác đã chọn…</option>
 					<?php if(xd_can_kiem_tra()): ?><option value="check">Đánh dấu đã kiểm tra</option><option value="uncheck">Bỏ kiểm tra</option><?php endif; ?>
 					<?php if(xd_can_duyet()): ?><option value="approve">Duyệt thanh toán</option><?php endif; ?>
 				</select>
 				<button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-play mr-1"></i>Thực hiện</button>
 				<span class="small text-muted">Chọn một hoặc nhiều giáo viên trong danh sách.</span>
+				<div id="xd-loc-bulk-msg" class="alert alert-danger py-1 px-2 mb-0 w-100" style="display:none" role="alert"></div>
 			</form>
 		</div>
 		<?php endif; ?>
@@ -200,3 +201,4 @@
 		</div>
 	</div>
 </section>
+<script src="assets/js/xangdau-bulk.js?v=<?=@filemtime(__DIR__.'/../../../assets/js/xangdau-bulk.js')?>"></script>

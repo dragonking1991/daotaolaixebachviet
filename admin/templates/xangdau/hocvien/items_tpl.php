@@ -26,8 +26,7 @@
 	foreach(($xd_hocvien_khoas ?? array()) as $course)
 	{
 		$name = trim((string)($course['ten_khoa'] ?? ''));
-		if($name === '') $name = $xdRankNames[strtolower(trim((string)$course['khoa']))] ?? '';
-		$xdCourseNames[(string)$course['khoa']] = $name;
+		$xdCourseNames[(string)$course['khoa']] = xd_course_display_name($course['khoa'], $name !== '' ? array((string)$course['khoa']=>$name) : array());
 	}
 	$xdTeacherNames = array();
 	foreach(($xd_hocvien_teachers ?? array()) as $teacher) $xdTeacherNames[(string)$teacher['gv_key']] = $teacher['gv_hoten'] !== '' ? $teacher['gv_hoten'] : $teacher['gv_key'];

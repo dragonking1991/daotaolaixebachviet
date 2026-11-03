@@ -86,7 +86,7 @@
 							<div class="dt-sub"><i class="fas fa-id-badge"></i><?=htmlspecialchars($hv['ma_hv'] ?: '—')?><span class="dt-sep">•</span><i class="fas fa-id-card"></i><?=htmlspecialchars($hv['cccd'])?></div>
 						</td>
 						<td>
-							<div><span class="dt-tag"><?=htmlspecialchars($hv['hang'] ?: 'Chưa rõ hạng')?></span> <span class="dt-tag is-muted"><?=htmlspecialchars($hv['ma_khoa'] ?: 'Chưa gán khóa')?></span></div>
+							<div><span class="dt-tag"><?=htmlspecialchars($hv['hang'] ?: 'Chưa rõ hạng')?></span> <?php if(!empty($hv['ten_khoa'])): ?><span class="dt-tag is-muted"><?=htmlspecialchars($hv['ten_khoa'])?></span><small class="dt-sub d-block"><?=htmlspecialchars($hv['ma_khoa'] ?? '')?></small><?php else: ?><span class="dt-tag is-muted"><?=htmlspecialchars($hv['ma_khoa'] ?: 'Chưa gán khóa')?></span><?php endif; ?></div>
 							<div class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars($hv['gv_hoten'] ?: 'Chưa phân giáo viên')?></div>
 							<?php if(!empty($hv['he_daotao'])): ?><div class="dt-sub"><i class="fas fa-layer-group"></i><?=htmlspecialchars($hv['he_daotao'])?></div><?php endif; ?>
 						</td>

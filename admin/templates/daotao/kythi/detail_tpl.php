@@ -13,6 +13,9 @@
 		<div class="card-header">
 			<h3 class="card-title"><strong><?=htmlspecialchars($ky['ten'] ?: '(Không tên)')?></strong> — <?=htmlspecialchars($ky['ngay_kt'] ?: '—')?> <span class="dt-count"><?=number_format((int)$total_items)?> HV</span></h3>
 			<div class="card-tools">
+				<?php if(dt_can('kythi','export')): ?>
+				<button type="button" data-bulk-form="dt-bulk-kythi-roster" class="btn btn-sm bg-gradient-success" onclick="var s=document.querySelectorAll('.dt-bulk-item[form=dt-bulk-kythi-roster]:checked');if(!s.length){alert('Vui lòng chọn học viên cần xuất.');return;}var q=[];s.forEach(function(c){q.push('ids[]='+encodeURIComponent(c.value));});location.href='index.php?com=daotao&act=exportKythiKetqua&id=<?=(int)$ky['id']?>&kq=all&'+q.join('&');"><i class="fas fa-file-excel mr-1"></i>Xuất KQ mục đã chọn</button>
+				<?php endif; ?>
 				<?php if(dt_can('kythi','delete')): ?>
 				<button type="submit" form="dt-bulk-kythi-roster" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button>
 				<button type="submit" form="dt-kythi-roster-clear" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash-alt mr-1"></i>Xóa toàn bộ danh sách</button>
@@ -25,6 +28,17 @@
 						<a class="dropdown-item" href="index.php?com=daotao&act=exportKythi&id=<?=$ky['id']?>&dk=chua">Chỉ chưa đủ điều kiện</a>
 					</div>
 				</div>
+				<?php if(dt_can('kythi','export')): ?>
+				<div class="btn-group">
+					<button type="button" class="btn btn-sm bg-gradient-primary dropdown-toggle" data-toggle="dropdown"><i class="fas fa-file-excel mr-1"></i>Xuất kết quả kiểm tra</button>
+					<div class="dropdown-menu dropdown-menu-right">
+						<a class="dropdown-item" href="index.php?com=daotao&act=exportKythiKetqua&id=<?=$ky['id']?>&kq=all">Tất cả kết quả</a>
+						<a class="dropdown-item" href="index.php?com=daotao&act=exportKythiKetqua&id=<?=$ky['id']?>&kq=dat">Chỉ đạt</a>
+						<a class="dropdown-item" href="index.php?com=daotao&act=exportKythiKetqua&id=<?=$ky['id']?>&kq=vang">Chỉ vắng</a>
+						<a class="dropdown-item" href="index.php?com=daotao&act=exportKythiKetqua&id=<?=$ky['id']?>&kq=rot">Chỉ rớt</a>
+					</div>
+				</div>
+				<?php endif; ?>
 				<a href="index.php?com=daotao&act=kythiRoster&id=<?=$ky['id']?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-import mr-1"></i>Import danh sách</a>
 				<a href="index.php?com=daotao&act=kythiUpload&id=<?=$ky['id']?>" class="btn btn-sm bg-gradient-warning"><i class="fas fa-upload mr-1"></i>Import kết quả</a>
 			</div>

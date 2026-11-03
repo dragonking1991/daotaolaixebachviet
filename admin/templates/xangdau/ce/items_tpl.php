@@ -3,6 +3,9 @@
 	if(!empty($xd_ce_filter_khoa)) $xdCeRetQuery['id_khoa'] = (int)$xd_ce_filter_khoa;
 	if(!empty($xd_ce_filter_keyword)) $xdCeRetQuery['keyword'] = $xd_ce_filter_keyword;
 	$xdCeRet = rawurlencode('index.php?'.http_build_query($xdCeRetQuery));
+	$xdCeCourseNames = array();
+	foreach(($xd_ce_courses ?? array()) as $courseId=>$course)
+		$xdCeCourseNames[(int)$courseId] = trim((string)($course['ten_khoa'] ?? '')) !== '' ? trim((string)$course['ten_khoa']) : xd_course_display_name($course['ma_khoa'] ?? '');
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -86,7 +89,7 @@
 					<?php if(!empty($xd_ce_students)): foreach($xd_ce_students as $i => $student): ?>
 					<tr>
 						<td><?=$i + 1?></td>
-						<td><?=htmlspecialchars($student['ma_khoa'].' — '.$student['ten_khoa'])?></td>
+						<td><strong><?=htmlspecialchars($student['ten_khoa'] ?: xd_course_display_name($student['ma_khoa'] ?? ''))?></strong><small class="d-block text-muted"><?=htmlspecialchars($student['ma_khoa'])?></small></td>
 						<td><?=htmlspecialchars($student['ma_hv'])?></td>
 						<td><?=htmlspecialchars($student['ho_ten'])?></td>
 						<td><?=htmlspecialchars($student['cccd'])?></td>
@@ -109,7 +112,7 @@
 					<?php if(!empty($xd_ce_invoices)): foreach($xd_ce_invoices as $i => $invoice): ?>
 					<tr>
 						<td><?=$i + 1?></td>
-						<td><?=htmlspecialchars($invoice['ma_khoa'])?></td>
+						<td><strong><?=htmlspecialchars($xdCeCourseNames[(int)$invoice['id_khoa']] ?? xd_course_display_name($invoice['ma_khoa'] ?? ''))?></strong><small class="d-block text-muted"><?=htmlspecialchars($invoice['ma_khoa'])?></small></td>
 						<td><?=htmlspecialchars($invoice['ma_hoa_don'])?></td>
 						<td><?=!empty($invoice['ngay_hoa_don']) ? date('d/m/Y', strtotime($invoice['ngay_hoa_don'])) : '—'?></td>
 						<td class="text-right"><?=number_format((float)$invoice['tong_tien'], 0, ',', '.')?></td>

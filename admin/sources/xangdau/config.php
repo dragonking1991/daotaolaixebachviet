@@ -5,11 +5,12 @@ if(!defined('SOURCES')) die("Error");
 
 function xd_get_config()
 {
-	global $d, $item, $xd_config_hocvien_cccd, $xd_config_hocvien, $xd_config_hocvien_dieu_chinh;
+	global $d, $item, $xd_config_hocvien_cccd, $xd_config_hocvien, $xd_config_hocvien_dieu_chinh, $xd_config_course_names;
 	$item = getXdConfig($d);
 	$xd_config_hocvien_cccd = isset($_GET['cccd']) ? trim((string)$_GET['cccd']) : '';
 	$xd_config_hocvien = array();
 	$xd_config_hocvien_dieu_chinh = array();
+	$xd_config_course_names = array();
 	if($xd_config_hocvien_cccd !== '')
 	{
 		$xd_config_hocvien = $d->rawQueryOne("select id, ho_ten, cccd, khoa, nhom, gv_hoten, dinh_muc_ca_nhan, da_dieu_chinh_tt, so_tien_thanh_toan from #_xd_hocvien where cccd = ? limit 1", array($xd_config_hocvien_cccd));
@@ -18,6 +19,10 @@ function xd_get_config()
 	{
 		$xd_config_hocvien_dieu_chinh = $d->rawQuery("select ho_ten, cccd, khoa, nhom, gv_hoten, so_tien_thanh_toan from #_xd_hocvien where (da_dieu_chinh_tt = 1 or dinh_muc_ca_nhan <> 0) and nhom in ('CK', 'DAT') order by substring_index(ho_ten, ' ', -1) asc, ho_ten asc", array());
 	}
+	$courseCodes = array();
+	if(!empty($xd_config_hocvien['khoa'])) $courseCodes[] = $xd_config_hocvien['khoa'];
+	foreach($xd_config_hocvien_dieu_chinh as $student) if(!empty($student['khoa'])) $courseCodes[] = $student['khoa'];
+	$xd_config_course_names = xd_course_name_map($courseCodes);
 }
 
 function xd_save_config()

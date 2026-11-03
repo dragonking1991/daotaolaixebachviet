@@ -28,10 +28,59 @@ function xd_normalize_cccd($value)
 	return preg_replace('/\D+/', '', (string)$value);
 }
 
-/**
- * Khóa định danh giáo viên theo TÊN (các file import không có CCCD giáo viên).
- * Chuẩn hóa: bỏ dấu, chữ thường, bỏ danh xưng (thầy/cô), gộp khoảng trắng.
- */
+/* Chuẩn hóa mã nhóm/hạng trong khóa XD để phân nhóm nội bộ. */
+function xd_course_rank_label($courseCode)
+{
+	$normalized = preg_replace('/[^a-z0-9]+/', '', xd_mb_lower(trim((string)$courseCode)));
+	if(preg_match('/\d*(bss|btd|c1|ce|c)$/', $normalized, $match))
+	{
+		$labels = array('bss'=>'B số sàn','btd'=>'B tự động','c1'=>'C1','ce'=>'CE','c'=>'C');
+		return $labels[$match[1]] ?? '';
+	}
+	return '';
+}
+
+/* Tên khóa Đào tạo chỉ áp dụng cho mã khóa thật; mã nhóm/hạng XD giữ nguyên. */
+function xd_course_name_map($courseCodes)
+{
+	global $d;
+	$codes = array_values(array_unique(array_filter(array_map(function($code) { return trim((string)$code); }, (array)$courseCodes), function($code) { return $code !== ''; })));
+	$names = array();
+	$lookupCodes = array();
+	foreach($codes as $code)
+	{
+		if(xd_course_rank_label($code) !== '') $names[$code] = $code;
+		else $lookupCodes[] = $code;
+	}
+	if($lookupCodes)
+	{
+		try
+		{
+			$marks = implode(',', array_fill(0, count($lookupCodes), '?'));
+			$rows = $d->rawQuery("select ma_khoa, ten_khoa from #_dt_khoa where ma_khoa in ($marks)", $lookupCodes);
+			foreach(is_array($rows) ? $rows : array() as $row)
+			{
+				$code = trim((string)($row['ma_khoa'] ?? ''));
+				$name = trim((string)($row['ten_khoa'] ?? ''));
+				if($code !== '' && $name !== '') $names[$code] = $name;
+			}
+		}
+		catch(Exception $error) { }
+	}
+	foreach($codes as $code) if(!isset($names[$code])) $names[$code] = $code;
+	return $names;
+}
+
+function xd_course_display_name($courseCode, $nameMap = array())
+{
+	$courseCode = trim((string)$courseCode);
+	if($courseCode === '') return '—';
+	if(xd_course_rank_label($courseCode) !== '') return $courseCode;
+	$name = trim((string)($nameMap[$courseCode] ?? ''));
+	return $name !== '' ? $name : $courseCode;
+}
+
+/* Khóa định danh giáo viên theo TÊN (các file import không có CCCD giáo viên). */
 function xd_gv_key($name)
 {
 	$name = xd_mb_lower(trim((string)$name));
@@ -41,9 +90,16 @@ function xd_gv_key($name)
 	$name = str_replace($search, $replace, $name);
 	$name = preg_replace('/[^a-z0-9\s]+/', ' ', $name);
 	$name = preg_replace('/\s+/', ' ', trim($name));
-	// Bỏ danh xưng đầu chuỗi
 	$name = preg_replace('/^(thay|co)\s+/', '', $name);
 	return trim($name);
+}
+
+/* Khóa sắp xếp theo tên (từ cuối) rồi đến họ tên đầy đủ. */
+function xd_gv_sort_key($name)
+{
+	$key = xd_gv_key($name);
+	$pos = strrpos($key, ' ');
+	return ($pos === false ? $key : substr($key, $pos + 1)).' '.$key;
 }
 
 function xd_cccd_variants($cccd)

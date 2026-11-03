@@ -16,7 +16,7 @@ function xd_loc_params_url($gvKey = '', $act = 'loc')
 
 function xd_get_giao_vien_detail()
 {
-	global $d, $xd_detail_gv, $xd_detail_hoadons, $xd_detail_hocviens, $xd_detail_hoadons_da_thanh_toan, $xd_detail_hocviens_da_thanh_toan, $xd_detail_config, $xd_detail_da_kiem_tra, $xd_detail_da_thanh_toan;
+	global $d, $xd_detail_gv, $xd_detail_hoadons, $xd_detail_hocviens, $xd_detail_hoadons_da_thanh_toan, $xd_detail_hocviens_da_thanh_toan, $xd_detail_course_names, $xd_detail_config, $xd_detail_da_kiem_tra, $xd_detail_da_thanh_toan;
 	$gvKey = isset($_REQUEST['gv_key']) ? trim((string)$_REQUEST['gv_key']) : '';
 	$xd_detail_gv = array('gv_key' => $gvKey, 'gv_hoten' => $gvKey);
 	$xd_detail_hoadons = array(); $xd_detail_hocviens = array(); $xd_detail_hoadons_da_thanh_toan = array(); $xd_detail_hocviens_da_thanh_toan = array(); $xd_detail_config = getXdConfig($d); $xd_detail_da_kiem_tra = false; $xd_detail_da_thanh_toan = isset($_REQUEST['paid']) && $_REQUEST['paid'] === '1';
@@ -27,6 +27,10 @@ function xd_get_giao_vien_detail()
 	$xd_detail_hocviens_da_thanh_toan = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null order by ".xd_hocvien_order_clause(), array($gvKey));
 	$xd_detail_hoadons = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 order by ngay_hoa_don desc, id desc", array($gvKey));
 	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by ".xd_hocvien_order_clause(), array($gvKey));
+	$courseCodes = array();
+	foreach(array_merge(is_array($xd_detail_hocviens_da_thanh_toan)?$xd_detail_hocviens_da_thanh_toan:array(),is_array($xd_detail_hocviens)?$xd_detail_hocviens:array()) as $student)
+		if(trim((string)($student['khoa']??''))!=='')$courseCodes[]=trim((string)$student['khoa']);
+	$xd_detail_course_names = xd_course_name_map($courseCodes);
 	if($xd_detail_da_thanh_toan) return;
 	$chuaKiemTraHoaDon = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and ke_toan_kiem_tra = 0", array($gvKey));
 	$chuaKiemTraHocVien = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
@@ -141,17 +145,21 @@ function xd_loc_bulk_action()
 	foreach($xd_loc_selected as $student)
 		if(isset($selectedKeys[(string)$student['gv_key']])) $studentsByTeacher[(string)$student['gv_key']][] = $student;
 	$approved = 0;
-	$failed = 0;
+	$failed = array();
 	foreach($gvKeys as $gvKey)
 	{
+		$teacherName = $gvKey;
+		foreach($xd_loc_summary as $teacher) if((string)$teacher['gv_key'] === $gvKey) { $teacherName = (string)($teacher['gv_hoten'] !== '' ? $teacher['gv_hoten'] : $gvKey); break; }
 		$unCheckedInvoice = $GLOBALS['d']->rawQueryOne('select count(*) as total from #_xd_hoadon where gv_key=? and da_quyettoan=0 and ke_toan_kiem_tra=0', array($gvKey));
 		$unCheckedStudent = $GLOBALS['d']->rawQueryOne('select count(*) as total from #_xd_hocvien where gv_key=? and ngay_thanh_toan is null and ke_toan_kiem_tra=0', array($gvKey));
-		if((int)($unCheckedInvoice['total'] ?? 0) > 0 || (int)($unCheckedStudent['total'] ?? 0) > 0 || empty($studentsByTeacher[$gvKey])) { $failed++; continue; }
+		if((int)($unCheckedInvoice['total'] ?? 0) > 0 || (int)($unCheckedStudent['total'] ?? 0) > 0) { $failed[] = $teacherName.': chưa được kế toán kiểm tra, hãy "Đánh dấu đã kiểm tra" trước'; continue; }
+		if(empty($studentsByTeacher[$gvKey])) { $failed[] = $teacherName.': không còn học viên đủ điều kiện thanh toán trong bộ lọc hiện tại'; continue; }
 		if(xd_loc_approve_teacher($gvKey, $studentsByTeacher[$gvKey], $xd_loc_ky, $xd_loc_from, $xd_loc_to)) $approved++;
-		else $failed++;
+		else $failed[] = $teacherName.': lỗi ghi dữ liệu, đã hoàn tác';
 	}
-	$message = 'Đã duyệt '.$approved.' giáo viên'.($failed ? '; '.$failed.' giáo viên chưa được duyệt (chưa kiểm tra đủ hoặc không còn học viên đủ điều kiện).' : '.');
-	$func->transfer($message, $back, $failed === 0);
+	$message = 'Đã duyệt '.$approved.'/'.count($gvKeys).' giáo viên.';
+	if($failed) $message .= '<br>Không duyệt được:<br>'.implode('<br>', array_map('htmlspecialchars', array_slice($failed, 0, 15)));
+	$func->transfer($message, $back, !$failed);
 }
 
 /* Duyệt một giáo viên trong một transaction: tạo bảng kê, ghi thanh toán học viên và quyết toán hóa đơn; lỗi bất kỳ bước nào thì hoàn tác toàn bộ. */
@@ -391,36 +399,18 @@ function xd_loc_preview()
 	}
 	$xd_loc_summary = $filteredSummary;
 	$xd_loc_selected = array_values(array_filter($selected, function($student) use ($visibleKeys) { return isset($visibleKeys[(string)$student['gv_key']]); }));
-	$courseNames = array();
 	$courseCodes = array_values(array_unique(array_filter(array_map(function($student) {
 		return trim((string)($student['khoa'] ?? ''));
 	}, $xd_loc_selected), function($code) { return $code !== ''; })));
-	if($courseCodes)
-	{
-		try
-		{
-			$marks = implode(',', array_fill(0, count($courseCodes), '?'));
-			$courseRows = $d->rawQuery("select ma_khoa, ten_khoa from #_dt_khoa where ma_khoa in ($marks) or ten_khoa in ($marks)", array_merge($courseCodes, $courseCodes));
-			foreach(is_array($courseRows) ? $courseRows : array() as $course)
-			{
-				$name = trim((string)($course['ten_khoa'] ?? ''));
-				if($name !== '')
-				{
-					$courseNames[trim((string)$course['ma_khoa'])] = $name;
-					$courseNames[trim((string)$course['ten_khoa'])] = $name;
-				}
-			}
-		}
-		catch(Exception $error) { $courseNames = array(); }
-	}
-	foreach($xd_loc_selected as &$student) $student['khoa_ten'] = $courseNames[trim((string)($student['khoa'] ?? ''))] ?? trim((string)($student['khoa'] ?? ''));
+	$courseNames = xd_course_name_map($courseCodes);
+	foreach($xd_loc_selected as &$student) $student['khoa_ten'] = xd_course_display_name($student['khoa'] ?? '', $courseNames);
 	unset($student);
 	usort($xd_loc_summary, function($a, $b) use ($xd_loc_sort) {
 		if($xd_loc_sort === 'invoice_desc') $compare = (int)$b['so_hd'] <=> (int)$a['so_hd'];
 		elseif($xd_loc_sort === 'invoice_asc') $compare = (int)$a['so_hd'] <=> (int)$b['so_hd'];
 		elseif($xd_loc_sort === 'date_desc') $compare = strcmp((string)$b['ngay_hd_gan_nhat'], (string)$a['ngay_hd_gan_nhat']);
 		elseif($xd_loc_sort === 'date_asc') $compare = strcmp((string)$a['ngay_hd_gan_nhat'], (string)$b['ngay_hd_gan_nhat']);
-		else $compare = strcmp(xd_gv_key((string)$a['gv_hoten']), xd_gv_key((string)$b['gv_hoten']));
+		else $compare = strcmp(xd_gv_sort_key((string)$a['gv_hoten']), xd_gv_sort_key((string)$b['gv_hoten']));
 		if($compare !== 0) return $compare;
 		return strcmp(xd_gv_key((string)$a['gv_key']), xd_gv_key((string)$b['gv_key']));
 	});
@@ -452,7 +442,7 @@ function xd_loc_kiem_tra()
 		}
 	}
 	
-	usort($data, function($a, $b) { return strcmp(xd_gv_key((string)$a['gv_hoten']), xd_gv_key((string)$b['gv_hoten'])); });
+	usort($data, function($a, $b) { return strcmp(xd_gv_sort_key((string)$a['gv_hoten']), xd_gv_sort_key((string)$b['gv_hoten'])); });
 	$xd_loc_kiem_tra_data = $data;
 }
 
@@ -488,7 +478,7 @@ function xd_loc_duyet()
 		}
 	}
 	
-	usort($data, function($a, $b) { return strcmp(xd_gv_key((string)$a['gv_hoten']), xd_gv_key((string)$b['gv_hoten'])); });
+	usort($data, function($a, $b) { return strcmp(xd_gv_sort_key((string)$a['gv_hoten']), xd_gv_sort_key((string)$b['gv_hoten'])); });
 	$xd_loc_duyet_data = $data;
 }
 
