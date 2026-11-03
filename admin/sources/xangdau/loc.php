@@ -24,16 +24,16 @@ function xd_get_giao_vien_detail()
 	$row = $d->rawQueryOne("select max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key = ?", array($gvKey));
 	if($row && $row['gv_hoten'] !== '') $xd_detail_gv['gv_hoten'] = $row['gv_hoten'];
 	$xd_detail_hoadons_da_thanh_toan = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 1 order by ngay_hoa_don desc, id desc", array($gvKey));
-	$xd_detail_hocviens_da_thanh_toan = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null order by ".xd_hocvien_order_clause(), array($gvKey));
+	$xd_detail_hocviens_da_thanh_toan = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null and ".xd_not_ce_sql()." order by ".xd_hocvien_order_clause(), array($gvKey));
 	$xd_detail_hoadons = $d->rawQuery("select * from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 order by ngay_hoa_don desc, id desc", array($gvKey));
-	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null order by ".xd_hocvien_order_clause(), array($gvKey));
+	$xd_detail_hocviens = $d->rawQuery("select * from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ".xd_not_ce_sql()." order by ".xd_hocvien_order_clause(), array($gvKey));
 	$courseCodes = array();
 	foreach(array_merge(is_array($xd_detail_hocviens_da_thanh_toan)?$xd_detail_hocviens_da_thanh_toan:array(),is_array($xd_detail_hocviens)?$xd_detail_hocviens:array()) as $student)
 		if(trim((string)($student['khoa']??''))!=='')$courseCodes[]=trim((string)$student['khoa']);
 	$xd_detail_course_names = xd_course_name_map($courseCodes);
 	if($xd_detail_da_thanh_toan) return;
 	$chuaKiemTraHoaDon = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and ke_toan_kiem_tra = 0", array($gvKey));
-	$chuaKiemTraHocVien = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
+	$chuaKiemTraHocVien = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0 and ".xd_not_ce_sql(), array($gvKey));
 	$xd_detail_da_kiem_tra = (int)($chuaKiemTraHoaDon['total'] ?? 0) === 0 && (int)($chuaKiemTraHocVien['total'] ?? 0) === 0;
 }
 
@@ -151,7 +151,7 @@ function xd_loc_bulk_action()
 		$teacherName = $gvKey;
 		foreach($xd_loc_summary as $teacher) if((string)$teacher['gv_key'] === $gvKey) { $teacherName = (string)($teacher['gv_hoten'] !== '' ? $teacher['gv_hoten'] : $gvKey); break; }
 		$unCheckedInvoice = $GLOBALS['d']->rawQueryOne('select count(*) as total from #_xd_hoadon where gv_key=? and da_quyettoan=0 and ke_toan_kiem_tra=0', array($gvKey));
-		$unCheckedStudent = $GLOBALS['d']->rawQueryOne('select count(*) as total from #_xd_hocvien where gv_key=? and ngay_thanh_toan is null and ke_toan_kiem_tra=0', array($gvKey));
+		$unCheckedStudent = $GLOBALS['d']->rawQueryOne('select count(*) as total from #_xd_hocvien where gv_key=? and ngay_thanh_toan is null and ke_toan_kiem_tra=0 and '.xd_not_ce_sql(), array($gvKey));
 		if((int)($unCheckedInvoice['total'] ?? 0) > 0 || (int)($unCheckedStudent['total'] ?? 0) > 0) { $failed[] = $teacherName.': chưa được kế toán kiểm tra, hãy "Đánh dấu đã kiểm tra" trước'; continue; }
 		if(empty($studentsByTeacher[$gvKey])) { $failed[] = $teacherName.': không còn học viên đủ điều kiện thanh toán trong bộ lọc hiện tại'; continue; }
 		if(xd_loc_approve_teacher($gvKey, $studentsByTeacher[$gvKey], $xd_loc_ky, $xd_loc_from, $xd_loc_to)) $approved++;
@@ -205,7 +205,7 @@ function xd_duyet_giao_vien()
 	if($gvKey === '') $func->transfer("Không xác định được giáo viên.", xd_loc_params_url(), false);
 	$notChecked = $d->rawQueryOne("select count(*) as total from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and ke_toan_kiem_tra = 0", array($gvKey));
 	if($notChecked && (int)$notChecked['total'] > 0) $func->transfer("Kế toán chưa kiểm tra hết hóa đơn của giáo viên.", xd_loc_params_url(), false);
-	$notCheckedStudents = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
+	$notCheckedStudents = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0 and ".xd_not_ce_sql(), array($gvKey));
 	if($notCheckedStudents && (int)$notCheckedStudents['total'] > 0) $func->transfer("Kế toán chưa kiểm tra hết học viên của giáo viên.", xd_loc_params_url(), false);
 	list($selected, $summary, $config) = xd_run_algorithm($d, $ky, $fromDate, $toDate);
 	$selectedTeacher = array(); foreach($selected as $student) if($student['gv_key'] === $gvKey) $selectedTeacher[] = $student;
@@ -236,7 +236,7 @@ function xd_duyet_tat_ca_giao_vien()
 	foreach($rows as $row)
 	{
 		$gvKey = $row['gv_key'];
-		$notCheckedStudents = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0", array($gvKey));
+		$notCheckedStudents = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ke_toan_kiem_tra = 0 and ".xd_not_ce_sql(), array($gvKey));
 		if($notCheckedStudents && (int)$notCheckedStudents['total'] > 0) continue;
 		$students = array(); foreach($selected as $student) if($student['gv_key'] === $gvKey) $students[] = $student;
 		if(empty($students)) continue;
@@ -427,7 +427,7 @@ function xd_loc_kiem_tra()
 		"select gv_key, max(gv_hoten) as gv_hoten from #_xd_hoadon where gv_key <> '' and da_quyettoan = 0 and ke_toan_kiem_tra = 0 group by gv_key order by max(gv_hoten) asc"
 	);
 	$hocviens = $d->rawQuery(
-		"select gv_key, max(gv_hoten) as gv_hoten from #_xd_hocvien where gv_key <> '' and ngay_thanh_toan is null and ke_toan_kiem_tra = 0 group by gv_key order by max(gv_hoten) asc"
+		"select gv_key, max(gv_hoten) as gv_hoten from #_xd_hocvien where gv_key <> '' and ngay_thanh_toan is null and ke_toan_kiem_tra = 0 and ".xd_not_ce_sql()." group by gv_key order by max(gv_hoten) asc"
 	);
 	
 	$data = array();

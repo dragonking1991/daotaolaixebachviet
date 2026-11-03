@@ -53,8 +53,8 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 		);
 		$status = $d->rawQueryOne("select min(ke_toan_kiem_tra) as ke_toan_kiem_tra, min(quan_ly_duyet) as quan_ly_duyet from #_xd_hoadon where gv_key = ? and da_quyettoan = 0 and hop_le = 1", array($gvKey));
 		if($status) { $row['ke_toan_kiem_tra'] = (int)$status['ke_toan_kiem_tra']; $row['quan_ly_duyet'] = (int)$status['quan_ly_duyet']; }
-		$paid = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null", array($gvKey));
-		$unpaid = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null", array($gvKey));
+		$paid = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is not null and ".xd_not_ce_sql(), array($gvKey));
+		$unpaid = $d->rawQueryOne("select count(*) as total from #_xd_hocvien where gv_key = ? and ngay_thanh_toan is null and ".xd_not_ce_sql(), array($gvKey));
 		if($paid) $row['so_hv_da_thanh_toan'] = (int)$paid['total'];
 		if($unpaid) $row['so_hv_chua_thanh_toan'] = (int)$unpaid['total'];
 
@@ -62,7 +62,7 @@ function xd_run_algorithm($d, $ky = '', $fromDate = '', $toDate = '')
 		// Định mức XD có thể khác nhau giữa BT/CK/DAT (cấu hình riêng cho CK, DAT).
 		$hocviens = $d->rawQuery(
 			"select id, ho_ten, cccd, nhom, khoa, gv_key, gv_hoten, dinh_muc_ca_nhan, da_dieu_chinh_tt from #_xd_hocvien
-			 where gv_key = ? and ngay_thanh_toan is null order by ".xd_hocvien_order_clause(),
+			 where gv_key = ? and ngay_thanh_toan is null and ".xd_not_ce_sql()." order by ".xd_hocvien_order_clause(),
 			array($gvKey)
 		);
 		$remaining = $sHd;

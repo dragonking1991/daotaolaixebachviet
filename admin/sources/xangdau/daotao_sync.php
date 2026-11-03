@@ -54,6 +54,7 @@ function xd_sync_training_students($idKhoa = 0, $cccd = '', $dryRun = false)
 			continue;
 		}
 		$classCode = $classCodes[$hang] ?? strtolower($hang);
+		if($hang === 'CE') { $result['ce_skipped'] = ($result['ce_skipped'] ?? 0) + 1; continue; } // CE có luồng hóa đơn riêng
 
 		$aggregate = dt_dat_aggregate($studentCccd, (int)$student['id_khoa']);
 		list($datPassed) = dt_dat_danhgia($hang, $aggregate);

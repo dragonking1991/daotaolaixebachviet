@@ -40,6 +40,12 @@ function xd_course_rank_label($courseCode)
 	return '';
 }
 
+/* Điều kiện SQL loại học viên khóa CE (mã khóa kết thúc bằng CE) khỏi luồng thanh toán B/C. */
+function xd_not_ce_sql($column = 'khoa')
+{
+	return "lower(replace(replace(replace(trim($column),' ',''),'-',''),'_','')) not like '%ce'";
+}
+
 /* Tên khóa Đào tạo chỉ áp dụng cho mã khóa thật; mã nhóm/hạng XD giữ nguyên. */
 function xd_course_name_map($courseCodes)
 {
@@ -114,7 +120,8 @@ function xd_cccd_variants($cccd)
 function xd_hocvien_order_clause($byName = false)
 {
 	if($byName) return "substring_index(trim(ho_ten), ' ', -1) asc, trim(ho_ten) asc, id asc";
-	return "lower(trim(khoa)) asc, lan_import asc, thu_tu_file asc, id asc";
+	// Khóa khai giảng sớm được thanh toán trước; khóa chưa có ngày khai giảng xếp cuối.
+	return "coalesce((select min(k.ngay_khaigiang) from #_dt_khoa k where k.ngay_khaigiang is not null and (k.ma_khoa = #_xd_hocvien.khoa or k.ten_khoa = #_xd_hocvien.khoa)), '9999-12-31') asc, lower(trim(khoa)) asc, lan_import asc, thu_tu_file asc, id asc";
 }
 
 function xd_username()
