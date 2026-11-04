@@ -50,6 +50,7 @@
 		var monOpts = null;
 		try { var rawMon = zone.getAttribute('data-mon'); if(rawMon) monOpts = JSON.parse(rawMon); } catch(e){ monOpts = null; }
 		var monSel = {}; // key file -> môn đã chọn
+		var hourSel = {};
 
 		function fileKey(f){ return f.name + '|' + f.size; }
 		function normName(s){
@@ -100,9 +101,21 @@
 					var ph = document.createElement('option'); ph.value = ''; ph.textContent = '— Chọn môn —'; sel.appendChild(ph);
 					monOpts.forEach(function(o){ var op = document.createElement('option'); op.value = o.v; op.textContent = o.l; if(o.v === cur) op.selected = true; sel.appendChild(op); });
 					if(!cur) sel.classList.add('is-empty');
-					sel.addEventListener('change', function(){ monSel[key] = this.value; this.classList.toggle('is-empty', !this.value); });
+					sel.addEventListener('change', function(){ monSel[key] = this.value; this.classList.toggle('is-empty', !this.value); hours.hidden = ['ky_thuat', 'cau_tao', 'mophong'].indexOf(this.value) === -1; });
 					sel.addEventListener('click', function(ev){ ev.stopPropagation(); });
 					li.appendChild(sel);
+					var hours = document.createElement('input');
+					hours.type = 'number'; hours.min = '0.01'; hours.step = '0.01';
+					hours.className = 'form-control form-control-sm';
+					hours.style.width = '150px'; hours.style.maxWidth = '100%';
+					hours.placeholder = 'Giờ chuẩn (tùy chọn)';
+					hours.title = 'Mẫu số tính tiến độ (giờ). Để trống dùng cấu hình hiện hành.';
+					hours.setAttribute('aria-label', 'Giờ chuẩn của file ' + f.name);
+					hours.value = hourSel[key] || '';
+					hours.hidden = ['ky_thuat', 'cau_tao', 'mophong'].indexOf(cur) === -1;
+					hours.addEventListener('input', function(){ hourSel[key] = this.value; });
+					hours.addEventListener('click', function(ev){ ev.stopPropagation(); });
+					li.appendChild(hours);
 				}
 
 				var spacer = document.createElement('span'); spacer.className = 'dt-dz-spacer';
@@ -161,12 +174,16 @@
 				var missing = [];
 				files.forEach(function(f, i){ if(!mons[i]) missing.push(f.name); });
 				if(missing.length){ e.preventDefault(); notify(false, 'Chưa chọn môn học cho: ' + missing.join(', ')); return; }
+				var hourValues = files.map(function(f, i){ return ['ky_thuat', 'cau_tao', 'mophong'].indexOf(mons[i]) !== -1 ? (hourSel[fileKey(f)] || '') : ''; });
+				if(hourValues.some(function(value){ return value !== '' && (!Number.isFinite(Number(value)) || Number(value) <= 0); })){
+					e.preventDefault(); notify(false, 'Giờ chuẩn phải lớn hơn 0 hoặc để trống.'); return;
+				}
 				if(mons.indexOf('mophong') !== -1){
 					var khoaSelect = form.querySelector('[name="id_khoa"]');
 					if(!khoaSelect || !khoaSelect.value){ e.preventDefault(); notify(false, 'Vui lòng chọn khóa trước khi import mô phỏng.'); return; }
 				}
 				e.preventDefault();
-				uploadSequential(form, zone, files, mons);
+				uploadSequential(form, zone, files, mons, hourValues);
 				return;
 			}
 
@@ -183,7 +200,7 @@
 		} else { alert(msg); }
 	}
 
-	function uploadSequential(form, zone, files, monValues){
+	function uploadSequential(form, zone, files, monValues, hourValues){
 		var endpoint = form.getAttribute('action') || window.location.href;
 		var back = zone.getAttribute('data-back') || '';
 
@@ -230,6 +247,7 @@
 				fd.append('file-excel', f);
 				fd.append('dt_ajax', '1');
 				if(monValues) fd.set('mon', monValues[i]);
+				if(hourValues) fd.set('lt_hours_override', hourValues[i]);
 				return fetch(endpoint, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
 					.then(function(r){ return r.json().catch(function(){ return { success: false, message: 'Phản hồi không hợp lệ từ máy chủ.' }; }); })
 					.then(function(j){

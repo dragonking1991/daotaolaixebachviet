@@ -111,6 +111,9 @@ function dt_lythuyet_upload_excel()
 	$dsMon = dt_mon_lythuyet();
 
 	if(!isset($dsMon[$mon])) dt_import_notice("Vui lòng chọn môn học hợp lệ", $back, false);
+	$hourOverride = trim((string)($_POST['lt_hours_override'] ?? ''));
+	if($hourOverride !== '' && (!in_array($mon, array('ky_thuat', 'cau_tao', 'mophong'), true) || !is_numeric($hourOverride) || !is_finite((float)$hourOverride) || (float)$hourOverride <= 0))
+		dt_import_notice('Giờ chuẩn phải lớn hơn 0 và chỉ áp dụng cho Kỹ thuật lái, Cấu tạo, Mô phỏng.', $back, false);
 	if(!isset($_FILES['file-excel']) || $_FILES['file-excel']['error'] != 0)
 		dt_import_notice("Vui lòng chọn file Excel", $back, false);
 	$file = $_FILES['file-excel'];
@@ -182,7 +185,7 @@ function dt_lythuyet_upload_excel()
 		}
 		$idKhoa = (int)$hv['id_khoa'];
 
-		$denom = dt_lythuyet_denom($mon, $idKhoa);
+		$denom = $hourOverride !== '' ? (float)$hourOverride : dt_lythuyet_denom($mon, $idKhoa);
 		if($mon === 'mophong')
 			$tienDo = (isset($map['on_luyen']) && $denom > 0) ? round(dt_parse_number(dt_val($row, $map, 'on_luyen')) / $denom * 100, 2) : dt_parse_number(dt_val($row, $map, 'tien_do'));
 		elseif($have3 && $denom > 0)
