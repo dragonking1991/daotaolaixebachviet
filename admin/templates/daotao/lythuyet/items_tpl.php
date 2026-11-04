@@ -37,6 +37,25 @@
 				</select>
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
+			<?php if($id_khoa_sel && dt_can('lythuyet','edit')): ?>
+			<?php $ltHours = json_decode(dt_setting_get('lt_hours_'.(int)$id_khoa_sel, '{}'), true) ?: array(); ?>
+			<form method="post" action="index.php?com=daotao&act=saveLythuyetHours" class="border-top border-bottom py-3 mb-3">
+				<input type="hidden" name="id_khoa" value="<?=(int)$id_khoa_sel?>">
+				<h6 class="font-weight-bold">Số giờ tối đa LT của khóa đang chọn</h6>
+				<div class="form-row align-items-end">
+					<?php foreach(array('ky_thuat'=>'Kỹ thuật lái', 'cau_tao'=>'Cấu tạo', 'mophong'=>'Mô phỏng') as $mon=>$label): ?>
+					<div class="form-group col-sm-3 mb-2">
+						<label for="lt-course-hours-<?=$mon?>"><?=$label?></label>
+						<div class="input-group input-group-sm">
+							<input id="lt-course-hours-<?=$mon?>" type="number" name="lt_hours[<?=$mon?>]" class="form-control" min="0.01" step="0.01" placeholder="Mặc định <?=dt_lythuyet_denom($mon)?>" value="<?=htmlspecialchars((string)($ltHours[$mon] ?? ''), ENT_QUOTES, 'UTF-8')?>">
+							<div class="input-group-append"><span class="input-group-text">giờ</span></div>
+						</div>
+					</div>
+					<?php endforeach; ?>
+					<div class="form-group col-sm-3 mb-2"><button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-save mr-1"></i>Lưu giờ LT</button></div>
+				</div>
+			</form>
+			<?php endif; ?>
 			<div class="dt-stats mb-2">
 				<div class="dt-stat is-green"><div class="dt-stat-label">Đạt đủ các môn lý thuyết theo hạng</div><div class="dt-stat-num"><?=(int)$module_stats['dat']?></div></div>
 				<div class="dt-stat is-red"><div class="dt-stat-label">Chưa đạt đủ các môn lý thuyết theo hạng</div><div class="dt-stat-num"><?=(int)$module_stats['chua']?></div></div>

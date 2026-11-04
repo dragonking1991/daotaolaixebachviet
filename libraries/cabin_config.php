@@ -116,6 +116,17 @@ if (!function_exists('cabin_course_deadline_ts')) {
     }
 }
 
+function cabin_course_holidays($course)
+{
+    $dates = json_decode((string)($course['ngay_nghi'] ?? '[]'), true);
+    return is_array($dates) ? $dates : array();
+}
+
+function cabin_is_holiday($course, $date)
+{
+    return in_array($date, cabin_course_holidays($course), true);
+}
+
 if (!function_exists('cabin_registration_closed')) {
     /**
      * Khóa học đã đóng đăng ký chưa (quá ngày kết thúc HOẶC quá hạn đăng ký).

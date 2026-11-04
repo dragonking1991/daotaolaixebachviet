@@ -165,6 +165,7 @@ switch($act)
 	case "uploadLythuyet":      dt_guard(dt_p('lythuyet','import')); dt_lythuyet_upload_form(); $template = "daotao/lythuyet/upload"; break;
 	case "uploadLythuyetExcel": dt_guard(dt_p('lythuyet','import')); dt_lythuyet_upload_excel(); break;
 	case "saveLythuyetCheck":   dt_guard(dt_p('lythuyet','edit')); dt_lythuyet_save_check(); break;
+	case "saveLythuyetHours":   dt_guard(dt_p('lythuyet','edit')); dt_lythuyet_save_hours(); break;
 
 	/* ---------- Cabin kết quả ---------- */
 	case "cabinkq":          dt_guard(dt_p('cabinkq','view'));   dt_cabin_list();  $template = "daotao/cabinkq/items"; break;

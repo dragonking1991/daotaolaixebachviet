@@ -215,6 +215,32 @@ function dt_lythuyet_upload_excel()
 }
 
 /* Lưu kết quả check 4 môn lý thuyết nâng hạng (C/CE). POST: id_khoa, check[cccd][mon]=1, nút "Đạt toàn bộ". */
+function dt_lythuyet_save_hours()
+{
+	global $d, $func;
+	$idKhoa = (int)($_POST['id_khoa'] ?? 0);
+	$back = 'index.php?com=daotao&act=lythuyet&id_khoa='.$idKhoa;
+	$course = $d->rawQueryOne('select id from #_dt_khoa where id = ?', array($idKhoa));
+	if(!$course) $func->transfer('Vui lòng chọn khóa để cấu hình giờ LT.', $back, false);
+	$hours = array();
+	foreach(array('ky_thuat', 'cau_tao', 'mophong') as $mon)
+	{
+		$value = trim((string)($_POST['lt_hours'][$mon] ?? ''));
+		if($value === '') continue;
+		if(!is_numeric($value) || !is_finite((float)$value) || (float)$value <= 0)
+			$func->transfer('Số giờ tối đa phải lớn hơn 0 hoặc để trống.', $back, false);
+		$hours[$mon] = (float)$value;
+	}
+	$d->startTransaction();
+	dt_setting_set('lt_hours_'.$idKhoa, json_encode($hours));
+	if($d->transactionFailed() || $d->commit() === false)
+	{
+		$d->rollback();
+		$func->transfer('Không lưu được cấu hình giờ LT; chưa thay đổi dữ liệu.', $back, false);
+	}
+	$func->transfer('Đã lưu giờ LT của khóa. Import lại kết quả để tính tiến độ theo cấu hình mới.', $back);
+}
+
 function dt_lythuyet_save_check()
 {
 	global $d, $func;

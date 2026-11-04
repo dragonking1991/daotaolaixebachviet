@@ -100,6 +100,7 @@
 										data-ngay-ketthuc="<?=$items[$i]['ngay_ketthuc']?>"
 										data-han-dangky="<?=(!empty($items[$i]['han_dangky']) && strpos($items[$i]['han_dangky'], '0000-00-00') !== 0) ? date('Y-m-d\TH:i', strtotime($items[$i]['han_dangky'])) : ''?>"
 										data-suc-chua="<?=(int)$items[$i]['suc_chua_ca']?>"
+										data-ngay-nghi="<?=htmlspecialchars($items[$i]['ngay_nghi'] ?? '[]', ENT_QUOTES, 'UTF-8')?>"
 										title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
 									<a class="text-info mr-2" href="index.php?com=cabin&act=full_dangky&id=<?=$items[$i]['id']?>" title="Full lịch đăng ký"><i class="far fa-calendar-alt"></i></a>
 									<a class="text-success mr-2" href="index.php?com=cabin&act=upload&id=<?=$items[$i]['id']?>" title="Import học viên"><i class="fas fa-file-upload"></i></a>
@@ -160,6 +161,14 @@
 							<input type="number" class="form-control" name="data[suc_chua_ca]" id="suc_chua_ca" min="1" value="3">
 						</div>
 					</div>
+					<div class="form-group">
+						<label for="cabin-holiday-date">Ngày nghỉ / ngày lễ</label>
+						<div class="input-group">
+							<input type="date" class="form-control" id="cabin-holiday-date">
+							<div class="input-group-append"><button type="button" class="btn btn-outline-primary" id="cabin-holiday-add" title="Thêm ngày nghỉ"><i class="fas fa-plus"></i></button></div>
+						</div>
+						<div id="cabin-holiday-list" class="mt-2"></div>
+					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
@@ -172,6 +181,23 @@
 
 <script type="text/javascript">
 $(document).ready(function(){
+	function renderHolidays(dates) {
+		var list = $('#cabin-holiday-list').empty();
+		dates.sort().forEach(function(date) {
+			var row = $('<div class="d-flex align-items-center mb-1"></div>');
+			$('<input type="hidden" name="ngay_nghi[]">').val(date).appendTo(row);
+			$('<span class="mr-2"></span>').text(date.split('-').reverse().join('/')).appendTo(row);
+			$('<button type="button" class="btn btn-sm btn-outline-danger" title="Bỏ ngày nghỉ"><i class="fas fa-times"></i></button>').on('click', function(){ row.remove(); }).appendTo(row);
+			list.append(row);
+		});
+	}
+	$('#cabin-holiday-add').on('click', function(){
+		var input = document.getElementById('cabin-holiday-date');
+		if(!input.value || !input.reportValidity()) return;
+		var dates = $('#cabin-holiday-list input').map(function(){ return this.value; }).get();
+		if(dates.indexOf(input.value) === -1) dates.push(input.value);
+		renderHolidays(dates); input.value = '';
+	});
 	$('[data-target="#modal-add"]').click(function(){
 		$('#modal-add-label').text('Tạo mới khóa học cabin');
 		$('#modal-id').val(0);
@@ -180,6 +206,8 @@ $(document).ready(function(){
 		$('#ngay_ketthuc').val('');
 		$('#han_dangky').val('');
 		$('#suc_chua_ca').val(3);
+		renderHolidays([]);
+		$('#cabin-holiday-date').val('');
 	});
 
 	$('.btn-edit-khoa').click(function(e){
@@ -191,6 +219,10 @@ $(document).ready(function(){
 		$('#ngay_ketthuc').val($(this).data('ngay-ketthuc'));
 		$('#han_dangky').val($(this).data('han-dangky'));
 		$('#suc_chua_ca').val($(this).data('suc-chua'));
+		var holidays;
+		try { holidays = JSON.parse($(this).attr('data-ngay-nghi') || '[]'); } catch(error) { holidays = []; }
+		renderHolidays(Array.isArray(holidays) ? holidays : []);
+		$('#cabin-holiday-date').val('');
 		$('#modal-add').modal('show');
 	});
 });

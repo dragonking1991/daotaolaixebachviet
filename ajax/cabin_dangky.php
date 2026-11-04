@@ -178,7 +178,8 @@ function cabin_render_panel($d, $student, $course, $weekStart)
             $isPast = ($date < $today);
             $isFull = ($count >= $capacity);
             $studentLimitReached = ($studentRegCount >= $maxStudentSlots);
-            $canRegister = (!$closed && $isValidByDay && $inRange && !$isPast && !$already && !$isFull && !$studentLimitReached);
+            $isHoliday = cabin_is_holiday($course, $date);
+            $canRegister = (!$closed && !$isHoliday && $isValidByDay && $inRange && !$isPast && !$already && !$isFull && !$studentLimitReached);
 
             $html .= '<td style="border:1px solid #ddd; padding:8px; text-align:center;">';
 
@@ -190,6 +191,8 @@ function cabin_render_panel($d, $student, $course, $weekStart)
                 //     $html .= '<div style="margin-top:6px;"><button type="button" class="btn-cabin-cancel" data-hocvien="'.$student['id'].'" data-ngay="'.$date.'" data-ca="'.$ca.'" data-week-start="'.$weekStart.'" style="padding:4px 10px; border:1px solid #dc3545; border-radius:4px; background:#fff; color:#dc3545; font-size:12px;">Hủy ca này</button></div>';
                 // }
                 $html .= '<div style="font-size:11px; color:#666; margin-top:4px;">'.$count.'/'.$capacity.'</div>';
+            } elseif($isHoliday) {
+                $html .= '<span class="text-muted">Ngày nghỉ</span>';
             } elseif($closed) {
                 $html .= '<span style="display:inline-block; padding:4px 8px; border-radius:4px; background:#f8d7da; color:#721c24; font-size:12px;">Đã khóa</span>';
             } elseif(!$inRange) {
@@ -296,6 +299,10 @@ if($action === 'register')
     if($ngay_hoc < $course['ngay_batdau'] || $ngay_hoc > $course['ngay_ketthuc'] || $ngay_hoc < $today) {
         $html = cabin_render_panel($d, $student, $course, $weekStart);
         cabin_json(false, 'Ngày học nằm ngoài phạm vi đăng ký hợp lệ.', $html);
+    }
+
+    if(cabin_is_holiday($course, $ngay_hoc)) {
+        cabin_json(false, 'Ngày này là ngày nghỉ, không nhận đăng ký cabin.', cabin_render_panel($d, $student, $course, $weekStart));
     }
 
     $slotTimes = cabin_slot_times($ca);

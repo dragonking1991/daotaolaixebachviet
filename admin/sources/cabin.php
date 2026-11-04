@@ -247,6 +247,22 @@ function save_item_cabin()
 
 	$id = isset($_POST['id']) ? (int)htmlspecialchars($_POST['id']) : 0;
 
+	$holidays = array();
+	foreach((array)($_POST['ngay_nghi'] ?? array()) as $date)
+	{
+		$date = trim((string)$date);
+		$parsed = DateTime::createFromFormat('!Y-m-d', $date);
+		if(!$parsed || $parsed->format('Y-m-d') !== $date)
+			$func->transfer('Ngày nghỉ không hợp lệ.', 'index.php?com=cabin&act=man', false);
+		$holidays[] = $date;
+	}
+	$holidays = array_values(array_unique($holidays));
+	sort($holidays);
+	$column = $d->rawQueryOne("select count(*) as total from information_schema.columns where table_schema = database() and table_name = 'table_cabin_khoahoc' and column_name = 'ngay_nghi'");
+	if(empty($column['total'])) $d->rawQuery('alter table #_cabin_khoahoc add column ngay_nghi TEXT NULL');
+	if($d->getLastErrorCode() !== '00000') $func->transfer('Không tạo được cấu hình ngày nghỉ; chưa lưu khóa.', 'index.php?com=cabin&act=man', false);
+	$data['ngay_nghi'] = json_encode($holidays);
+
 	if($id)
 	{
 		$d->where('id', $id);
@@ -831,6 +847,7 @@ function autofill_dangky_cabin()
 	for($ts = $tsStart; $ts <= $tsEnd; $ts += 86400)
 	{
 		$ngayHoc = date('Y-m-d', $ts);
+		if(cabin_is_holiday($kh_info, $ngayHoc)) continue;
 		$allowedCa = cabin_ca_for_dow((int)date('N', $ts));
 		if(empty($allowedCa)) continue;
 
@@ -995,6 +1012,8 @@ function save_dangky_cabin()
 
 	if($ngay_hoc < $kh_info['ngay_batdau'] || $ngay_hoc > $kh_info['ngay_ketthuc'])
 		$func->transfer("Ngày học phải nằm trong thời gian khóa", $redirectForm, false);
+	if(cabin_is_holiday($kh_info, $ngay_hoc))
+		$func->transfer('Ngày này là ngày nghỉ, không nhận đăng ký cabin.', $redirectForm, false);
 
 	$slotTimes = cabin_slot_times($ca);
 	if(empty($slotTimes))
