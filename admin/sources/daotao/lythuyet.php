@@ -182,7 +182,7 @@ function dt_lythuyet_upload_excel()
 		}
 		$idKhoa = (int)$hv['id_khoa'];
 
-		$denom = dt_lythuyet_denom($mon);
+		$denom = dt_lythuyet_denom($mon, $idKhoa);
 		if($mon === 'mophong')
 			$tienDo = (isset($map['on_luyen']) && $denom > 0) ? round(dt_parse_number(dt_val($row, $map, 'on_luyen')) / $denom * 100, 2) : dt_parse_number(dt_val($row, $map, 'tien_do'));
 		elseif($have3 && $denom > 0)

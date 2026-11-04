@@ -583,7 +583,7 @@
                     if(isset($kiemtra) && $kiemtra == true)
                     {
                         $list_quyen = (isset($_SESSION['list_quyen']) && is_array($_SESSION['list_quyen'])) ? $_SESSION['list_quyen'] : array();
-                        $can_hoadon_man = in_array('hoadon_man', $list_quyen) || in_array('hoadon_view', $list_quyen) || in_array('hoadon_delete', $list_quyen) || in_array('cabin_man', $list_quyen) || in_array('product_man_cabin', $list_quyen) || in_array('order_man', $list_quyen);
+                        $can_hoadon_man = in_array('hoadon_man', $list_quyen) || in_array('hoadon_view', $list_quyen) || in_array('hoadon_delete', $list_quyen) || in_array('xangdau_ketoan_check', $list_quyen) || in_array('cabin_man', $list_quyen) || in_array('product_man_cabin', $list_quyen) || in_array('order_man', $list_quyen);
                         $can_hoadon_upload = in_array('hoadon_upload', $list_quyen) || in_array('cabin_upload', $list_quyen) || in_array('import_man_cabin', $list_quyen);
                         if(!$can_hoadon_man && !$can_hoadon_upload) $none_hoadon = "d-none";
                     }

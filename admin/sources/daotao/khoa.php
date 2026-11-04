@@ -48,6 +48,15 @@ function dt_khoa_save()
 	$back = dt_crud_ret_url() ?: 'index.php?com=daotao&act=khoa';
 	if(empty($_POST['data'])) $func->transfer("Không nhận được dữ liệu", $back, false);
 	$p = $_POST['data'];
+	$ltHours = array();
+	foreach(array('ky_thuat', 'cau_tao', 'mophong') as $mon)
+	{
+		$value = trim((string)($_POST['lt_hours'][$mon] ?? ''));
+		if($value === '') continue;
+		if(!is_numeric($value) || !is_finite((float)$value) || (float)$value <= 0)
+			$func->transfer('Số giờ tối đa LT phải lớn hơn 0 hoặc để trống.', $back, false);
+		$ltHours[$mon] = (float)$value;
+	}
 
 	$data = array(
 		'ma_khoa' => trim(htmlspecialchars($p['ma_khoa'] ?? '')),
@@ -68,20 +77,27 @@ function dt_khoa_save()
 	$dup = $d->rawQueryOne("select id from #_dt_khoa where ma_khoa = ? and id <> ? limit 0,1", array($data['ma_khoa'], $id));
 	if($dup && $dup['id']) $func->transfer("Mã khóa học đã tồn tại", $back, false);
 
+	$d->startTransaction();
 	if($id)
 	{
 		$d->where('id', $id);
-		if($d->update('dt_khoa', $data) !== false) $func->transfer("Cập nhật khóa thành công", $back);
-		$func->transfer("Cập nhật khóa bị lỗi", $back, false);
+		$saved = $d->update('dt_khoa', $data) !== false;
 	}
 	else
 	{
 		$data['ngaytao'] = time();
 		$data['user_tao'] = isset($_SESSION[$login_admin]['username']) ? $_SESSION[$login_admin]['username'] : '';
 		$data['hienthi'] = 1;
-		if($d->insert('dt_khoa', $data)) $func->transfer("Lưu khóa thành công", $back);
-		$func->transfer("Lưu khóa bị lỗi", $back, false);
+		$id = (int)$d->insert('dt_khoa', $data);
+		$saved = $id > 0;
 	}
+	if($saved) dt_setting_set('lt_hours_'.$id, json_encode($ltHours));
+	if(!$saved || $d->transactionFailed() || $d->commit() === false)
+	{
+		$d->rollback();
+		$func->transfer('Không lưu được khóa và cấu hình giờ LT; chưa thay đổi dữ liệu.', $back, false);
+	}
+	$func->transfer('Lưu khóa và cấu hình giờ LT thành công', $back);
 }
 
 function dt_khoa_delete()

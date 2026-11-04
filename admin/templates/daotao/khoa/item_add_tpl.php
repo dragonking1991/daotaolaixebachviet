@@ -49,6 +49,21 @@
 					<label>Hệ đào tạo</label>
 					<input type="text" class="form-control form-control-sm" name="data[he_daotao]" value="<?=$isEdit ? htmlspecialchars($item['he_daotao']) : ''?>">
 				</div>
+				<?php $ltHours = $isEdit ? (json_decode(dt_setting_get('lt_hours_'.(int)$item['id'], '{}'), true) ?: array()) : array(); ?>
+				<div class="border-top pt-3">
+					<h6>Số giờ tối đa lý thuyết</h6>
+					<div class="row">
+						<?php foreach(array('ky_thuat'=>'Kỹ thuật lái', 'cau_tao'=>'Cấu tạo', 'mophong'=>'Mô phỏng') as $mon=>$label): ?>
+						<div class="col-sm-4 form-group">
+							<label for="lt-hours-<?=$mon?>"><?=$label?></label>
+							<div class="input-group input-group-sm">
+								<input id="lt-hours-<?=$mon?>" type="number" name="lt_hours[<?=$mon?>]" class="form-control" min="0.01" step="0.01" placeholder="Mặc định <?=dt_lythuyet_denom($mon)?>" value="<?=htmlspecialchars((string)($ltHours[$mon] ?? ''), ENT_QUOTES, 'UTF-8')?>">
+								<div class="input-group-append"><span class="input-group-text">giờ</span></div>
+							</div>
+						</div>
+						<?php endforeach; ?>
+					</div>
+				</div>
 			</div>
 			<div class="card-footer">
 				<button type="submit" class="btn btn-sm bg-gradient-success"><i class="fas fa-save mr-1"></i>Lưu</button>

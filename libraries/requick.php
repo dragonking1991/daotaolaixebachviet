@@ -104,9 +104,15 @@
 						}
 						if($com == 'hoadon')
 						{
-							if(in_array($act, array('man', 'delete')))
+							if(in_array($act, array('man', 'delete', 'deleteAll')))
 							{
 								$quyen_aliases[] = 'hoadon_man';
+								$quyen_aliases[] = 'hoadon_delete';
+								if($act === 'man')
+								{
+									$quyen_aliases[] = 'hoadon_view';
+									$quyen_aliases[] = 'xangdau_ketoan_check';
+								}
 								$quyen_aliases[] = 'cabin_man';
 								$quyen_aliases[] = 'product_man_cabin';
 								$quyen_aliases[] = 'order_man';

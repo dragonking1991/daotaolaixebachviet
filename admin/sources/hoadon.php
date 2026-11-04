@@ -4,7 +4,7 @@ if(!defined('SOURCES')) die("Error");
 switch($act)
 {
 	case "man":
-		if(hoadon_permission_denied(array('hoadon_man', 'hoadon_view', 'hoadon_delete', 'cabin_man', 'product_man_cabin', 'order_man'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
+		if(hoadon_permission_denied(array('hoadon_man', 'hoadon_view', 'hoadon_delete', 'xangdau_ketoan_check', 'cabin_man', 'product_man_cabin', 'order_man'))) $func->transfer("Bạn không có quyền vào trang này", "index.php", false);
 		hoadon_ensure_table();
 		get_items_hoadon();
 		$template = "hoadon/man/items";

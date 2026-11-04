@@ -18,9 +18,16 @@ function dt_mon_lythuyet()
 }
 
 /* Mẫu số tính tiến độ từng môn: tiến độ = (Xem giáo trình + Ôn luyện + Kiểm tra) / mẫu số * 100 (Note LT). */
-function dt_lythuyet_denom($mon)
+function dt_lythuyet_denom($mon, $idKhoa = 0)
 {
 	$m = array('cau_tao' => 8, 'dao_duc' => 14, 'ky_thuat' => 20, 'phan_1' => 25, 'phan_2' => 40, 'phan_3' => 25, 'mophong' => 4);
+	if($idKhoa > 0 && in_array($mon, array('ky_thuat', 'cau_tao', 'mophong'), true))
+	{
+		static $courseHours = array();
+		if(!array_key_exists($idKhoa, $courseHours)) $courseHours[$idKhoa] = json_decode(dt_setting_get('lt_hours_'.(int)$idKhoa, '{}'), true) ?: array();
+		$hours = $courseHours[$idKhoa][$mon] ?? null;
+		if(is_numeric($hours) && (float)$hours > 0) return (float)$hours;
+	}
 	return isset($m[$mon]) ? $m[$mon] : 0;
 }
 

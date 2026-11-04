@@ -117,10 +117,12 @@ function xd_course_merge_ensure()
 function xd_course_merge_targets()
 {
 	$targets=array();
+	$names=array();
+	foreach(xd_course_query("select ma_khoa,ten_khoa from #_dt_khoa where ten_khoa<>''") as $course)$names[$course['ma_khoa']]=$course['ten_khoa'];
 	foreach(xd_course_query("select khoa,count(*) as so from #_xd_hocvien where khoa<>'' group by khoa order by khoa") as $row)
-		$targets[$row['khoa']]=array('label'=>xd_hocvien_course_label($row),'xd'=>(int)$row['so']);
+		$targets[$row['khoa']]=array('label'=>($names[$row['khoa']]??$row['khoa']).' · XD '.(int)$row['so'].' HV','xd'=>(int)$row['so']);
 	foreach(xd_course_query("select k.ma_khoa,k.ten_khoa,(select count(*) from #_dt_hocvien h where h.id_khoa=k.id) as so_hoc_vien from #_dt_khoa k where k.ma_khoa<>'' order by k.ma_khoa") as $row)
-		if(!isset($targets[$row['ma_khoa']]))$targets[$row['ma_khoa']]=array('label'=>course_option_label(array('ma_khoa'=>$row['ma_khoa'],'ten_khoa'=>$row['ten_khoa'],'so_hoc_vien'=>0)).' · Đào tạo '.(int)$row['so_hoc_vien'].' HV · XD 0 HV','xd'=>0);
+		if(!isset($targets[$row['ma_khoa']]))$targets[$row['ma_khoa']]=array('label'=>(trim((string)$row['ten_khoa'])!==''?$row['ten_khoa']:$row['ma_khoa']).' · Đào tạo '.(int)$row['so_hoc_vien'].' HV · XD 0 HV','xd'=>0);
 	return $targets;
 }
 

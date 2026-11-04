@@ -80,11 +80,15 @@
 	<div class="card card-primary card-outline text-sm">
 		<div class="card-header">
 			<h3 class="card-title"><strong>Số giấy chứng nhận HTKH</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3>
-			<div class="card-tools"><?php if(dt_can('htkh','import')): ?><a href="index.php?com=daotao&act=uploadHtkh<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import</a> <?php endif; ?><?php if($id_khoa_sel && dt_can('htkh','view')): ?><a href="index.php?com=daotao&act=htkhPrint&id_khoa=<?=$id_khoa_sel?>" target="_blank" class="btn btn-sm bg-gradient-secondary"><i class="fas fa-print mr-1"></i>In giấy</a> <?php endif; ?><?php if(dt_can('htkh','export')): ?><a href="<?=dt_export_link('exportHtkh', array('id_khoa','keyword'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php endif; ?></div>
+			<div class="card-tools"><?php if(dt_can('htkh','import')): ?><a href="index.php?com=daotao&act=uploadHtkh<?=$id_khoa_sel?'&id_khoa='.$id_khoa_sel:''?>" class="btn btn-sm bg-gradient-success"><i class="fas fa-upload mr-1"></i>Import</a> <?php endif; ?><?php if($id_khoa_sel && !(int)dt_req('so_giay_id_ky', 0) && dt_can('htkh','view')): ?><a href="index.php?com=daotao&act=htkhPrint&id_khoa=<?=$id_khoa_sel?>" target="_blank" class="btn btn-sm bg-gradient-secondary"><i class="fas fa-print mr-1"></i>In giấy</a> <?php endif; ?><?php if(dt_can('htkh','export')): ?><a href="<?=dt_export_link('exportHtkh', array('id_khoa','keyword','so_giay_id_ky'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a><?php endif; ?></div>
 		</div>
 		<div class="card-body">
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="htkh">
+				<select name="so_giay_id_ky" class="form-control form-control-sm mr-2" aria-label="Kỳ kiểm tra" onchange="this.form.submit()">
+					<option value="0">— Tất cả kỳ kiểm tra —</option>
+					<?php foreach($ds_ky as $reviewPeriod): ?><option value="<?=(int)$reviewPeriod['id']?>" <?=(int)dt_req('so_giay_id_ky', 0)===(int)$reviewPeriod['id']?'selected':''?>><?=htmlspecialchars(($reviewPeriod['ngay_kt'] ? date('d/m/Y', strtotime($reviewPeriod['ngay_kt'])) : '').' · '.$reviewPeriod['ten'], ENT_QUOTES, 'UTF-8')?></option><?php endforeach; ?>
+				</select>
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
 					<option value="0">— Chọn khóa —</option>
 					<?php foreach($ds_khoa as $k): ?><option value="<?=$k['id']?>" <?=$id_khoa_sel==$k['id']?'selected':''?>><?=htmlspecialchars(course_option_label($k))?></option><?php endforeach; ?>
@@ -92,10 +96,10 @@
 				<input type="text" name="keyword" class="form-control form-control-sm mr-2" placeholder="Tên / CCCD / Mã HV" value="<?=isset($_REQUEST['keyword'])?htmlspecialchars($_REQUEST['keyword']):''?>">
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
-			<?php if(!$id_khoa_sel && empty($items)): ?>
-			<div class="alert alert-info mb-0">Chọn khóa để nhập/cập nhật số giấy HTKH, hoặc nhập CCCD/tên để tra cứu.</div>
+			<?php if(!$id_khoa_sel && !(int)dt_req('so_giay_id_ky', 0) && empty($items)): ?>
+			<div class="alert alert-info mb-0">Chọn kỳ kiểm tra, khóa hoặc nhập CCCD/tên để tra cứu số giấy HTKH.</div>
 			<?php else: ?>
-			<?php if($id_khoa_sel && dt_can('htkh','edit')): ?>
+			<?php if($id_khoa_sel && !(int)dt_req('so_giay_id_ky', 0) && dt_can('htkh','edit')): ?>
 			<form method="post" action="index.php?com=daotao&act=htkhCapGiay&id_khoa=<?=$id_khoa_sel?>" class="border rounded mb-3" onsubmit="return confirm(this.elements.tat_ca.checked ? 'Cấp giấy cho tất cả học viên trong khóa, kể cả học viên chưa đủ điều kiện?' : 'Cấp giấy HTKH cho học viên đủ điều kiện trong khóa?');">
 				<div class="p-3">
 					<h4 class="h6 font-weight-bold mb-1">Cấp giấy hàng loạt</h4>

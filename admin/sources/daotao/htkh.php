@@ -96,9 +96,17 @@ function dt_htkh_list()
 	$id_khoa_sel = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$items = array(); $total_items = 0;
 	$kw = dt_mb_lower(dt_req('keyword'));
-	if(!$id_khoa_sel && $kw === '') return;
+	$reviewKy = (int)dt_req('so_giay_id_ky', 0);
+	if(!$id_khoa_sel && !$reviewKy && $kw === '') return;
 
-	if($id_khoa_sel)
+	if($reviewKy)
+	{
+		$params = array($reviewKy);
+		$where = 'e.id_ky = ?';
+		if($id_khoa_sel) { $where .= ' and e.id_khoa = ?'; $params[] = $id_khoa_sel; }
+		$hvs = $d->rawQuery("select e.id, e.cccd, e.ma_hv, e.hoten, e.hang, e.id_khoa, e.giaovien as gv_hoten, e.ten_khoa, e.ma_khoa from #_dt_ky_thi_hv e where $where order by substring_index(e.hoten, ' ', -1) asc, e.hoten asc", $params);
+	}
+	elseif($id_khoa_sel)
 		$hvs = $d->rawQuery("select h.id, h.cccd, h.ma_hv, h.hoten, h.hang, h.id_khoa, h.gv_hoten from #_dt_hocvien h where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", array($id_khoa_sel));
 	else
 	{
@@ -578,17 +586,15 @@ function dt_htkh_upload_excel()
 /* Xuất Excel số giấy HTKH theo khóa. */
 function dt_htkh_export()
 {
-	global $d, $func;
+	global $d, $func, $items;
 	$idKhoa = (int)dt_req('id_khoa', 0);
-	if(!$idKhoa) $func->transfer('Vui lòng chọn khóa để xuất', 'index.php?com=daotao&act=htkh', false);
-	$hvs = $d->rawQuery("select h.cccd, h.ma_hv, h.hoten, h.hang, h.gv_hoten from #_dt_hocvien h where h.id_khoa = ? order by substring_index(h.hoten, ' ', -1) asc, h.hoten asc", array($idKhoa));
-	$byCccd = array();
-	foreach($d->rawQuery("select cccd, so_giay, so_quyet_dinh, ngay_cap, ghi_chu from #_dt_htkh where id_khoa = ?", array($idKhoa)) as $r) $byCccd[$r['cccd']] = $r;
+	if(!$idKhoa && !(int)dt_req('so_giay_id_ky', 0) && dt_req('keyword') === '') $func->transfer('Vui lòng chọn kỳ kiểm tra, khóa hoặc nhập từ khóa để xuất', 'index.php?com=daotao&act=htkh', false);
+	dt_htkh_list();
 	$headers = array('STT','Mã HV','Họ và tên','CCCD','Hạng','Giáo viên','Số giấy HTKH','Số quyết định','Ngày cấp','Ghi chú');
 	$out = array(); $stt = 1;
-	foreach($hvs as $hv)
+	foreach($items as $hv)
 	{
-		$h = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : null;
+		$h = $hv['htkh'];
 		$out[] = array($stt++, $hv['ma_hv'], $hv['hoten'], $hv['cccd'], $hv['hang'], $hv['gv_hoten'],
 			$h ? $h['so_giay'] : '', $h ? $h['so_quyet_dinh'] : '', $h ? $h['ngay_cap'] : '', $h ? $h['ghi_chu'] : '');
 	}
