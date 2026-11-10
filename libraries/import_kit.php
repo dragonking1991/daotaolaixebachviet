@@ -63,7 +63,8 @@ function ik_specs()
 		'daotao.kythi' => array(
 			'title' => 'Kỳ kiểm tra', 'section' => 'kythi', 'list' => 'index.php?com=daotao&act=kythi',
 			'required' => array('CCCD' => '', 'Họ và tên' => ''),
-			'optional' => array('Mã HV' => '', 'Năm sinh' => '', 'Hạng' => '', 'Mã khóa' => '', 'Tên khóa' => '', 'Giáo viên' => ''),
+			'optional' => array('Mã HV' => '', 'Năm sinh' => '', 'Hạng' => 'Tự lấy từ Đào tạo nếu có', 'Mã khóa' => 'Tự lấy từ Đào tạo nếu có', 'Tên khóa' => '', 'Giáo viên' => '', 'Điểm/KQ/Ngày đạt LT, MP, KT hình, KT đường, KT chữ chi' => 'Mẫu TTSH', 'Kết luận CSĐT' => '', 'TG bắt đầu / kết thúc' => '', 'Ghi chú' => ''),
+			'notes' => array('File import và file xuất cùng một mẫu TTSH (KQ_DaoTao_LT_MP): xuất ra → TTSH điền kết quả → import lại.', 'Dòng chưa có điểm/kết quả không bị đánh dấu "đã có KQ".'),
 		),
 		'daotao.sathach' => array(
 			'title' => 'Kết quả sát hạch', 'section' => 'sathach', 'upload' => 'index.php?com=daotao&act=uploadSathach', 'list' => 'index.php?com=daotao&act=sathach', 'system_export' => 'Sở GTVT / phần mềm sát hạch',

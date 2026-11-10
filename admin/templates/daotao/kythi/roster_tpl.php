@@ -14,6 +14,7 @@
 			<div class="card-header"><h3 class="card-title"><strong>Import danh sách học viên vào kỳ: <?=htmlspecialchars($ky['ten'] ?: '')?></strong></h3></div>
 			<div class="card-body">
 				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.kythi'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
+				<div class="alert alert-info py-2">Nhận file danh sách đủ điều kiện hoặc file mẫu TTSH đã xuất. Bắt buộc có <strong>Họ và tên</strong>, <strong>CCCD</strong>. Hạng, Mã khóa, Tên khóa, Giáo viên tự lấy từ hệ thống Đào tạo (theo CCCD); nếu học viên chưa có trong hệ thống thì dùng dữ liệu trong file.</div>
 				<input type="hidden" name="roster_mode" value="append">
 				<div class="form-group"><label class="mb-0"><input type="checkbox" name="roster_mode" value="replace" checked> Thay thế danh sách hiện tại</label></div>
 				<div class="form-group">

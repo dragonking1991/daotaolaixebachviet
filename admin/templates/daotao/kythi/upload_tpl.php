@@ -14,7 +14,7 @@
 			<div class="card-header"><h3 class="card-title"><strong>Import kết quả kỳ: <?=htmlspecialchars($ky['ten'] ?: '')?></strong></h3></div>
 			<div class="card-body">
 				<?php $ikStep = 1; $ikHasPreview = false; include TEMPLATE.LAYOUT.'import_steps.php'; $ikKey = 'daotao.kythi'; include TEMPLATE.LAYOUT.'import_guide.php'; ?>
-				<div class="alert alert-warning">Nạp file kết quả từ TTSH (mẫu đã xuất). Ghép theo <strong>CCCD</strong>: cập nhật học viên trong kỳ, đồng thời chèn mới học viên khóa cũ (vắng/rớt) để lưu trữ.</div>
+				<div class="alert alert-warning">Dùng <strong>cùng mẫu TTSH</strong> với nút <em>Xuất Excel (mẫu TTSH)</em> của kỳ (dòng 1 tiêu đề, dòng 2 tên cột: STT … Điểm LT, KQ LT, Ngày đạt LT … Kết luận CSĐT, Ghi chú). Ghép theo <strong>CCCD</strong>; chỉ cập nhật cột có trong file. Hạng, Mã khóa, Tên khóa, Giáo viên tự lấy từ hệ thống Đào tạo nếu có. Học viên chưa có trong kỳ (khóa cũ) được thêm mới để lưu trữ.</div>
 				<div class="form-group">
 					<label>File Excel (.xlsx, .xls)</label>
 					<div class="dt-dropzone" data-back="index.php?com=daotao&act=kythiDetail&id=<?=$ky['id']?>">

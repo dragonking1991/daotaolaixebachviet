@@ -54,9 +54,17 @@ function dt_kythi_delete()
 }
 
 /* Chi tiết một kỳ: danh sách HV + bộ lọc khóa để thêm HV đủ điều kiện. */
+function dt_kythi_stat_hang($hang)
+{
+	$compact = dt_norm_header($hang);
+	if(in_array($compact, array('bstd', 'btd'), true)) return 'B11';
+	return dt_norm_hang($hang);
+}
+
 function dt_kythi_detail()
 {
-	global $d, $func, $ky, $items, $ds_khoa, $total_items, $result_total, $result_filters, $result_stats, $tracuu_kq, $tracuu_kw;
+	global $d, $func, $ky, $items, $ds_khoa, $total_items, $result_total, $result_filters, $result_stats, $tracuu_kq, $tracuu_kw, $kythi_counts;
+	global $result_hangs, $result_rank_stats;
 	$id = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
 	$ky = $d->rawQueryOne("select * from #_dt_ky_thi where id = ? limit 0,1", array($id));
 	if(!$ky || !$ky['id']) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
@@ -64,24 +72,47 @@ function dt_kythi_detail()
 	$ds_khoa = dt_khoa_options();
 	$allItems = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id));
 	$result_total = count($allItems);
-	$result_filters = array('ma_khoa' => dt_req('ma_khoa'), 'ten_khoa' => dt_req('ten_khoa'));
+	$kythi_counts = array('ket_qua' => 0, 'thieu_khoa' => 0, 'htkh' => dt_kythi_htkh_count($id));
+	foreach($allItems as $item)
+	{
+		if((int)$item['co_ket_qua'] === 1) $kythi_counts['ket_qua']++;
+		if(trim((string)$item['ma_khoa']) === '') $kythi_counts['thieu_khoa']++;
+	}
+	$result_hangs = array(); $result_rank_stats = array();
+	foreach($allItems as $item)
+	{
+		$hang = dt_kythi_stat_hang($item['hang']);
+		$result_hangs[$hang] = $hang === '' ? 'Chưa có hạng' : $hang;
+	}
+	ksort($result_hangs);
+	$result_filters = array('ma_khoa' => dt_req('ma_khoa'), 'ten_khoa' => dt_req('ten_khoa'), 'hang' => dt_req('hang'));
 	$items = array(); $result_stats = array();
 	foreach($allItems as $item)
 	{
 		$maKhoa = trim((string)$item['ma_khoa']); $tenKhoa = trim((string)$item['ten_khoa']);
+		$hang = dt_kythi_stat_hang($item['hang']);
+		if($result_filters['hang'] !== '' && ($hang === '' ? 'none' : $hang) !== $result_filters['hang']) continue;
 		$matchMaKhoa = function_exists('mb_stripos') ? mb_stripos($maKhoa, $result_filters['ma_khoa'], 0, 'UTF-8') : stripos($maKhoa, $result_filters['ma_khoa']);
 		$matchTenKhoa = function_exists('mb_stripos') ? mb_stripos($tenKhoa, $result_filters['ten_khoa'], 0, 'UTF-8') : stripos($tenKhoa, $result_filters['ten_khoa']);
 		if($result_filters['ma_khoa'] !== '' && $matchMaKhoa === false) continue;
 		if($result_filters['ten_khoa'] !== '' && $matchTenKhoa === false) continue;
 		$items[] = $item;
-		$key = json_encode(array($maKhoa, $tenKhoa), JSON_UNESCAPED_UNICODE);
-		if(!isset($result_stats[$key])) $result_stats[$key] = array('ma_khoa' => $maKhoa, 'ten_khoa' => $tenKhoa, 'so_hv' => 0, 'so_dat' => 0);
+		$key = json_encode(array($hang, $maKhoa, $tenKhoa), JSON_UNESCAPED_UNICODE);
+		if(!isset($result_stats[$key])) $result_stats[$key] = array('hang' => $hang, 'ma_khoa' => $maKhoa, 'ten_khoa' => $tenKhoa, 'so_hv' => 0, 'so_dat' => 0);
 		$result_stats[$key]['so_hv']++;
-		if((int)$item['co_ket_qua'] === 1 && dt_htkh_ket_qua_dat($item)) $result_stats[$key]['so_dat']++;
+		$passed = (int)$item['co_ket_qua'] === 1 && dt_htkh_ket_qua_dat($item);
+		if($passed) $result_stats[$key]['so_dat']++;
+		if(!isset($result_rank_stats[$hang])) $result_rank_stats[$hang] = array('hang' => $hang, 'khoa' => array(), 'so_hv' => 0, 'so_dat' => 0, 'thieu_khoa' => 0);
+		$courseKey = $maKhoa !== '' ? 'ma:'.$maKhoa : ((int)$item['id_khoa'] > 0 ? 'id:'.(int)$item['id_khoa'] : ($tenKhoa !== '' ? 'ten:'.$tenKhoa : ''));
+		if($courseKey !== '') $result_rank_stats[$hang]['khoa'][$courseKey] = true;
+		else $result_rank_stats[$hang]['thieu_khoa']++;
+		$result_rank_stats[$hang]['so_hv']++;
+		if($passed) $result_rank_stats[$hang]['so_dat']++;
 	}
+	ksort($result_rank_stats);
 	$total_items = count($items);
 	$result_stats = array_values($result_stats);
-	usort($result_stats, function($a, $b) { return strcmp($a['ma_khoa'].' '.$a['ten_khoa'], $b['ma_khoa'].' '.$b['ten_khoa']); });
+	usort($result_stats, function($a, $b) { return strcmp($a['hang'].' '.$a['ma_khoa'].' '.$a['ten_khoa'], $b['hang'].' '.$b['ma_khoa'].' '.$b['ten_khoa']); });
 
 	// Tra cứu học viên đủ điều kiện (chưa thuộc kỳ) để thêm lẻ.
 	$tracuu_kq = array(); $tracuu_kw = trim(dt_req('tc'));
@@ -164,25 +195,14 @@ function dt_kythi_add_manual()
 	$hoten = trim($_POST['hoten'] ?? '');
 	if($cccd === '' || $hoten === '') $func->transfer("Nhập tối thiểu Họ tên và CCCD", $back, false);
 
-	// Ưu tiên dữ liệu nhập tay; bổ sung từ hệ thống nếu CCCD đã tồn tại.
-	$sys = dt_find_hocvien_by_cccd($cccd);
-	$hv = array(
-		'id_khoa'  => $sys ? (int)$sys['id_khoa'] : 0,
-		'cccd'     => $cccd,
-		'ma_hv'    => trim($_POST['ma_hv'] ?? '') ?: ($sys ? $sys['ma_hv'] : ''),
-		'hoten'    => $hoten,
-		'ngaysinh' => trim($_POST['nam_sinh'] ?? '') ?: ($sys ? $sys['ngaysinh'] : ''),
-		'hang'     => trim($_POST['hang'] ?? '') ?: ($sys ? $sys['hang'] : ''),
-		'ma_khoa'  => trim($_POST['ma_khoa'] ?? ''),
-		'ten_khoa' => trim($_POST['ten_khoa'] ?? ''),
-		'gv_hoten' => trim($_POST['giaovien'] ?? '') ?: ($sys ? ($sys['gv_hoten'] ?? '') : ''),
-	);
-	if($hv['ma_khoa'] === '' && $sys)
-	{
-		$k = $d->rawQueryOne("select ma_khoa, ten_khoa from #_dt_khoa where id = ? limit 0,1", array($sys['id_khoa']));
-		if($k) { $hv['ma_khoa'] = $k['ma_khoa']; if($hv['ten_khoa'] === '') $hv['ten_khoa'] = $k['ten_khoa']; }
-	}
-	$them = dt_kythi_them_hv($id, $hv);
+	// Hạng/mã khóa/tên khóa/giáo viên ưu tiên dữ liệu Đào tạo nếu CCCD đã có trong hệ thống.
+	$sys = dt_kythi_sys_hocvien($cccd);
+	$data = dt_kythi_identity($sys, array(
+		'ma_hv' => trim($_POST['ma_hv'] ?? ''), 'hoten' => $hoten, 'nam_sinh' => trim($_POST['nam_sinh'] ?? ''), 'hang' => trim($_POST['hang'] ?? ''),
+		'ma_khoa' => trim($_POST['ma_khoa'] ?? ''), 'ten_khoa' => trim($_POST['ten_khoa'] ?? ''), 'giaovien' => trim($_POST['giaovien'] ?? ''),
+	));
+	$exist = $d->rawQueryOne("select id from #_dt_ky_thi_hv where id_ky = ? and cccd = ? limit 0,1", array($id, $cccd));
+	$them = !$exist && $d->insert('dt_ky_thi_hv', array_merge($data, array('id_ky' => $id, 'cccd' => $cccd, 'ngaytao' => time()))) !== false;
 	dt_audit('add', 'ky_thi_hv', $them ? 1 : 0, 'manual id_ky='.$id.' cccd='.$cccd);
 	$func->transfer($them ? "Đã thêm học viên vào kỳ kiểm tra" : "Học viên (CCCD $cccd) đã có trong kỳ", $back, $them ? true : false);
 }
@@ -210,16 +230,9 @@ function dt_kythi_import_roster()
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 	list($sheet, $highestRow, $highestCol) = dt_open_upload_sheet($file, $ext, $back);
 
-	$aliases = array(
-		'ma_hv' => array('mahv','mahocvien','maso'),
-		'hoten' => array('hovaten','hoten'),
-		'nam_sinh' => array('namsinh','ngaysinh','nts'),
-		'cccd' => array('cccd','socccd','socmt','cmnd'),
-		'hang' => array('hang'),
-		'ma_khoa' => array('makhoa','makhoahoc'),
-		'ten_khoa' => array('tenkhoa'),
-		'giaovien' => array('giaovien','gv'),
-	);
+	$aliases = array_intersect_key(dt_kythi_import_aliases(), array_flip(array('ma_hv','hoten','nam_sinh','cccd','hang','ma_khoa','ten_khoa','giaovien')));
+	$aliases['ma_hv'][] = 'maso';
+	$aliases['nam_sinh'][] = 'nts';
 	$contains = array(
 		'cccd' => array('cccd','cmt','cmnd'),
 		'hoten' => array('hovaten'),
@@ -231,7 +244,7 @@ function dt_kythi_import_roster()
 		dt_import_notice("Không nhận diện được cột 'Họ và tên' và 'CCCD' trong file danh sách.", $back, false);
 
 	$replace = !isset($_POST['roster_mode']) || $_POST['roster_mode'] !== 'append';
-	$pending = array(); $emptyStreak = 0;
+	$pending = array();
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
 		$row = dt_read_row($sheet, $r, $highestCol);
@@ -243,46 +256,37 @@ function dt_kythi_import_roster()
 				dt_import_notice("Dòng $r thiếu hoặc sai CCCD. Chưa thay đổi danh sách.", $back, false);
 			continue;
 		}
-		$emptyStreak = 0;
-		$sys = dt_find_hocvien_by_cccd($cccd);
-		$hv = array(
-			'id_khoa'  => $sys ? (int)$sys['id_khoa'] : 0,
-			'cccd'     => $cccd,
-			'ma_hv'    => dt_val($row, $map, 'ma_hv') ?: ($sys ? $sys['ma_hv'] : ''),
-			'hoten'    => $hoten ?: ($sys ? $sys['hoten'] : ''),
-			'ngaysinh' => dt_val($row, $map, 'nam_sinh') ?: ($sys ? $sys['ngaysinh'] : ''),
-			'hang'     => dt_val($row, $map, 'hang') ?: ($sys ? $sys['hang'] : ''),
-			'ma_khoa'  => dt_val($row, $map, 'ma_khoa'),
-			'ten_khoa' => dt_val($row, $map, 'ten_khoa'),
-			'gv_hoten' => dt_val($row, $map, 'giaovien') ?: ($sys ? ($sys['gv_hoten'] ?? '') : ''),
+		$fileRow = array(
+			'ma_hv' => dt_val($row, $map, 'ma_hv'), 'hoten' => $hoten, 'nam_sinh' => dt_kythi_cell_date(dt_val($row, $map, 'nam_sinh')),
+			'hang' => dt_val($row, $map, 'hang'), 'ma_khoa' => dt_val($row, $map, 'ma_khoa'), 'ten_khoa' => dt_val($row, $map, 'ten_khoa'), 'giaovien' => dt_val($row, $map, 'giaovien'),
 		);
-		if($hv['hoten'] === '') dt_import_notice("Dòng $r thiếu họ tên. Chưa thay đổi danh sách.", $back, false);
+		$sys = dt_kythi_sys_hocvien($cccd);
+		if(dt_kythi_first($hoten, $sys['hoten'] ?? '') === '') dt_import_notice("Dòng $r thiếu họ tên. Chưa thay đổi danh sách.", $back, false);
 		if(isset($pending[$cccd])) dt_import_notice("Dòng $r trùng CCCD $cccd. Chưa thay đổi danh sách.", $back, false);
-		$pending[$cccd] = $hv;
+		$pending[$cccd] = array('sys' => $sys, 'file' => $fileRow);
 	}
 	if(!$pending) dt_import_notice('File không có học viên hợp lệ. Giữ nguyên danh sách hiện tại.', $back, false);
 	if(!dt_backup_tables(array('dt_ky_thi_hv'), 'imp_kythi_roster'))
 		dt_import_notice('Không thể sao lưu. Chưa thay đổi danh sách.', $back, false);
-	$them = 0; $capnhat = 0;
+	$them = 0; $capnhat = 0; $coKhoa = 0;
 	$d->startTransaction();
 	try
 	{
 		$d->rawQueryOne('select id from #_dt_ky_thi where id = ? for update', array($id));
-		foreach($pending as $cccd => $hv)
+		foreach($pending as $cccd => $p)
 		{
-			$exist = $d->rawQueryOne('select id from #_dt_ky_thi_hv where id_ky = ? and cccd = ? limit 0,1', array($id, $hv['cccd']));
+			$exist = $d->rawQueryOne('select * from #_dt_ky_thi_hv where id_ky = ? and cccd = ? limit 0,1', array($id, (string)$cccd));
+			$data = dt_kythi_identity($p['sys'], $p['file'], $exist);
+			if($data['ma_khoa'] !== '') $coKhoa++;
 			if($exist)
 			{
-				$data = $hv;
-				$data['nam_sinh'] = $data['ngaysinh']; unset($data['ngaysinh']);
-				$data['giaovien'] = $data['gv_hoten']; unset($data['gv_hoten']);
 				$d->where('id', $exist['id']);
 				if($d->update('dt_ky_thi_hv', $data) === false) throw new RuntimeException('Không thể cập nhật học viên.');
 				$capnhat++;
 			}
 			else
 			{
-				if(!dt_kythi_them_hv($id, $hv)) throw new RuntimeException('Không thể thêm học viên.');
+				if($d->insert('dt_ky_thi_hv', array_merge($data, array('id_ky' => $id, 'cccd' => (string)$cccd, 'ngaytao' => time()))) === false) throw new RuntimeException('Không thể thêm học viên.');
 				$them++;
 			}
 		}
@@ -301,7 +305,8 @@ function dt_kythi_import_roster()
 	}
 	dt_audit('import', 'ky_thi_hv', count($pending), ($replace ? 'replace ' : 'append ').$file['name'].' id_ky='.$id);
 	dt_log_import('ky_thi_roster', $file['name'], count($pending), 0);
-	dt_import_notice(($replace ? 'Đã thay thế danh sách: '.count($pending).' học viên. ' : '')."Thêm $them, cập nhật $capnhat học viên.", "index.php?com=daotao&act=kythiDetail&id=".$id, true);
+	$thieuKhoa = count($pending) - $coKhoa;
+	dt_import_notice(($replace ? 'Đã thay thế danh sách: '.count($pending).' học viên. ' : '')."Thêm $them, cập nhật $capnhat học viên. Có mã khóa: $coKhoa".($thieuKhoa ? " ($thieuKhoa học viên chưa có trong hệ thống Đào tạo và file không có mã khóa)" : '').'.', "index.php?com=daotao&act=kythiDetail&id=".$id, true);
 }
 
 function dt_kythi_remove_selected()
@@ -344,6 +349,77 @@ function dt_kythi_remove_hv()
 	$func->transfer("Đã xóa học viên khỏi kỳ", "index.php?com=daotao&act=kythiDetail&id=".$id);
 }
 
+/* Lấy lại Mã HV/Hạng/Mã khóa/Tên khóa/Giáo viên từ dữ liệu Đào tạo cho mọi học viên trong kỳ. */
+function dt_kythi_sync_khoa()
+{
+	global $d, $func;
+	$ky = dt_kythi_load($_POST['id'] ?? 0);
+	$back = 'index.php?com=daotao&act=kythiDetail&id='.$ky['id'];
+	$rows = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ?", array($ky['id']));
+	if(!dt_backup_tables(array('dt_ky_thi_hv'), 'sync_kythi_khoa')) $func->transfer('Không thể sao lưu. Chưa cập nhật.', $back, false);
+	$capnhat = 0; $khongCo = 0;
+	$d->startTransaction();
+	foreach($rows as $r)
+	{
+		$sys = dt_kythi_sys_hocvien($r['cccd'], (int)$r['id_khoa']);
+		if(!$sys) { $khongCo++; continue; }
+		$data = dt_kythi_identity($sys, array(), $r);
+		unset($data['hoten'], $data['nam_sinh']);
+		$changed = false;
+		foreach($data as $k => $v) if((string)$r[$k] !== (string)$v) { $changed = true; break; }
+		if(!$changed) continue;
+		$d->where('id', $r['id']); $d->update('dt_ky_thi_hv', $data);
+		$capnhat++;
+	}
+	if($d->transactionFailed()) { $d->rollback(); $func->transfer('Cập nhật thất bại, dữ liệu được giữ nguyên.', $back, false); }
+	$d->commit();
+	dt_audit('sync', 'ky_thi_hv', $capnhat, 'id_ky='.$ky['id']);
+	$func->transfer("Đã cập nhật thông tin khóa cho $capnhat học viên".($khongCo ? ". $khongCo học viên chưa có trong hệ thống Đào tạo (giữ nguyên)" : ''), $back);
+}
+
+/* Xóa kết quả kiểm tra trong kỳ (giữ danh sách học viên). */
+function dt_kythi_clear_results()
+{
+	global $d, $func;
+	$ky = dt_kythi_load($_POST['id'] ?? 0);
+	$back = 'index.php?com=daotao&act=kythiDetail&id='.$ky['id'];
+	if(!dt_backup_tables(array('dt_ky_thi_hv'), 'clear_kythi_kq')) $func->transfer('Không thể sao lưu. Chưa xóa kết quả.', $back, false);
+	$n = (int)($d->rawQueryOne("select count(*) as c from #_dt_ky_thi_hv where id_ky = ? and co_ket_qua = 1", array($ky['id']))['c'] ?? 0);
+	$set = array();
+	foreach(array_merge(dt_kythi_result_fields(), array('ket_qua_tong')) as $f) $set[] = "`$f` = ''";
+	$d->rawQuery("update #_dt_ky_thi_hv set ".implode(', ', $set).", co_ket_qua = 0 where id_ky = ?", array($ky['id']));
+	if($d->getLastErrorCode() !== '00000') $func->transfer('Không thể xóa kết quả.', $back, false);
+	dt_audit('delete', 'ky_thi_ketqua', $n, 'id_ky='.$ky['id']);
+	$func->transfer("Đã xóa kết quả kiểm tra của $n học viên. Danh sách học viên được giữ nguyên.", $back);
+}
+
+/* Số giấy xác nhận (HTKH) đã cấp cho học viên trong kỳ. */
+function dt_kythi_htkh_where()
+{
+	return "from #_dt_htkh g where exists (select 1 from #_dt_ky_thi_hv e where e.id_ky = ? and e.cccd = g.cccd and (g.id_khoa = e.id_khoa or g.id_khoa = 0))";
+}
+
+function dt_kythi_htkh_count($idKy)
+{
+	global $d;
+	return (int)($d->rawQueryOne("select count(*) as c ".dt_kythi_htkh_where(), array((int)$idKy))['c'] ?? 0);
+}
+
+/* Xóa toàn bộ số giấy xác nhận đã cấp cho học viên trong kỳ. */
+function dt_kythi_clear_htkh()
+{
+	global $d, $func;
+	$ky = dt_kythi_load($_POST['id'] ?? 0);
+	$back = 'index.php?com=daotao&act=kythiDetail&id='.$ky['id'];
+	$n = dt_kythi_htkh_count($ky['id']);
+	if(!$n) $func->transfer('Kỳ này chưa có số giấy xác nhận nào được cấp.', $back, false);
+	if(!dt_backup_tables(array('dt_htkh'), 'clear_kythi_htkh')) $func->transfer('Không thể sao lưu. Chưa xóa số giấy.', $back, false);
+	$d->rawQuery("delete g ".dt_kythi_htkh_where(), array($ky['id']));
+	if($d->getLastErrorCode() !== '00000') $func->transfer('Không thể xóa số giấy xác nhận.', $back, false);
+	dt_audit('delete', 'htkh', $n, 'id_ky='.$ky['id']);
+	$func->transfer("Đã xóa $n số giấy xác nhận đã cấp trong kỳ.", $back);
+}
+
 /* Helper: chèn học viên vào kỳ nếu chưa có (theo id_ky + cccd). */
 function dt_kythi_them_hv($idKy, $hv)
 {
@@ -379,64 +455,243 @@ function dt_kythi_course_values($row, $hv)
 	);
 }
 
-/* Xuất Excel kỳ kiểm tra theo mẫu tổng hợp để kiểm tra (gồm quá trình đào tạo).
- * Mô phỏng gộp chung trong nội dung Lý thuyết. Lọc theo đủ/không đủ điều kiện qua dk=du|chua|all. */
-function dt_kythi_export()
-{
-	global $d, $func;
-	$id = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
-	$dk = dt_req('dk'); // '', 'du', 'chua', 'all'
-	$ky = $d->rawQueryOne("select * from #_dt_ky_thi where id = ? limit 0,1", array($id));
-	if(!$ky) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
-	$rows = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id));
+/* ============================ Mẫu TTSH (import = xuất) ============================ */
 
-	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',
-		'Lý thuyết','Cabin','Th.hành hình','DAT','Tổng giờ H','Tổng km H','Tổng giờ Đ','Tổng km Đ','A','B','C','D','Kết luận');
-	$out = array(); $redCells = array(); $stt = 1; $ri = 0;
+/* Tiêu đề cột mẫu TTSH (KQ_DaoTao_LT_MP_ddmmyyyy): dòng 1 tiêu đề kỳ, dòng 2 header, dữ liệu từ dòng 3. */
+function dt_kythi_ttsh_headers()
+{
+	return array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',
+		'Lý thuyết','Cabin','Th.hành hình','DAT','Tổng giờ H','Tổng km H','Tổng giờ Đ','Tổng km Đ',
+		'Điểm LT','KQ LT','Ngày đạt LT','Điểm MP','KQ MP','Ngày đạt MP',
+		'Điểm KT hình','KQ KT hình','Ngày đạt hình','Điểm KT đường','KQ KT đường','Ngày đạt đường',
+		'Điểm KT chữ chi','KQ KT chữ chi','Ngày đạt chữ chi','Kết luận CSĐT','TG bắt đầu','TG kết thúc','Ghi chú');
+}
+
+/* Cột kết quả (theo thứ tự mẫu, từ cột "Điểm LT"). */
+function dt_kythi_result_fields()
+{
+	return array('diem_lt','lt','ngay_dat_lt','diem_mp','mp','ngay_dat_mp','diem_hinh','hinh','ngay_dat_hinh',
+		'diem_duong','duong','ngay_dat_duong','diem_chu_chi','chu_chi','ngay_dat_chu_chi','ket_luan','tg_bat_dau','tg_ket_thuc','ghi_chu');
+}
+
+/* Cột quá trình đào tạo trong file (lưu lại cho học viên khóa cũ chưa có trong hệ thống). */
+function dt_kythi_progress_fields()
+{
+	return array('p_lt','p_cabin','p_hinh','p_dat','gio_h','km_h','gio_d','km_d');
+}
+
+/* Alias tiêu đề nhận diện cả mẫu TTSH lẫn mẫu cũ (Điểm LT|LT|...|Kết luận). */
+function dt_kythi_import_aliases()
+{
+	return array(
+		'hoten' => array('hovaten','hoten'),
+		'nam_sinh' => array('namsinh','ngaysinh'),
+		'cccd' => array('cccd','socccd','socmt','cmnd'),
+		'ma_hv' => array('mahv','mahocvien'),
+		'hang' => array('hang'),
+		'ma_khoa' => array('makhoa','makhoahoc'),
+		'ten_khoa' => array('tenkhoa','khoahang','khoa'),
+		'giaovien' => array('giaovien','gv'),
+		'p_lt' => array('lythuyet'),
+		'p_cabin' => array('cabin'),
+		'p_hinh' => array('thhanhhinh','thuchanhhinh'),
+		'p_dat' => array('dat'),
+		'gio_h' => array('tonggioh'),
+		'km_h' => array('tongkmh'),
+		'gio_d' => array('tonggiod'),
+		'km_d' => array('tongkmd'),
+		'diem_lt' => array('diemlt'),
+		'lt' => array('lt','kqlt'),
+		'ngay_dat_lt' => array('ngaydatlt'),
+		'diem_mp' => array('diemmp'),
+		'mp' => array('mp','kqmp'),
+		'ngay_dat_mp' => array('ngaydatmp'),
+		'ket_qua_tong' => array('ketquatong'),
+		'diem_hinh' => array('diemhinh','diemkthinh'),
+		'hinh' => array('hinh','kqhinh','kqkthinh'),
+		'ngay_dat_hinh' => array('ngaydathinh'),
+		'diem_duong' => array('diemduong','diemktduong'),
+		'duong' => array('duong','kqduong','kqktduong'),
+		'ngay_dat_duong' => array('ngaydatduong'),
+		'chu_chi' => array('chuchi','kqchuchi','kqktchuchi'),
+		'diem_chu_chi' => array('diemchuchi','diemktchuchi'),
+		'ngay_dat_chu_chi' => array('ngaydatchuchi'),
+		'ket_luan' => array('ketluan','ketluancsdt'),
+		'tg_bat_dau' => array('tgbatdau','thoigianbatdau'),
+		'tg_ket_thuc' => array('tgketthuc','thoigianketthuc'),
+		'ghi_chu' => array('ghichu'),
+	);
+}
+
+/* Ô ngày Excel (serial) -> dd/mm/yyyy [HH:ii]; chuỗi giữ nguyên. */
+function dt_kythi_cell_date($value)
+{
+	$value = trim((string)$value);
+	if($value === '' || !is_numeric($value)) return $value;
+	$serial = (float)$value;
+	if($serial < 20000 || $serial > 80000) return $value;
+	$ts = PHPExcel_Shared_Date::ExcelToPHP($serial);
+	return gmdate(abs($serial - floor($serial)) > 0.00001 ? 'd/m/Y H:i' : 'd/m/Y', $ts);
+}
+
+/* Giá trị không rỗng đầu tiên. */
+function dt_kythi_first()
+{
+	foreach(func_get_args() as $v) { $v = trim((string)$v); if($v !== '') return $v; }
+	return '';
+}
+
+/* Học viên trong Đào tạo theo CCCD (ưu tiên đúng khóa đang gắn), kèm mã/tên khóa. */
+function dt_kythi_sys_hocvien($cccd, $idKhoa = 0)
+{
+	global $d;
+	$variants = dt_cccd_variants($cccd);
+	if(!$variants) return null;
+	$in = implode(',', array_fill(0, count($variants), '?'));
+	return $d->rawQueryOne("select h.*, coalesce(k.ma_khoa, '') as ma_khoa, coalesce(k.ten_khoa, '') as ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where h.cccd in ($in) order by (h.id_khoa = ?) desc, h.id desc limit 0,1", array_merge($variants, array((int)$idKhoa))) ?: null;
+}
+
+/* Thông tin định danh: Hạng/Mã khóa/Tên khóa/Giáo viên/Mã HV ưu tiên dữ liệu Đào tạo, sau đó file, sau đó giá trị đang lưu. */
+function dt_kythi_identity($sys, $file, $exist = null)
+{
+	return array(
+		'id_khoa' => $sys ? (int)$sys['id_khoa'] : (int)($exist['id_khoa'] ?? 0),
+		'ma_hv' => dt_kythi_first($sys['ma_hv'] ?? '', $file['ma_hv'] ?? '', $exist['ma_hv'] ?? ''),
+		'hoten' => dt_kythi_first($file['hoten'] ?? '', $sys['hoten'] ?? '', $exist['hoten'] ?? ''),
+		'nam_sinh' => dt_kythi_first($file['nam_sinh'] ?? '', $sys['ngaysinh'] ?? '', $exist['nam_sinh'] ?? ''),
+		'hang' => dt_kythi_first($sys['hang'] ?? '', $file['hang'] ?? '', $exist['hang'] ?? ''),
+		'ma_khoa' => dt_kythi_first($sys['ma_khoa'] ?? '', $file['ma_khoa'] ?? '', $exist['ma_khoa'] ?? ''),
+		'ten_khoa' => dt_kythi_first($sys['ten_khoa'] ?? '', $file['ten_khoa'] ?? '', $exist['ten_khoa'] ?? ''),
+		'giaovien' => dt_kythi_first($sys['gv_hoten'] ?? '', $file['giaovien'] ?? '', $exist['giaovien'] ?? ''),
+	);
+}
+
+/* Ô kết quả không đạt (để tô đỏ). */
+function dt_kythi_is_fail($value)
+{
+	$t = dt_strip_diacritics((string)$value);
+	return $t !== '' && (bool)preg_match('/(^|[^a-z])(khong|vang|rot|truot|chua)([^a-z]|$)/', $t);
+}
+
+/* Một dòng theo mẫu TTSH (chưa có STT). $du trả về true/false/null (không có dữ liệu Đào tạo). */
+function dt_kythi_ttsh_line($r, &$du, &$red)
+{
+	$sys = dt_kythi_sys_hocvien($r['cccd'], (int)$r['id_khoa']);
+	$id = dt_kythi_identity($sys, array(), $r);
+	$red = array(); $du = null;
+	if($sys)
+	{
+		$s = dt_student_summary($sys);
+		$du = !empty($s['du_dieu_kien']);
+		$agg = $s['dat']['agg'];
+		$prog = array(
+			dt_lythuyet_cell_text($sys, $s['ly_thuyet']['dat']),
+			$s['cabin']['dat'] ? 'Đạt' : (empty($s['cabin']['yeu_cau']) ? 'Không yêu cầu' : 'Chưa đạt'),
+			$s['hinh']['dat'] ? 'Đạt' : 'Chưa đạt',
+			dt_dat_cell_text($s),
+			$s['hinh']['gio'], $s['hinh']['km'], $agg['a'], $agg['e'],
+		);
+		if(!$s['ly_thuyet']['dat']) $red[9] = 1;
+		if(!dt_cabin_pass($s['cabin'])) $red[10] = 1;
+		if(!$s['hinh']['dat']) $red[11] = 1;
+		if(!$s['dat']['dat']) $red[12] = 1;
+	}
+	else
+	{
+		$snap = json_decode((string)($r['dl_daotao'] ?? ''), true);
+		if(!is_array($snap)) $snap = array();
+		$prog = array();
+		foreach(dt_kythi_progress_fields() as $f) $prog[] = $snap[$f] ?? '';
+	}
+	$line = array($id['ma_hv'], $id['hoten'], $id['nam_sinh'], $r['cccd'], $id['hang'], $id['ma_khoa'], $id['ten_khoa'], $id['giaovien']);
+	$line = array_merge($line, $prog);
+	foreach(dt_kythi_result_fields() as $f) $line[] = (string)($r[$f] ?? '');
+	// Chỉ số cột (có STT ở cột 0) của các ô KQ + Kết luận.
+	foreach(array(18, 21, 24, 27, 30, 32) as $c) if(dt_kythi_is_fail($line[$c - 1])) $red[$c] = 1;
+	return $line;
+}
+
+/* Dựng workbook đúng mẫu TTSH cho các dòng của kỳ. */
+function dt_kythi_ttsh_build($ky, $rows, $dk = '')
+{
+	require_once LIBRARIES.'PHPExcel.php';
+	$headers = dt_kythi_ttsh_headers();
+	$ngay = $ky['ngay_kt'] ? date('d/m/Y', strtotime($ky['ngay_kt'])) : date('d/m/Y');
+	$xls = new PHPExcel();
+	$sheet = $xls->getActiveSheet();
+	$sheet->setTitle('DaoTao');
+	$lastCol = PHPExcel_Cell::stringFromColumnIndex(count($headers) - 1);
+	$sheet->setCellValue('A1', 'Tốt nghiệp '.$ngay);
+	$sheet->mergeCells('A1:'.$lastCol.'1');
+	$sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13);
+	$sheet->getStyle('A1')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+	foreach($headers as $c => $h)
+	{
+		$cell = PHPExcel_Cell::stringFromColumnIndex($c).'2';
+		$sheet->setCellValue($cell, $h);
+	}
+	$headStyle = $sheet->getStyle('A2:'.$lastCol.'2');
+	$headStyle->getFont()->setBold(true);
+	$headStyle->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('EEF2F9');
+	$headStyle->getAlignment()->setWrapText(true)->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+
+	$text = array(1 => 1, 3 => 1, 4 => 1, 6 => 1);
+	$rowNum = 3; $stt = 1;
 	foreach($rows as $r)
 	{
-		// Lấy dữ liệu đào tạo trực tiếp từ hồ sơ học viên (nếu có trong hệ thống).
-		$hv = ($r['cccd'] !== '') ? dt_find_hocvien_by_cccd($r['cccd']) : null;
-		if($hv)
+		$line = dt_kythi_ttsh_line($r, $du, $red);
+		if($dk === 'du' && $du !== true) continue;
+		if($dk === 'chua' && $du === true) continue;
+		array_unshift($line, $stt++);
+		foreach($line as $c => $val)
 		{
-			$courseValues = dt_kythi_course_values($r, $hv);
-			$hv['ma_hv'] = $courseValues['ma_hv'];
-			$hv['ma_khoa'] = $courseValues['ma_khoa'];
-			$hv['ten_khoa'] = $courseValues['ten_khoa'];
-			$s = dt_student_summary($hv);
-			$du = $s['du_dieu_kien'];
-			if($dk === 'du' && !$du) continue;
-			if($dk === 'chua' && $du) continue;
-			$agg = $s['dat']['agg'];
-			$ltText = dt_lythuyet_cell_text($hv, $s['ly_thuyet']['dat']);
-			$cabinText = $s['cabin']['dat'] ? 'Đạt' : (empty($s['cabin']['yeu_cau']) ? 'Không yêu cầu' : 'Chưa đạt');
-			$hinhText = $s['hinh']['dat'] ? 'Đạt' : 'Chưa đạt';
-			$datText = dt_dat_cell_text($s);
-			$out[] = array($stt, $hv['ma_hv'], $hv['hoten'], isset($hv['ngaysinh']) ? $hv['ngaysinh'] : $r['nam_sinh'], $r['cccd'], $hv['hang'],
-				$hv['ma_khoa'], $hv['ten_khoa'], isset($hv['gv_hoten']) ? $hv['gv_hoten'] : $r['giaovien'],
-				$ltText, $cabinText, $hinhText, $datText,
-				$s['hinh']['gio'], $s['hinh']['km'], $agg['a'], $agg['e'], $agg['a'], $agg['b'], $agg['c'], $agg['d'],
-				$du ? 'Đủ điều kiện' : 'Chưa đủ');
-			if(!$s['ly_thuyet']['dat']) $redCells[$ri.',9'] = 1;
-			if(!dt_cabin_pass($s['cabin'])) $redCells[$ri.',10'] = 1;
-			if(!$s['hinh']['dat']) $redCells[$ri.',11'] = 1;
-			if(!$s['dat']['dat']) $redCells[$ri.',12'] = 1;
-			if(!$du) $redCells[$ri.',21'] = 1;
+			$cell = PHPExcel_Cell::stringFromColumnIndex($c).$rowNum;
+			if(isset($text[$c])) $sheet->setCellValueExplicit($cell, (string)$val, PHPExcel_Cell_DataType::TYPE_STRING);
+			else $sheet->setCellValue($cell, $val);
+			if(!empty($red[$c]))
+			{
+				$sheet->getStyle($cell)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('F8D7DA');
+				$sheet->getStyle($cell)->getFont()->getColor()->setRGB('C0392B');
+			}
 		}
-		else
-		{
-			// Khóa cũ chưa có dữ liệu trong hệ thống: chỉ xuất thông tin định danh.
-			if($dk === 'du') continue; // không xác định được => coi như chưa đủ
-			$out[] = array($stt, $r['ma_hv'], $r['hoten'], $r['nam_sinh'], $r['cccd'], $r['hang'],
-				$r['ma_khoa'], $r['ten_khoa'], $r['giaovien'],
-				'Chưa có dữ liệu', '', '', 'Chưa có dữ liệu', '', '', '', '', '', '', '', '', 'Chưa đủ');
-			$redCells[$ri.',21'] = 1;
-		}
-		$stt++; $ri++;
+		$rowNum++;
 	}
-	$suffix = ($dk === 'du') ? '-du-dk' : (($dk === 'chua') ? '-chua-du-dk' : '');
-	$fn = 'ky-kiem-tra'.$suffix.'-'.($ky['ngay_kt'] ? str_replace('-', '', $ky['ngay_kt']) : date('Ymd')).'.xlsx';
-	dt_xlsx_simple('Ky kiem tra', $fn, $headers, $out, array(1, 3, 4), $redCells);
+	$widths = array(5, 24, 26, 11, 14, 8, 15, 12, 22, 16, 12, 12, 16);
+	for($c = 0; $c < count($headers); $c++)
+		$sheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($c))->setWidth($widths[$c] ?? 11);
+	$sheet->freezePane('C3');
+	return $xls;
+}
+
+/* Xuất file .xls đúng mẫu TTSH rồi kết thúc. */
+function dt_kythi_ttsh_output($ky, $rows, $dk = '', $suffix = '')
+{
+	$xls = dt_kythi_ttsh_build($ky, $rows, $dk);
+	$fn = 'KQ_DaoTao_LT_MP_'.($ky['ngay_kt'] ? date('dmY', strtotime($ky['ngay_kt'])) : date('dmY')).$suffix.'.xls';
+	if(ob_get_length()) ob_end_clean();
+	header('Content-Type: application/vnd.ms-excel');
+	header('Content-Disposition: attachment;filename="'.$fn.'"');
+	header('Cache-Control: max-age=0');
+	PHPExcel_IOFactory::createWriter($xls, 'Excel5')->save('php://output');
+	exit;
+}
+
+function dt_kythi_load($id)
+{
+	global $d, $func;
+	$ky = $d->rawQueryOne("select * from #_dt_ky_thi where id = ? limit 0,1", array((int)$id));
+	if(!$ky) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
+	return $ky;
+}
+
+/* Xuất danh sách kỳ theo mẫu TTSH (dùng nộp TTSH trước ngày kiểm tra); dk=all|du|chua. */
+function dt_kythi_export()
+{
+	global $d;
+	$ky = dt_kythi_load($_REQUEST['id'] ?? 0);
+	$dk = dt_req('dk');
+	$rows = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($ky['id']));
+	dt_kythi_ttsh_output($ky, $rows, $dk, $dk === 'du' ? '_du-dk' : ($dk === 'chua' ? '_chua-du-dk' : ''));
 }
 
 /* Phân loại kết quả kiểm tra: dat | vang | rot | chua. */
@@ -448,36 +703,21 @@ function dt_kythi_result_status($row)
 	return dt_htkh_ket_qua_dat($row) ? 'dat' : 'rot';
 }
 
-/* Xuất Excel kết quả kiểm tra của kỳ; kq=all|dat|vang|rot. */
+/* Xuất kết quả kiểm tra của kỳ theo cùng mẫu TTSH; kq=all|dat|vang|rot, ids[] = mục đã chọn. */
 function dt_kythi_export_results()
 {
-	global $d, $func;
-	$id = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
+	global $d;
+	$ky = dt_kythi_load($_REQUEST['id'] ?? 0);
 	$kq = dt_req('kq');
 	if(!in_array($kq, array('all', 'dat', 'vang', 'rot'), true)) $kq = 'all';
-	$ky = $d->rawQueryOne("select * from #_dt_ky_thi where id = ? limit 0,1", array($id));
-	if(!$ky) $func->transfer("Kỳ kiểm tra không tồn tại", "index.php?com=daotao&act=kythi", false);
-	$rows = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ? and co_ket_qua = 1 order by ma_khoa asc, substring_index(hoten, ' ', -1) asc, hoten asc", array($id));
 	$pick = array_flip(array_filter(array_map('intval', (array)($_GET['ids'] ?? array()))));
-	if($pick) $rows = array_values(array_filter($rows, function($r) use ($pick) { return isset($pick[(int)$r['id']]); }));
-
-	$labels = array('dat' => 'Đạt', 'vang' => 'Vắng', 'rot' => 'Rớt', 'chua' => 'Chưa có kết quả');
-	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',
-		'Điểm LT','LT','Điểm MP','MP','Điểm Hình','Hình','Điểm Đường','Đường','Chữ chi','Điểm chữ chi','Kết quả tổng','Kết luận','Phân loại');
-	$out = array(); $redCells = array(); $stt = 1; $ri = 0;
-	foreach($rows as $r)
-	{
-		$status = dt_kythi_result_status($r);
-		if($kq !== 'all' && $status !== $kq) continue;
-		$out[] = array($stt++, $r['ma_hv'], $r['hoten'], $r['nam_sinh'], $r['cccd'], $r['hang'], $r['ma_khoa'], $r['ten_khoa'], $r['giaovien'],
-			$r['diem_lt'], $r['lt'], $r['diem_mp'], $r['mp'], $r['diem_hinh'], $r['hinh'], $r['diem_duong'], $r['duong'],
-			$r['chu_chi'], $r['diem_chu_chi'], $r['ket_qua_tong'], $r['ket_luan'], $labels[$status]);
-		if($status !== 'dat') $redCells[$ri.',21'] = 1;
-		$ri++;
-	}
-	$suffix = $kq === 'all' ? '' : '-'.$kq;
-	$fn = 'ket-qua-kiem-tra'.$suffix.'-'.($ky['ngay_kt'] ? str_replace('-', '', $ky['ngay_kt']) : date('Ymd')).'.xlsx';
-	dt_xlsx_simple('Ket qua kiem tra', $fn, $headers, $out, array(1, 3, 4), $redCells);
+	// Mục đã chọn: xuất đúng các dòng được chọn (kể cả chưa có kết quả).
+	$rows = $d->rawQuery("select * from #_dt_ky_thi_hv where id_ky = ?".($pick ? "" : " and co_ket_qua = 1")." order by substring_index(hoten, ' ', -1) asc, hoten asc", array($ky['id']));
+	$rows = array_values(array_filter($rows, function($r) use ($pick, $kq) {
+		if($pick && !isset($pick[(int)$r['id']])) return false;
+		return $kq === 'all' || dt_kythi_result_status($r) === $kq;
+	}));
+	dt_kythi_ttsh_output($ky, $rows, '', $pick ? '_chon' : ($kq === 'all' ? '' : '_'.$kq));
 }
 
 /* Màn import kết quả TTSH. */
@@ -503,28 +743,7 @@ function dt_kythi_import_excel()
 	$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 	list($sheet, $highestRow, $highestCol) = dt_open_upload_sheet($file, $ext, $back);
 
-	$aliases = array(
-		'hoten' => array('hovaten','hoten'),
-		'nam_sinh' => array('namsinh','ngaysinh'),
-		'cccd' => array('cccd','socccd','socmt'),
-		'ma_hv' => array('mahv','mahocvien'),
-		'hang' => array('hang'),
-		'ma_khoa' => array('makhoa','makhoahoc'),
-		'ten_khoa' => array('tenkhoa','khoahang','khoa'),
-		'giaovien' => array('giaovien','gv'),
-		'diem_lt' => array('diemlt'),
-		'lt' => array('lt'),
-		'diem_mp' => array('diemmp'),
-		'mp' => array('mp'),
-		'ket_qua_tong' => array('ketquatong'),
-		'diem_hinh' => array('diemhinh'),
-		'hinh' => array('hinh'),
-		'diem_duong' => array('diemduong'),
-		'duong' => array('duong'),
-		'chu_chi' => array('chuchi'),
-		'diem_chu_chi' => array('diemchuchi'),
-		'ket_luan' => array('ketluan','ketluancsdt'),
-	);
+	$aliases = dt_kythi_import_aliases();
 	$contains = array(
 		'cccd' => array('cccd','cmt'),
 		'hoten' => array('hovaten'),
@@ -534,44 +753,46 @@ function dt_kythi_import_excel()
 	if($score <= 0 || !isset($map['cccd']) || !isset($map['hoten']))
 		dt_import_notice("Không nhận diện được cột 'Họ và tên' và 'CCCD' trong file kết quả.", $back, false);
 
+	$resultFields = array_merge(dt_kythi_result_fields(), array('ket_qua_tong'));
+	$dateFields = array('ngay_dat_lt' => 1, 'ngay_dat_mp' => 1, 'ngay_dat_hinh' => 1, 'ngay_dat_duong' => 1, 'ngay_dat_chu_chi' => 1, 'tg_bat_dau' => 1, 'tg_ket_thuc' => 1);
+	$progressInFile = array_values(array_filter(dt_kythi_progress_fields(), function($f) use ($map) { return isset($map[$f]); }));
+
 	dt_backup_tables(array('dt_ky_thi_hv'), 'imp_kythi');
 	$d->startTransaction();
-	$ok = 0; $moi = 0; $emptyStreak = 0;
+	$ok = 0; $moi = 0; $coKq = 0; $seen = array();
 	for($r = $headerRow + 1; $r <= $highestRow; $r++)
 	{
 		$row = dt_read_row($sheet, $r, $highestCol);
 		$cccd = dt_normalize_cccd(dt_val($row, $map, 'cccd'));
-		$hoten = dt_val($row, $map, 'hoten');
-		if(strlen($cccd) < 9)
-		{
-			continue;
-		}
-		$emptyStreak = 0;
+		if(strlen($cccd) < 9 || isset($seen[$cccd])) continue;
+		$seen[$cccd] = true;
 
-		$kq = array(
-			'diem_lt' => dt_val($row, $map, 'diem_lt'),
-			'lt' => dt_val($row, $map, 'lt'),
-			'diem_mp' => dt_val($row, $map, 'diem_mp'),
-			'mp' => dt_val($row, $map, 'mp'),
-			'ket_qua_tong' => dt_val($row, $map, 'ket_qua_tong'),
-			'diem_hinh' => dt_val($row, $map, 'diem_hinh'),
-			'hinh' => dt_val($row, $map, 'hinh'),
-			'diem_duong' => dt_val($row, $map, 'diem_duong'),
-			'duong' => dt_val($row, $map, 'duong'),
-			'chu_chi' => dt_val($row, $map, 'chu_chi'),
-			'diem_chu_chi' => dt_val($row, $map, 'diem_chu_chi'),
-			'ket_luan' => dt_val($row, $map, 'ket_luan'),
-			'co_ket_qua' => 1,
+		// Chỉ ghi cột có trong file; dòng chưa có điểm/kết quả không bị đánh dấu "đã có kết quả".
+		$kq = array(); $hasResult = false;
+		foreach($resultFields as $f)
+		{
+			if(!isset($map[$f])) continue;
+			$v = dt_val($row, $map, $f);
+			if(isset($dateFields[$f])) $v = dt_kythi_cell_date($v);
+			$kq[$f] = mb_substr($v, 0, $f === 'ghi_chu' ? 255 : (in_array($f, array('ket_luan','ket_qua_tong','tg_bat_dau','tg_ket_thuc'), true) ? 30 : 20), 'UTF-8');
+			if($v !== '' && $f !== 'ghi_chu' && $f !== 'tg_bat_dau' && $f !== 'tg_ket_thuc') $hasResult = true;
+		}
+		if($hasResult) { $kq['co_ket_qua'] = 1; $coKq++; }
+
+		$exist = $d->rawQueryOne("select * from #_dt_ky_thi_hv where id_ky = ? and cccd in (".implode(',', array_fill(0, count(dt_cccd_variants($cccd)), '?')).") limit 0,1", array_merge(array($id), dt_cccd_variants($cccd)));
+		if($progressInFile)
+		{
+			$snap = json_decode((string)($exist['dl_daotao'] ?? ''), true);
+			if(!is_array($snap)) $snap = array();
+			foreach($progressInFile as $f) $snap[$f] = dt_val($row, $map, $f);
+			$kq['dl_daotao'] = json_encode($snap, JSON_UNESCAPED_UNICODE);
+		}
+		$fileRow = array(
+			'ma_hv' => dt_val($row, $map, 'ma_hv'), 'hoten' => dt_val($row, $map, 'hoten'),
+			'nam_sinh' => dt_kythi_cell_date(dt_val($row, $map, 'nam_sinh')), 'hang' => dt_val($row, $map, 'hang'),
+			'ma_khoa' => dt_val($row, $map, 'ma_khoa'), 'ten_khoa' => dt_val($row, $map, 'ten_khoa'), 'giaovien' => dt_val($row, $map, 'giaovien'),
 		);
-		$exist = $d->rawQueryOne("select * from #_dt_ky_thi_hv where id_ky = ? and cccd = ? limit 0,1", array($id, $cccd));
-		$cccdVariants = dt_cccd_variants($cccd);
-		$hv = $cccdVariants ? $d->rawQueryOne("select h.*, k.ma_khoa as sys_ma_khoa, k.ten_khoa as sys_ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where h.cccd in (".implode(',', array_fill(0, count($cccdVariants), '?')).") limit 0,1", $cccdVariants) : null;
-		$khoaDaoTao = $hv ? array('ma_khoa' => $hv['sys_ma_khoa'], 'ten_khoa' => $hv['sys_ten_khoa']) : null;
-		$identity = array(
-			'ma_hv' => ($hv && trim((string)$hv['ma_hv']) !== '') ? $hv['ma_hv'] : (dt_val($row, $map, 'ma_hv') ?: ($exist ? $exist['ma_hv'] : '')),
-			'ma_khoa' => ($khoaDaoTao && trim((string)$khoaDaoTao['ma_khoa']) !== '') ? $khoaDaoTao['ma_khoa'] : (dt_val($row, $map, 'ma_khoa') ?: ($exist ? $exist['ma_khoa'] : '')),
-			'ten_khoa' => ($khoaDaoTao && trim((string)$khoaDaoTao['ten_khoa']) !== '') ? $khoaDaoTao['ten_khoa'] : (dt_val($row, $map, 'ten_khoa') ?: ($exist ? $exist['ten_khoa'] : '')),
-		);
+		$identity = dt_kythi_identity(dt_kythi_sys_hocvien($cccd, (int)($exist['id_khoa'] ?? 0)), $fileRow, $exist);
 		if($exist && $exist['id'])
 		{
 			$d->where('id', $exist['id']); $d->update('dt_ky_thi_hv', array_merge($kq, $identity));
@@ -579,19 +800,8 @@ function dt_kythi_import_excel()
 		}
 		else
 		{
-			// Khóa cũ: chèn mới để lưu trữ kết quả.
-			$kq['id_ky'] = $id;
-			$kq['id_khoa'] = $hv ? (int)$hv['id_khoa'] : 0;
-			$kq['cccd'] = $cccd;
-			$kq['ma_hv'] = $identity['ma_hv'];
-			$kq['hoten'] = $hoten ?: ($hv ? $hv['hoten'] : '');
-			$kq['nam_sinh'] = dt_val($row, $map, 'nam_sinh') ?: ($hv ? $hv['ngaysinh'] : '');
-			$kq['hang'] = dt_val($row, $map, 'hang') ?: ($hv ? $hv['hang'] : '');
-			$kq['ma_khoa'] = $identity['ma_khoa'];
-			$kq['ten_khoa'] = $identity['ten_khoa'];
-			$kq['giaovien'] = dt_val($row, $map, 'giaovien') ?: ($hv ? $hv['gv_hoten'] : '');
-			$kq['ngaytao'] = time();
-			$d->insert('dt_ky_thi_hv', $kq);
+			// Khóa cũ/học viên chưa có trong kỳ: chèn mới để lưu trữ kết quả.
+			$d->insert('dt_ky_thi_hv', array_merge($kq, $identity, array('id_ky' => $id, 'cccd' => $cccd, 'ngaytao' => time())));
 			$moi++;
 		}
 	}
@@ -599,7 +809,7 @@ function dt_kythi_import_excel()
 	$d->commit();
 	dt_audit('import', 'ky_thi_hv', $ok + $moi, $file['name']);
 	dt_log_import('ky_thi', $file['name'], $ok + $moi, 0);
-	dt_import_notice("Import kết quả: cập nhật $ok, thêm mới $moi học viên", "index.php?com=daotao&act=kythiDetail&id=".$id, true);
+	dt_import_notice("Import kết quả: cập nhật $ok, thêm mới $moi học viên ($coKq dòng có điểm/kết quả).", "index.php?com=daotao&act=kythiDetail&id=".$id, true);
 }
 
 /* Tra cứu kết quả kỳ kiểm tra theo ngày / CCCD / họ tên / mã khóa. */

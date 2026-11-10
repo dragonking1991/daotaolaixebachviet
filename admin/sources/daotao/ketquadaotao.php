@@ -17,6 +17,7 @@ function dt_ketqua_latest_exam($cccd)
 function dt_ketqua_filters()
 {
 	return array(
+		'id_ky' => isset($_REQUEST['id_ky']) ? (int)$_REQUEST['id_ky'] : 0,
 		'id_khoa' => isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0,
 		'cccd' => isset($_REQUEST['cccd']) ? dt_normalize_cccd($_REQUEST['cccd']) : '',
 		'hoten' => isset($_REQUEST['hoten']) ? trim($_REQUEST['hoten']) : '',
@@ -24,10 +25,44 @@ function dt_ketqua_filters()
 	);
 }
 
+/* Học viên của một ngày kiểm tra (kỳ) theo bộ lọc. */
+function dt_ketqua_ky_rows($f)
+{
+	global $d;
+	$where = "e.id_ky = ?"; $params = array($f['id_ky']);
+	if($f['id_khoa']) { $where .= " and e.id_khoa = ?"; $params[] = $f['id_khoa']; }
+	if($f['cccd'] !== '') { $where .= " and e.cccd like ?"; $params[] = '%'.$f['cccd'].'%'; }
+	if($f['hoten'] !== '') { $where .= " and e.hoten like ?"; $params[] = '%'.$f['hoten'].'%'; }
+	if($f['ma_khoa'] !== '') { $where .= " and e.ma_khoa like ?"; $params[] = '%'.$f['ma_khoa'].'%'; }
+	return $d->rawQuery("select e.* from #_dt_ky_thi_hv e where $where order by substring_index(e.hoten, ' ', -1) asc, e.hoten asc", $params);
+}
+
 /* Lấy danh sách học viên theo bộ lọc, gắn dữ liệu đào tạo + kết quả kiểm tra. */
 function dt_ketqua_rows($f, $limit = 1000, &$matched = null)
 {
 	global $d;
+	if($f['id_ky'])
+	{
+		$out = array();
+		$rows = dt_ketqua_ky_rows($f);
+		$matched = count($rows);
+		foreach($rows as $i => $r)
+		{
+			if($limit > 0 && $i >= $limit) break;
+			$sys = dt_kythi_sys_hocvien($r['cccd'], (int)$r['id_khoa']);
+			$id = dt_kythi_identity($sys, array(), $r);
+			if($sys) $sum = dt_student_summary($sys);
+			else
+			{
+				$snap = json_decode((string)($r['dl_daotao'] ?? ''), true);
+				if(!is_array($snap)) $snap = array();
+				$sum = array('hinh' => array('gio' => $snap['gio_h'] ?? '', 'km' => $snap['km_h'] ?? ''), 'dat' => array('agg' => array('a' => $snap['gio_d'] ?? '', 'e' => $snap['km_d'] ?? '')));
+			}
+			$hv = array('hoten' => $id['hoten'], 'cccd' => $r['cccd'], 'hang' => $id['hang'], 'ma_khoa' => $id['ma_khoa'], 'ten_khoa' => $id['ten_khoa'], 'gv_hoten' => $id['giaovien']);
+			$out[] = array('hv' => $hv, 'sum' => $sum, 'exam' => (int)$r['co_ket_qua'] === 1 ? $r : null);
+		}
+		return $out;
+	}
 	$where = "1"; $params = array();
 	if($f['id_khoa']) { $where .= " and h.id_khoa = ?"; $params[] = $f['id_khoa']; }
 	if($f['cccd'] !== '') { $where .= " and h.cccd like ?"; $params[] = '%'.$f['cccd'].'%'; }
@@ -50,20 +85,27 @@ function dt_ketqua_rows($f, $limit = 1000, &$matched = null)
 
 function dt_ketqua_list()
 {
-	global $items, $ds_khoa, $filters, $total_items, $ketqua_matched;
+	global $d, $items, $ds_khoa, $ds_ky, $filters, $total_items, $ketqua_matched;
 	$ds_khoa = dt_khoa_options();
+	$ds_ky = $d->rawQuery("select ky.id, ky.ten, ky.ngay_kt, (select count(*) from #_dt_ky_thi_hv h where h.id_ky = ky.id) as so_hv from #_dt_ky_thi ky order by ky.ngay_kt desc, ky.id desc");
 	$filters = dt_ketqua_filters();
-	$has = ($filters['id_khoa'] || $filters['cccd'] !== '' || $filters['hoten'] !== '' || $filters['ma_khoa'] !== '');
+	$has = ($filters['id_ky'] || $filters['id_khoa'] || $filters['cccd'] !== '' || $filters['hoten'] !== '' || $filters['ma_khoa'] !== '');
 	$ketqua_matched = 0;
 	$items = $has ? dt_ketqua_rows($filters, 1000, $ketqua_matched) : array();
 	$total_items = $has ? $ketqua_matched : 0;
 }
 
-/* Xuất Excel kết quả đào tạo (đào tạo + kết quả kiểm tra). */
+/* Xuất Excel kết quả đào tạo (đào tạo + kết quả kiểm tra).
+ * Khi chọn ngày kiểm tra: xuất đúng mẫu TTSH như "Xuất kết quả kiểm tra" của kỳ. */
 function dt_ketqua_export()
 {
 	global $func;
 	$f = dt_ketqua_filters();
+	if($f['id_ky'])
+	{
+		$ky = dt_kythi_load($f['id_ky']);
+		dt_kythi_ttsh_output($ky, dt_ketqua_ky_rows($f));
+	}
 	$rows = dt_ketqua_rows($f, 0);
 
 	$headers = array('STT','Mã HV','Họ và tên','Năm sinh','CCCD','Hạng','Mã khóa','Tên khóa','Giáo viên',

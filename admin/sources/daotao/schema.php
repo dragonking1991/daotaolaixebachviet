@@ -220,6 +220,15 @@ function dt_ensure_tables()
 		chu_chi VARCHAR(20) DEFAULT '',
 		diem_chu_chi VARCHAR(20) DEFAULT '',
 		ket_luan VARCHAR(30) DEFAULT '',
+		ngay_dat_lt VARCHAR(20) DEFAULT '',
+		ngay_dat_mp VARCHAR(20) DEFAULT '',
+		ngay_dat_hinh VARCHAR(20) DEFAULT '',
+		ngay_dat_duong VARCHAR(20) DEFAULT '',
+		ngay_dat_chu_chi VARCHAR(20) DEFAULT '',
+		tg_bat_dau VARCHAR(30) DEFAULT '',
+		tg_ket_thuc VARCHAR(30) DEFAULT '',
+		ghi_chu VARCHAR(255) DEFAULT '',
+		dl_daotao TEXT NULL,
 		co_ket_qua TINYINT DEFAULT 0,
 		ngaytao INT DEFAULT 0,
 		UNIQUE KEY uq_dt_kythi_hv (id_ky, cccd),
@@ -345,7 +354,28 @@ function dt_ensure_tables()
 		dt_ensure_sh_link_schema();
 		dt_migration_mark('sh_roster_link_v1');
 	}
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('kythi_ttsh_v1'))
+	{
+		dt_ensure_kythi_ttsh_cols();
+		dt_migration_mark('kythi_ttsh_v1');
+	}
 	$done = true;
+}
+
+/* Cột theo mẫu TTSH (ngày đạt từng nội dung, thời gian, ghi chú, dữ liệu đào tạo trong file) cho kỳ kiểm tra. */
+function dt_ensure_kythi_ttsh_cols()
+{
+	global $d;
+	$cols = array(
+		'ngay_dat_lt' => "VARCHAR(20) DEFAULT ''", 'ngay_dat_mp' => "VARCHAR(20) DEFAULT ''", 'ngay_dat_hinh' => "VARCHAR(20) DEFAULT ''",
+		'ngay_dat_duong' => "VARCHAR(20) DEFAULT ''", 'ngay_dat_chu_chi' => "VARCHAR(20) DEFAULT ''",
+		'tg_bat_dau' => "VARCHAR(30) DEFAULT ''", 'tg_ket_thuc' => "VARCHAR(30) DEFAULT ''", 'ghi_chu' => "VARCHAR(255) DEFAULT ''", 'dl_daotao' => 'TEXT NULL',
+	);
+	foreach($cols as $col => $def)
+	{
+		$ex = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_ky_thi_hv' and column_name = ? limit 0,1", array($col));
+		if(!$ex) $d->rawQuery("ALTER TABLE table_dt_ky_thi_hv ADD COLUMN `$col` $def AFTER ket_luan");
+	}
 }
 
 function dt_ensure_sh_link_schema()
