@@ -58,6 +58,7 @@
 		else
 		{
 			$com = (isset($match['params']['com'])) ? htmlspecialchars($match['params']['com']) : htmlspecialchars($match['target']);
+			if($match['target'] === 'index' && ($_GET['com'] ?? '') === 'cong-giao-vien') $com = 'cong-giao-vien';
 			$get_page = isset($_GET['p']) ? htmlspecialchars($_GET['p']) : 1;
 		}
 	}

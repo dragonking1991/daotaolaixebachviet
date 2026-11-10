@@ -23,6 +23,8 @@ RewriteRule ^ - [F,L]
 
 DirectoryIndex index.php
 
+RewriteRule ^cong-giao-vien$ index.php [L]
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteRule ^index\.php$ - [L]
