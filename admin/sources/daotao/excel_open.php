@@ -68,15 +68,15 @@ function dt_read_row($sheet, $rowNum, $highestColIndex)
 		$val = $cell->getValue();
 		if(is_string($val) && strlen($val) > 0 && $val[0] === '=')
 		{
-			$calculated = '';
-			try { $calculated = $cell->getCalculatedValue(); } catch(Exception $e) { $calculated = ''; }
-			if($calculated !== null && $calculated !== '' && $calculated !== $val && strpos((string)$calculated, '#') !== 0)
-				$val = $calculated;
+			// Excel's saved result wins: PHPExcel miscalculates some functions (e.g. COUNTIF with Unicode wildcards).
+			$cached = method_exists($cell, 'getOldCalculatedValue') ? $cell->getOldCalculatedValue() : null;
+			if($cached !== null)
+				$val = strpos((string)$cached, '#') === 0 ? '' : $cached;
 			else
 			{
-				// Công thức không giải được (vd =INDEX(#REF!,...)) — dùng giá trị đã tính sẵn lưu trong file.
-				$cached = method_exists($cell, 'getOldCalculatedValue') ? $cell->getOldCalculatedValue() : null;
-				$val = ($cached !== null && $cached !== '' && strpos((string)$cached, '#') !== 0) ? $cached : '';
+				$calculated = '';
+				try { $calculated = $cell->getCalculatedValue(); } catch(Exception $e) { $calculated = ''; }
+				$val = ($calculated !== null && $calculated !== $val && strpos((string)$calculated, '#') !== 0) ? $calculated : '';
 			}
 		}
 		$row[$c] = ($val === null) ? '' : trim((string)$val);

@@ -60,7 +60,7 @@ if($dtAct === 'login')
 		$_SESSION['dt_gv'] = array('id' => (int)$gv['id'], 'cccd' => $gv['cccd'], 'hoten' => $gv['hoten'], 'gv_key' => $gv['gv_key'],
 			'must_change' => dt_gv_is_default_password($gv['cccd'], $gv['matkhau']) ? 1 : 0);
 		unset($_SESSION['dt_gv_csrf']);
-		$func->redirect('cong-giao-vien');
+		$func->redirect('cong-giao-vien', 303);
 	}
 	else
 	{
@@ -104,7 +104,7 @@ elseif($dtAct === 'logout')
 {
 	unset($_SESSION['dt_gv'], $_SESSION['dt_gv_csrf']);
 	session_regenerate_id(true);
-	$func->redirect('cong-giao-vien');
+	$func->redirect('cong-giao-vien', 303);
 }
 elseif($dtAct === 'changepass' && $dtGvLoggedIn)
 {
