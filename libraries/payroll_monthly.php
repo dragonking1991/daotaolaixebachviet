@@ -39,18 +39,19 @@ if (!function_exists('payrollMonthlySheetConfig')) {
 				'fields' => array(
 					// 2 cột tô đỏ (Lương cơ bản + PC trách nhiệm, Xăng xe) gộp thành Lương căn bản
 					array('key' => 'luong_can_ban', 'label' => 'Lương căn bản', 'sum' => array('luongcobanpctrachnhiem', 'xangxe'), 'type' => 'money'),
-					array('key' => 'luong_hv', 'label' => 'Lương HV', 'aliases' => array('luonghv'), 'type' => 'money'),
-					array('key' => 'btd', 'label' => 'BTĐ (số học viên)', 'aliases' => array('btd'), 'occurrence' => 1, 'type' => 'int'),
-					array('key' => 'tien_btd', 'label' => 'Tiền BTĐ', 'aliases' => array('btd'), 'occurrence' => 2, 'type' => 'money'),
 					array('key' => 'luong_tn', 'label' => 'Lương TN', 'aliases' => array('luongtn'), 'type' => 'money'),
-					array('key' => 'tien_com', 'label' => 'Tiền cơm', 'aliases' => array('tiencom'), 'type' => 'money'),
+					array('key' => 'luong_hv', 'label' => 'Lương HV', 'aliases' => array('luonghv'), 'type' => 'money'),
+					array('key' => 'btd', 'label' => 'B(TĐ)', 'aliases' => array('btd'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'bss', 'label' => 'B(SS)', 'aliases' => array('bss'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'c1', 'label' => 'C1', 'aliases' => array('c1'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'ce', 'label' => 'CE', 'aliases' => array('ce'), 'occurrence' => 1, 'type' => 'int'),
 					array('key' => 'thuong_sinh_nhat', 'label' => 'Thưởng sinh nhật', 'aliases' => array('thuongsinhnhat'), 'type' => 'money'),
 					array('key' => 'hoa_hong_chieu_sinh', 'label' => 'Hoa hồng chiêu sinh', 'aliases' => array('hoahongchieusinh'), 'type' => 'money'),
-					array('key' => 'thu_nhap_danh_nghia', 'label' => 'Thu nhập danh nghĩa', 'aliases' => array('thunhapdanhnghia'), 'type' => 'money'),
+					array('key' => 'tien_com', 'label' => 'Phụ cấp thêm', 'aliases' => array('tiencom'), 'type' => 'money'),
 					array('key' => 'tntt', 'label' => 'Thu nhập tính thuế', 'aliases' => array('tntt'), 'type' => 'money'),
 					array('key' => 'bhxh', 'label' => 'BHXH', 'aliases' => array('bhxh'), 'type' => 'money'),
 					array('key' => 'thue_tncn', 'label' => 'Thuế TNCN', 'aliases' => array('thuetncn'), 'type' => 'money'),
-					array('key' => 'nguoi_phu_thuoc', 'label' => 'Giảm trừ người phụ thuộc', 'aliases' => array('nguoiphuthuoc', 'npt'), 'type' => 'money'),
+					array('key' => 'npt', 'label' => 'Người phụ thuộc', 'aliases' => array('sl'), 'type' => 'int'),
 					array('key' => 'thuc_linh', 'label' => 'Thực lĩnh', 'aliases' => array('thuclinh'), 'type' => 'money'),
 					array('key' => 'ghi_chu', 'label' => 'Ghi chú', 'aliases' => array('ghichu'), 'type' => 'text'),
 				),
@@ -61,12 +62,14 @@ if (!function_exists('payrollMonthlySheetConfig')) {
 				'fields' => array(
 					array('key' => 'luong', 'label' => 'Lương', 'aliases' => array('luong'), 'type' => 'money'),
 					array('key' => 'luong_hv', 'label' => 'Lương HV', 'aliases' => array('luonghv'), 'type' => 'money'),
-					array('key' => 'btd', 'label' => 'BTĐ (số học viên)', 'aliases' => array('btd'), 'occurrence' => 1, 'type' => 'int'),
-					array('key' => 'ce', 'label' => 'CE (số học viên)', 'aliases' => array('ce'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'btd', 'label' => 'B(TĐ)', 'aliases' => array('btd'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'bss', 'label' => 'B(SS)', 'aliases' => array('bss'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'c1', 'label' => 'C1', 'aliases' => array('c1'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'ce', 'label' => 'CE', 'aliases' => array('ce'), 'occurrence' => 1, 'type' => 'int'),
 					array('key' => 'thuong_sinh_nhat', 'label' => 'Thưởng sinh nhật', 'aliases' => array('thuongsinhnhat'), 'type' => 'money'),
 					array('key' => 'hoa_hong_chieu_sinh', 'label' => 'Hoa hồng chiêu sinh', 'aliases' => array('hoahongchieusinh'), 'type' => 'money'),
-					array('key' => 'thu_nhap_danh_nghia', 'label' => 'Thu nhập danh nghĩa', 'aliases' => array('thunhapdanhnghia'), 'type' => 'money'),
 					array('key' => 'thue_tncn', 'label' => 'Thuế TNCN', 'aliases' => array('thuetncn'), 'type' => 'money'),
+					array('key' => 'npt', 'label' => 'Người phụ thuộc', 'aliases' => array('sl'), 'type' => 'int'),
 					array('key' => 'thuc_linh', 'label' => 'Thực lĩnh', 'aliases' => array('thuclinh'), 'type' => 'money'),
 					array('key' => 'ghi_chu', 'label' => 'Ghi chú', 'aliases' => array('ghichu'), 'type' => 'text'),
 				),
@@ -161,10 +164,27 @@ if (!function_exists('payrollMonthlyFindByCccd')) {
 }
 
 if (!function_exists('payrollMonthlyRecordFields')) {
+	/** Các khoản đã lưu, lọc + sắp xếp + đặt tên theo cấu hình hiện tại để dữ liệu import cũ hiển thị đúng mẫu mới. */
 	function payrollMonthlyRecordFields($record)
 	{
 		$fields = json_decode((string)(isset($record['du_lieu']) ? $record['du_lieu'] : ''), true);
-		return is_array($fields) ? $fields : array();
+		if (!is_array($fields)) return array();
+
+		$config = payrollMonthlySheetConfig();
+		$sheet = isset($record['sheet']) ? $record['sheet'] : '';
+		if (!isset($config[$sheet])) return $fields;
+
+		$stored = array();
+		foreach ($fields as $field) if (isset($field['key'])) $stored[$field['key']] = $field;
+		// Bản import đầu tiên lưu cột W (= Lương cơ bản + Xăng xe) dưới key cũ
+		if (!isset($stored['luong_can_ban']) && isset($stored['luong_cb_xang_xe'])) $stored['luong_can_ban'] = $stored['luong_cb_xang_xe'];
+
+		$result = array();
+		foreach ($config[$sheet]['fields'] as $def) {
+			if (!isset($stored[$def['key']])) continue;
+			$result[] = array('key' => $def['key'], 'label' => $def['label'], 'type' => $def['type'], 'value' => isset($stored[$def['key']]['value']) ? $stored[$def['key']]['value'] : null);
+		}
+		return $result;
 	}
 }
 
@@ -244,7 +264,7 @@ if (!function_exists('payrollMonthlyFormatValue')) {
 		if ($value === null || $value === '') return '-';
 		if ($type === 'text') return (string)$value;
 		if (!is_numeric($value)) return (string)$value;
-		if ($type === 'int') return (string)(int)round((float)$value);
+		if ($type === 'int') return ((int)round((float)$value) === 0) ? '-' : (string)(int)round((float)$value);
 		$num = round((float)$value);
 		if ($num == 0) return '-';
 		return number_format($num, 0, ',', '.');

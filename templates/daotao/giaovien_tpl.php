@@ -78,6 +78,7 @@
 				<div><strong>CCCD:</strong><br><?=htmlspecialchars($dtGv['cccd'])?></div>
 				<div><strong>Bộ phận:</strong><br><?=htmlspecialchars(payrollMonthlyDepartmentLabel($slipRec['bo_phan']))?></div>
 			</div>
+			<?php if($slip['note'] !== ''): ?><div class="dt-gv-slip-note"><strong>Ghi chú:</strong><br><?=nl2br(htmlspecialchars($slip['note']))?></div><?php endif; ?>
 			<div class="dt-gv-slip-head">
 				<div class="dt-gv-slip-title">Phiếu lương giáo viên</div>
 				<form method="get" action="cong-giao-vien" class="dt-gv-slip-month">
@@ -94,7 +95,6 @@
 				<div class="dt-gv-slip-gap"></div>
 				<?php foreach($slip['detail'] as $r): ?><div class="dt-gv-slip-row<?=$r['strong']?' is-strong':''?>"><span><?=htmlspecialchars($r['label'])?></span><strong><?=htmlspecialchars($r['value'])?></strong></div><?php endforeach; ?>
 			</div>
-			<?php if($slip['note'] !== ''): ?><div class="dt-gv-slip-note"><strong>Ghi chú:</strong><br><?=nl2br(htmlspecialchars($slip['note']))?></div><?php endif; ?>
 			<?php endif; ?>
 		</div>
 		<?php else: ?>
@@ -266,7 +266,7 @@
 .dt-gv-slip-row strong { color: #111827; font-weight: 400; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dt-gv-slip-row.is-strong span, .dt-gv-slip-row.is-strong strong { color: #0f766e; font-weight: 700; }
 .dt-gv-slip-gap { height: 10px; }
-.dt-gv-slip-note { margin-top: 14px; padding: 10px 12px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 14px; }
+.dt-gv-slip-note { margin: 0 0 14px; padding: 10px 12px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 14px; }
 .dt-gv-slip-empty { color: #64748b; padding: 8px 0; }
 .w_1000.dt-gv-page { width: min(1400px, calc(100% - 32px)); max-width: 1400px; }
 .dt-gv-content { max-width: 1360px; margin: 0 auto; }
