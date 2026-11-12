@@ -63,7 +63,39 @@
 			$allowHinh = !empty($dtCfg['allow_hinh_input']);
 			$colCount = 2 + ($showLt?1:0) + ($showCabin?1:0) + ($showHinh?1:0) + ($showDat?1:0) + ($showExam?1:0) + ($showKl?1:0);
 		?>
+		<div style="border:1px solid #d7e3f4;border-radius:12px;padding:14px 16px;margin-bottom:18px;background:#f8fbff;">
+			<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:<?=$dtPayroll?'12px':'0'?>;">
+				<strong style="font-size:16px;color:#1d4ed8;"><i class="fas fa-receipt" aria-hidden="true"></i> Phiếu lương</strong>
+				<?php if($dtPayroll): ?>
+				<form method="get" action="cong-giao-vien" style="display:flex;align-items:center;gap:6px;margin:0;">
+					<?php if($dtFilterKhoa): ?><input type="hidden" name="khoa" value="<?=$dtFilterKhoa?>"><?php endif; ?>
+					<?php if($dtFilterKw !== ''): ?><input type="hidden" name="kw" value="<?=htmlspecialchars($dtFilterKw)?>"><?php endif; ?>
+					<select name="luong_thang" onchange="this.form.submit()" style="height:34px;padding:0 10px;border:1px solid #ccc;border-radius:6px;">
+						<?php foreach($dtPayroll['months'] as $m): ?><option value="<?=htmlspecialchars($m)?>" <?=$m===$dtPayroll['record']['thang']?'selected':''?>><?=htmlspecialchars(payrollMonthlyLabel($m))?></option><?php endforeach; ?>
+					</select>
+					<noscript><button type="submit">Xem</button></noscript>
+				</form>
+				<span style="color:#64748b;font-size:13px;"><?=htmlspecialchars(payrollMonthlyDepartmentLabel($dtPayroll['record']['bo_phan']))?></span>
+				<?php $dtThucLinh = payrollMonthlyFieldValue($dtPayroll['fields'], 'thuc_linh'); ?>
+				<span style="margin-left:auto;font-size:15px;">Thực lĩnh: <strong style="color:#0f766e;font-size:18px;"><?=htmlspecialchars(payrollMonthlyFormatValue($dtThucLinh, 'money'))?></strong></span>
+				<?php else: ?>
+				<span style="color:#64748b;font-size:13px;">Chưa có dữ liệu lương.</span>
+				<?php endif; ?>
+			</div>
+			<?php if($dtPayroll): ?>
+			<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">
+				<?php foreach($dtPayroll['fields'] as $f): if(isset($f['key']) && $f['key'] === 'thuc_linh') continue; ?>
+				<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;">
+					<span style="color:#475569;font-size:13px;"><?=htmlspecialchars((string)$f['label'])?></span>
+					<strong style="color:#111827;white-space:nowrap;"><?=htmlspecialchars(payrollMonthlyFormatValue(isset($f['value']) ? $f['value'] : null, isset($f['type']) ? $f['type'] : 'money'))?></strong>
+				</div>
+				<?php endforeach; ?>
+			</div>
+			<?php endif; ?>
+		</div>
+
 		<form method="get" action="cong-giao-vien" class="dt-gv-filter" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;">
+			<?php if($dtPayroll && $dtPayroll['record']['thang'] !== $dtPayroll['months'][0]): ?><input type="hidden" name="luong_thang" value="<?=htmlspecialchars($dtPayroll['record']['thang'])?>"><?php endif; ?>
 			<select name="khoa" style="height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;min-width:200px;">
 				<option value="0">— Tất cả khóa —</option>
 				<?php foreach($dtKhoaList as $k): ?><option value="<?=$k['id']?>" <?=($dtFilterKhoa==$k['id'])?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>

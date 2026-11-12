@@ -123,6 +123,13 @@
                         <label class="custom-file-label" for="file-excel">Chọn file</label>
                     </div>
                 </div>
+                <?php if($type == 'nhan-vien') { ?>
+                    <div class="form-group mb-0">
+                        <label for="payroll_month" class="mb-1">Tháng lương:</label>
+                        <input type="month" class="form-control form-control-sm" style="max-width:200px" name="payroll_month" id="payroll_month">
+                        <small class="form-text text-muted">File lương 3 sheet VP, GVTH, CTV: chỉ lấy các cột tô vàng, lưu theo từng tháng, nhận diện theo CCCD. VP → Quản lý nhân viên; GVTH/CTV → Đào tạo &gt; Giáo viên (xem trên cổng giáo viên). Để trống tháng để tự lấy từ dòng "Tháng .. năm ...." trong file.</small>
+                    </div>
+                <?php } ?>
             </div>
         </div>
         <div class="card-footer text-sm">

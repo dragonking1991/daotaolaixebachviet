@@ -200,6 +200,15 @@
                                 'CE' => $items[$i]['payroll_ce']
                             );
 							if($_GET['type']=='nhan-vien' && $employeeGhiChu !== '') $payrollDetail['Ghi chú'] = $employeeGhiChu;
+							if($_GET['type']=='nhan-vien')
+							{
+								$employeeOptions = json_decode((string)$items[$i]['options2'], true);
+								if(isset($employeeOptions['payroll_monthly']['fields']) && is_array($employeeOptions['payroll_monthly']['fields']))
+								{
+									$payrollDetail = array('Kỳ lương' => 'Tháng '.(int)substr($employeeOptions['payroll_monthly']['thang'], 5, 2).'/'.substr($employeeOptions['payroll_monthly']['thang'], 0, 4).' (sheet '.$employeeOptions['payroll_monthly']['sheet'].')');
+									foreach($employeeOptions['payroll_monthly']['fields'] as $monthlyField) $payrollDetail[$monthlyField['label']] = $monthlyField['value'];
+								}
+							}
                             $payrollDetailJson = htmlspecialchars(json_encode($payrollDetail, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
 
                         	$linkID = "";

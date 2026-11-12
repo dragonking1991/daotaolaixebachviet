@@ -2,6 +2,7 @@
 	include "ajax_config.php";
 
 	require_once __DIR__.'/../libraries/payroll_config.php';
+	require_once __DIR__.'/../libraries/payroll_monthly.php';
 
 	function normalizeEmployeeLookupText($value)
 	{
@@ -448,8 +449,73 @@
 		return ob_get_clean();
 	}
 
+	function renderMonthlyPayrollResult($employee, $monthly, $message = '', $messageType = 'success')
+	{
+		$record = $monthly['record'];
+		$fields = $monthly['fields'];
+		$boPhan = payrollMonthlyDepartmentLabel($record['bo_phan']);
+		if($boPhan === '') $boPhan = trim((string)$employee['hang']);
+		$chucVu = ($record['chuc_vu'] !== '') ? $record['chuc_vu'] : trim((string)$employee['khoa']);
+		$lookupToken = issueEmployeeLookupToken($employee['id'], (string)$employee['ma_tra_cuu']);
+
+		$rowStyle = 'display:grid; grid-template-columns:minmax(200px,260px) 1fr; gap:6px 12px; padding:5px 0; border-bottom:1px solid #f3f4f6;';
+		$labelStyle = 'font-weight:600; color:#374151;';
+		$valStyle = 'color:#111827; text-align:right;';
+
+		ob_start();
+		?>
+		<div style="border:1px solid #d0d5dd; border-radius:16px; padding:18px; background:#ffffff;">
+			<?=renderMessageBox($message, $messageType)?>
+			<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:10px; margin-bottom:16px;">
+				<div><strong>Họ và tên:</strong><br><?=htmlspecialchars(isset($employee['ten']) ? $employee['ten'] : $employee['tenvi'])?></div>
+				<div><strong>Mã tra cứu:</strong><br><?=htmlspecialchars($employee['ma_tra_cuu'])?></div>
+				<?php if(!empty($employee['cccd'])) { ?><div><strong>CCCD:</strong><br><?=htmlspecialchars($employee['cccd'])?></div><?php } ?>
+				<div><strong>Bộ phận:</strong><br><?=htmlspecialchars($boPhan !== '' ? $boPhan : '-')?></div>
+				<?php if($chucVu !== '') { ?><div><strong>Chức vụ:</strong><br><?=htmlspecialchars($chucVu)?></div><?php } ?>
+			</div>
+			<div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px;">
+				<label for="employee-payroll-month" style="font-weight:600; margin:0;">Tháng lương:</label>
+				<select id="employee-payroll-month" data-keyword="<?=htmlspecialchars($employee['ma_tra_cuu'])?>" style="height:38px; padding:0 10px; border:1px solid #d0d5dd; border-radius:10px;">
+					<?php foreach($monthly['months'] as $month) { ?>
+						<option value="<?=htmlspecialchars($month)?>" <?=($month === $record['thang']) ? 'selected' : ''?>><?=htmlspecialchars(payrollMonthlyLabel($month))?></option>
+					<?php } ?>
+				</select>
+			</div>
+			<div style="margin-bottom:18px;">
+				<h3 style="margin:0 0 10px 0; font-size:17px; color:#0f766e;">Phiếu lương <?=htmlspecialchars(mb_strtolower(payrollMonthlyLabel($record['thang']), 'UTF-8'))?></h3>
+				<div>
+					<?php foreach($fields as $field) { $isTotal = (isset($field['key']) && $field['key'] === 'thuc_linh'); ?>
+						<div style="<?=$rowStyle?><?=$isTotal ? ' font-weight:700;' : ''?>"><div style="<?=$labelStyle?>"><?=htmlspecialchars((string)$field['label'])?></div><div style="<?=$valStyle?><?=$isTotal ? ' color:#0f766e;' : ''?>"><?=htmlspecialchars(payrollMonthlyFormatValue(isset($field['value']) ? $field['value'] : null, isset($field['type']) ? $field['type'] : 'money'))?></div></div>
+					<?php } ?>
+				</div>
+			</div>
+			<?=renderReferenceUpdateForm($employee, $lookupToken)?>
+		</div>
+		<script>
+		(function($){
+			$('#employee-payroll-month').off('change').on('change', function(){
+				$.ajax({
+					url: 'ajax/tracuu_nhanvien.php',
+					type: 'POST',
+					dataType: 'html',
+					data: { action: 'lookup', keyword: $(this).data('keyword'), thang: $(this).val() },
+					success: function(result){ $('.employee-lookup-result').html(result); }
+				});
+			});
+		})(jQuery);
+		</script>
+		<?php
+		return ob_get_clean();
+	}
+
 	function renderPayrollLookupResult($employee, $message = '', $messageType = 'success')
 	{
+		global $d;
+
+		$requestedMonth = isset($_POST['thang']) ? trim((string)$_POST['thang']) : '';
+		$monthly = payrollMonthlyFindByCccd($d, isset($employee['cccd']) ? $employee['cccd'] : '', $requestedMonth, array('VP'));
+		if($monthly) return renderMonthlyPayrollResult($employee, $monthly, $message, $messageType);
+
 		$isGiaoVien = (isset($employee['payroll_department']) && $employee['payroll_department'] === 'giao_vien');
 		if($isGiaoVien) return renderGiaoVienLookupResult($employee, $message, $messageType);
 		if(isset($employee['payroll_department']) && $employee['payroll_department'] !== '') return renderVanPhongLookupResult($employee, $message, $messageType);

@@ -529,6 +529,400 @@
 		return '';
 	}
 
+	/* Lương theo tháng — file 3 sheet VP / GVTH / CTV */
+	function payrollMonthlyMatchSheets($sheetNames)
+	{
+		$config = payrollMonthlySheetConfig();
+		$found = array();
+		foreach($sheetNames as $name)
+		{
+			$key = strtoupper(trim((string)$name));
+			if(isset($config[$key]) && !isset($found[$key])) $found[$key] = $name;
+		}
+
+		return $found;
+	}
+
+	function payrollMonthlyCellRaw($worksheet, $column, $row)
+	{
+		$cell = $worksheet->getCellByColumnAndRow($column, $row);
+		$value = $cell->getValue();
+		// Công thức tham chiếu sheet khác: dùng giá trị Excel đã tính sẵn trong file
+		if(is_string($value) && $value !== '' && $value[0] === '=') $value = $cell->getOldCalculatedValue();
+		if(is_object($value) && method_exists($value, '__toString')) $value = (string)$value;
+
+		return $value;
+	}
+
+	function payrollMonthlyDetectMonth($worksheet)
+	{
+		for($row = 1; $row <= 5; $row++)
+		{
+			for($column = 0; $column < 10; $column++)
+			{
+				$value = payrollMonthlyCellRaw($worksheet, $column, $row);
+				if(!is_string($value)) continue;
+				if(preg_match('/th[aá]ng\s*(\d{1,2})\s*(?:n[aă]m|\/|-)\s*(\d{4})/iu', $value, $m) && (int)$m[1] >= 1 && (int)$m[1] <= 12)
+				{
+					return sprintf('%04d-%02d', (int)$m[2], (int)$m[1]);
+				}
+			}
+		}
+
+		return '';
+	}
+
+	function payrollMonthlyParseSheet($worksheet, $sheetConfig, &$errors)
+	{
+		$sheetTitle = $worksheet->getTitle();
+		$highestRow = $worksheet->getHighestRow();
+		$highestColumnIndex = min(PHPExcel_Cell::columnIndexFromString($worksheet->getHighestColumn()), 80);
+
+		$headerRow = 0;
+		for($row = 1; $row <= min(20, $highestRow); $row++)
+		{
+			if(payrollMonthlyNorm(payrollMonthlyCellRaw($worksheet, 0, $row)) !== 'stt') continue;
+			if(in_array(payrollMonthlyNorm(payrollMonthlyCellRaw($worksheet, 1, $row)), array('hovaten', 'hoten'), true))
+			{
+				$headerRow = $row;
+				break;
+			}
+		}
+
+		if(!$headerRow)
+		{
+			$errors[] = 'Sheet '.$sheetTitle.': không tìm thấy dòng tiêu đề (STT | Họ và tên).';
+			return array();
+		}
+
+		// Tiêu đề gộp nhiều dòng: gom chữ ở 4 dòng tiêu đề của từng cột
+		$headerColumns = array();
+		for($column = 0; $column < $highestColumnIndex; $column++)
+		{
+			$keys = array();
+			for($row = $headerRow; $row <= $headerRow + 3; $row++)
+			{
+				$value = payrollMonthlyCellRaw($worksheet, $column, $row);
+				if(!is_string($value)) continue;
+				$key = payrollMonthlyNorm($value);
+				if($key !== '') $keys[$key] = true;
+			}
+			foreach(array_keys($keys) as $key) $headerColumns[$key][] = $column;
+		}
+
+		$columnMap = array();
+		foreach($sheetConfig['fields'] as $field)
+		{
+			$column = null;
+			if(isset($field['after']))
+			{
+				if(isset($columnMap[$field['after']])) $column = $columnMap[$field['after']] + 1;
+			}
+			else
+			{
+				$occurrence = isset($field['occurrence']) ? (int)$field['occurrence'] : 1;
+				foreach($field['aliases'] as $alias)
+				{
+					if(isset($headerColumns[$alias][$occurrence - 1]))
+					{
+						$column = $headerColumns[$alias][$occurrence - 1];
+						break;
+					}
+				}
+			}
+
+			if($column === null)
+			{
+				$errors[] = 'Sheet '.$sheetTitle.': không tìm thấy cột "'.$field['label'].'".';
+				continue;
+			}
+			$columnMap[$field['key']] = $column;
+		}
+
+		$cccdColumn = isset($headerColumns['cccd'][0]) ? $headerColumns['cccd'][0] : null;
+		$titleColumn = isset($headerColumns['chucvu'][0]) ? $headerColumns['chucvu'][0] : null;
+		if($cccdColumn === null)
+		{
+			$errors[] = 'Sheet '.$sheetTitle.': không có cột CCCD, bỏ qua cả sheet.';
+			return array();
+		}
+
+		$rows = array();
+		for($row = $headerRow + 1; $row <= $highestRow; $row++)
+		{
+			$order = payrollMonthlyCellRaw($worksheet, 0, $row);
+			if(strpos(payrollMonthlyNorm($order), 'tong') === 0) break;
+
+			$name = trim((string)payrollMonthlyCellRaw($worksheet, 1, $row));
+			if(!is_numeric($order) || $name === '' || is_numeric($name)) continue;
+
+			$values = array();
+			foreach($sheetConfig['fields'] as $field)
+			{
+				$value = isset($columnMap[$field['key']]) ? payrollMonthlyCellRaw($worksheet, $columnMap[$field['key']], $row) : null;
+				if(is_string($value))
+				{
+					$value = trim($value);
+					if($value === '') $value = null;
+				}
+				if(is_bool($value)) $value = null;
+				if(is_int($value) || is_float($value)) $value = ($field['type'] === 'int') ? (int)round($value) : (float)round($value);
+				$values[$field['key']] = $value;
+			}
+
+			$rows[] = array(
+				'row' => $row,
+				'stt' => (int)$order,
+				'name' => preg_replace('/\s+/u', ' ', $name),
+				'cccd' => payrollMonthlyCccd(payrollMonthlyCellRaw($worksheet, $cccdColumn, $row)),
+				'chuc_vu' => ($titleColumn !== null) ? trim((string)payrollMonthlyCellRaw($worksheet, $titleColumn, $row)) : '',
+				'values' => $values
+			);
+		}
+
+		return $rows;
+	}
+
+	function payrollMonthlyLegacyColumns($sheetConfig, $values)
+	{
+		$data = array();
+		foreach(array('payroll_so_ngay_lam_viec', 'payroll_luong_chinh', 'payroll_thuong_le_tet', 'payroll_tien_com', 'payroll_phu_cap_xang_xe', 'payroll_day_lt_sat_hach', 'payroll_chieu_sinh_tttn', 'payroll_khac_dt_khac', 'payroll_lam_them_gio', 'payroll_dien_thoai', 'payroll_tong_thu_nhap', 'payroll_nld_nop_bhxh_10_5', 'payroll_tt_nop_bhxh_21_5', 'payroll_thu_nhap_chiu_thue', 'payroll_giam_tru_gia_canh', 'payroll_so_npt', 'payroll_nguoi_phu_thuoc', 'payroll_thu_nhap_tinh_thue', 'payroll_bac', 'payroll_thue_tncn', 'payroll_luong_thuc_nhan', 'payroll_nghia_vu_gv') as $column) $data[$column] = '';
+		foreach(array('payroll_td', 'payroll_ss', 'payroll_c1', 'payroll_ce') as $column) $data[$column] = null;
+
+		$moneyMap = array(
+			'thuc_linh' => 'payroll_luong_thuc_nhan',
+			'bhxh' => 'payroll_nld_nop_bhxh_10_5',
+			'thue_tncn' => 'payroll_thue_tncn',
+			'thu_nhap_danh_nghia' => 'payroll_tong_thu_nhap',
+			'tien_com' => 'payroll_tien_com',
+			'dien_thoai' => 'payroll_dien_thoai',
+			'xang_xe' => 'payroll_phu_cap_xang_xe',
+			'them_gio' => 'payroll_lam_them_gio',
+			'hoa_hong_chieu_sinh' => 'payroll_chieu_sinh_tttn',
+			'npt' => 'payroll_nguoi_phu_thuoc',
+			'tntt' => 'payroll_thu_nhap_tinh_thue',
+			'luong_cb_pctn' => 'payroll_luong_chinh',
+			'luong' => 'payroll_luong_chinh',
+			'luong_cb_xang_xe' => 'payroll_nghia_vu_gv'
+		);
+		foreach($moneyMap as $key => $column)
+		{
+			if(!isset($values[$key])) continue;
+			$data[$column] = is_numeric($values[$key]) ? number_format((float)$values[$key], 0, ',', '.') : htmlspecialchars((string)$values[$key]);
+		}
+		if(isset($values['btd']) && is_numeric($values['btd'])) $data['payroll_td'] = (int)$values['btd'];
+		if(isset($values['ce']) && is_numeric($values['ce'])) $data['payroll_ce'] = (int)$values['ce'];
+
+		return $data;
+	}
+
+	function importEmployeePayrollMonthly($objPHPExcel, $matchedSheets, $sourceFileName)
+	{
+		global $d, $func, $type;
+
+		$backUrl = "index.php?com=import&act=man&type=".$type;
+		payrollMonthlyEnsureTable($d);
+		$config = payrollMonthlySheetConfig();
+
+		$thang = '';
+		$monthInput = isset($_POST['payroll_month']) ? trim((string)$_POST['payroll_month']) : '';
+		if($monthInput !== '')
+		{
+			if(!preg_match('/^(\d{4})-(\d{2})$/', $monthInput, $m) || (int)$m[2] < 1 || (int)$m[2] > 12) $func->transfer("Tháng lương không hợp lệ.", $backUrl, false);
+			$thang = $monthInput;
+		}
+		if($thang === '')
+		{
+			foreach($matchedSheets as $title)
+			{
+				$thang = payrollMonthlyDetectMonth($objPHPExcel->getSheetByName($title));
+				if($thang !== '') break;
+			}
+		}
+		if($thang === '') $func->transfer("Không xác định được tháng lương trong file (dòng \"Tháng .. năm ....\"). Vui lòng chọn Tháng lương rồi import lại.", $backUrl, false);
+
+		$errors = array();
+		$parsed = array();
+		foreach($matchedSheets as $key => $title)
+		{
+			$worksheet = $objPHPExcel->getSheetByName($title);
+			if($worksheet) $parsed[$key] = payrollMonthlyParseSheet($worksheet, $config[$key], $errors);
+		}
+
+		$byCccd = array();
+		$usedReferences = array();
+		$employees = $d->rawQuery("select id, tenvi, cccd, ma_tra_cuu, payroll_department from #_product where type = ?", array($type));
+		foreach((array)$employees as $employee)
+		{
+			$cccd = payrollMonthlyCccd($employee['cccd']);
+			if($cccd !== '' && !isset($byCccd[$cccd])) $byCccd[$cccd] = $employee;
+			if($employee['ma_tra_cuu'] !== '') $usedReferences[$employee['ma_tra_cuu']] = true;
+		}
+
+		$teacherCccd = array();
+		try
+		{
+			foreach((array)$d->rawQuery("select cccd from #_dt_giaovien where cccd <> ''") as $teacher) $teacherCccd[payrollMonthlyCccd($teacher['cccd'])] = true;
+		}
+		catch(Exception $e)
+		{
+			$teacherCccd = array();
+		}
+
+		$counts = array();
+		$inserted = 0;
+		$updated = 0;
+		$teacherLinked = 0;
+		$teacherUnlinked = 0;
+		$seenCccd = array();
+		$dbError = '';
+
+		$d->startTransaction();
+		foreach($parsed as $key => $rows)
+		{
+			$sheetConfig = $config[$key];
+			$counts[$key] = 0;
+
+			foreach($rows as $item)
+			{
+				$where = 'Sheet '.$matchedSheets[$key].' dòng '.$item['row'].' ('.$item['name'].')';
+				if($item['cccd'] === '')
+				{
+					$errors[] = $where.': thiếu CCCD, bỏ qua.';
+					continue;
+				}
+				if(!in_array(strlen($item['cccd']), array(9, 12), true))
+				{
+					$errors[] = $where.': CCCD "'.$item['cccd'].'" không hợp lệ, bỏ qua.';
+					continue;
+				}
+				if(isset($seenCccd[$item['cccd']]))
+				{
+					$errors[] = $where.': trùng CCCD với '.$seenCccd[$item['cccd']].', bỏ qua.';
+					continue;
+				}
+				$seenCccd[$item['cccd']] = $where;
+
+				$fields = array();
+				foreach($sheetConfig['fields'] as $field)
+				{
+					$fields[] = array('key' => $field['key'], 'label' => $field['label'], 'type' => $field['type'], 'value' => $item['values'][$field['key']]);
+				}
+
+				$productId = 0;
+				if($sheetConfig['department'] !== 'van_phong')
+				{
+					// GVTH/CTV thuộc Đào tạo > Giáo viên: chỉ lưu lương theo CCCD, không tạo nhân viên
+					if(isset($teacherCccd[$item['cccd']])) $teacherLinked++;
+					else
+					{
+						$teacherUnlinked++;
+						$errors[] = $where.': chưa có trong Đào tạo > Giáo viên (vẫn lưu lương theo CCCD).';
+					}
+				}
+				else
+				{
+					$existing = isset($byCccd[$item['cccd']]) ? $byCccd[$item['cccd']] : null;
+
+					$productData = array(
+						'tenvi' => htmlspecialchars($item['name']),
+						'tenkhongdauvi' => $func->changeTitle(htmlspecialchars($item['name'])),
+						'cccd' => $item['cccd'],
+						'hang' => $sheetConfig['label'],
+						'payroll_phong_ban' => $sheetConfig['label'],
+						'payroll_department' => $sheetConfig['department']
+					);
+					if($item['chuc_vu'] !== '') $productData['khoa'] = htmlspecialchars($item['chuc_vu']);
+
+					$isLatest = true;
+					if($existing)
+					{
+						$latest = $d->rawQueryOne("select max(thang) as thang from #_nhanvien_luong where cccd = ?", array($item['cccd']));
+						if(!empty($latest['thang']) && $latest['thang'] > $thang) $isLatest = false;
+					}
+
+					if($isLatest)
+					{
+						$productData = array_merge($productData, payrollMonthlyLegacyColumns($sheetConfig, $item['values']));
+						$summary = array();
+						foreach($fields as $field) $summary[] = array('label' => $field['label'], 'value' => payrollMonthlyFormatValue($field['value'], $field['type']));
+						$productData['options2'] = json_encode(array(
+							'payroll_monthly' => array('thang' => $thang, 'sheet' => $key, 'fields' => $summary),
+							'import_meta' => array('file_name' => $sourceFileName, 'sheet_name' => $matchedSheets[$key], 'imported_at' => time())
+						), JSON_UNESCAPED_UNICODE);
+					}
+
+					if($existing)
+					{
+						$productId = (int)$existing['id'];
+						$d->where('id', $productId);
+						$d->where('type', $type);
+						if(!$d->update('product', $productData)) { $dbError = $where.': không cập nhật được nhân viên.'; break 2; }
+						$updated++;
+					}
+					else
+					{
+						$reference = $item['cccd'];
+						if(isset($usedReferences[$reference])) $reference = buildEmployeeReferenceCode($matchedSheets[$key], '', $item['name'].'|'.$key.'|'.$item['row']);
+						$productData['ma_tra_cuu'] = $reference;
+						$productData['stt'] = $item['stt'];
+						$productData['type'] = $type;
+						$productData['hienthi'] = 1;
+						$productData['ngaytao'] = time();
+						$productId = (int)$d->insert('product', $productData);
+						if($productId <= 0) { $dbError = $where.': không thêm được nhân viên.'; break 2; }
+						$usedReferences[$reference] = true;
+						$byCccd[$item['cccd']] = array('id' => $productId);
+						$inserted++;
+					}
+				}
+
+				$record = array(
+					'id_product' => $productId,
+					'sheet' => $key,
+					'bo_phan' => $sheetConfig['department'],
+					'hoten' => $item['name'],
+					'cccd' => $item['cccd'],
+					'chuc_vu' => $item['chuc_vu'],
+					'du_lieu' => json_encode($fields, JSON_UNESCAPED_UNICODE),
+					'file_name' => $sourceFileName,
+					'ngaytao' => time()
+				);
+				$current = $d->rawQueryOne("select id from #_nhanvien_luong where cccd = ? and thang = ? limit 0,1", array($item['cccd'], $thang));
+				if(!empty($current['id']))
+				{
+					$d->where('id', $current['id']);
+					$saved = $d->update('nhanvien_luong', $record);
+				}
+				else
+				{
+					$record['cccd'] = $item['cccd'];
+					$record['thang'] = $thang;
+					$saved = $d->insert('nhanvien_luong', $record);
+				}
+				if(!$saved) { $dbError = $where.': không lưu được lương tháng.'; break 2; }
+
+				$counts[$key]++;
+			}
+		}
+
+		if($dbError !== '')
+		{
+			$d->rollback();
+			$func->transfer('Import thất bại, không có dữ liệu nào được lưu.<br>'.htmlspecialchars($dbError), $backUrl, false);
+		}
+		$d->commit();
+
+		$parts = array();
+		foreach($counts as $key => $count) $parts[] = htmlspecialchars($matchedSheets[$key]).': '.$count;
+		$message = 'Import lương '.payrollMonthlyLabel($thang).' — '.implode(', ', $parts).'.';
+		if(isset($counts['VP'])) $message .= '<br>Văn phòng → Quản lý nhân viên: thêm mới '.$inserted.', cập nhật '.$updated.'.';
+		if($teacherLinked + $teacherUnlinked > 0) $message .= '<br>GVTH/CTV → Đào tạo > Giáo viên: khớp '.$teacherLinked.', chưa có hồ sơ '.$teacherUnlinked.'.';
+		if(!empty($errors)) $message .= '<br>Cảnh báo:<br>'.implode('<br>', array_map('htmlspecialchars', array_slice($errors, 0, 30)));
+
+		$func->transfer($message, $backUrl, array_sum($counts) > 0);
+	}
+
 	/* Upload excel */
 	function uploadExcel()
 	{
@@ -595,6 +989,37 @@
 				
 				require LIBRARIES.'PHPExcel.php';
 				require_once LIBRARIES.'PHPExcel/IOFactory.php';
+
+				if($type == 'nhan-vien')
+				{
+					require_once LIBRARIES.'payroll_monthly.php';
+					$payrollSheets = array();
+					try
+					{
+						$payrollReader = PHPExcel_IOFactory::createReaderForFile($filename);
+						$payrollSheets = payrollMonthlyMatchSheets($payrollReader->listWorksheetNames($filename));
+					}
+					catch(Exception $e)
+					{
+						$payrollSheets = array();
+					}
+
+					if(!empty($payrollSheets))
+					{
+						try
+						{
+							$payrollReader->setLoadSheetsOnly(array_values($payrollSheets));
+							$payrollBook = $payrollReader->load($filename);
+						}
+						catch(Exception $e)
+						{
+							@unlink($filename);
+							$func->transfer("Không thể đọc file lương. Vui lòng kiểm tra lại định dạng file (.xls/.xlsx/.xlsm).", "index.php?com=import&act=man&type=".$type, false);
+						}
+						@unlink($filename);
+						importEmployeePayrollMonthly($payrollBook, $payrollSheets, $sourceFileName);
+					}
+				}
 
 				try
 				{

@@ -13,7 +13,7 @@ function admin_csrf_modules()
 			'', 'dashboard', 'dieukienDat', 'exportDieukienDat', 'taichinh', 'exportTaichinh', 'sathachPending',
 			'khoa', 'exportKhoa', 'khoaAdd', 'khoaEdit', 'uploadKhoa', 'crudEdit',
 			'hocvien', 'exportHocvien', 'uploadHocvien', 'xe', 'exportXe', 'uploadXe',
-			'giaovien', 'exportGiaovien', 'uploadGiaovien', 'lythuyet', 'exportLythuyet', 'uploadLythuyet',
+			'giaovien', 'gvLuong', 'exportGiaovien', 'uploadGiaovien', 'lythuyet', 'exportLythuyet', 'uploadLythuyet',
 			'cabinkq', 'exportCabin', 'uploadCabin', 'hinh', 'exportHinh', 'dat', 'exportDat', 'uploadDat',
 			'tonghop', 'exportTonghop', 'kythi', 'kythiDetail', 'exportKythi', 'exportKythiKetqua', 'kythiUpload', 'kythiRoster', 'kythiTracuu',
 			'ketquadaotao', 'exportKetqua', 'htkh', 'uploadHtkh', 'exportHtkh', 'htkhPrint', 'htkhPrintKy', 'htkhExcelKy', 'htkhWordKy', 'importTemplate', 'importHistory', 'importErrors',

@@ -158,7 +158,7 @@ switch($act)
 	case "uploadGiaovienExcel": dt_guard(dt_p('giaovien','import')); dt_giaovien_upload_excel(); break;
 	case "gvResetPass":         dt_guard(dt_p('giaovien','edit')); dt_giaovien_reset_pass(); break;
 	case "gvThanhLy":           dt_guard(dt_p('giaovien','edit')); dt_giaovien_thanh_ly(); break;
-
+    case "gvLuong":             dt_guard(dt_p('giaovien','edit')); dt_giaovien_luong_page(); $template = "daotao/giaovien/luong"; break;
 	/* ---------- Lý thuyết ---------- */
 	case "lythuyet":            dt_guard(dt_p('lythuyet','view'));   dt_lythuyet_list();  $template = "daotao/lythuyet/items"; break;
 	case "exportLythuyet":      dt_guard(dt_p('lythuyet','export')); dt_lythuyet_export(); break;

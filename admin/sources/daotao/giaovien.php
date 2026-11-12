@@ -2,6 +2,55 @@
 if(!defined('SOURCES')) die("Error");
 
 require_once LIBRARIES.'daotao_gv_auth.php';
+require_once LIBRARIES.'payroll_monthly.php';
+
+/* Lương tháng mới nhất (sheet GVTH/CTV) theo CCCD cho danh sách giáo viên đang hiển thị. */
+function dt_giaovien_attach_luong(&$items)
+{
+	global $d;
+	if(empty($items)) return;
+	$keys = array();
+	foreach($items as $i => $it)
+	{
+		$items[$i]['luong'] = null;
+		$cccd = payrollMonthlyCccd($it['cccd']);
+		if($cccd !== '') $keys[$cccd][] = $i;
+	}
+	if(empty($keys)) return;
+	try
+	{
+		payrollMonthlyEnsureTable($d);
+		$in = implode(',', array_fill(0, count($keys), '?'));
+		$rows = $d->rawQuery("select cccd, thang, sheet, du_lieu from #_nhanvien_luong where sheet in ('GVTH','CTV') and cccd in ($in) order by thang desc", array_keys($keys));
+	}
+	catch(Exception $e)
+	{
+		return;
+	}
+	$months = array();
+	foreach((array)$rows as $row)
+	{
+		$months[$row['cccd']] = isset($months[$row['cccd']]) ? $months[$row['cccd']] + 1 : 1;
+		if($months[$row['cccd']] > 1) continue;
+		foreach($keys[$row['cccd']] as $i) $items[$i]['luong'] = array('thang' => $row['thang'], 'sheet' => $row['sheet'], 'thuc_linh' => payrollMonthlyFieldValue(payrollMonthlyRecordFields($row), 'thuc_linh'));
+	}
+	foreach($months as $cccd => $count) foreach($keys[$cccd] as $i) $items[$i]['luong']['so_thang'] = $count;
+}
+
+function dt_giaovien_luong_page()
+{
+	global $d, $func, $gv, $gv_luong, $gv_luong_history;
+	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+	$gv = $id ? $d->rawQueryOne("select id, hoten, cccd, sdt, ngaysinh from #_dt_giaovien where id = ? limit 0,1", array($id)) : null;
+	if(empty($gv['id'])) $func->transfer('Không tìm thấy giáo viên.', 'index.php?com=daotao&act=giaovien', false);
+	$gv_luong = payrollMonthlyFindByCccd($d, $gv['cccd'], isset($_GET['thang']) ? trim((string)$_GET['thang']) : '', array('GVTH', 'CTV'));
+	$gv_luong_history = array();
+	if($gv_luong)
+	{
+		$rows = $d->rawQuery("select thang, sheet, du_lieu from #_nhanvien_luong where cccd = ? and sheet in ('GVTH','CTV') order by thang desc", array(payrollMonthlyCccd($gv['cccd'])));
+		foreach($rows as $row) $gv_luong_history[] = array('thang' => $row['thang'], 'sheet' => $row['sheet'], 'thuc_linh' => payrollMonthlyFieldValue(payrollMonthlyRecordFields($row), 'thuc_linh'));
+	}
+}
 
 function dt_giaovien_list()
 {
@@ -12,6 +61,7 @@ function dt_giaovien_list()
 	$per_page = 30;
 	$startpoint = ($curPage * $per_page) - $per_page;
 	$items = $d->rawQuery("select g.*, (select count(*) from #_dt_hocvien h where h.gv_key = g.gv_key or (h.gv_key = '' and h.gv_hoten = g.hoten)) as so_hoc_vien from #_dt_giaovien g where 1 $where order by substring_index(g.hoten, ' ', -1) asc, g.hoten asc limit $startpoint,$per_page", $params);
+	if(dt_can('giaovien', 'edit')) dt_giaovien_attach_luong($items);
 	$count = $d->rawQueryOne("select count(*) as num from #_dt_giaovien where 1 $where", $params);
 	$total_items = (int)$count['num'];
 	$baseUrl = "index.php?com=daotao&act=giaovien";

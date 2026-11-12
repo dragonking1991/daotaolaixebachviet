@@ -3,6 +3,7 @@ if(!defined('SOURCES')) die("Error");
 
 require_once LIBRARIES.'daotao_lib.php';
 require_once LIBRARIES.'daotao_gv_auth.php';
+require_once LIBRARIES.'payroll_monthly.php';
 
 function dt_gv_badge($ok)
 {
@@ -170,10 +171,12 @@ $dtStudents = array();
 $dtExamResults = array();
 $dtKhoaList = array();
 $dtHistory = array();
+$dtPayroll = null;
 $dtFilterKhoa = isset($_REQUEST['khoa']) ? (int)$_REQUEST['khoa'] : 0;
 $dtFilterKw = isset($_REQUEST['kw']) ? trim((string)$_REQUEST['kw']) : '';
 if($dtGv)
 {
+	if(empty($dtGv['must_change'])) $dtPayroll = payrollMonthlyFindByCccd($d, $dtGv['cccd'], isset($_GET['luong_thang']) ? trim((string)$_GET['luong_thang']) : '', array('GVTH', 'CTV'));
 	// Nhật ký cập nhật của giáo viên trong 30 ngày gần đây.
 	$dtHistory = dt_portal_gv_history($dtGv['gv_key'], 30, 50);
 	// Danh sách khóa mà giáo viên phụ trách (cho bộ lọc).
