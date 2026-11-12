@@ -33,7 +33,7 @@
 							<?php foreach($gv_luong['fields'] as $f): $isTotal = isset($f['key']) && $f['key'] === 'thuc_linh'; ?>
 							<tr<?=$isTotal ? ' class="table-success font-weight-bold"' : ''?>>
 								<td style="width:60%"><?=htmlspecialchars((string)$f['label'])?></td>
-								<td class="text-right"><?=htmlspecialchars(payrollMonthlyFormatValue(isset($f['value']) ? $f['value'] : null, isset($f['type']) ? $f['type'] : 'money'))?></td>
+								<td class="text-right"><?=nl2br(htmlspecialchars(payrollMonthlyFormatValue(isset($f['value']) ? $f['value'] : null, isset($f['type']) ? $f['type'] : 'money')))?></td>
 							</tr>
 							<?php endforeach; ?>
 						</tbody>

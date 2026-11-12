@@ -37,14 +37,22 @@ if (!function_exists('payrollMonthlySheetConfig')) {
 				'department' => 'giao_vien',
 				'label' => 'Giáo viên thực hành',
 				'fields' => array(
-					array('key' => 'luong_tn', 'label' => 'Lương TN', 'aliases' => array('luongtn'), 'type' => 'money'),
-					array('key' => 'thu_nhap_danh_nghia', 'label' => 'Thu nhập danh nghĩa', 'aliases' => array('thunhapdanhnghia'), 'type' => 'money'),
-					array('key' => 'bhxh', 'label' => 'BHXH', 'aliases' => array('bhxh'), 'type' => 'money'),
-					array('key' => 'thuc_linh', 'label' => 'Thực lĩnh', 'aliases' => array('thuclinh'), 'type' => 'money'),
-					// Cột không tiêu đề ngay sau "Thực lĩnh" (= Lương cơ bản + Xăng xe)
-					array('key' => 'luong_cb_xang_xe', 'label' => 'Lương cơ bản + Xăng xe', 'after' => 'thuc_linh', 'type' => 'money'),
+					// 2 cột tô đỏ (Lương cơ bản + PC trách nhiệm, Xăng xe) gộp thành Lương căn bản
+					array('key' => 'luong_can_ban', 'label' => 'Lương căn bản', 'sum' => array('luongcobanpctrachnhiem', 'xangxe'), 'type' => 'money'),
+					array('key' => 'luong_hv', 'label' => 'Lương HV', 'aliases' => array('luonghv'), 'type' => 'money'),
 					array('key' => 'btd', 'label' => 'BTĐ (số học viên)', 'aliases' => array('btd'), 'occurrence' => 1, 'type' => 'int'),
 					array('key' => 'tien_btd', 'label' => 'Tiền BTĐ', 'aliases' => array('btd'), 'occurrence' => 2, 'type' => 'money'),
+					array('key' => 'luong_tn', 'label' => 'Lương TN', 'aliases' => array('luongtn'), 'type' => 'money'),
+					array('key' => 'tien_com', 'label' => 'Tiền cơm', 'aliases' => array('tiencom'), 'type' => 'money'),
+					array('key' => 'thuong_sinh_nhat', 'label' => 'Thưởng sinh nhật', 'aliases' => array('thuongsinhnhat'), 'type' => 'money'),
+					array('key' => 'hoa_hong_chieu_sinh', 'label' => 'Hoa hồng chiêu sinh', 'aliases' => array('hoahongchieusinh'), 'type' => 'money'),
+					array('key' => 'thu_nhap_danh_nghia', 'label' => 'Thu nhập danh nghĩa', 'aliases' => array('thunhapdanhnghia'), 'type' => 'money'),
+					array('key' => 'tntt', 'label' => 'Thu nhập tính thuế', 'aliases' => array('tntt'), 'type' => 'money'),
+					array('key' => 'bhxh', 'label' => 'BHXH', 'aliases' => array('bhxh'), 'type' => 'money'),
+					array('key' => 'thue_tncn', 'label' => 'Thuế TNCN', 'aliases' => array('thuetncn'), 'type' => 'money'),
+					array('key' => 'nguoi_phu_thuoc', 'label' => 'Giảm trừ người phụ thuộc', 'aliases' => array('nguoiphuthuoc', 'npt'), 'type' => 'money'),
+					array('key' => 'thuc_linh', 'label' => 'Thực lĩnh', 'aliases' => array('thuclinh'), 'type' => 'money'),
+					array('key' => 'ghi_chu', 'label' => 'Ghi chú', 'aliases' => array('ghichu'), 'type' => 'text'),
 				),
 			),
 			'CTV' => array(
@@ -52,11 +60,15 @@ if (!function_exists('payrollMonthlySheetConfig')) {
 				'label' => 'Cộng tác viên',
 				'fields' => array(
 					array('key' => 'luong', 'label' => 'Lương', 'aliases' => array('luong'), 'type' => 'money'),
+					array('key' => 'luong_hv', 'label' => 'Lương HV', 'aliases' => array('luonghv'), 'type' => 'money'),
+					array('key' => 'btd', 'label' => 'BTĐ (số học viên)', 'aliases' => array('btd'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'ce', 'label' => 'CE (số học viên)', 'aliases' => array('ce'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'thuong_sinh_nhat', 'label' => 'Thưởng sinh nhật', 'aliases' => array('thuongsinhnhat'), 'type' => 'money'),
+					array('key' => 'hoa_hong_chieu_sinh', 'label' => 'Hoa hồng chiêu sinh', 'aliases' => array('hoahongchieusinh'), 'type' => 'money'),
 					array('key' => 'thu_nhap_danh_nghia', 'label' => 'Thu nhập danh nghĩa', 'aliases' => array('thunhapdanhnghia'), 'type' => 'money'),
 					array('key' => 'thue_tncn', 'label' => 'Thuế TNCN', 'aliases' => array('thuetncn'), 'type' => 'money'),
 					array('key' => 'thuc_linh', 'label' => 'Thực lĩnh', 'aliases' => array('thuclinh'), 'type' => 'money'),
-					array('key' => 'btd', 'label' => 'BTĐ (số học viên)', 'aliases' => array('btd'), 'occurrence' => 1, 'type' => 'int'),
-					array('key' => 'ce', 'label' => 'CE (số học viên)', 'aliases' => array('ce'), 'occurrence' => 1, 'type' => 'int'),
+					array('key' => 'ghi_chu', 'label' => 'Ghi chú', 'aliases' => array('ghichu'), 'type' => 'text'),
 				),
 			),
 		);
@@ -166,6 +178,49 @@ if (!function_exists('payrollMonthlyFieldValue')) {
 	}
 }
 
+if (!function_exists('payrollMonthlySlip')) {
+	/**
+	 * Bố cục phiếu lương giáo viên theo mẫu cũ: TT chuyển khoản / Lương căn bản / Nhận,
+	 * rồi các khoản chi tiết, BHXH, Thuế TNCN, Nhận, Người phụ thuộc, Ghi chú.
+	 */
+	function payrollMonthlySlip($fields)
+	{
+		$byKey = array();
+		foreach ($fields as $field) if (isset($field['key'])) $byKey[$field['key']] = $field;
+		$row = function ($label, $value, $type = 'money', $strong = false) {
+			return array('label' => $label, 'value' => payrollMonthlyFormatValue($value, $type), 'strong' => $strong);
+		};
+
+		$thucLinh = isset($byKey['thuc_linh']['value']) && is_numeric($byKey['thuc_linh']['value']) ? (float)$byKey['thuc_linh']['value'] : null;
+		$canBan = isset($byKey['luong_can_ban']['value']) && is_numeric($byKey['luong_can_ban']['value']) ? (float)$byKey['luong_can_ban']['value'] : null;
+		$nhan = ($thucLinh !== null) ? $thucLinh - (float)$canBan : null;
+
+		$top = array($row('TT chuyển khoản', $thucLinh));
+		if (isset($byKey['luong_can_ban'])) {
+			$top[] = $row($byKey['luong_can_ban']['label'], $canBan);
+			$top[] = $row('Nhận', $nhan, 'money', true);
+		}
+
+		$tailKeys = array('bhxh', 'thue_tncn');
+		$skip = array('thuc_linh', 'luong_can_ban', 'ghi_chu', 'nguoi_phu_thuoc', 'npt', 'bhxh', 'thue_tncn');
+		$detail = array();
+		foreach ($fields as $field) {
+			if (!isset($field['key']) || in_array($field['key'], $skip, true)) continue;
+			$detail[] = $row($field['label'], isset($field['value']) ? $field['value'] : null, isset($field['type']) ? $field['type'] : 'money');
+		}
+		foreach ($tailKeys as $key) {
+			if (isset($byKey[$key])) $detail[] = $row($byKey[$key]['label'], $byKey[$key]['value'], $byKey[$key]['type']);
+		}
+		$detail[] = $row('Nhận', $nhan, 'money', true);
+		foreach (array('nguoi_phu_thuoc', 'npt') as $key) {
+			if (isset($byKey[$key])) $detail[] = $row($byKey[$key]['label'], $byKey[$key]['value'], $byKey[$key]['type']);
+		}
+
+		$note = isset($byKey['ghi_chu']['value']) ? trim((string)$byKey['ghi_chu']['value']) : '';
+		return array('top' => $top, 'detail' => $detail, 'note' => $note);
+	}
+}
+
 if (!function_exists('payrollMonthlyDepartmentLabel')) {
 	function payrollMonthlyDepartmentLabel($department)
 	{
@@ -187,6 +242,7 @@ if (!function_exists('payrollMonthlyFormatValue')) {
 	function payrollMonthlyFormatValue($value, $type)
 	{
 		if ($value === null || $value === '') return '-';
+		if ($type === 'text') return (string)$value;
 		if (!is_numeric($value)) return (string)$value;
 		if ($type === 'int') return (string)(int)round((float)$value);
 		$num = round((float)$value);

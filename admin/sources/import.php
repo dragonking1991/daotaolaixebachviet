@@ -614,7 +614,17 @@
 		foreach($sheetConfig['fields'] as $field)
 		{
 			$column = null;
-			if(isset($field['after']))
+			if(isset($field['sum']))
+			{
+				$column = array();
+				foreach($field['sum'] as $alias)
+				{
+					if(isset($headerColumns[$alias][0])) $column[] = $headerColumns[$alias][0];
+					else $errors[] = 'Sheet '.$sheetTitle.': không tìm thấy cột "'.$alias.'" để tính "'.$field['label'].'".';
+				}
+				if(empty($column)) $column = null;
+			}
+			elseif(isset($field['after']))
 			{
 				if(isset($columnMap[$field['after']])) $column = $columnMap[$field['after']] + 1;
 			}
@@ -659,7 +669,26 @@
 			$values = array();
 			foreach($sheetConfig['fields'] as $field)
 			{
-				$value = isset($columnMap[$field['key']]) ? payrollMonthlyCellRaw($worksheet, $columnMap[$field['key']], $row) : null;
+				if(isset($field['sum']))
+				{
+					$value = null;
+					if(isset($columnMap[$field['key']]))
+					{
+						foreach($columnMap[$field['key']] as $sumColumn)
+						{
+							$part = payrollMonthlyCellRaw($worksheet, $sumColumn, $row);
+							if(is_numeric($part)) $value = (float)$value + (float)$part;
+						}
+					}
+				}
+				else $value = isset($columnMap[$field['key']]) ? payrollMonthlyCellRaw($worksheet, $columnMap[$field['key']], $row) : null;
+				if($field['type'] === 'text')
+				{
+					// Công thức INDEX không tìm thấy trả về 0 thay cho ô trống
+					$value = ($value === null || is_bool($value) || (is_numeric($value) && (float)$value == 0)) ? null : trim((string)$value);
+					$values[$field['key']] = ($value === '') ? null : $value;
+					continue;
+				}
 				if(is_string($value))
 				{
 					$value = trim($value);
@@ -703,7 +732,7 @@
 			'tntt' => 'payroll_thu_nhap_tinh_thue',
 			'luong_cb_pctn' => 'payroll_luong_chinh',
 			'luong' => 'payroll_luong_chinh',
-			'luong_cb_xang_xe' => 'payroll_nghia_vu_gv'
+			'luong_can_ban' => 'payroll_nghia_vu_gv'
 		);
 		foreach($moneyMap as $key => $column)
 		{

@@ -63,39 +63,43 @@
 			$allowHinh = !empty($dtCfg['allow_hinh_input']);
 			$colCount = 2 + ($showLt?1:0) + ($showCabin?1:0) + ($showHinh?1:0) + ($showDat?1:0) + ($showExam?1:0) + ($showKl?1:0);
 		?>
-		<div style="border:1px solid #d7e3f4;border-radius:12px;padding:14px 16px;margin-bottom:18px;background:#f8fbff;">
-			<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:<?=$dtPayroll?'12px':'0'?>;">
-				<strong style="font-size:16px;color:#1d4ed8;"><i class="fas fa-receipt" aria-hidden="true"></i> Phiếu lương</strong>
-				<?php if($dtPayroll): ?>
-				<form method="get" action="cong-giao-vien" style="display:flex;align-items:center;gap:6px;margin:0;">
-					<?php if($dtFilterKhoa): ?><input type="hidden" name="khoa" value="<?=$dtFilterKhoa?>"><?php endif; ?>
-					<?php if($dtFilterKw !== ''): ?><input type="hidden" name="kw" value="<?=htmlspecialchars($dtFilterKw)?>"><?php endif; ?>
-					<select name="luong_thang" onchange="this.form.submit()" style="height:34px;padding:0 10px;border:1px solid #ccc;border-radius:6px;">
-						<?php foreach($dtPayroll['months'] as $m): ?><option value="<?=htmlspecialchars($m)?>" <?=$m===$dtPayroll['record']['thang']?'selected':''?>><?=htmlspecialchars(payrollMonthlyLabel($m))?></option><?php endforeach; ?>
+		<div class="dt-gv-tabs">
+			<a href="cong-giao-vien" class="<?=$dtTab==='daotao'?'is-active':''?>"><i class="fas fa-user-graduate" aria-hidden="true"></i> Đào tạo</a>
+			<a href="cong-giao-vien?tab=luong" class="<?=$dtTab==='luong'?'is-active':''?>"><i class="fas fa-receipt" aria-hidden="true"></i> Lương</a>
+		</div>
+
+		<?php if($dtTab === 'luong'): ?>
+		<div class="dt-gv-slip">
+			<?php if(!$dtPayroll): ?>
+			<div class="dt-gv-slip-empty">Chưa có dữ liệu lương. Vui lòng liên hệ trung tâm nếu bạn cần tra cứu.</div>
+			<?php else: $slipRec = $dtPayroll['record']; $slip = payrollMonthlySlip($dtPayroll['fields']); ?>
+			<div class="dt-gv-slip-info">
+				<div><strong>Họ và tên:</strong><br><?=htmlspecialchars($dtGv['hoten'])?></div>
+				<div><strong>CCCD:</strong><br><?=htmlspecialchars($dtGv['cccd'])?></div>
+				<div><strong>Bộ phận:</strong><br><?=htmlspecialchars(payrollMonthlyDepartmentLabel($slipRec['bo_phan']))?></div>
+			</div>
+			<div class="dt-gv-slip-head">
+				<div class="dt-gv-slip-title">Phiếu lương giáo viên</div>
+				<form method="get" action="cong-giao-vien" class="dt-gv-slip-month">
+					<input type="hidden" name="tab" value="luong">
+					<label for="dt-gv-thang">Tháng</label>
+					<select id="dt-gv-thang" name="thang" onchange="this.form.submit()">
+						<?php foreach($dtPayroll['months'] as $m): ?><option value="<?=htmlspecialchars($m)?>" <?=$m===$slipRec['thang']?'selected':''?>><?=htmlspecialchars(payrollMonthlyLabel($m))?></option><?php endforeach; ?>
 					</select>
 					<noscript><button type="submit">Xem</button></noscript>
 				</form>
-				<span style="color:#64748b;font-size:13px;"><?=htmlspecialchars(payrollMonthlyDepartmentLabel($dtPayroll['record']['bo_phan']))?></span>
-				<?php $dtThucLinh = payrollMonthlyFieldValue($dtPayroll['fields'], 'thuc_linh'); ?>
-				<span style="margin-left:auto;font-size:15px;">Thực lĩnh: <strong style="color:#0f766e;font-size:18px;"><?=htmlspecialchars(payrollMonthlyFormatValue($dtThucLinh, 'money'))?></strong></span>
-				<?php else: ?>
-				<span style="color:#64748b;font-size:13px;">Chưa có dữ liệu lương.</span>
-				<?php endif; ?>
 			</div>
-			<?php if($dtPayroll): ?>
-			<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">
-				<?php foreach($dtPayroll['fields'] as $f): if(isset($f['key']) && $f['key'] === 'thuc_linh') continue; ?>
-				<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;">
-					<span style="color:#475569;font-size:13px;"><?=htmlspecialchars((string)$f['label'])?></span>
-					<strong style="color:#111827;white-space:nowrap;"><?=htmlspecialchars(payrollMonthlyFormatValue(isset($f['value']) ? $f['value'] : null, isset($f['type']) ? $f['type'] : 'money'))?></strong>
-				</div>
-				<?php endforeach; ?>
+			<div class="dt-gv-slip-rows">
+				<?php foreach($slip['top'] as $r): ?><div class="dt-gv-slip-row<?=$r['strong']?' is-strong':''?>"><span><?=htmlspecialchars($r['label'])?></span><strong><?=htmlspecialchars($r['value'])?></strong></div><?php endforeach; ?>
+				<div class="dt-gv-slip-gap"></div>
+				<?php foreach($slip['detail'] as $r): ?><div class="dt-gv-slip-row<?=$r['strong']?' is-strong':''?>"><span><?=htmlspecialchars($r['label'])?></span><strong><?=htmlspecialchars($r['value'])?></strong></div><?php endforeach; ?>
 			</div>
+			<?php if($slip['note'] !== ''): ?><div class="dt-gv-slip-note"><strong>Ghi chú:</strong><br><?=nl2br(htmlspecialchars($slip['note']))?></div><?php endif; ?>
 			<?php endif; ?>
 		</div>
+		<?php else: ?>
 
 		<form method="get" action="cong-giao-vien" class="dt-gv-filter" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;">
-			<?php if($dtPayroll && $dtPayroll['record']['thang'] !== $dtPayroll['months'][0]): ?><input type="hidden" name="luong_thang" value="<?=htmlspecialchars($dtPayroll['record']['thang'])?>"><?php endif; ?>
 			<select name="khoa" style="height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;min-width:200px;">
 				<option value="0">— Tất cả khóa —</option>
 				<?php foreach($dtKhoaList as $k): ?><option value="<?=$k['id']?>" <?=($dtFilterKhoa==$k['id'])?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
@@ -239,11 +243,31 @@
 			<?php endif; ?>
 		</details>
 		<?php endif; ?>
+		<?php endif; ?>
 	</div>
 	<?php endif; ?>
 </div>
 
 <style>
+.dt-gv-tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; }
+.dt-gv-tabs a { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; margin-bottom: -2px; border-bottom: 3px solid transparent; color: #475569; font-weight: 700; text-decoration: none; }
+.dt-gv-tabs a:hover { color: #2954f2; }
+.dt-gv-tabs a.is-active { color: #2954f2; border-bottom-color: #2954f2; }
+.dt-gv-slip { max-width: 900px; border: 1px solid #d0d5dd; border-radius: 16px; padding: 18px; background: #fff; }
+.dt-gv-slip-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px; color: #374151; }
+.dt-gv-slip-info strong { color: #111827; }
+.dt-gv-slip-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dt-gv-slip-title { font-size: 17px; font-weight: 700; color: #0f766e; }
+.dt-gv-slip-month { display: flex; align-items: center; gap: 8px; margin: 0; }
+.dt-gv-slip-month label { margin: 0; font-weight: 600; color: #374151; }
+.dt-gv-slip-month select { height: 36px; padding: 0 10px; border: 1px solid #ccc; border-radius: 8px; }
+.dt-gv-slip-row { display: grid; grid-template-columns: minmax(200px, 1fr) auto; gap: 6px 12px; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+.dt-gv-slip-row span { color: #374151; font-weight: 600; }
+.dt-gv-slip-row strong { color: #111827; font-weight: 400; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dt-gv-slip-row.is-strong span, .dt-gv-slip-row.is-strong strong { color: #0f766e; font-weight: 700; }
+.dt-gv-slip-gap { height: 10px; }
+.dt-gv-slip-note { margin-top: 14px; padding: 10px 12px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 14px; }
+.dt-gv-slip-empty { color: #64748b; padding: 8px 0; }
 .w_1000.dt-gv-page { width: min(1400px, calc(100% - 32px)); max-width: 1400px; }
 .dt-gv-content { max-width: 1360px; margin: 0 auto; }
 .dt-gv-page table { table-layout: auto; }
