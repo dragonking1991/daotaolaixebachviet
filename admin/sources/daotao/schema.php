@@ -1,5 +1,6 @@
 <?php
 if(!defined('SOURCES')) die("Error");
+require_once LIBRARIES.'xe_suachua_lib.php';
 
 /* Tạo bảng phân hệ đào tạo nếu chưa có (idempotent). Gọi trước mọi thao tác đọc/ghi. */
 function dt_ensure_tables()
@@ -59,6 +60,8 @@ function dt_ensure_tables()
 		UNIQUE KEY uq_dt_xe_bienso (bien_so),
 		KEY idx_dt_xe_hang (hang_xe)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	dt_xe_suachua_ensure_table();
 
 	$d->rawQuery("CREATE TABLE IF NOT EXISTS table_dt_giaovien (
 		id INT AUTO_INCREMENT PRIMARY KEY,

@@ -3,6 +3,7 @@
 	foreach(array('keyword','hang','loai_xe','nhan_hieu','tt_tl','expiry','p') as $__k) if(isset($_GET[$__k]) && $_GET[$__k] !== '') $__q[$__k] = $_GET[$__k];
 	if($__q) $dt_ret = '&'.http_build_query($__q);
 	$show_tl = isset($_REQUEST['tt_tl']) ? $_REQUEST['tt_tl'] : '';
+	$xe_list_return = rawurlencode('index.php?com=daotao&act=xe'.$dt_ret);
 ?>
 <section class="content-header text-sm">
 	<div class="container-fluid">
@@ -89,6 +90,7 @@
 							<?php if(!empty($it['ghi_chu'])): ?><div class="dt-sub"><?=nl2br(htmlspecialchars($it['ghi_chu']))?></div><?php elseif(!$is_tl): ?><span class="text-muted">—</span><?php endif; ?>
 						</td>
 						<td class="dt-actions">
+							<a href="index.php?com=daotao&act=xeSuachua&id_xe=<?=(int)$it['id']?>&ret=<?=$xe_list_return?>" class="btn btn-xs btn-outline-warning mb-1" title="Mở nhật ký sửa chữa của xe <?=htmlspecialchars($it['bien_so'])?>"><i class="fas fa-tools mr-1"></i>Nhật ký sửa xe</a>
 							<a href="index.php?com=daotao&act=crudEdit&entity=xe&id=<?=$it['id']?><?=$dt_ret?>" class="btn btn-xs bg-gradient-info" title="Sửa"><i class="fas fa-edit"></i></a>
 							<?php if($is_tl): ?>
 								<a href="index.php?com=daotao&act=xeThanhLy&huy=1&id=<?=$it['id']?><?=$dt_ret?>" onclick="return confirm('Hủy thanh lý xe này?')" class="btn btn-xs bg-gradient-secondary" title="Hủy thanh lý"><i class="fas fa-undo"></i></a>

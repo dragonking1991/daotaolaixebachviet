@@ -80,6 +80,16 @@ Request → admin/index.php
 
 ---
 
+### Xe tập lái — nhật ký sửa chữa
+
+Trong **Đào tạo → Xe tập lái**, bấm **Nhật ký sửa xe** ở dòng xe để mở lịch sử riêng của xe. Trang hiển thị thông tin nhận diện xe, tổng số lần sửa, số việc đang sửa, chi phí đã nhập và lịch bảo dưỡng gần nhất; lịch sử xếp theo ngày sửa mới nhất và phân trang.
+
+Người có quyền **Sửa xe** có thể thêm/cập nhật ngày sửa, nội dung, trạng thái **Đang sửa / Hoàn tất**, gara, số km, chi phí VND, ghi chú và mục tiêu bảo dưỡng theo ngày hoặc số km. Chi phí và số km có thể để trống nếu chưa biết; tổng chi phí chỉ cộng khoản đã nhập. Mốc bảo dưỡng lấy từ lần sửa mới nhất; nếu chỉ có km, trang không tự tính số km còn lại vì chưa có số km hiện tại của xe.
+
+Quyền **Xóa xe** mới xóa được từng lần sửa chữa. Xe đã có nhật ký không thể xóa riêng, xóa nhiều, xóa toàn bộ mục xe hay qua chức năng xóa toàn bộ đào tạo; hãy dùng **Thanh lý xe** để giữ nguyên lịch sử. Bảng `dt_xe_suachua` được tạo idempotent khi mở phân hệ Đào tạo; dữ liệu lịch sử không bị xóa khi thanh lý.
+
+Trong **Cổng giáo viên → Xe phụ trách**, giáo viên chỉ xem được xe có `gv_key` đang khớp với tài khoản của mình. Giáo viên có thể thêm nhật ký hiện trạng/sửa chữa và cập nhật trạng thái **Đang sửa / Hoàn tất**; không thể sửa chi tiết nhật ký đã tạo hoặc xóa. Mỗi nhật ký cho phép tối đa 10 ảnh JPEG/PNG/WebP (5 MB/ảnh, tối đa 12 MP); hệ thống thu nhỏ cạnh dài còn tối đa 1.600 px, nén lại thành JPEG và giới hạn ảnh đã lưu ở 1 MB/ảnh. Ảnh lưu trong `private_upload` (chặn truy cập HTTP trực tiếp); portal và admin chỉ phục vụ ảnh qua route có kiểm tra xe/bản ghi/quyền xem. Ảnh hiển thị trong lịch sử sửa chữa admin. Nếu upload bị từ chối, kiểm tra giới hạn tải lên của PHP/web server; nội dung nhật ký và ảnh không được lưu dở dang.
+
 ### Thực hành trong hình — cổng giáo viên và admin
 
 Giờ/km do giáo viên nhập được dùng trực tiếp để tự xét kết quả ở **Thực hành trong hình** và **Tổng hợp**. Chỉ `dat_override = 1` là xác nhận Đạt thủ công; `NULL` hoặc `0` đều xét tự động theo hạng (lớp PDODb hiện lưu `NULL` ở trường này thành `0`). Dữ liệu cũ đã đủ giờ/km được tính lại khi tải trang, không cần nhập lại hay chạy cập nhật dữ liệu.

@@ -163,6 +163,27 @@ function dt_crud_delete()
 	$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 	if(!$config || !$id) $func->transfer('Dữ liệu không hợp lệ', 'index.php?com=daotao&act=khoa', false);
 
+	if($entity === 'xe')
+	{
+		$d->startTransaction();
+		$ids = dt_xe_suachua_assert_vehicles_deletable(array($id), dt_crud_back($config));
+		$row = $d->rawQueryOne('select * from #_dt_xe where id = ? limit 0,1', array($id));
+		if(!$row || $d->transactionFailed())
+		{
+			$d->rollback();
+			$func->transfer('Không tìm thấy xe hoặc không thể kiểm tra dữ liệu; chưa xóa xe.', dt_crud_back($config), false);
+		}
+		$_SESSION['dt_undo'] = array('entity' => $entity, 'row' => $row, 'time' => time());
+		dt_crud_delete_id($entity, $id);
+		if($d->transactionFailed() || $d->commit() === false)
+		{
+			$d->rollback();
+			$func->transfer('Không thể xóa xe do lỗi cơ sở dữ liệu.', dt_crud_back($config), false);
+		}
+		dt_audit('delete', $entity, 1, 'id='.$id);
+		$func->transfer('Đã xóa '.$config['title'], dt_crud_back($config, dt_crud_ret_query().'&undo=1'));
+	}
+
 	// Lưu bản ghi để hoàn tác (chỉ với mục không xóa dây chuyền)
 	$cascade = in_array($entity, array('khoa','hocvien'), true);
 	if(!$cascade)
@@ -262,20 +283,63 @@ function dt_crud_delete_all()
 	$entity = preg_replace('/[^a-z]/', '', isset($_GET['entity']) ? $_GET['entity'] : '');
 	if($entity === 'all')
 	{
+		$d->startTransaction();
+		$vehicleRows = $d->rawQuery('select id from #_dt_xe order by id for update');
+		if($d->transactionFailed())
+		{
+			$d->rollback();
+			$func->transfer('Không thể kiểm tra nhật ký sửa chữa; đã hủy thao tác xóa.', 'index.php?com=daotao&act=tonghop', false);
+		}
+		dt_xe_suachua_assert_vehicles_deletable(array_column((array)$vehicleRows, 'id'), 'index.php?com=daotao&act=tonghop');
 		if(dt_backup_tables(dt_backup_tables_list(), 'all') === '')
+		{
+			$d->rollback();
 			$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', 'index.php?com=daotao&act=tonghop', false);
+		}
 		$affected = 0;
-		foreach(array('dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_dat_override','dt_thuchanh_hinh','dt_hocvien','dt_xe','dt_giaovien','dt_khoa','dt_import_log') as $table)
+		foreach(array('dt_xe_suachua','dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_dat_override','dt_thuchanh_hinh','dt_hocvien','dt_xe','dt_giaovien','dt_khoa','dt_import_log') as $table)
 		{
 			$c = $d->rawQueryOne("select count(*) as c from #_$table");
 			$affected += (int)($c ? $c['c'] : 0);
 			$d->rawQuery('delete from #_'.$table);
+		}
+		if($d->transactionFailed() || $d->commit() === false)
+		{
+			$d->rollback();
+			$func->transfer('Không thể xóa dữ liệu; đã hủy thao tác.', 'index.php?com=daotao&act=tonghop', false);
 		}
 		dt_audit('delete_all', 'all', $affected, 'Xóa toàn bộ dữ liệu đào tạo');
 		$func->transfer('Đã xóa toàn bộ dữ liệu đào tạo ('.$affected.' bản ghi)', 'index.php?com=daotao&act=tonghop');
 	}
 	$config = dt_crud_context($entity);
 	if(!$config) $func->transfer('Mục đào tạo không hợp lệ', 'index.php?com=daotao&act=khoa', false);
+
+	if($entity === 'xe')
+	{
+		$d->startTransaction();
+		$vehicleRows = $d->rawQuery('select id from #_dt_xe order by id for update');
+		if($d->transactionFailed())
+		{
+			$d->rollback();
+			$func->transfer('Không thể kiểm tra nhật ký sửa chữa; đã hủy thao tác xóa.', dt_crud_back($config), false);
+		}
+		dt_xe_suachua_assert_vehicles_deletable(array_column((array)$vehicleRows, 'id'), dt_crud_back($config));
+		$cnt = $d->rawQueryOne("select count(*) as c from #_dt_xe");
+		$affected = (int)($cnt ? $cnt['c'] : 0);
+		if(dt_backup_tables(array('dt_xe'), $entity) === '')
+		{
+			$d->rollback();
+			$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', dt_crud_back($config), false);
+		}
+		$d->rawQuery('delete from #_dt_xe');
+		if($d->transactionFailed() || $d->commit() === false)
+		{
+			$d->rollback();
+			$func->transfer('Không thể xóa xe; đã hủy thao tác.', dt_crud_back($config), false);
+		}
+		dt_audit('delete_all', $entity, $affected, 'Xóa toàn bộ '.$config['title']);
+		$func->transfer('Đã xóa toàn bộ '.$config['title'].' ('.$affected.' bản ghi)', dt_crud_back($config));
+	}
 
 	$cnt = $d->rawQueryOne("select count(*) as c from #_".$config['table']);
 	$affected = (int)($cnt ? $cnt['c'] : 0);
@@ -301,6 +365,25 @@ function dt_crud_delete_selected()
 	$back = dt_crud_back($config, dt_crud_ret_query());
 	$ids = isset($_POST['ids']) && is_array($_POST['ids']) ? array_values(array_unique(array_filter(array_map('intval', $_POST['ids'])))) : array();
 	if(!$ids) $func->transfer('Vui lòng chọn ít nhất một mục để xóa', $back, false);
+
+	if($entity === 'xe')
+	{
+		$d->startTransaction();
+		dt_xe_suachua_assert_vehicles_deletable($ids, $back);
+		if(dt_backup_tables(array('dt_xe'), 'sel_xe') === '')
+		{
+			$d->rollback();
+			$func->transfer('Không thể sao lưu dữ liệu; đã hủy thao tác xóa.', $back, false);
+		}
+		foreach($ids as $id) dt_crud_delete_id($entity, $id);
+		if($d->transactionFailed() || $d->commit() === false)
+		{
+			$d->rollback();
+			$func->transfer('Không thể xóa xe; đã hủy toàn bộ lượt xóa.', $back, false);
+		}
+		dt_audit('delete_selected', $entity, count($ids), 'id: '.implode(',', $ids));
+		$func->transfer('Đã xóa '.count($ids).' mục đã chọn khỏi '.$config['title'], $back);
+	}
 
 	$backupTables = array_merge(array($config['table']), $entity === 'hocvien' ? array('dt_lythuyet','dt_mophong','dt_cabin_kq','dt_dat_phien','dt_dat_override','dt_thuchanh_hinh') : array());
 	if(dt_backup_tables($backupTables, 'sel_'.$entity) === '')

@@ -9,6 +9,7 @@ require_once SOURCES.'daotao/excel_open.php';
 require_once SOURCES.'daotao/khoa.php';
 require_once SOURCES.'daotao/hocvien.php';
 require_once SOURCES.'daotao/xe.php';
+require_once SOURCES.'daotao/xe_suachua.php';
 require_once SOURCES.'daotao/giaovien.php';
 require_once SOURCES.'daotao/lythuyet.php';
 require_once SOURCES.'daotao/dat_eligibility.php';
@@ -146,6 +147,10 @@ switch($act)
 
 	/* ---------- Xe ---------- */
 	case "xe":            dt_guard(dt_p('xe','view'));   dt_xe_list();         $template = "daotao/xe/items"; break;
+	case "xeSuachua":     dt_guard(dt_p('xe','view'));   dt_xe_suachua_page(); $template = "daotao/xe/suachua"; break;
+	case "xeSuachuaImage": dt_guard(dt_p('xe','view')); dt_xe_suachua_image(); break;
+	case "xeSuachuaSave": dt_guard(dt_p('xe','edit'));   dt_xe_suachua_save(); break;
+	case "xeSuachuaDelete": dt_guard(dt_p('xe','delete')); dt_xe_suachua_delete(); break;
 	case "exportXe":      dt_guard(dt_p('xe','export')); dt_xe_export(); break;
 	case "xeThanhLy":     dt_guard(dt_p('xe','edit')); dt_xe_thanh_ly(); break;
 	case "uploadXe":      dt_guard(dt_p('xe','import')); $template = "daotao/xe/upload"; break;

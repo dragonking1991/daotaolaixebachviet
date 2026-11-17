@@ -421,3 +421,5 @@ if(!function_exists('dt_mb_lower'))
 		return is_array($rows) ? $rows : array();
 	}
 }
+
+require_once __DIR__.'/xe_suachua_lib.php';

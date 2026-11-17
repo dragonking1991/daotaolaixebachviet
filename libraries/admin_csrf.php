@@ -12,7 +12,7 @@ function admin_csrf_modules()
 		'daotao' => array(
 			'', 'dashboard', 'dieukienDat', 'exportDieukienDat', 'taichinh', 'exportTaichinh', 'sathachPending',
 			'khoa', 'exportKhoa', 'khoaAdd', 'khoaEdit', 'uploadKhoa', 'crudEdit',
-			'hocvien', 'exportHocvien', 'uploadHocvien', 'xe', 'exportXe', 'uploadXe',
+			'hocvien', 'exportHocvien', 'uploadHocvien', 'xe', 'xeSuachua', 'exportXe', 'uploadXe',
 			'giaovien', 'gvLuong', 'exportGiaovien', 'uploadGiaovien', 'lythuyet', 'exportLythuyet', 'uploadLythuyet',
 			'cabinkq', 'exportCabin', 'uploadCabin', 'hinh', 'exportHinh', 'dat', 'exportDat', 'uploadDat',
 			'tonghop', 'exportTonghop', 'kythi', 'kythiDetail', 'exportKythi', 'exportKythiKetqua', 'kythiUpload', 'kythiRoster', 'kythiTracuu',

@@ -66,9 +66,107 @@
 		<div class="dt-gv-tabs">
 			<a href="cong-giao-vien" class="<?=$dtTab==='daotao'?'is-active':''?>"><i class="fas fa-user-graduate" aria-hidden="true"></i> Đào tạo</a>
 			<a href="cong-giao-vien?tab=luong" class="<?=$dtTab==='luong'?'is-active':''?>"><i class="fas fa-receipt" aria-hidden="true"></i> Lương</a>
+			<a href="cong-giao-vien?tab=xe" class="<?=$dtTab==='xe'?'is-active':''?>"><i class="fas fa-car" aria-hidden="true"></i> Xe phụ trách</a>
 		</div>
 
-		<?php if($dtTab === 'luong'): ?>
+		<?php if($dtTab === 'xe'): ?>
+		<section class="dt-gv-vehicles">
+			<div class="dt-gv-vehicle-heading">
+				<div><h2><i class="fas fa-car-side" aria-hidden="true"></i> Xe được phân công</h2><p>Chỉ hiển thị xe đang được phân công cho tài khoản của bạn.</p></div>
+				<span class="dt-gv-vehicle-count"><?=count($dtXeRepairVehicles)?> xe</span>
+			</div>
+			<form method="get" action="cong-giao-vien" class="dt-gv-vehicle-search">
+				<input type="hidden" name="tab" value="xe">
+				<label for="dt-gv-xe-kw">Tìm xe</label>
+				<input id="dt-gv-xe-kw" type="search" name="xe_kw" value="<?=htmlspecialchars($dtXeRepairKeyword, ENT_QUOTES, 'UTF-8')?>" placeholder="Nhập biển số hoặc nhãn hiệu">
+				<button type="submit"><i class="fas fa-search" aria-hidden="true"></i> Tìm</button>
+			</form>
+			<?php if($dtXeRepairVehicles): ?>
+			<div class="dt-gv-vehicle-list">
+				<?php foreach($dtXeRepairVehicles as $vehicle): $isSelected = (int)$dtXeRepairSelectedId === (int)$vehicle['id']; ?>
+				<a class="dt-gv-vehicle-item <?=$isSelected?'is-selected':''?>" href="cong-giao-vien?tab=xe&amp;id_xe=<?=(int)$vehicle['id']?>&amp;xe_kw=<?=rawurlencode($dtXeRepairKeyword)?>">
+					<span class="dt-gv-vehicle-icon"><i class="fas fa-car" aria-hidden="true"></i></span>
+					<span class="dt-gv-vehicle-info">
+						<strong><?=htmlspecialchars($vehicle['bien_so'], ENT_QUOTES, 'UTF-8')?></strong>
+						<span><?=htmlspecialchars(trim(($vehicle['nhan_hieu'] ?? '').' '.($vehicle['loai_xe'] ?? '')) ?: 'Chưa cập nhật nhãn hiệu', ENT_QUOTES, 'UTF-8')?></span>
+					</span>
+					<span class="dt-gv-vehicle-history">
+						<?php if((int)$vehicle['so_lan_sua'] > 0): ?>
+						<?=number_format((int)$vehicle['so_lan_sua'])?> nhật ký
+						<?php if(($vehicle['trang_thai_cuoi'] ?? '') === 'dang_sua'): ?><em>Đang sửa</em><?php endif; ?>
+						<?php else: ?>Chưa có nhật ký<?php endif; ?>
+					</span>
+					<i class="fas fa-chevron-right dt-gv-vehicle-arrow" aria-hidden="true"></i>
+				</a>
+				<?php endforeach; ?>
+			</div>
+			<?php else: ?>
+			<div class="dt-gv-vehicle-empty"><i class="fas fa-car fa-2x" aria-hidden="true"></i><strong>Chưa có xe được phân công</strong><span>Liên hệ trung tâm nếu danh sách này chưa chính xác.</span></div>
+			<?php endif; ?>
+
+			<?php if($dtXeRepairSelectedVehicle): ?>
+			<div class="dt-gv-repair-panel">
+				<div class="dt-gv-repair-title">
+					<div><span>NHẬT KÝ SỬA XE</span><h3><?=htmlspecialchars($dtXeRepairSelectedVehicle['bien_so'], ENT_QUOTES, 'UTF-8')?></h3><p><?=htmlspecialchars(trim(($dtXeRepairSelectedVehicle['nhan_hieu'] ?? '').' '.($dtXeRepairSelectedVehicle['loai_xe'] ?? '')) ?: 'Thông tin xe tập lái', ENT_QUOTES, 'UTF-8')?></p></div>
+					<?php if(!$dtMustChange): ?><a href="cong-giao-vien?tab=xe&amp;id_xe=<?=(int)$dtXeRepairSelectedId?>&amp;new_log=1#dt-gv-repair-form" class="dt-gv-repair-add"><i class="fas fa-plus" aria-hidden="true"></i> Thêm nhật ký</a><?php endif; ?>
+				</div>
+				<div class="dt-gv-repair-stats">
+					<div><span>Tổng nhật ký</span><strong><?=(int)$dtXeRepairSummary['tong']?></strong></div>
+					<div><span>Đang sửa</span><strong><?=(int)$dtXeRepairSummary['dang_sua']?></strong></div>
+					<div><span>Chi phí đã ghi nhận</span><strong><?=number_format((float)$dtXeRepairSummary['chi_phi'], 0, ',', '.')?> ₫</strong></div>
+				</div>
+
+				<?php if($dtXeRepairFormOpen && !$dtMustChange): ?>
+				<form id="dt-gv-repair-form" method="post" action="index.php?com=cong-giao-vien" enctype="multipart/form-data" class="dt-gv-repair-form">
+					<input type="hidden" name="dt_act" value="addXeSuachua">
+					<input type="hidden" name="dt_csrf" value="<?=htmlspecialchars(dt_gv_csrf_token(), ENT_QUOTES, 'UTF-8')?>">
+					<input type="hidden" name="tab" value="xe">
+					<input type="hidden" name="id_xe" value="<?=(int)$dtXeRepairSelectedId?>">
+					<input type="hidden" name="xe_kw" value="<?=htmlspecialchars($dtXeRepairKeyword, ENT_QUOTES, 'UTF-8')?>">
+					<div class="dt-gv-repair-form-heading"><div><strong>Ghi nhận hiện trạng / sửa chữa</strong><span>Trạng thái mới bắt đầu là “Đang sửa”; có thể cập nhật sau.</span></div><a href="cong-giao-vien?tab=xe&amp;id_xe=<?=(int)$dtXeRepairSelectedId?>" aria-label="Đóng biểu mẫu">Đóng</a></div>
+					<div class="dt-gv-repair-fields">
+						<label><span>Ngày ghi nhận <b>*</b></span><input type="date" name="ngay_sua" value="<?=htmlspecialchars($dtXeRepairFormValues['ngay_sua'] ?? date('Y-m-d'), ENT_QUOTES, 'UTF-8')?>" required><?php if(isset($dtXeRepairFormErrors['ngay_sua'])): ?><small><?=htmlspecialchars($dtXeRepairFormErrors['ngay_sua'], ENT_QUOTES, 'UTF-8')?></small><?php endif; ?></label>
+						<label><span>Gara / đơn vị thực hiện</span><input type="text" name="gara" maxlength="255" value="<?=htmlspecialchars($dtXeRepairFormValues['gara'] ?? '', ENT_QUOTES, 'UTF-8')?>" placeholder="Nếu đã đưa xe đi sửa"></label>
+						<label class="dt-gv-repair-description"><span>Mô tả hiện trạng hoặc nội dung sửa chữa <b>*</b></span><textarea name="noi_dung" maxlength="1000" rows="3" required placeholder="Ví dụ: Xe có vết xước ở cửa bên phải, cần kiểm tra và xử lý"><?=htmlspecialchars($dtXeRepairFormValues['noi_dung'] ?? '', ENT_QUOTES, 'UTF-8')?></textarea><?php if(isset($dtXeRepairFormErrors['noi_dung'])): ?><small><?=htmlspecialchars($dtXeRepairFormErrors['noi_dung'], ENT_QUOTES, 'UTF-8')?></small><?php endif; ?></label>
+						<label><span>Số km hiện tại</span><input type="number" name="so_km" min="0" max="99999999.99" step="0.01" value="<?=htmlspecialchars($dtXeRepairFormValues['so_km'] ?? '', ENT_QUOTES, 'UTF-8')?>" placeholder="Chưa ghi nhận"><?php if(isset($dtXeRepairFormErrors['so_km'])): ?><small><?=htmlspecialchars($dtXeRepairFormErrors['so_km'], ENT_QUOTES, 'UTF-8')?></small><?php endif; ?></label>
+						<label><span>Chi phí (₫)</span><input type="number" name="chi_phi" min="0" max="99999999999999" step="1" value="<?=htmlspecialchars($dtXeRepairFormValues['chi_phi'] ?? '', ENT_QUOTES, 'UTF-8')?>" placeholder="Chưa nhập"><?php if(isset($dtXeRepairFormErrors['chi_phi'])): ?><small><?=htmlspecialchars($dtXeRepairFormErrors['chi_phi'], ENT_QUOTES, 'UTF-8')?></small><?php endif; ?></label>
+						<label class="dt-gv-repair-description"><span>Ảnh minh chứng hiện trạng</span><input type="file" name="anh_minh_chung[]" accept="image/jpeg,image/png,image/webp" multiple data-max-files="10" data-max-size="5242880"><small>Chọn tối đa 10 ảnh JPEG, PNG hoặc WebP; mỗi ảnh không quá 5 MB. Ảnh sẽ tự thu nhỏ và nén trước khi lưu. Bạn có thể chụp ảnh hoặc chọn ảnh có sẵn trên điện thoại/máy tính.</small><span class="dt-gv-upload-feedback" aria-live="polite"></span></label>
+						<label class="dt-gv-repair-description"><span>Ghi chú thêm</span><textarea name="ghi_chu" maxlength="5000" rows="2" placeholder="Thông tin bổ sung (không bắt buộc)"><?=htmlspecialchars($dtXeRepairFormValues['ghi_chu'] ?? '', ENT_QUOTES, 'UTF-8')?></textarea></label>
+					</div>
+					<div class="dt-gv-repair-form-actions"><button type="submit"><i class="fas fa-save" aria-hidden="true"></i> Lưu nhật ký</button><a href="cong-giao-vien?tab=xe&amp;id_xe=<?=(int)$dtXeRepairSelectedId?>">Hủy</a></div>
+				</form>
+				<?php endif; ?>
+
+				<div class="dt-gv-repair-history">
+					<h4>Lịch sử sửa chữa <span><?=count($dtXeRepairRows)?></span></h4>
+					<?php if($dtXeRepairRows): foreach($dtXeRepairRows as $repair): $repairImages = dt_xe_suachua_decode_images($repair['anh_minh_chung'] ?? ''); ?>
+					<article class="dt-gv-repair-card">
+						<div class="dt-gv-repair-card-top">
+							<div><time datetime="<?=htmlspecialchars($repair['ngay_sua'], ENT_QUOTES, 'UTF-8')?>"><?=date('d/m/Y', strtotime($repair['ngay_sua']))?></time><span class="dt-gv-repair-status <?=$repair['trang_thai']==='hoan_tat'?'is-done':'is-progress'?>"><?=$repair['trang_thai']==='hoan_tat'?'Hoàn tất':'Đang sửa'?></span></div>
+							<?php if(!$dtMustChange): ?>
+							<form method="post" action="index.php?com=cong-giao-vien" class="dt-gv-status-form">
+								<input type="hidden" name="dt_act" value="updateXeSuachuaStatus"><input type="hidden" name="dt_csrf" value="<?=htmlspecialchars(dt_gv_csrf_token(), ENT_QUOTES, 'UTF-8')?>"><input type="hidden" name="tab" value="xe"><input type="hidden" name="id_xe" value="<?=(int)$dtXeRepairSelectedId?>"><input type="hidden" name="id_suachua" value="<?=(int)$repair['id']?>"><input type="hidden" name="xe_kw" value="<?=htmlspecialchars($dtXeRepairKeyword, ENT_QUOTES, 'UTF-8')?>">
+								<label for="dt-gv-status-<?=(int)$repair['id']?>">Cập nhật trạng thái</label><select id="dt-gv-status-<?=(int)$repair['id']?>" name="trang_thai"><option value="dang_sua" <?=$repair['trang_thai']==='dang_sua'?'selected':''?>>Đang sửa</option><option value="hoan_tat" <?=$repair['trang_thai']==='hoan_tat'?'selected':''?>>Hoàn tất</option></select><button type="submit">Cập nhật</button>
+							</form>
+							<?php endif; ?>
+						</div>
+						<h5><?=nl2br(htmlspecialchars($repair['noi_dung'], ENT_QUOTES, 'UTF-8'))?></h5>
+						<div class="dt-gv-repair-meta">
+							<?php if(!empty($repair['gara'])): ?><span><i class="fas fa-wrench" aria-hidden="true"></i><?=htmlspecialchars($repair['gara'], ENT_QUOTES, 'UTF-8')?></span><?php endif; ?>
+							<?php if($repair['so_km'] !== null): ?><span><i class="fas fa-gauge" aria-hidden="true"></i><?=number_format((float)$repair['so_km'], 0, ',', '.')?> km</span><?php endif; ?>
+							<?php if($repair['chi_phi'] !== null): ?><span><i class="fas fa-coins" aria-hidden="true"></i><?=number_format((float)$repair['chi_phi'], 0, ',', '.')?> ₫</span><?php endif; ?>
+						</div>
+						<?php if(!empty($repair['ghi_chu'])): ?><p class="dt-gv-repair-notes"><?=nl2br(htmlspecialchars($repair['ghi_chu'], ENT_QUOTES, 'UTF-8'))?></p><?php endif; ?>
+						<?php if($repairImages): ?><div class="dt-gv-repair-images"><?php foreach($repairImages as $image): $imageUrl = 'index.php?com=cong-giao-vien&repair_image='.rawurlencode($image).'&id_xe='.(int)$dtXeRepairSelectedId.'&id_suachua='.(int)$repair['id']; ?><a href="<?=htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8')?>" target="_blank" rel="noopener noreferrer"><img src="<?=htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8')?>" alt="Ảnh hiện trạng xe" loading="lazy"></a><?php endforeach; ?></div><?php endif; ?>
+					</article>
+					<?php endforeach; else: ?>
+					<div class="dt-gv-repair-empty"><i class="fas fa-clipboard-list" aria-hidden="true"></i><strong>Chưa có nhật ký sửa chữa</strong><span>Ghi nhận hiện trạng xe hoặc thêm lần sửa chữa đầu tiên để tiện theo dõi.</span></div>
+					<?php endif; ?>
+				</div>
+			</div>
+			<?php endif; ?>
+		</section>
+		<?php elseif($dtTab === 'luong'): ?>
 		<div class="dt-gv-slip">
 			<?php if(!$dtPayroll): ?>
 			<div class="dt-gv-slip-empty">Chưa có dữ liệu lương. Vui lòng liên hệ trung tâm nếu bạn cần tra cứu.</div>
@@ -383,4 +481,113 @@
 .dt-gv-hinh-form input { height: 30px; padding: 0 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 12px; }
 .dt-gv-hinh-form button { height: 30px; padding: 0 10px; border: none; border-radius: 5px; background: #1e9e4a; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
 .dt-gv-hinh-form .dt-gv-field, .dt-gv-hinh-rule, .dt-gv-hinh-entry-note { width: 100%; }
+.dt-gv-vehicles { max-width: 1050px; }
+.dt-gv-vehicle-heading, .dt-gv-repair-title, .dt-gv-repair-form-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.dt-gv-vehicle-heading { margin: 4px 0 15px; }
+.dt-gv-vehicle-heading h2 { margin: 0; color: #172554; font-size: 20px; }
+.dt-gv-vehicle-heading h2 i { margin-right: 7px; color: #3155d9; }
+.dt-gv-vehicle-heading p { margin: 5px 0 0; color: #64748b; font-size: 13px; }
+.dt-gv-vehicle-count { padding: 6px 11px; border-radius: 999px; background: #eef3ff; color: #2947a5; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.dt-gv-vehicle-search { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.dt-gv-vehicle-search label { margin: 0; color: #475569; font-size: 13px; font-weight: 700; }
+.dt-gv-vehicle-search input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 7px; }
+.dt-gv-vehicle-search button, .dt-gv-repair-add { height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 7px; background: #3155d9; color: white; font-weight: 700; text-decoration: none; cursor: pointer; }
+.dt-gv-vehicle-search button:hover, .dt-gv-repair-add:hover { background: #2444bf; color: white; }
+.dt-gv-vehicle-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 8px; }
+.dt-gv-vehicle-item { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid #e2e8f0; border-radius: 9px; background: white; color: #334155; text-decoration: none; transition: border-color .15s, box-shadow .15s; }
+.dt-gv-vehicle-item:hover, .dt-gv-vehicle-item.is-selected { border-color: #93a8f4; box-shadow: 0 2px 8px rgba(49,85,217,.09); text-decoration: none; }
+.dt-gv-vehicle-item.is-selected { background: #f7f8ff; }
+.dt-gv-vehicle-icon { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 9px; background: #eef3ff; color: #3155d9; }
+.dt-gv-vehicle-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dt-gv-vehicle-info strong { color: #172554; font-size: 14px; }
+.dt-gv-vehicle-info span, .dt-gv-vehicle-history { color: #64748b; font-size: 11px; }
+.dt-gv-vehicle-history { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; white-space: nowrap; }
+.dt-gv-vehicle-history em { color: #9a5a00; font-style: normal; font-weight: 700; }
+.dt-gv-vehicle-arrow { color: #94a3b8; font-size: 11px; }
+.dt-gv-vehicle-empty, .dt-gv-repair-empty { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 24px; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b; text-align: center; }
+.dt-gv-vehicle-empty strong, .dt-gv-repair-empty strong { color: #334155; }
+.dt-gv-repair-panel { margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; overflow: hidden; }
+.dt-gv-repair-title { padding: 16px 18px; border-bottom: 1px solid #e8edf4; }
+.dt-gv-repair-title > div > span { color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.dt-gv-repair-title h3 { margin: 3px 0; color: #172554; font-size: 20px; }
+.dt-gv-repair-title p { margin: 0; color: #64748b; font-size: 12px; }
+.dt-gv-repair-add { height: 38px; font-size: 13px; }
+.dt-gv-repair-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #e8edf4; }
+.dt-gv-repair-stats > div { display: flex; flex-direction: column; gap: 3px; }
+.dt-gv-repair-stats span { color: #64748b; font-size: 11px; }
+.dt-gv-repair-stats strong { color: #172554; font-size: 16px; }
+.dt-gv-repair-form { margin: 16px; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fbfdff; }
+.dt-gv-repair-form-heading { align-items: flex-start; margin-bottom: 13px; }
+.dt-gv-repair-form-heading > div { display: flex; flex-direction: column; gap: 3px; }
+.dt-gv-repair-form-heading strong { color: #172554; font-size: 15px; }
+.dt-gv-repair-form-heading span, .dt-gv-repair-form-heading a { color: #64748b; font-size: 12px; }
+.dt-gv-repair-form-heading a { text-decoration: none; }
+.dt-gv-repair-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+.dt-gv-repair-fields label { min-width: 0; display: flex; flex-direction: column; gap: 5px; margin: 0; }
+.dt-gv-repair-fields label > span { color: #475569; font-size: 12px; font-weight: 700; }
+.dt-gv-repair-fields label b { color: #c0392b; }
+.dt-gv-repair-fields input, .dt-gv-repair-fields textarea { width: 100%; min-height: 39px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; color: #1e293b; font: inherit; font-size: 13px; box-sizing: border-box; }
+.dt-gv-repair-fields input[type=file] { min-height: 43px; padding: 7px; }
+.dt-gv-repair-fields textarea { resize: vertical; }
+.dt-gv-repair-fields small { color: #a12a23; font-size: 11px; line-height: 1.4; }
+.dt-gv-repair-fields .dt-gv-repair-description { grid-column: 1 / -1; }
+.dt-gv-repair-fields .dt-gv-repair-description input[type=file] + small { color: #64748b; }
+.dt-gv-upload-feedback { color: #64748b; font-size: 11px; }
+.dt-gv-upload-feedback.is-error { color: #a12a23; font-weight: 700; }
+.dt-gv-repair-form-actions { display: flex; align-items: center; gap: 12px; margin-top: 13px; }
+.dt-gv-repair-form-actions button { min-height: 39px; padding: 0 15px; border: 0; border-radius: 6px; background: #1e9e4a; color: #fff; font-weight: 700; cursor: pointer; }
+.dt-gv-repair-form-actions a { color: #64748b; font-size: 13px; text-decoration: none; }
+.dt-gv-repair-history { padding: 15px 16px 4px; }
+.dt-gv-repair-history > h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 10px; color: #1e293b; font-size: 15px; }
+.dt-gv-repair-history > h4 span { display: inline-grid; min-width: 21px; height: 21px; place-items: center; padding: 0 5px; border-radius: 999px; background: #eef3ff; color: #2947a5; font-size: 11px; }
+.dt-gv-repair-card { margin-bottom: 10px; padding: 13px; border: 1px solid #e2e8f0; border-radius: 9px; }
+.dt-gv-repair-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.dt-gv-repair-card-top > div { display: flex; align-items: center; gap: 8px; }
+.dt-gv-repair-card time { color: #334155; font-size: 13px; font-weight: 700; }
+.dt-gv-repair-status { padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.dt-gv-repair-status.is-progress { background: #fff3d6; color: #8a5a00; }
+.dt-gv-repair-status.is-done { background: #e7f5ec; color: #176b3a; }
+.dt-gv-status-form { display: flex; align-items: center; gap: 6px; }
+.dt-gv-status-form label { margin: 0; color: #64748b; font-size: 10px; }
+.dt-gv-status-form select { height: 31px; border: 1px solid #cbd5e1; border-radius: 5px; color: #334155; font-size: 11px; }
+.dt-gv-status-form button { height: 31px; padding: 0 9px; border: 1px solid #3155d9; border-radius: 5px; background: white; color: #3155d9; font-size: 11px; font-weight: 700; cursor: pointer; }
+.dt-gv-repair-card h5 { margin: 10px 0 7px; color: #1e293b; font-size: 14px; line-height: 1.5; }
+.dt-gv-repair-meta { display: flex; flex-wrap: wrap; gap: 7px 15px; color: #64748b; font-size: 11px; }
+.dt-gv-repair-meta i { width: 14px; color: #94a3b8; }
+.dt-gv-repair-notes { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid #f1f5f9; color: #64748b; font-size: 12px; }
+.dt-gv-repair-images { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.dt-gv-repair-images img { width: 100px; height: 76px; object-fit: cover; border: 1px solid #e2e8f0; border-radius: 6px; }
+.dt-gv-repair-empty { padding: 20px; border: 0; }
+@media (max-width: 640px) {
+	.dt-gv-vehicle-heading { align-items: flex-start; }
+	.dt-gv-vehicle-search { flex-wrap: wrap; }
+	.dt-gv-vehicle-search label { width: 100%; }
+	.dt-gv-vehicle-search input { flex: 1 1 150px; }
+	.dt-gv-vehicle-list { grid-template-columns: 1fr; }
+	.dt-gv-repair-title { align-items: flex-start; }
+	.dt-gv-repair-title h3 { font-size: 18px; }
+	.dt-gv-repair-add { height: auto; min-height: 36px; padding: 0 10px; font-size: 12px; }
+	.dt-gv-repair-stats { padding: 10px; }
+	.dt-gv-repair-stats strong { font-size: 13px; }
+	.dt-gv-repair-stats span { font-size: 10px; }
+	.dt-gv-repair-form { margin: 10px; padding: 11px; }
+	.dt-gv-repair-fields { grid-template-columns: 1fr; }
+	.dt-gv-repair-fields .dt-gv-repair-description { grid-column: auto; }
+	.dt-gv-repair-history { padding: 12px 10px 2px; }
+	.dt-gv-repair-card { padding: 10px; }
+	.dt-gv-repair-card-top { align-items: flex-start; flex-direction: column; }
+	.dt-gv-status-form { flex-wrap: wrap; }
+}
 </style>
+<script>
+document.querySelectorAll('.dt-gv-repair-form input[type="file"]').forEach(function(input) {
+	input.addEventListener('change', function() {
+		var feedback = input.parentNode.querySelector('.dt-gv-upload-feedback');
+		var files = Array.prototype.slice.call(input.files || []);
+		var invalid = files.length > 10 || files.some(function(file) { return file.size > 5242880; });
+		feedback.textContent = invalid ? 'Chọn tối đa 10 ảnh, mỗi ảnh không quá 5 MB.' : (files.length ? 'Đã chọn ' + files.length + ' ảnh.' : '');
+		feedback.classList.toggle('is-error', invalid);
+		if(invalid) input.value = '';
+	});
+});
+</script>
