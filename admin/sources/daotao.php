@@ -178,6 +178,7 @@ switch($act)
 	case "exportHinh": dt_guard(dt_p('hinh','export')); dt_hinh_export(); break;
 	case "saveHinh": dt_guard(dt_p('hinh','edit')); dt_hinh_save(); break;
 	case "saveHinhSelected": dt_guard(dt_p('hinh','edit')); dt_hinh_save_selected(); break;
+	case "hinhAutoFill": dt_guard(dt_p('hinh','edit')); dt_hinh_auto_fill(); break;
 	case "hinhDatAll": dt_guard(dt_p('hinh','edit')); dt_hinh_dat_all(); break;
 	/* ---------- DAT ---------- */
 	case "dat":            dt_guard(dt_p('dat','view'));   dt_dat_list();  $template = "daotao/dat/items"; break;

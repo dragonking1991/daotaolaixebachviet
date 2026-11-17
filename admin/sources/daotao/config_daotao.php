@@ -91,3 +91,9 @@ function dt_nguong_hinh()
 		'CE'  => array('km' => 15,  'gio' => 7,  'km_max' => 20,  'gio_max' => 8),
 	);
 }
+
+function dt_hinh_thieu_du_lieu($gio, $km)
+{
+	return $gio === null || $km === null || trim((string)$gio) === '' || trim((string)$km) === ''
+		|| (float)$gio <= 0 || (float)$km <= 0;
+}

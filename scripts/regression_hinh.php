@@ -109,8 +109,9 @@ $func = new HinhFunctions();
 $seo = new HinhSeo();
 $breadcr = new HinhBreadcrumbs();
 $_SESSION = array('dt_gv' => array('id' => 1, 'cccd' => '000000000002', 'hoten' => 'GV thu', 'gv_key' => 'gv thu'));
+$_SESSION['dt_gv_csrf'] = 'hinh-regression-token';
 $_REQUEST = array('id_khoa' => 7);
-$_POST = array('dt_act' => 'savehinh', 'id_khoa' => 7, 'cccd' => $d->student['cccd']);
+$_POST = array('dt_act' => 'savehinh', 'dt_csrf' => $_SESSION['dt_gv_csrf'], 'id_khoa' => 7, 'cccd' => $d->student['cccd']);
 
 if($mode === 'portal')
 {
@@ -240,6 +241,8 @@ $expectedThresholds = array(
 	'CE' => array('km' => 15, 'gio' => 7, 'km_max' => 20, 'gio_max' => 8),
 );
 hinh_check(dt_nguong_hinh() === $expectedThresholds, 'Category thresholds must match the prescribed hour/km limits');
+hinh_check(dt_hinh_thieu_du_lieu(null, null) && dt_hinh_thieu_du_lieu(1, null) && dt_hinh_thieu_du_lieu(0, 10), 'Missing or zero practice values must be identified');
+hinh_check(!dt_hinh_thieu_du_lieu(1, 10), 'Positive hour and km values are complete');
 foreach($expectedThresholds as $hang => $threshold)
 {
 	foreach(array(null, '', 0, '0') as $override)

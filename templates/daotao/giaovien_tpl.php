@@ -105,8 +105,12 @@
 				<?php foreach($dtKhoaList as $k): ?><option value="<?=$k['id']?>" <?=($dtFilterKhoa==$k['id'])?'selected':''?>><?=htmlspecialchars($k['ma_khoa'].' '.$k['ten_khoa'])?></option><?php endforeach; ?>
 			</select>
 			<input type="text" name="kw" value="<?=htmlspecialchars($dtFilterKw)?>" placeholder="Tên / CCCD / Mã HV" style="height:38px;padding:0 12px;border:1px solid #ccc;border-radius:6px;min-width:200px;">
+			<select name="hinh_thieu" aria-label="Lọc học viên thiếu giờ/km thực hành hình" style="height:38px;padding:0 10px;border:1px solid #ccc;border-radius:6px;">
+				<option value="0">Tất cả giờ/km</option>
+				<option value="1" <?=$dtFilterHinhThieu?'selected':''?>>Thiếu giờ/km</option>
+			</select>
 			<button type="submit" style="height:38px;padding:0 18px;border:none;border-radius:6px;background:#2954f2;color:#fff;font-weight:700;cursor:pointer;"><i class="fas fa-search" aria-hidden="true"></i> Lọc</button>
-			<?php if($dtFilterKhoa || $dtFilterKw !== ''): ?><a href="cong-giao-vien" style="height:38px;line-height:38px;padding:0 14px;border:1px solid #ccc;border-radius:6px;color:#555;text-decoration:none;">Bỏ lọc</a><?php endif; ?>
+			<?php if($dtFilterKhoa || $dtFilterKw !== '' || $dtFilterHinhThieu): ?><a href="cong-giao-vien" style="height:38px;line-height:38px;padding:0 14px;border:1px solid #ccc;border-radius:6px;color:#555;text-decoration:none;">Bỏ lọc</a><?php endif; ?>
 			<span style="margin-left:auto;color:#64748b;font-size:13px;">Tổng: <strong><?=count($dtStudents)?></strong> học viên</span>
 		</form>
 
@@ -146,6 +150,25 @@
 			</div>
 			<?php } ?>
 		</div>
+		<?php if($showHinh): ?>
+		<details class="dt-gv-hinh-reference">
+			<summary><i class="fas fa-info-circle" aria-hidden="true"></i> Hướng dẫn cập nhật Giờ/Km thực hành trong hình</summary>
+			<div class="dt-gv-hinh-reference-body">
+				<p>Giáo viên nhập số liệu thực tế trước ngày kiểm tra hoàn thành khóa học. Giờ phải lớn hơn ngưỡng tối thiểu; giờ và km không vượt quá giới hạn theo hạng.</p>
+				<div class="table-responsive">
+					<table>
+						<thead><tr><th>Hạng</th><th>Giờ thực hành</th><th>Quãng đường (km)</th></tr></thead>
+						<tbody>
+							<?php foreach(array('B11' => 'B (TĐ)', 'B1' => 'B (SS)', 'C1' => 'C1', 'C' => 'C', 'CE' => 'CE') as $hinhKey => $hinhLabel): $rule = dt_nguong_hinh()[$hinhKey]; ?>
+							<tr><th><?=$hinhLabel?></th><td>&gt;<?=$rule['gio']?> đến <?=$rule['gio_max']?></td><td><?=$rule['km']?>–<?=$rule['km_max']?></td></tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+				<div class="dt-gv-hinh-warning"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Chỉ cập nhật số liệu đúng với thực tế giảng dạy; dữ liệu thiếu sẽ được đánh dấu để bổ sung.</div>
+			</div>
+		</details>
+		<?php endif; ?>
 
 		<div style="overflow-x:auto;">
 		<table style="width:100%;border-collapse:collapse;font-size:14px;">
@@ -167,6 +190,7 @@
 					// DAT: luôn hiển thị nội dung còn thiếu (giống cột DAT ở màn Tổng hợp admin), không phụ thuộc show_detail.
 					$datMiss = $showDat && empty($s['dat']['dat']) && !empty($s['dat']['thieu']) ? $s['dat']['thieu'] : array();
 					$hinhMiss = $showDetail && $showHinh && empty($s['hinh']['dat']) ? dt_portal_hinh_missing($hv['hang'], $s['hinh']['gio'], $s['hinh']['km']) : array();
+					$hinhThieuDuLieu = $showHinh && dt_hinh_thieu_du_lieu($s['hinh']['gio'], $s['hinh']['km']);
 				?>
 				<tr>
 					<td class="dt-gv-student-cell"><?=htmlspecialchars($hv['hoten'])?><span class="dt-gv-student-meta">CCCD: <?=htmlspecialchars($hv['cccd'])?> <span>•</span> Hạng <?=htmlspecialchars($hv['hang'])?></span></td>
@@ -195,12 +219,16 @@
 								<input type="hidden" name="id_khoa" value="<?=(int)$hv['id_khoa']?>">
 								<input type="hidden" name="khoa" value="<?=(int)$dtFilterKhoa?>">
 								<input type="hidden" name="kw" value="<?=htmlspecialchars($dtFilterKw)?>">
-								<label class="dt-gv-field"><span>Giờ thực hành<?=isset($hinhLimit['gio_max']) ? ' (tối đa '.$hinhLimit['gio_max'].')' : ''?></span><input type="number" name="gio" min="0" <?=isset($hinhLimit['gio_max']) ? 'max="'.$hinhLimit['gio_max'].'"' : ''?> step="0.1" value="<?=htmlspecialchars((string)$s['hinh']['gio'])?>" required></label>
-								<label class="dt-gv-field"><span>Quãng đường (km)<?=isset($hinhLimit['km_max']) ? ' (tối đa '.$hinhLimit['km_max'].')' : ''?></span><input type="number" name="km" min="0" <?=isset($hinhLimit['km_max']) ? 'max="'.$hinhLimit['km_max'].'"' : ''?> step="0.1" value="<?=htmlspecialchars((string)$s['hinh']['km'])?>" required></label>
+								<input type="hidden" name="hinh_thieu" value="<?=$dtFilterHinhThieu?>">
+								<?php if($hinhLimit): ?><div class="dt-gv-hinh-rule">Hạng <?=htmlspecialchars($hv['hang'])?>: cần &gt;<?=$hinhLimit['gio']?> đến <?=$hinhLimit['gio_max']?> giờ · <?=$hinhLimit['km']?>–<?=$hinhLimit['km_max']?> km</div><?php endif; ?>
+								<label class="dt-gv-field"><span>Giờ thực hành (giờ)</span><input type="number" name="gio" min="0" <?=isset($hinhLimit['gio_max']) ? 'max="'.$hinhLimit['gio_max'].'"' : ''?> step="0.1" value="<?=htmlspecialchars((string)$s['hinh']['gio'])?>" required></label>
+								<label class="dt-gv-field"><span>Quãng đường (km)</span><input type="number" name="km" min="0" <?=isset($hinhLimit['km_max']) ? 'max="'.$hinhLimit['km_max'].'"' : ''?> step="0.1" value="<?=htmlspecialchars((string)$s['hinh']['km'])?>" required></label>
+								<div class="dt-gv-hinh-entry-note">Nhập đúng số liệu thực tế. Hồ sơ chỉ được đánh giá đạt khi đủ yêu cầu theo hạng.</div>
 								<button type="submit"><i class="fas fa-save" aria-hidden="true"></i> Lưu</button>
 							</form>
 						</details>
 						<?php endif; ?>
+						<?php if($hinhThieuDuLieu): ?><div class="dt-gv-hinh-incomplete"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> Thiếu giờ/km thực tế</div><?php endif; ?>
 					</td>
 					<?php endif; ?>
 					<?php if($showDat): ?>
@@ -300,6 +328,20 @@
 .dt-gv-hinh-form input:focus { outline: none; border-color: #3155d9; box-shadow: 0 0 0 2px rgba(49,85,217,.15); }
 .dt-gv-hinh-form button { width: 100%; height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; border-radius: 6px; background: #1e9e4a; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
 .dt-gv-hinh-form button:hover { background: #18823d; }
+.dt-gv-hinh-reference { margin: 0 0 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; overflow: hidden; }
+.dt-gv-hinh-reference > summary { padding: 11px 14px; color: #1f3a8a; background: #f3f6ff; font-weight: 700; cursor: pointer; list-style: none; }
+.dt-gv-hinh-reference > summary::-webkit-details-marker { display: none; }
+.dt-gv-hinh-reference > summary i { margin-right: 6px; color: #3155d9; }
+.dt-gv-hinh-reference-body { padding: 12px 14px; }
+.dt-gv-hinh-reference-body p { margin: 0 0 9px; color: #475569; font-size: 13px; }
+.dt-gv-hinh-reference table { width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; }
+.dt-gv-hinh-reference th, .dt-gv-hinh-reference td { padding: 6px 9px; border: 1px solid #d5dce7; }
+.dt-gv-hinh-reference thead { background: #f1f5f9; }
+.dt-gv-hinh-warning { margin-top: 9px; padding: 8px 10px; border-left: 3px solid #c0392b; border-radius: 4px; background: #fff4f2; color: #8d2922; font-size: 12px; font-weight: 600; }
+.dt-gv-hinh-rule { padding: 7px 8px; border-radius: 5px; background: #f3f6ff; color: #2947a5; font-size: 11px; font-weight: 700; line-height: 1.4; }
+.dt-gv-hinh-entry-note { color: #64748b; font-size: 11px; line-height: 1.35; }
+.dt-gv-hinh-incomplete { margin-top: 5px; color: #a9441b; font-size: 11px; font-weight: 700; white-space: normal; }
+.dt-gv-hinh-incomplete i { margin-right: 3px; }
 .dt-gv-history { margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fbfdff; overflow: hidden; }
 .dt-gv-history > summary { display: flex; align-items: center; gap: 8px; padding: 12px 16px; font-weight: 700; color: #1f3a8a; cursor: pointer; list-style: none; background: #eef3ff; }
 .dt-gv-history > summary::-webkit-details-marker { display: none; }
@@ -340,4 +382,5 @@
 .dt-gv-hinh-form { margin-top: 8px; display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
 .dt-gv-hinh-form input { height: 30px; padding: 0 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 12px; }
 .dt-gv-hinh-form button { height: 30px; padding: 0 10px; border: none; border-radius: 5px; background: #1e9e4a; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
+.dt-gv-hinh-form .dt-gv-field, .dt-gv-hinh-rule, .dt-gv-hinh-entry-note { width: 100%; }
 </style>

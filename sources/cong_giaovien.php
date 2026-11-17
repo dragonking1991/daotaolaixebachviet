@@ -175,6 +175,7 @@ $dtPayroll = null;
 $dtTab = (isset($_GET['tab']) && $_GET['tab'] === 'luong') ? 'luong' : 'daotao';
 $dtFilterKhoa = isset($_REQUEST['khoa']) ? (int)$_REQUEST['khoa'] : 0;
 $dtFilterKw = isset($_REQUEST['kw']) ? trim((string)$_REQUEST['kw']) : '';
+$dtFilterHinhThieu = isset($_REQUEST['hinh_thieu']) && (string)$_REQUEST['hinh_thieu'] === '1' ? 1 : 0;
 if($dtGv && $dtTab === 'luong')
 {
 	if(empty($dtGv['must_change'])) $dtPayroll = payrollMonthlyFindByCccd($d, $dtGv['cccd'], isset($_GET['thang']) ? trim((string)$_GET['thang']) : '', array('GVTH', 'CTV'));
@@ -196,7 +197,9 @@ elseif($dtGv)
 	$rows = $d->rawQuery("select h.*, k.ma_khoa, k.ten_khoa from #_dt_hocvien h left join #_dt_khoa k on k.id = h.id_khoa where $where order by k.ma_khoa asc, substring_index(h.hoten, ' ', -1) asc, h.hoten asc", $params);
 	foreach($rows as $hv)
 	{
-		$dtStudents[] = array('hv' => $hv, 'sum' => dt_student_summary($hv));
+		$summary = dt_student_summary($hv);
+		if($dtFilterHinhThieu && !dt_hinh_thieu_du_lieu($summary['hinh']['gio'], $summary['hinh']['km'])) continue;
+		$dtStudents[] = array('hv' => $hv, 'sum' => $summary);
 	}
 	if(!empty($dtCfg['show_sathach'])) $dtExamResults = dt_portal_sathach_latest_map($dtStudents);
 }

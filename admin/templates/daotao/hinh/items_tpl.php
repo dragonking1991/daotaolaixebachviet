@@ -15,10 +15,24 @@
 </section>
 <section class="content">
 	<div class="card card-primary card-outline text-sm">
-		<div class="card-header"><h3 class="card-title"><strong>Thực hành trong hình (nhập tay)</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3><div class="card-tools"><?php if(dt_can('hinh','edit')): ?><button type="submit" form="dt-module-hinh" onclick="return confirm('Đánh dấu Đạt thực hành trong hình cho học viên đã chọn?')" class="btn btn-sm bg-gradient-success"><i class="fas fa-check mr-1"></i>Đạt mục đã chọn</button> <?php if($id_khoa_sel): ?><a href="index.php?com=daotao&act=hinhDatAll&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Đánh dấu ĐẠT thực hành hình cho TẤT CẢ học viên trong khóa?')" class="btn btn-sm bg-gradient-warning"><i class="fas fa-check-double mr-1"></i>Đạt toàn bộ</a> <?php endif; ?><?php endif; ?><?php if(dt_can('hinh','export')): ?>		<a href="<?=dt_export_link('exportHinh', array('id_khoa','keyword','trang_thai','gv'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('hinh','delete')): ?><button type="submit" form="dt-module-hinh" formaction="index.php?com=daotao&act=moduleDeleteSelected" onclick="return confirm('Xóa kết quả thực hành trong hình của các học viên đã chọn?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button><?php endif; ?></div></div>
+		<div class="card-header"><h3 class="card-title"><strong>Thực hành trong hình (nhập tay)</strong> <span class="dt-count"><?=number_format((int)$total_items)?></span></h3><div class="card-tools"><?php if(dt_can('hinh','edit')): ?><button type="submit" form="dt-module-hinh" onclick="return confirm('Đánh dấu Đạt thực hành trong hình cho học viên đã chọn?')" class="btn btn-sm bg-gradient-success"><i class="fas fa-check mr-1"></i>Đạt mục đã chọn</button> <?php if($id_khoa_sel): ?><a href="index.php?com=daotao&act=hinhAutoFill&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Tự động điền ngẫu nhiên giờ/km còn thiếu theo hướng dẫn cho tất cả học viên trong khóa?')" class="btn btn-sm bg-gradient-primary"><i class="fas fa-random mr-1"></i>Tự động cập nhật giờ/km</a> <a href="index.php?com=daotao&act=hinhDatAll&id_khoa=<?=$id_khoa_sel?>" onclick="return confirm('Đánh dấu ĐẠT thực hành hình cho TẤT CẢ học viên trong khóa?')" class="btn btn-sm bg-gradient-warning"><i class="fas fa-check-double mr-1"></i>Đạt toàn bộ</a> <?php endif; ?><?php endif; ?><?php if(dt_can('hinh','export')): ?>		<a href="<?=dt_export_link('exportHinh', array('id_khoa','keyword','trang_thai','gv'))?>" class="btn btn-sm bg-gradient-info"><i class="fas fa-file-excel mr-1"></i>Xuất Excel</a> <?php endif; ?><?php if(dt_can('hinh','delete')): ?><button type="submit" form="dt-module-hinh" formaction="index.php?com=daotao&act=moduleDeleteSelected" onclick="return confirm('Xóa kết quả thực hành trong hình của các học viên đã chọn?')" class="btn btn-sm bg-gradient-danger"><i class="fas fa-trash mr-1"></i>Xóa mục đã chọn</button><?php endif; ?></div></div>
 		<div class="card-body">
 			<?php if(dt_can('hinh','edit')): ?><button type="submit" form="dt-module-hinh" formaction="index.php?com=daotao&act=saveHinhSelected" name="save_hinh_selected" value="1" class="btn btn-sm bg-gradient-success mb-2"><i class="fas fa-save mr-1"></i>Lưu toàn bộ</button><?php endif; ?>
 			<?php if(dt_can('hinh','edit') || dt_can('hinh','delete')): ?><form id="dt-module-hinh" method="post" action="index.php?com=daotao&act=modulePassSelected"><input type="hidden" name="entity" value="hinh"><input type="hidden" name="id_khoa" value="<?=(int)$id_khoa_sel?>"><input type="hidden" name="ret" value="<?=$hinh_ret?>"></form><?php endif; ?>
+			<div class="alert alert-light border mb-3">
+				<strong class="text-primary"><i class="fas fa-info-circle mr-1"></i>Hướng dẫn nhập giờ/km</strong>
+				<div class="small text-muted mb-2">Chỉ nhập số liệu thực tế. Giờ phải lớn hơn ngưỡng tối thiểu và không vượt mức tối đa; quãng đường cần nằm trong khoảng theo hạng.</div>
+				<div class="table-responsive">
+					<table class="table table-sm table-bordered bg-white mb-0 text-center">
+						<thead class="thead-light"><tr><th>Hạng</th><th>Giờ thực hành</th><th>Quãng đường (km)</th></tr></thead>
+						<tbody>
+							<?php foreach(array('B11' => 'B (TĐ)', 'B1' => 'B (SS)', 'C1' => 'C1', 'C' => 'C', 'CE' => 'CE') as $hinhKey => $hinhLabel): $rule = dt_nguong_hinh()[$hinhKey]; ?>
+							<tr><th><?=$hinhLabel?></th><td>&gt;<?=$rule['gio']?> đến <?=$rule['gio_max']?></td><td><?=$rule['km']?>–<?=$rule['km_max']?></td></tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="hinh">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
@@ -31,6 +45,7 @@
 					<option value="">— Trạng thái —</option>
 					<option value="dat" <?=(isset($_REQUEST['trang_thai'])&&$_REQUEST['trang_thai']=='dat')?'selected':''?>>Đạt</option>
 					<option value="chua" <?=(isset($_REQUEST['trang_thai'])&&$_REQUEST['trang_thai']=='chua')?'selected':''?>>Chưa đạt</option>
+					<option value="thieu" <?=(isset($_REQUEST['trang_thai'])&&$_REQUEST['trang_thai']=='thieu')?'selected':''?>>Thiếu giờ/km</option>
 				</select>
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
@@ -48,12 +63,13 @@
 						<td><?=htmlspecialchars($it['cccd'])?></td>
 						<td><?=htmlspecialchars($it['hang'])?></td>
 						<td class="dt-sub"><i class="fas fa-chalkboard-teacher"></i><?=htmlspecialchars(!empty($it['gv_hoten']) ? $it['gv_hoten'] : '—')?></td>
-						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đạt</span><?php else: ?><span class="badge badge-secondary">Chưa</span><?php endif; ?></td>
+						<td class="text-center"><?php if((int)$it['dat']===1): ?><span class="badge badge-success">Đạt</span><?php elseif(!empty($it['thieu_du_lieu'])): ?><span class="badge badge-warning">Thiếu giờ/km</span><?php else: ?><span class="badge badge-secondary">Chưa</span><?php endif; ?></td>
 						<td>
 							<form data-hinh-id="<?=(int)$it['id']?>" method="post" action="index.php?com=daotao&act=saveHinh&id_khoa=<?=(int)(isset($it['id_khoa'])?$it['id_khoa']:$id_khoa_sel)?>" style="display:flex;gap:6px;align-items:center;margin:0;">
 								<input type="hidden" name="cccd" value="<?=htmlspecialchars($it['cccd'])?>">
-								<input type="number" step="0.01" min="0" <?=isset($hinhLimit['gio_max']) ? 'max="'.$hinhLimit['gio_max'].'"' : ''?> name="gio" class="form-control form-control-sm" style="width:90px" placeholder="giờ" value="<?=$it['gio']!==null?htmlspecialchars($it['gio']):''?>">
-								<input type="number" step="0.01" min="0" <?=isset($hinhLimit['km_max']) ? 'max="'.$hinhLimit['km_max'].'"' : ''?> name="km" class="form-control form-control-sm" style="width:90px" placeholder="km" value="<?=$it['km']!==null?htmlspecialchars($it['km']):''?>">
+								<input type="hidden" name="ret" value="<?=$hinh_ret?>">
+								<input type="number" step="0.01" min="0" <?=isset($hinhLimit['gio_max']) ? 'max="'.$hinhLimit['gio_max'].'"' : ''?> name="gio" class="form-control form-control-sm" style="width:90px" placeholder="giờ" aria-label="Giờ thực hành" title="<?=isset($hinhLimit['gio'])?'Mức tham khảo: >'.$hinhLimit['gio'].' đến '.$hinhLimit['gio_max'].' giờ, nhập số thực tế.':'Nhập số giờ thực tế.'?>" value="<?=$it['gio']!==null?htmlspecialchars($it['gio']):''?>">
+								<input type="number" step="0.01" min="0" <?=isset($hinhLimit['km_max']) ? 'max="'.$hinhLimit['km_max'].'"' : ''?> name="km" class="form-control form-control-sm" style="width:90px" placeholder="km" aria-label="Quãng đường (km)" title="<?=isset($hinhLimit['km'])?'Mức tham khảo: '.$hinhLimit['km'].' đến '.$hinhLimit['km_max'].' km, nhập số thực tế.':'Nhập quãng đường thực tế.'?>" value="<?=$it['km']!==null?htmlspecialchars($it['km']):''?>">
 								<label class="mb-0 text-nowrap"><input type="checkbox" name="dat_override" value="1" <?=$it['dat_override']!==null && (int)$it['dat_override']===1?'checked':''?>> Đạt</label>
 								<button class="btn btn-xs bg-gradient-success"><i class="fas fa-save mr-1"></i>Lưu</button>
 							</form>

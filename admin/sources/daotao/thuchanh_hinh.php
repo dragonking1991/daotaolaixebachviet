@@ -34,10 +34,12 @@ function dt_hinh_list()
 	{
 		if($kw !== '' && strpos(dt_mb_lower($rw['hoten'].' '.$rw['cccd']), $kw) === false) continue;
 		if($gvFilter !== '' && dt_gv_key($rw['gv_hoten']) !== $gvFilter) continue;
+		$rw['thieu_du_lieu'] = dt_hinh_thieu_du_lieu($rw['gio'], $rw['km']);
 		$rw['dat'] = dt_hinh_dat($rw['hang'], $rw['gio'], $rw['km'], $rw['dat_override']);
 		$module_stats[$rw['dat'] ? 'dat' : 'chua']++;
 		if($tt === 'dat' && !$rw['dat']) continue;
 		if($tt === 'chua' && $rw['dat']) continue;
+		if($tt === 'thieu' && !$rw['thieu_du_lieu']) continue;
 		$items[] = $rw;
 	}
 	$total_items = count($items);
@@ -50,6 +52,8 @@ function dt_hinh_save()
 	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
 	$cccd = isset($_POST['cccd']) ? dt_normalize_cccd($_POST['cccd']) : '';
 	$back = "index.php?com=daotao&act=hinh&id_khoa=".$idKhoa;
+	$ret = rawurldecode((string)($_POST['ret'] ?? ''));
+	if(strpos($ret, 'index.php?com=daotao&act=hinh') === 0) $back = $ret;
 	if(!$idKhoa || $cccd === '') $func->transfer("Thiếu dữ liệu học viên", $back, false);
 
 	$hv = dt_find_hocvien_by_cccd($cccd, $idKhoa);
@@ -145,4 +149,53 @@ function dt_hinh_dat_all()
 	$d->commit();
 	dt_audit('update', 'hinh_dat_all', count($hvs), 'id_khoa='.$idKhoa);
 	$func->transfer("Đã đánh dấu Đạt thực hành hình cho ".count($hvs)." học viên", $back);
+}
+/* Tự động điền ngẫu nhiên giờ/km còn thiếu theo ngưỡng của hạng (giờ > min đến max, km min đến max). */
+function dt_hinh_auto_fill()
+{
+	global $d, $func;
+
+	$idKhoa = isset($_REQUEST['id_khoa']) ? (int)$_REQUEST['id_khoa'] : 0;
+	$back = "index.php?com=daotao&act=hinh&id_khoa=".$idKhoa;
+	if(!$idKhoa) $func->transfer("Vui lòng chọn khóa học", $back, false);
+
+	$ng = dt_nguong_hinh();
+	$rows = $d->rawQuery("select h.cccd, h.hang, th.id as data_id, th.gio, th.km from #_dt_hocvien h left join #_dt_thuchanh_hinh th on (th.id_khoa = h.id_khoa and th.cccd = h.cccd) where h.id_khoa = ?", array($idKhoa));
+	$rand = function($min, $max) { return round($min + mt_rand() / mt_getrandmax() * ($max - $min), 2); };
+	$pending = array();
+	foreach($rows as $rw)
+	{
+		$r = $ng[dt_norm_hang($rw['hang'])] ?? null;
+		if(!$r) continue;
+		$needGio = $rw['gio'] === null || (float)$rw['gio'] <= 0;
+		$needKm = $rw['km'] === null || (float)$rw['km'] <= 0;
+		if(!$needGio && !$needKm) continue;
+		$data = array('nguoi_nhap' => dt_username());
+		if($needGio) $data['gio'] = max($rand($r['gio'], $r['gio_max']), $r['gio'] + 0.01);
+		if($needKm) $data['km'] = $rand($r['km'], $r['km_max']);
+		$pending[] = array($rw, $data);
+	}
+	if(!$pending) $func->transfer("Không còn học viên nào thiếu giờ/km", $back);
+
+	dt_backup_tables(array('dt_thuchanh_hinh'), 'hinh_autofill');
+	$d->startTransaction();
+	foreach($pending as $p)
+	{
+		list($rw, $data) = $p;
+		if(!empty($rw['data_id'])) { $d->where('id', $rw['data_id']); $ok = $d->update('dt_thuchanh_hinh', $data); }
+		else
+		{
+			$data += array('id_khoa' => $idKhoa, 'cccd' => $rw['cccd'], 'ngaytao' => time());
+			$data += array('gio' => 0, 'km' => 0);
+			$ok = $d->insert('dt_thuchanh_hinh', $data);
+		}
+		if($ok === false)
+		{
+			$d->rollback();
+			$func->transfer("Không thể cập nhật dữ liệu. Đã hủy toàn bộ.", $back, false);
+		}
+	}
+	$d->commit();
+	dt_audit('update', 'hinh_auto_fill', count($pending), 'id_khoa='.$idKhoa);
+	$func->transfer("Đã tự động cập nhật giờ/km cho ".count($pending)." học viên", $back);
 }
