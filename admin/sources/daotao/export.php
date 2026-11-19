@@ -13,6 +13,31 @@ function dt_req($key, $default = '')
 	return isset($_REQUEST[$key]) && $_REQUEST[$key] !== '' ? trim((string)$_REQUEST[$key]) : $default;
 }
 
+/* Khoảng ngày (theo ngày nhập kết quả) từ tu_ngay/den_ngay dạng Y-m-d; trả về [từ, đến] timestamp, 0 nếu bỏ trống. */
+function dt_date_range()
+{
+	$from = 0; $to = 0;
+	$a = dt_req('tu_ngay'); $b = dt_req('den_ngay');
+	if(preg_match('/^\d{4}-\d{2}-\d{2}$/', $a)) $from = (int)strtotime($a.' 00:00:00');
+	if(preg_match('/^\d{4}-\d{2}-\d{2}$/', $b)) $to = (int)strtotime($b.' 23:59:59');
+	return array($from, $to);
+}
+
+/* Học viên có ít nhất một môn được nhập trong khoảng ngày (không giới hạn nếu không chọn ngày). */
+function dt_lythuyet_in_range($monData, $range)
+{
+	if(!$range[0] && !$range[1]) return true;
+	foreach($monData as $m)
+	{
+		$t = isset($m['ngaytao']) ? (int)$m['ngaytao'] : 0;
+		if(!$t) continue;
+		if($range[0] && $t < $range[0]) continue;
+		if($range[1] && $t > $range[1]) continue;
+		return true;
+	}
+	return false;
+}
+
 /* Tạo link "Xuất Excel" giữ nguyên bộ lọc hiện tại (dùng trong template). */
 function dt_export_link($act, $keys)
 {
@@ -322,7 +347,7 @@ function dt_lythuyet_export()
 	$rk = $d->rawQueryOne("select hang from #_dt_khoa where id = ?", array($idKhoa));
 	$dsMon = dt_mon_lythuyet_for_hang($rk ? $rk['hang'] : '');
 	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($idKhoa));
-	$rows = $d->rawQuery("select cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($idKhoa));
+	$rows = $d->rawQuery("select cccd, mon, tien_do, diem_kt, dat, ngaytao from #_dt_lythuyet where id_khoa = ?", array($idKhoa));
 	$byCccd = array();
 	foreach($rows as $rw) $byCccd[$rw['cccd']][$rw['mon']] = $rw;
 
@@ -331,6 +356,7 @@ function dt_lythuyet_export()
 	$gvFilter = dt_gv_key(dt_req('gv'));
 	$duLieu = dt_req('du_lieu', 'co');
 	if(!in_array($duLieu, array('co', 'tat_ca', 'chua'), true)) $duLieu = 'co';
+	$range = dt_date_range();
 
 	$baseCols = 6; // STT, Mã HV, Họ tên, CCCD, Hạng, Giáo viên
 	$tongMon = count($dsMon);
@@ -344,6 +370,7 @@ function dt_lythuyet_export()
 		$monData = isset($byCccd[$hv['cccd']]) ? $byCccd[$hv['cccd']] : array();
 		if($duLieu === 'co' && empty($monData)) continue;
 		if($duLieu === 'chua' && !empty($monData)) continue;
+		if(!dt_lythuyet_in_range($monData, $range)) continue;
 		$soDat = 0; $cells = array(); $redRel = array(); $mi = 0;
 		foreach($dsMon as $mk => $lbl)
 		{

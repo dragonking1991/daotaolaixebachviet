@@ -38,7 +38,7 @@ function dt_lythuyet_list()
 			$lt_mode = 'check';
 		}
 		$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id_khoa_sel));
-		$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
+		$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat, ngaytao from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
 		$mpRows = $d->rawQuery("select id_khoa, cccd, tien_do, dat from #_dt_mophong where id_khoa = ?", array($id_khoa_sel));
 	}
 	else
@@ -52,7 +52,7 @@ function dt_lythuyet_list()
 		if($ids)
 		{
 			$in = implode(',', array_map('intval', array_keys($ids)));
-			$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat from #_dt_lythuyet where id_khoa in ($in)");
+			$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat, ngaytao from #_dt_lythuyet where id_khoa in ($in)");
 			$mpRows = $d->rawQuery("select id_khoa, cccd, tien_do, dat from #_dt_mophong where id_khoa in ($in)");
 		}
 	}
@@ -72,6 +72,7 @@ function dt_lythuyet_list()
 
 	$tt = dt_req('trang_thai');
 	$gvFilter = dt_gv_key(dt_req('gv'));
+	$range = dt_date_range();
 	foreach($hvs as $hv)
 	{
 		if($kw !== '' && strpos(dt_mb_lower($hv['hoten'].' '.$hv['cccd'].' '.$hv['ma_hv']), $kw) === false) continue;
@@ -80,6 +81,7 @@ function dt_lythuyet_list()
 		$monData = isset($byCccd[$key]) ? $byCccd[$key] : array();
 		if($du_lieu_filter === 'co' && empty($monData)) continue;
 		if($du_lieu_filter === 'chua' && !empty($monData)) continue;
+		if(!dt_lythuyet_in_range($monData, $range)) continue;
 		$rowMons = dt_mon_lythuyet_for_hang($hv['hang']);
 		$soDat = 0;
 		foreach($rowMons as $mk => $lbl)
