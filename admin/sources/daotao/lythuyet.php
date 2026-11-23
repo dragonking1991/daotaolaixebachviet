@@ -38,7 +38,7 @@ function dt_lythuyet_list()
 			$lt_mode = 'check';
 		}
 		$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($id_khoa_sel));
-		$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat, ngaytao from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
+		$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat, ngaytao, ngay_capnhat from #_dt_lythuyet where id_khoa = ?", array($id_khoa_sel));
 		$mpRows = $d->rawQuery("select id_khoa, cccd, tien_do, dat from #_dt_mophong where id_khoa = ?", array($id_khoa_sel));
 	}
 	else
@@ -52,7 +52,7 @@ function dt_lythuyet_list()
 		if($ids)
 		{
 			$in = implode(',', array_map('intval', array_keys($ids)));
-			$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat, ngaytao from #_dt_lythuyet where id_khoa in ($in)");
+			$rows = $d->rawQuery("select id, id_khoa, cccd, mon, tien_do, diem_kt, dat, ngaytao, ngay_capnhat from #_dt_lythuyet where id_khoa in ($in)");
 			$mpRows = $d->rawQuery("select id_khoa, cccd, tien_do, dat from #_dt_mophong where id_khoa in ($in)");
 		}
 	}
@@ -217,6 +217,18 @@ function dt_lythuyet_upload_excel()
 	$msg = "Import môn ".$dsMon[$mon].": $ok học viên".($err ? ", $err lỗi" : "");
 	if(!empty($errMsgs)) $msg .= " — ".implode('; ', $errMsgs);
 	dt_import_notice($msg, "index.php?com=daotao&act=lythuyet".($idKhoaSel ? "&id_khoa=".$idKhoaSel : ""), ($ok > 0 || $err === 0));
+}
+
+/* Lưu link "Lý thuyết online" hiển thị ở menu website (mở tab mới). */
+function dt_lythuyet_save_online_url()
+{
+	global $func;
+	$back = 'index.php?com=daotao&act=lythuyet';
+	$url = trim((string)($_POST['lythuyet_online_url'] ?? ''));
+	if($url !== '' && !preg_match('#^https?://[^\s]+$#i', $url))
+		$func->transfer('Link phải bắt đầu bằng http:// hoặc https://', $back, false);
+	dt_setting_set('lythuyet_online_url', $url);
+	$func->transfer('Đã lưu link lý thuyết online.', $back);
 }
 
 /* Lưu kết quả check 4 môn lý thuyết nâng hạng (C/CE). POST: id_khoa, check[cccd][mon]=1, nút "Đạt toàn bộ". */

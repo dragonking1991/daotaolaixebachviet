@@ -17,6 +17,13 @@
 		</div>
 		<div class="card-body">
 			<?php if(dt_can('lythuyet','edit') || dt_can('lythuyet','delete')): ?><form id="dt-module-lythuyet" method="post" action="index.php?com=daotao&act=modulePassSelected"><input type="hidden" name="entity" value="lythuyet"><input type="hidden" name="id_khoa" value="<?=(int)$id_khoa_sel?>"><input type="hidden" name="ret" value="<?=$lt_ret?>"></form><?php endif; ?>
+			<?php if(dt_can('lythuyet','edit')): ?>
+			<form method="post" action="index.php?com=daotao&act=saveLythuyetOnlineUrl" class="form-inline mb-3">
+				<label for="lythuyet-online-url" class="mr-2 font-weight-bold">Link lý thuyết online (mở tab mới)</label>
+				<input id="lythuyet-online-url" type="url" name="lythuyet_online_url" class="form-control form-control-sm mr-2" style="min-width:420px" placeholder="Để trống = dùng link mặc định" value="<?=htmlspecialchars(dt_setting_get('lythuyet_online_url', ''), ENT_QUOTES, 'UTF-8')?>">
+				<button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-save mr-1"></i>Lưu link</button>
+			</form>
+			<?php endif; ?>
 			<form method="get" class="form-inline mb-2">
 				<input type="hidden" name="com" value="daotao"><input type="hidden" name="act" value="lythuyet">
 				<select name="id_khoa" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
@@ -35,8 +42,8 @@
 					<option value="tat_ca" <?=($du_lieu_filter==='tat_ca')?'selected':''?>>Tất cả học viên</option>
 					<option value="chua" <?=($du_lieu_filter==='chua')?'selected':''?>>Chưa có kết quả lý thuyết</option>
 				</select>
-				<input type="date" name="tu_ngay" class="form-control form-control-sm mr-1" title="Từ ngày nhập kết quả" value="<?=isset($_REQUEST['tu_ngay'])?htmlspecialchars($_REQUEST['tu_ngay']):''?>">
-				<input type="date" name="den_ngay" class="form-control form-control-sm mr-2" title="Đến ngày nhập kết quả" value="<?=isset($_REQUEST['den_ngay'])?htmlspecialchars($_REQUEST['den_ngay']):''?>">
+				<input type="date" name="tu_ngay" class="form-control form-control-sm mr-1" title="Từ ngày nhập/cập nhật kết quả" value="<?=isset($_REQUEST['tu_ngay'])?htmlspecialchars($_REQUEST['tu_ngay']):''?>">
+				<input type="date" name="den_ngay" class="form-control form-control-sm mr-2" title="Đến ngày nhập/cập nhật kết quả" value="<?=isset($_REQUEST['den_ngay'])?htmlspecialchars($_REQUEST['den_ngay']):''?>">
 				<button class="btn btn-sm bg-gradient-primary">Lọc</button>
 			</form>
 			<?php if($id_khoa_sel && dt_can('lythuyet','edit')): ?>

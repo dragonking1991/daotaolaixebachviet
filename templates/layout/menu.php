@@ -1,3 +1,4 @@
+<?php require_once LIBRARIES.'lythuyet_online_lib.php'; ?>
 <div class="wap_menu clear hidden_m">
     <div class="menu" role="navigation" aria-label="Điều hướng chính">
         <ul>
@@ -18,7 +19,7 @@
             
             <li><a class="<?php if($com=='tai-lieu') echo 'active'; ?>" href="tai-lieu" title="Tài liệu">Tài liệu</a></li>
 
-            <li><a class="<?php if($com=='ly-thuyet-online') echo 'active'; ?>" href="ly-thuyet-online" title="Lý thuyết online">Lý thuyết online</a></li>
+            <li><a class="<?php if($com=='ly-thuyet-online') echo 'active'; ?>" href="<?=htmlspecialchars(dt_online_theory_url(), ENT_QUOTES, 'UTF-8')?>" target="_blank" rel="noopener noreferrer" title="Lý thuyết online">Lý thuyết online</a></li>
 
             <li><a class="<?php if($com=='tra-cuu-qr-thanh-toan') echo 'active'; ?>" href="tra-cuu-qr-thanh-toan" title="QR Thanh toán">QR Thanh toán</a></li>
             
@@ -35,4 +36,4 @@
             </div>
         </div>
     </div>
-</div>
+</div>

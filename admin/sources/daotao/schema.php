@@ -342,6 +342,8 @@ function dt_ensure_tables()
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_hangce_v1')) { dt_ensure_htkh_hangce(); dt_migration_mark('htkh_hangce_v1'); }
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('htkh_soquyetdinh_v1')) { dt_ensure_htkh_soquyetdinh(); dt_migration_mark('htkh_soquyetdinh_v1'); }
 
+	if(function_exists('dt_migration_applied') && !dt_migration_applied('lythuyet_capnhat_v1')) { dt_ensure_lythuyet_capnhat(); dt_migration_mark('lythuyet_capnhat_v1'); }
+
 	if(function_exists('dt_migration_applied') && !dt_migration_applied('update8_v1'))
 	{
 		dt_ensure_update8_schema();
@@ -394,6 +396,13 @@ function dt_ensure_sh_link_schema()
 		KEY idx_sh_source_hv(id_hocvien), KEY idx_sh_source_result(id_ketqua)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	if($d->getLastErrorCode() !== '00000') throw new RuntimeException('Không thể tạo danh sách dòng import chờ bổ sung.');
+}
+
+function dt_ensure_lythuyet_capnhat()
+{
+	global $d;
+	$ex = $d->rawQueryOne("select column_name from information_schema.columns where table_schema = database() and table_name = 'table_dt_lythuyet' and column_name = 'ngay_capnhat' limit 0,1");
+	if(!$ex) $d->rawQuery("ALTER TABLE table_dt_lythuyet ADD COLUMN ngay_capnhat TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP");
 }
 
 function dt_ensure_update8_schema()

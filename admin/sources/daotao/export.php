@@ -23,13 +23,14 @@ function dt_date_range()
 	return array($from, $to);
 }
 
-/* Học viên có ít nhất một môn được nhập trong khoảng ngày (không giới hạn nếu không chọn ngày). */
+/* Học viên có ít nhất một môn được nhập hoặc cập nhật trong khoảng ngày (không giới hạn nếu không chọn ngày). */
 function dt_lythuyet_in_range($monData, $range)
 {
 	if(!$range[0] && !$range[1]) return true;
 	foreach($monData as $m)
 	{
 		$t = isset($m['ngaytao']) ? (int)$m['ngaytao'] : 0;
+		if(!empty($m['ngay_capnhat'])) $t = max($t, (int)strtotime($m['ngay_capnhat']));
 		if(!$t) continue;
 		if($range[0] && $t < $range[0]) continue;
 		if($range[1] && $t > $range[1]) continue;
@@ -347,7 +348,7 @@ function dt_lythuyet_export()
 	$rk = $d->rawQueryOne("select hang from #_dt_khoa where id = ?", array($idKhoa));
 	$dsMon = dt_mon_lythuyet_for_hang($rk ? $rk['hang'] : '');
 	$hvs = $d->rawQuery("select * from #_dt_hocvien where id_khoa = ? order by substring_index(hoten, ' ', -1) asc, hoten asc", array($idKhoa));
-	$rows = $d->rawQuery("select cccd, mon, tien_do, diem_kt, dat, ngaytao from #_dt_lythuyet where id_khoa = ?", array($idKhoa));
+	$rows = $d->rawQuery("select cccd, mon, tien_do, diem_kt, dat, ngaytao, ngay_capnhat from #_dt_lythuyet where id_khoa = ?", array($idKhoa));
 	$byCccd = array();
 	foreach($rows as $rw) $byCccd[$rw['cccd']][$rw['mon']] = $rw;
 
