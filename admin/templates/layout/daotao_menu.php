@@ -23,6 +23,7 @@ $dt_menu = array(
     'dat' => 'DAT (trên đường)',
     'tonghop' => 'Tổng hợp',
     'kythi' => 'Ngày kiểm tra',
+    'lichon' => 'Lịch ôn sát hạch',
     'ketquadaotao' => 'Kết quả đào tạo',
     'htkh' => 'Số giấy HTKH',
     'sathach' => 'Kết quả sát hạch',
@@ -34,14 +35,14 @@ $dt_menu = array(
 $dt_menu_sec = array(
     'dashboard' => '_man', 'khoa' => 'khoa', 'hocvien' => 'hocvien', 'xe' => 'xe',
     'giaovien' => 'giaovien', 'lythuyet' => 'lythuyet', 'dieukienDat' => 'lythuyet', 'cabinkq' => 'cabinkq', 'hinh' => 'hinh',
-    'dat' => 'dat', 'tonghop' => 'tonghop', 'kythi' => 'kythi', 'ketquadaotao' => 'ketqua',
+    'dat' => 'dat', 'tonghop' => 'tonghop', 'kythi' => 'kythi', 'lichon' => 'lichon', 'ketquadaotao' => 'ketqua',
     'htkh' => 'htkh', 'sathach' => 'sathach', 'audit' => '_man', 'backup' => '_man',
     'congGvConfig' => '_man', 'taichinh' => 'taichinh',
 );
 $dt_groups = array(
     'records' => array('label'=>'Hồ sơ & nguồn lực', 'icon'=>'users', 'items'=>array('khoa','hocvien','giaovien','xe')),
     'study' => array('label'=>'Quá trình học', 'icon'=>'book', 'items'=>array('lythuyet','dieukienDat','cabinkq','hinh','dat')),
-    'completion' => array('label'=>'Kiểm tra & hoàn tất', 'icon'=>'clipboard-check', 'items'=>array('tonghop','kythi','ketquadaotao','htkh','sathach')),
+    'completion' => array('label'=>'Kiểm tra & hoàn tất', 'icon'=>'clipboard-check', 'items'=>array('tonghop','kythi','lichon','ketquadaotao','htkh','sathach')),
     'finance' => array('label'=>'Tài chính', 'icon'=>'hand-holding-usd', 'items'=>array('taichinh')),
     'management' => array('label'=>'Quản trị', 'icon'=>'cogs', 'items'=>array('audit','backup','congGvConfig')),
 );

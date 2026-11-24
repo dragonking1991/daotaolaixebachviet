@@ -90,6 +90,16 @@ Quyền **Xóa xe** mới xóa được từng lần sửa chữa. Xe đã có n
 
 Trong **Cổng giáo viên → Xe phụ trách**, giáo viên chỉ xem được xe có `gv_key` đang khớp với tài khoản của mình. Giáo viên có thể thêm nhật ký hiện trạng/sửa chữa và cập nhật trạng thái **Đang sửa / Hoàn tất**; không thể sửa chi tiết nhật ký đã tạo hoặc xóa. Mỗi nhật ký cho phép tối đa 10 ảnh JPEG/PNG/WebP (5 MB/ảnh, tối đa 12 MP); hệ thống thu nhỏ cạnh dài còn tối đa 1.600 px, nén lại thành JPEG và giới hạn ảnh đã lưu ở 1 MB/ảnh. Ảnh lưu trong `private_upload` (chặn truy cập HTTP trực tiếp); portal và admin chỉ phục vụ ảnh qua route có kiểm tra xe/bản ghi/quyền xem. Ảnh hiển thị trong lịch sử sửa chữa admin. Nếu upload bị từ chối, kiểm tra giới hạn tải lên của PHP/web server; nội dung nhật ký và ảnh không được lưu dở dang.
 
+### Lịch ôn sát hạch — đăng ký giờ ôn xe thiết bị
+
+- Menu: **QL Đào tạo → Kiểm tra & hoàn tất → Lịch ôn sát hạch** (`com=daotao&act=lichon`). Quyền `daotao_lichon_view/edit/delete/export`.
+- Quy trình theo trạng thái đợt: **Đang chuẩn bị → Đang mở đăng ký → Đã khóa đăng ký → Đã công bố lịch**.
+  1. Tạo đợt (ngày sát hạch + sân), thêm ngày tập theo hạng: khung giờ và số xe của sân (`21, 23-25`). Giờ sân = số xe × số giờ.
+  2. Mở đăng ký: GV vào **Cổng giáo viên → tab Lịch ôn**, chọn hạng, nhập số giờ + ghi chú; không vượt giờ còn trống của hạng. Bộ phận có thể nhập hộ và đặt yêu cầu (ưu tiên ngày, khung giờ) theo ghi chú của GV.
+  3. Khóa đăng ký rồi **Tự động xếp**: GV có yêu cầu xếp trước, sau đó theo số giờ giảm dần; giờ của 1 GV trong ngày liên tục (nối giữa các hạng, đổi xe khi xe bận); song song 2 xe tối đa N giờ/ngày (mặc định 3) trước khi đẩy sang ngày sau. Chỉnh tay trên lưới: chọn GV rồi bấm/kéo ô; bỏ ô thì giờ trả lại cho GV.
+  4. Công bố: GV xem lịch của mình. Xuất Excel: lịch dạng lưới (mỗi hạng 1 sheet) và danh sách đăng ký.
+- Bảng: `table_dt_lo_dot`, `table_dt_lo_ngay`, `table_dt_lo_dangky`, `table_dt_lo_lich` (tự tạo khi mở trang). Logic chung: `libraries/lichon_lib.php`; kiểm thử: `php scripts/regression_lichon.php`.
+
 ### Thực hành trong hình — cổng giáo viên và admin
 
 Giờ/km do giáo viên nhập được dùng trực tiếp để tự xét kết quả ở **Thực hành trong hình** và **Tổng hợp**. Chỉ `dat_override = 1` là xác nhận Đạt thủ công; `NULL` hoặc `0` đều xét tự động theo hạng (lớp PDODb hiện lưu `NULL` ở trường này thành `0`). Dữ liệu cũ đã đủ giờ/km được tính lại khi tải trang, không cần nhập lại hay chạy cập nhật dữ liệu.

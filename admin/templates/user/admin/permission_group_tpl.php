@@ -63,6 +63,7 @@
                 'dat'      => array('label' => 'DAT (trên đường)', 'actions' => array('view','edit','delete','import','export')),
                 'tonghop'  => array('label' => 'Tổng hợp', 'actions' => array('view','export')),
                 'kythi'    => array('label' => 'Ngày kiểm tra', 'actions' => array('view','edit','delete','import','export')),
+                'lichon'   => array('label' => 'Lịch ôn sát hạch', 'actions' => array('view','edit','delete','export')),
                 'ketqua'   => array('label' => 'Kết quả đào tạo', 'actions' => array('view','export')),
                 'htkh'     => array('label' => 'Số giấy HTKH', 'actions' => array('view','edit','delete','import','export')),
                 'sathach'  => array('label' => 'Kết quả sát hạch', 'actions' => array('view','edit','delete','import','export')),

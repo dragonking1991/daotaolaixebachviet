@@ -17,7 +17,7 @@ function admin_csrf_modules()
 			'cabinkq', 'exportCabin', 'uploadCabin', 'hinh', 'exportHinh', 'dat', 'exportDat', 'uploadDat',
 			'tonghop', 'exportTonghop', 'kythi', 'kythiDetail', 'exportKythi', 'exportKythiKetqua', 'kythiUpload', 'kythiRoster', 'kythiTracuu',
 			'ketquadaotao', 'exportKetqua', 'htkh', 'uploadHtkh', 'exportHtkh', 'htkhPrint', 'htkhPrintKy', 'htkhExcelKy', 'htkhWordKy', 'importTemplate', 'importHistory', 'importErrors',
-			'sathach', 'sathachTracuu', 'uploadSathach', 'exportSathach', 'audit', 'backup', 'backupDownload', 'congGvConfig',
+			'sathach', 'sathachTracuu', 'uploadSathach', 'exportSathach', 'lichon', 'lichonDetail', 'exportLichon', 'exportLichonDk', 'audit', 'backup', 'backupDownload', 'congGvConfig',
 		),
 		'xangdau' => array(
 			'', 'khoa', 'config', 'hoadon', 'uploadHoadon', 'hocvien', 'ce', 'ceInvoiceTemplate', 'uploadHocvien', 'importTemplate', 'importHistory', 'importErrors',

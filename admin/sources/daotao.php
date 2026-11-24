@@ -27,6 +27,7 @@ require_once SOURCES.'daotao/ketquadaotao.php';
 require_once SOURCES.'daotao/htkh.php';
 require_once SOURCES.'daotao/sathach.php';
 require_once SOURCES.'daotao/conggv.php';
+require_once SOURCES.'daotao/lichon.php';
 $DT_MAN = array('daotao_man');
 $DT_UP  = array('daotao_upload', 'daotao_import', 'daotao_man');
 $DT_VIEW = array('daotao_tracuu', 'daotao_import', 'daotao_upload', 'daotao_man');
@@ -216,6 +217,22 @@ switch($act)
 	case "kythiRoster":      dt_guard(dt_p('kythi','import'));   dt_kythi_roster_form(); $template = "daotao/kythi/roster"; break;
 	case "kythiImportRoster":dt_guard(dt_p('kythi','import'));   dt_kythi_import_roster(); break;
 	case "kythiTracuu":      dt_guard(dt_p('kythi','view')); dt_kythi_tracuu(); $template = "daotao/kythi/tracuu"; break;
+
+	/* ---------- Lịch ôn sát hạch (đăng ký giờ ôn) ---------- */
+	case "lichon":         dt_guard(dt_p('lichon','view'));   dt_lichon_list();   $template = "daotao/lichon/items"; break;
+	case "lichonDetail":   dt_guard(dt_p('lichon','view'));   dt_lichon_detail(); $template = "daotao/lichon/detail"; break;
+	case "lichonSave":     dt_guard(dt_p('lichon','edit'));   dt_lichon_save(); break;
+	case "lichonDelete":   dt_guard(dt_p('lichon','delete')); dt_lichon_delete(); break;
+	case "lichonStatus":   dt_guard(dt_p('lichon','edit'));   dt_lichon_status(); break;
+	case "lichonNgaySave": dt_guard(dt_p('lichon','edit'));   dt_lichon_ngay_save(); break;
+	case "lichonNgayDelete": dt_guard(dt_p('lichon','edit')); dt_lichon_ngay_delete(); break;
+	case "lichonDkSave":   dt_guard(dt_p('lichon','edit'));   dt_lichon_dk_save(); break;
+	case "lichonDkDelete": dt_guard(dt_p('lichon','edit'));   dt_lichon_dk_delete(); break;
+	case "lichonAuto":     dt_guard(dt_p('lichon','edit'));   dt_lichon_auto(); break;
+	case "lichonClear":    dt_guard(dt_p('lichon','edit'));   dt_lichon_clear(); break;
+	case "lichonCell":     dt_guard(dt_p('lichon','edit'));   dt_lichon_cell(); break;
+	case "exportLichonDk": dt_guard(dt_p('lichon','export')); dt_lichon_export_dk(); break;
+	case "exportLichon":   dt_guard(dt_p('lichon','export')); dt_lichon_export_grid(); break;
 
 	/* ---------- Thông tin kết quả đào tạo ---------- */
 	case "ketquadaotao":  dt_guard(dt_p('ketqua','view')); dt_ketqua_list();   $template = "daotao/ketquadaotao/items"; break;

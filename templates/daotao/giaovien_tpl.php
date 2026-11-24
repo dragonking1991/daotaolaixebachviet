@@ -67,9 +67,11 @@
 			<a href="cong-giao-vien" class="<?=$dtTab==='daotao'?'is-active':''?>"><i class="fas fa-user-graduate" aria-hidden="true"></i> Đào tạo</a>
 			<a href="cong-giao-vien?tab=luong" class="<?=$dtTab==='luong'?'is-active':''?>"><i class="fas fa-receipt" aria-hidden="true"></i> Lương</a>
 			<a href="cong-giao-vien?tab=xe" class="<?=$dtTab==='xe'?'is-active':''?>"><i class="fas fa-car" aria-hidden="true"></i> Xe phụ trách</a>
+			<a href="cong-giao-vien?tab=lichon" class="<?=$dtTab==='lichon'?'is-active':''?>"><i class="fas fa-calendar-alt" aria-hidden="true"></i> Lịch ôn<?php if(!empty($dtLoOpen)): ?> <span class="dt-lo-tabbadge"><?=(int)$dtLoOpen?></span><?php endif; ?></a>
 		</div>
 
-		<?php if($dtTab === 'xe'): ?>
+		<?php if($dtTab === 'lichon'): include __DIR__.'/giaovien_lichon_tpl.php'; ?>
+		<?php elseif($dtTab === 'xe'): ?>
 		<section class="dt-gv-vehicles">
 			<div class="dt-gv-vehicle-heading">
 				<div><h2><i class="fas fa-car-side" aria-hidden="true"></i> Xe được phân công</h2><p>Chỉ hiển thị xe đang được phân công cho tài khoản của bạn.</p></div>

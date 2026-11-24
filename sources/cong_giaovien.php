@@ -4,6 +4,7 @@ if(!defined('SOURCES')) die("Error");
 require_once LIBRARIES.'daotao_lib.php';
 require_once LIBRARIES.'daotao_gv_auth.php';
 require_once LIBRARIES.'payroll_monthly.php';
+require_once LIBRARIES.'lichon_lib.php';
 
 function dt_gv_badge($ok)
 {
@@ -328,6 +329,64 @@ elseif($dtAct === 'deleteXeSuachua' && isset($_SESSION['dt_gv']))
 	$dtGvErr = 'Giáo viên không được phép xóa nhật ký sửa chữa xe.';
 }
 
+elseif(in_array($dtAct, array('loDangky', 'loHuy'), true) && isset($_SESSION['dt_gv']))
+{
+	// GV tự đăng ký / sửa / hủy giờ ôn sát hạch — chỉ khi đợt đang mở đăng ký.
+	$dtTab = 'lichon';
+	$_REQUEST['tab'] = 'lichon';
+	$gvId = (int)($_SESSION['dt_gv']['id'] ?? 0);
+	$idDot = (int)($_POST['id_dot'] ?? 0);
+	$hang = is_scalar($_POST['hang'] ?? null) ? trim((string)$_POST['hang']) : '';
+	try { lo_ensure_tables(); } catch(Exception $e) { $dtGvErr = 'Chưa thể mở đăng ký giờ ôn. Vui lòng thử lại sau.'; }
+	if($dtGvErr === '' && !empty($_SESSION['dt_gv']['must_change'])) $dtGvErr = 'Vui lòng đổi mật khẩu mặc định trước khi đăng ký giờ ôn.';
+	if($dtGvErr === '')
+	{
+		$d->startTransaction();
+		$dot = $d->rawQueryOne('select * from #_dt_lo_dot where id = ? limit 0,1 for update', array($idDot));
+		$own = $dot ? $d->rawQueryOne('select dk.*, (select count(*) from #_dt_lo_lich l where l.id_dangky = dk.id) as da_xep from #_dt_lo_dangky dk where dk.id_dot = ? and dk.id_gv = ? and dk.hang = ? limit 0,1', array($idDot, $gvId, $hang)) : null;
+		if(!$dot || $dot['trang_thai'] !== 'mo_dk') $dtGvErr = 'Đợt ôn này không còn mở đăng ký. Vui lòng liên hệ bộ phận đào tạo nếu cần thay đổi.';
+		elseif($dtAct === 'loHuy')
+		{
+			if(!$own) $dtGvErr = 'Không tìm thấy đăng ký cần hủy.';
+			elseif((int)$own['da_xep'] > 0) $dtGvErr = 'Đăng ký đã được xếp '.(int)$own['da_xep'].' giờ, không thể tự hủy. Vui lòng liên hệ bộ phận đào tạo.';
+			else
+			{
+				$d->rawQuery('delete from #_dt_lo_dangky where id = ?', array($own['id']));
+				$dtGvMsg = 'Đã hủy đăng ký '.$hang.' – '.lo_dot_title($dot).'.';
+			}
+		}
+		else
+		{
+			$soGio = is_scalar($_POST['so_gio'] ?? null) ? trim((string)$_POST['so_gio']) : '';
+			$ghiChu = mb_substr(is_scalar($_POST['ghi_chu'] ?? null) ? trim((string)$_POST['ghi_chu']) : '', 0, 1000);
+			$cap = lo_capacity($idDot);
+			$total = isset($cap[$hang]) ? (int)$cap[$hang]['tong_gio'] : 0;
+			$free = $total - (isset($cap[$hang]) ? (int)$cap[$hang]['da_dk'] : 0) + ($own ? (int)$own['so_gio'] : 0);
+			if(!in_array($hang, lo_hang_list(), true) || $total <= 0) $dtGvErr = 'Hạng '.$hang.' không có ngày tập trong đợt này.';
+			elseif(!ctype_digit($soGio) || (int)$soGio < 1) $dtGvErr = 'Số giờ đăng ký phải là số nguyên từ 1 trở lên.';
+			elseif((int)$soGio > $free) $dtGvErr = 'Hạng '.$hang.' chỉ còn trống '.max(0, $free).' giờ. Vui lòng giảm số giờ đăng ký.';
+			elseif($own && (int)$soGio < (int)$own['da_xep']) $dtGvErr = 'Đã xếp '.(int)$own['da_xep'].' giờ cho bạn, không thể giảm thấp hơn.';
+			elseif($own)
+			{
+				$d->rawQuery('update #_dt_lo_dangky set so_gio = ?, ghi_chu = ?, ngaycapnhat = ? where id = ?', array((int)$soGio, $ghiChu, time(), $own['id']));
+				$dtGvMsg = 'Đã cập nhật đăng ký '.$soGio.' giờ '.$hang.'.';
+			}
+			else
+			{
+				$gvRow = $d->rawQueryOne('select hoten, cccd from #_dt_giaovien where id = ? limit 0,1', array($gvId));
+				$newDk = lo_insert_dangky(array('id_dot' => $idDot, 'id_gv' => $gvId, 'gv_hoten' => $gvRow['hoten'] ?? '', 'gv_cccd' => $gvRow['cccd'] ?? '',
+					'ten_lich' => lo_pick_ten_lich($idDot, $gvId, $gvRow['hoten'] ?? ''), 'hang' => $hang, 'so_gio' => (int)$soGio, 'ghi_chu' => $ghiChu,
+					'nguon' => 'gv', 'ngaytao' => time(), 'ngaycapnhat' => time()));
+				if(!$newDk) $dtGvErr = 'Không thể lưu đăng ký. Vui lòng thử lại.';
+				else $dtGvMsg = 'Đã đăng ký '.$soGio.' giờ '.$hang.' – '.lo_dot_title($dot).'.';
+			}
+		}
+		if($dtGvErr !== '') { $d->rollback(); $dtGvMsg = ''; }
+		elseif($d->transactionFailed() || $d->commit() === false) { $d->rollback(); $dtGvMsg = ''; $dtGvErr = 'Không thể lưu đăng ký. Vui lòng thử lại.'; }
+		else dt_portal_gv_log((string)($_SESSION['dt_gv']['gv_key'] ?? ''), (string)($_SESSION['dt_gv']['cccd'] ?? ''), '', $hang, ($dtAct === 'loHuy' ? 'Hủy' : 'Đăng ký').' giờ ôn '.($dot ? lo_dot_title($dot) : '').': '.$hang.($dtAct === 'loHuy' ? '' : ' '.(int)($_POST['so_gio'] ?? 0).'h'));
+	}
+}
+
 /* ----- Dữ liệu cho template ----- */
 $dtGv = isset($_SESSION['dt_gv']) ? $_SESSION['dt_gv'] : null;
 $dtCfg = dt_portal_conggv();
@@ -337,7 +396,9 @@ $dtKhoaList = array();
 $dtHistory = array();
 $dtPayroll = null;
 $dtRequestedTab = $_REQUEST['tab'] ?? '';
-$dtTab = in_array($dtRequestedTab, array('luong', 'xe'), true) ? $dtRequestedTab : 'daotao';
+$dtTab = in_array($dtRequestedTab, array('luong', 'xe', 'lichon'), true) ? $dtRequestedTab : 'daotao';
+$dtLoDots = array();
+$dtLoOpen = 0;
 $dtFilterKhoa = isset($_REQUEST['khoa']) ? (int)$_REQUEST['khoa'] : 0;
 $dtFilterKw = isset($_REQUEST['kw']) ? trim((string)$_REQUEST['kw']) : '';
 $dtFilterHinhThieu = isset($_REQUEST['hinh_thieu']) && (string)$_REQUEST['hinh_thieu'] === '1' ? 1 : 0;
@@ -350,7 +411,31 @@ $dtXeRepairFormErrors = isset($dtXeRepairFormErrors) && is_array($dtXeRepairForm
 $dtXeRepairFormOpen = !empty($dtXeRepairFormOpen) || isset($_REQUEST['new_log']);
 $dtXeRepairSelectedId = isset($dtXeRepairSelectedId) ? (int)$dtXeRepairSelectedId : (int)($_REQUEST['id_xe'] ?? 0);
 $dtXeRepairKeyword = is_scalar($_REQUEST['xe_kw'] ?? '') ? trim((string)($_REQUEST['xe_kw'] ?? '')) : '';
-if($dtGv && $dtTab === 'luong')
+if($dtGv)
+{
+	// Đợt ôn hiển thị cho GV: đang mở / đã khóa / đã công bố, ngày sát hạch chưa quá 7 ngày.
+	try
+	{
+		lo_ensure_tables();
+		$dtLoOpen = (int)($d->rawQueryOne("select count(*) as n from #_dt_lo_dot where trang_thai = 'mo_dk' and ngay_sh >= curdate()")['n'] ?? 0);
+		if($dtTab === 'lichon')
+		{
+			foreach($d->rawQuery("select * from #_dt_lo_dot where trang_thai in ('mo_dk','khoa_dk','cong_bo') and ngay_sh >= date_sub(curdate(), interval 7 day) order by ngay_sh asc, id asc") as $dot)
+			{
+				$mine = lo_dangky_rows($dot['id'], (int)$dtGv['id']);
+				$blocks = array();
+				if($dot['trang_thai'] === 'cong_bo')
+					$blocks = lo_gv_blocks($d->rawQuery('select l.so_xe, l.gio, n.ngay, n.hang from #_dt_lo_lich l join #_dt_lo_ngay n on n.id = l.id_ngay join #_dt_lo_dangky dk on dk.id = l.id_dangky where l.id_dot = ? and dk.id_gv = ?', array($dot['id'], (int)$dtGv['id'])));
+				$days = array();
+				foreach(lo_ngay_rows($dot['id']) as $n) $days[$n['ngay']][] = $n;
+				$dtLoDots[] = array('dot' => $dot, 'cap' => lo_capacity($dot['id']), 'mine' => $mine, 'blocks' => $blocks, 'days' => $days);
+			}
+		}
+	}
+	catch(Exception $e) { if($dtTab === 'lichon') $dtGvErr = 'Chưa thể tải lịch ôn. Vui lòng thử lại sau.'; }
+}
+if($dtGv && $dtTab === 'lichon') {}
+elseif($dtGv && $dtTab === 'luong')
 {
 	if(empty($dtGv['must_change'])) $dtPayroll = payrollMonthlyFindByCccd($d, $dtGv['cccd'], isset($_GET['thang']) ? trim((string)$_GET['thang']) : '', array('GVTH', 'CTV'));
 }

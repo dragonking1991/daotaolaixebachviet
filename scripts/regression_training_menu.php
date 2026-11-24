@@ -23,7 +23,7 @@ function menu_dom($html)
     return new DOMXPath($document);
 }
 $expected = array('dashboard','khoa','hocvien','giaovien','xe','lythuyet','dieukienDat','cabinkq','hinh','dat',
-    'tonghop','kythi','ketquadaotao','htkh','sathach','taichinh','audit','backup','congGvConfig');
+    'tonghop','kythi','lichon','ketquadaotao','htkh','sathach','taichinh','audit','backup','congGvConfig');
 $html = training_menu_render(array('daotao_man'));
 $xpath = menu_dom($html);
 menu_check($xpath->query('//li[@data-training-group]')->length === 5, 'Expected exactly five themed groups');
@@ -54,6 +54,7 @@ $pages = array(
     array('crudEdit','daotao/crud_form',array('entity'=>'hocvien'),'records','hocvien'),
     array('modulePassSelected','',array('entity'=>'cabinkq'),'study','cabinkq'),
     array('kythiDetail','daotao/kythi/detail',array(),'completion','kythi'),
+    array('lichonDetail','daotao/lichon/detail',array(),'completion','lichon'),
     array('sathachPending','daotao/sathach/pending',array(),'completion','sathach'),
     array('uploadHtkh','daotao/htkh/upload',array(),'completion','htkh'),
     array('taichinh','daotao/taichinh/items',array(),'finance','taichinh'),
@@ -97,4 +98,4 @@ menu_check($xpath->query('//li[contains(@class,"menu-open")]')->length === 0 &&
     $xpath->query('//a[@aria-current="page"]')->length === 0, 'Another module must not open training groups');
 $outer = file_get_contents(dirname(__DIR__).'/admin/templates/layout/menu.php');
 menu_check(strpos($outer, "include __DIR__.'/daotao_menu.php'") !== false, 'Training menu partial not wired into sidebar');
-echo "PASS training menu: all 19 links, five groups, primary/subpage/CRUD highlighting, theory/cabin/lookup/admin permissions, no empty groups and other-module isolation\n";
+echo "PASS training menu: all 20 links, five groups, primary/subpage/CRUD highlighting, theory/cabin/lookup/admin permissions, no empty groups and other-module isolation\n";
