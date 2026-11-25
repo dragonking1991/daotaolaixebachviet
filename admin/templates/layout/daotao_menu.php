@@ -42,7 +42,8 @@ $dt_menu_sec = array(
 $dt_groups = array(
     'records' => array('label'=>'Hồ sơ & nguồn lực', 'icon'=>'users', 'items'=>array('khoa','hocvien','giaovien','xe')),
     'study' => array('label'=>'Quá trình học', 'icon'=>'book', 'items'=>array('lythuyet','dieukienDat','cabinkq','hinh','dat')),
-    'completion' => array('label'=>'Kiểm tra & hoàn tất', 'icon'=>'clipboard-check', 'items'=>array('tonghop','kythi','lichon','ketquadaotao','htkh','sathach')),
+    'schedule' => array('label'=>'Lịch ôn & sát hạch', 'icon'=>'calendar-alt', 'items'=>array('lichon')),
+    'completion' => array('label'=>'Kiểm tra & hoàn tất', 'icon'=>'clipboard-check', 'items'=>array('tonghop','kythi','ketquadaotao','htkh','sathach')),
     'finance' => array('label'=>'Tài chính', 'icon'=>'hand-holding-usd', 'items'=>array('taichinh')),
     'management' => array('label'=>'Quản trị', 'icon'=>'cogs', 'items'=>array('audit','backup','congGvConfig')),
 );

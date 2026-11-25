@@ -92,7 +92,7 @@ Trong **Cổng giáo viên → Xe phụ trách**, giáo viên chỉ xem được
 
 ### Lịch ôn sát hạch — đăng ký giờ ôn xe thiết bị
 
-- Menu: **QL Đào tạo → Kiểm tra & hoàn tất → Lịch ôn sát hạch** (`com=daotao&act=lichon`). Quyền `daotao_lichon_view/edit/delete/export`.
+- Menu: **QL Đào tạo → Lịch ôn & sát hạch → Lịch ôn sát hạch** (`com=daotao&act=lichon`). Quyền `daotao_lichon_view/edit/delete/export`.
 - Quy trình theo trạng thái đợt: **Đang chuẩn bị → Đang mở đăng ký → Đã khóa đăng ký → Đã công bố lịch**.
   1. Tạo đợt (ngày sát hạch + sân), thêm ngày tập theo hạng: khung giờ và số xe của sân (`21, 23-25`). Giờ sân = số xe × số giờ.
   2. Mở đăng ký: GV vào **Cổng giáo viên → tab Lịch ôn**, chọn hạng, nhập số giờ + ghi chú; không vượt giờ còn trống của hạng. Bộ phận có thể nhập hộ và đặt yêu cầu (ưu tiên ngày, khung giờ) theo ghi chú của GV.
