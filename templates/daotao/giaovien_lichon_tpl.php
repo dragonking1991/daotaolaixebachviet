@@ -56,7 +56,7 @@ $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w =
 				<?php if($open): ?>
 				<details class="dt-lo-edit">
 					<summary><i class="fas fa-pen" aria-hidden="true"></i> Sửa</summary>
-					<form method="post" action="cong-giao-vien?tab=lichon" class="dt-lo-form">
+					<form method="post" action="index.php?com=cong-giao-vien&amp;tab=lichon" class="dt-lo-form">
 						<input type="hidden" name="dt_act" value="loDangky"><input type="hidden" name="dt_csrf" value="<?=$loE(dt_gv_csrf_token())?>">
 						<input type="hidden" name="id_dot" value="<?=(int)$dot['id']?>"><input type="hidden" name="hang" value="<?=$loE($r['hang'])?>">
 						<label><span>Số giờ (tối đa <?=$max?>)</span><input type="number" name="so_gio" min="<?=max(1, $r['da_xep'])?>" max="<?=$max?>" value="<?=(int)$r['so_gio']?>" required></label>
@@ -64,7 +64,7 @@ $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w =
 						<button type="submit"><i class="fas fa-save" aria-hidden="true"></i> Lưu</button>
 					</form>
 					<?php if(!$r['da_xep']): ?>
-					<form method="post" action="cong-giao-vien?tab=lichon" onsubmit="return confirm('Hủy đăng ký <?=$loE($r['hang'])?>?')" class="dt-lo-cancel">
+					<form method="post" action="index.php?com=cong-giao-vien&amp;tab=lichon" onsubmit="return confirm('Hủy đăng ký <?=$loE($r['hang'])?>?')" class="dt-lo-cancel">
 						<input type="hidden" name="dt_act" value="loHuy"><input type="hidden" name="dt_csrf" value="<?=$loE(dt_gv_csrf_token())?>">
 						<input type="hidden" name="id_dot" value="<?=(int)$dot['id']?>"><input type="hidden" name="hang" value="<?=$loE($r['hang'])?>">
 						<button type="submit"><i class="fas fa-times" aria-hidden="true"></i> Hủy đăng ký này</button>
@@ -76,7 +76,7 @@ $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w =
 			<?php endforeach; ?>
 
 			<?php if($open && $canAdd): ?>
-			<form method="post" action="cong-giao-vien?tab=lichon" class="dt-lo-form dt-lo-add">
+			<form method="post" action="index.php?com=cong-giao-vien&amp;tab=lichon" class="dt-lo-form dt-lo-add">
 				<input type="hidden" name="dt_act" value="loDangky"><input type="hidden" name="dt_csrf" value="<?=$loE(dt_gv_csrf_token())?>">
 				<input type="hidden" name="id_dot" value="<?=(int)$dot['id']?>">
 				<label><span>Hạng xe</span>
