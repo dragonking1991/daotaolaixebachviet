@@ -352,6 +352,7 @@ elseif(in_array($dtAct, array('loDangky', 'loHuy'), true) && isset($_SESSION['dt
 			else
 			{
 				$d->rawQuery('delete from #_dt_lo_dangky where id = ?', array($own['id']));
+				lo_set_xac_nhan($idDot, $gvId, $own['xac_nhan'] ?? '');
 				$dtGvMsg = 'Đã hủy đăng ký '.$hang.' – '.lo_dot_title($dot).'.';
 			}
 		}
@@ -359,13 +360,18 @@ elseif(in_array($dtAct, array('loDangky', 'loHuy'), true) && isset($_SESSION['dt
 		{
 			$soGio = is_scalar($_POST['so_gio'] ?? null) ? trim((string)$_POST['so_gio']) : '';
 			$ghiChu = mb_substr(is_scalar($_POST['ghi_chu'] ?? null) ? trim((string)$_POST['ghi_chu']) : '', 0, 1000);
+			$xacNhan = is_scalar($_POST['xac_nhan'] ?? null) ? trim((string)$_POST['xac_nhan']) : '';
+			$xnList = lo_xac_nhan_list();
 			$cap = lo_capacity($idDot);
 			$total = isset($cap[$hang]) ? (int)$cap[$hang]['tong_gio'] : 0;
 			$free = $total - (isset($cap[$hang]) ? (int)$cap[$hang]['da_dk'] : 0) + ($own ? (int)$own['so_gio'] : 0);
+			$gvTotal = lo_gv_total_hours($idDot, $gvId, $hang) + (ctype_digit($soGio) ? (int)$soGio : 0);
+			$over = $gvTotal > lo_gio_canh_bao();
 			if(!in_array($hang, lo_hang_list(), true) || $total <= 0) $dtGvErr = 'Hạng '.$hang.' không có ngày tập trong đợt này.';
 			elseif(!ctype_digit($soGio) || (int)$soGio < 1) $dtGvErr = 'Số giờ đăng ký phải là số nguyên từ 1 trở lên.';
 			elseif((int)$soGio > $free) $dtGvErr = 'Hạng '.$hang.' chỉ còn trống '.max(0, $free).' giờ. Vui lòng giảm số giờ đăng ký.';
 			elseif($own && (int)$soGio < (int)$own['da_xep']) $dtGvErr = 'Đã xếp '.(int)$own['da_xep'].' giờ cho bạn, không thể giảm thấp hơn.';
+			elseif($over && !isset($xnList[$xacNhan])) $dtGvErr = 'Tổng giờ đăng ký của bạn trong đợt là '.$gvTotal.' giờ (trên '.lo_gio_canh_bao().' giờ). Vui lòng gửi cho người phụ trách đăng ký, hoặc xác nhận tập song song 2 xe / tập trong 2 ngày.';
 			elseif($own)
 			{
 				$d->rawQuery('update #_dt_lo_dangky set so_gio = ?, ghi_chu = ?, ngaycapnhat = ? where id = ?', array((int)$soGio, $ghiChu, time(), $own['id']));
@@ -379,6 +385,12 @@ elseif(in_array($dtAct, array('loDangky', 'loHuy'), true) && isset($_SESSION['dt
 					'nguon' => 'gv', 'ngaytao' => time(), 'ngaycapnhat' => time()));
 				if(!$newDk) $dtGvErr = 'Không thể lưu đăng ký. Vui lòng thử lại.';
 				else $dtGvMsg = 'Đã đăng ký '.$soGio.' giờ '.$hang.' – '.lo_dot_title($dot).'.';
+			}
+			if($dtGvErr === '')
+			{
+				lo_set_xac_nhan($idDot, $gvId, $over ? $xacNhan : '');
+				$dtGvMsg .= ' Tổng giờ đăng ký trong đợt: '.$gvTotal.' giờ.';
+				if($over) $dtGvMsg .= $xacNhan === 'phu_trach' ? ' Yêu cầu đã được gửi cho người phụ trách xếp lịch.' : ' Bạn đã xác nhận: '.mb_strtolower($xnList[$xacNhan]['label']).'.';
 			}
 		}
 		if($dtGvErr !== '') { $d->rollback(); $dtGvMsg = ''; }

@@ -12,7 +12,9 @@ function lo_by_reg($res, $id) { return array_values(array_filter($res['new'], fu
 lo_check(lo_parse_xe_list('21, 23-25 ,89') === array('21', '23', '24', '25', '89'), 'Parse xe list with ranges');
 $err = '';
 lo_check(lo_parse_xe_list('21, 30-20', $err) === false && $err !== '', 'Reject reversed range');
-lo_check(lo_short_name('Lê Trung Cường', array('Cường')) === 'Cường T', 'Disambiguate duplicate short name');
+lo_check(lo_short_name('Võ Duy Minh') === 'Duy Minh', 'Short name uses the last two words');
+lo_check(lo_short_name('Lê Trung Cường', array('Trung Cường')) === 'Trung Cường L', 'Disambiguate duplicate two-word name');
+lo_check(lo_short_name('Minh') === 'Minh', 'Single-word name is kept');
 
 $cfg = array(
 	array('id' => 1, 'ngay' => '2026-11-23', 'hang' => 'B số sàn', 'gio_bd' => 7, 'gio_kt' => 17, 'xe' => array('21', '23')),
@@ -36,6 +38,14 @@ $day1 = array_filter($res['new'], function($s) { return $s['id_ngay'] === 1; });
 $day2 = array_filter($res['new'], function($s) { return $s['id_ngay'] === 3; });
 lo_check(count($day1) === 13 && count($day2) === 3 && !$res['unplaced'], 'Overflow uses ≤3h parallel then next day');
 
+/* GV chọn "tập trong 2 ngày" → không xếp song song, phần dư sang ngày sau. */
+$reg = lo_reg(1, 1, 'B số sàn', 16);
+$reg['xac_nhan'] = 'hai_ngay';
+$res = lo_schedule($cfg, array($reg), array(), 3);
+$day1 = array_filter($res['new'], function($s) { return $s['id_ngay'] === 1; });
+$day2 = array_filter($res['new'], function($s) { return $s['id_ngay'] === 3; });
+lo_check(count($day1) === 10 && count($day2) === 6 && !$res['unplaced'], 'Two-day choice must not schedule parallel hours');
+
 /* Ô có sẵn được giữ nguyên, không xếp trùng ô. */
 $existing = array(array('id_ngay' => 1, 'so_xe' => '21', 'gio' => 7, 'id_dangky' => 9));
 $res = lo_schedule($cfg, array(lo_reg(9, 2, 'B số sàn', 1), lo_reg(1, 1, 'B số sàn', 10)), $existing, 0);
@@ -54,4 +64,4 @@ lo_check($n['uu_tien_gio_bd'] === 13 && $n['uu_tien_gio_kt'] === 24, 'Open-ended
 $res = lo_schedule($cfg, array(array('id' => 1, 'id_gv' => 1, 'hang' => 'B số sàn', 'so_gio' => 2, 'uu_tien_ngay' => '0000-00-00', 'uu_tien_gio_bd' => '0', 'uu_tien_gio_kt' => '0')), array(), 3);
 lo_check(count($res['new']) === 2, 'Zero-filled preferences must not block scheduling');
 
-echo "PASS lich on: zero-filled preferences, parse xe, short names, continuity across classes, preferences, parallel cap + next day, existing slots, unplaced report\n";
+echo "PASS lich on: zero-filled preferences, parse xe, two-word short names, continuity across classes, preferences, parallel cap + next day, two-day choice, existing slots, unplaced report\n";

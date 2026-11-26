@@ -95,9 +95,10 @@ Trong **Cổng giáo viên → Xe phụ trách**, giáo viên chỉ xem được
 - Menu: **QL Đào tạo → Lịch ôn & sát hạch → Lịch ôn sát hạch** (`com=daotao&act=lichon`). Quyền `daotao_lichon_view/edit/delete/export`.
 - Quy trình theo trạng thái đợt: **Đang chuẩn bị → Đang mở đăng ký → Đã khóa đăng ký → Đã công bố lịch**.
   1. Tạo đợt (ngày sát hạch + sân), thêm ngày tập theo hạng: khung giờ và số xe của sân (`21, 23-25`). Giờ sân = số xe × số giờ.
-  2. Mở đăng ký: GV vào **Cổng giáo viên → tab Lịch ôn**, chọn hạng, nhập số giờ + ghi chú; không vượt giờ còn trống của hạng. Bộ phận có thể nhập hộ và đặt yêu cầu (ưu tiên ngày, khung giờ) theo ghi chú của GV.
-  3. Khóa đăng ký rồi **Tự động xếp**: GV có yêu cầu xếp trước, sau đó theo số giờ giảm dần; giờ của 1 GV trong ngày liên tục (nối giữa các hạng, đổi xe khi xe bận); song song 2 xe tối đa N giờ/ngày (mặc định 3) trước khi đẩy sang ngày sau. Chỉnh tay trên lưới: chọn GV rồi bấm/kéo ô; bỏ ô thì giờ trả lại cho GV.
+  2. Mở đăng ký: GV vào **Cổng giáo viên → tab Lịch ôn**, chọn hạng, nhập số giờ + ghi chú; không vượt giờ còn trống của hạng. Bấm Đăng ký sẽ hiện hộp **xác nhận số giờ theo hạng**; nếu tổng giờ của GV trong đợt **> 12h** (`lo_gio_canh_bao()`) GV phải chọn: *gửi người phụ trách xếp* (vẫn lưu, gắn cờ cho bộ phận) / *tập song song 2 xe* / *tập trong 2 ngày* (cột `xac_nhan`, máy chủ cũng kiểm tra). Bộ phận có thể nhập hộ — kể cả **GV ngoài hệ thống** (nhập họ tên, CCCD, SĐT; lưu `id_gv` âm, CCCD trùng GV hệ thống thì gắn vào GV đó) — và đặt yêu cầu (ưu tiên ngày, khung giờ) theo ghi chú của GV.
+  3. Khóa đăng ký rồi **Tự động xếp**: GV có yêu cầu xếp trước, sau đó theo số giờ giảm dần; giờ của 1 GV trong ngày liên tục (nối giữa các hạng, đổi xe khi xe bận); song song 2 xe tối đa N giờ/ngày (mặc định 3) trước khi đẩy sang ngày sau (GV chọn “tập trong 2 ngày” thì không xếp song song). Chỉnh tay trên lưới: chọn GV rồi bấm/kéo ô; bỏ ô thì giờ trả lại cho GV. **Xóa lịch**: toàn bộ lịch đợt, chỉ ô tự động, hoặc theo các GV đã tích ở bảng bên phải.
   4. Công bố: GV xem lịch của mình. Xuất Excel: lịch dạng lưới (mỗi hạng 1 sheet) và danh sách đăng ký.
+- Tên trên lịch tự động lấy **2 chữ cuối** của họ tên (VD “Duy Minh”) để tránh trùng; vẫn trùng thì thêm chữ cái đầu của chữ liền trước.
 - Bảng: `table_dt_lo_dot`, `table_dt_lo_ngay`, `table_dt_lo_dangky`, `table_dt_lo_lich` (tự tạo khi mở trang). Logic chung: `libraries/lichon_lib.php`; kiểm thử: `php scripts/regression_lichon.php`.
 
 ### Thực hành trong hình — cổng giáo viên và admin

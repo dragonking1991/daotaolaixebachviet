@@ -160,11 +160,43 @@
 		document.querySelectorAll('.lo-gv').forEach(function (b) {
 			var d = cfg.dk[b.getAttribute('data-lo-gv')];
 			var ok = (!q || b.getAttribute('data-q').indexOf(q) >= 0) && (!pm || !pm.checked || d.da_xep < d.so_gio);
-			b.classList.toggle('d-none', !ok);
+			(b.closest('.lo-gv-row') || b).classList.toggle('d-none', !ok);
 		});
+		syncChecks();
 	}
 	if (pq) pq.addEventListener('input', filterPanel);
 	if (pm) pm.addEventListener('change', filterPanel);
+
+	/* Tích chọn GV để xóa lịch theo GV (menu "Xóa lịch"). */
+	var checkAll = document.querySelector('[data-lo-check-all]');
+	var clearGv = document.querySelector('[data-lo-clear-gv]');
+	function checkedIds() {
+		return Array.prototype.filter.call(document.querySelectorAll('[data-lo-check]'), function (c) { return c.checked; }).map(function (c) { return +c.value; });
+	}
+	function syncChecks() {
+		var ids = checkedIds();
+		document.querySelectorAll('[data-lo-check-count]').forEach(function (el) { el.textContent = ids.length; });
+		document.querySelectorAll('[data-lo-check]').forEach(function (c) { c.closest('.lo-gv-row').classList.toggle('is-checked', c.checked); });
+		if (checkAll) {
+			var visible = Array.prototype.filter.call(document.querySelectorAll('[data-lo-check]'), function (c) { return !c.closest('.lo-gv-row').classList.contains('d-none'); });
+			var n = visible.filter(function (c) { return c.checked; }).length;
+			checkAll.checked = visible.length > 0 && n === visible.length;
+			checkAll.indeterminate = n > 0 && n < visible.length;
+		}
+	}
+	document.querySelectorAll('[data-lo-check]').forEach(function (c) { c.addEventListener('change', syncChecks); });
+	if (checkAll) checkAll.addEventListener('change', function () {
+		document.querySelectorAll('[data-lo-check]').forEach(function (c) { if (!c.closest('.lo-gv-row').classList.contains('d-none')) c.checked = checkAll.checked; });
+		syncChecks();
+	});
+	if (clearGv) clearGv.addEventListener('submit', function (e) {
+		var ids = checkedIds();
+		if (!ids.length) { e.preventDefault(); toast('Tích chọn giáo viên ở bảng bên phải trước, rồi chọn "Xóa lịch → Lịch của GV đã tích".', 'error'); return; }
+		var hours = 0, names = ids.map(function (id) { var d = cfg.dk[id]; hours += d ? d.da_xep : 0; return d ? d.ten : id; });
+		if (!confirm('Xóa toàn bộ lịch đã xếp (' + hours + ' giờ) của ' + ids.length + ' giáo viên:\n' + names.join(', ') + '?')) { e.preventDefault(); return; }
+		clearGv.querySelectorAll('input[name="dk[]"]').forEach(function (el) { el.remove(); });
+		ids.forEach(function (id) { var i = document.createElement('input'); i.type = 'hidden'; i.name = 'dk[]'; i.value = id; clearGv.appendChild(i); });
+	});
 	filterPanel();
 
 	if (cfg.focus && cfg.dk[cfg.focus]) {

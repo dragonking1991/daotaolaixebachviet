@@ -4,6 +4,8 @@ if(!defined('SOURCES')) die("Error");
 $loE = function($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); };
 $loSt = lo_status_list();
 $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w === 0 ? 'CN' : 'T'.($w + 1)).' '.date('d/m', strtotime($date)); };
+$loXn = lo_xac_nhan_list();
+$loLimit = lo_gio_canh_bao();
 ?>
 <section class="dt-lo">
 	<div class="dt-lo-intro">
@@ -15,6 +17,8 @@ $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w =
 	<?php endif; ?>
 	<?php foreach($dtLoDots as $L): $dot = $L['dot']; $st = $dot['trang_thai']; $open = $st === 'mo_dk';
 		$mineHang = array_column($L['mine'], 'hang');
+		$mineTotal = array_sum(array_map('intval', array_column($L['mine'], 'so_gio')));
+		$mineXn = $L['mine'] ? (string)($L['mine'][0]['xac_nhan'] ?? '') : '';
 		$canAdd = array(); foreach($L['cap'] as $h => $c) if($c['tong_gio'] > 0 && !in_array($h, $mineHang, true)) $canAdd[$h] = $c; ?>
 	<article class="dt-lo-card is-<?=$st?>">
 		<header class="dt-lo-head">
@@ -41,7 +45,10 @@ $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w =
 		</div>
 
 		<div class="dt-lo-section">
-			<h3>Đăng ký của bạn</h3>
+			<h3>Đăng ký của bạn<?php if($mineTotal): ?> <span class="dt-lo-total <?=$mineTotal > $loLimit ? 'is-over' : ''?>">Tổng <?=$mineTotal?> giờ</span><?php endif; ?></h3>
+			<?php if($mineTotal > $loLimit && isset($loXn[$mineXn])): ?>
+			<p class="dt-lo-xn"><i class="fas <?=$loXn[$mineXn]['icon']?>" aria-hidden="true"></i> Trên <?=$loLimit?> giờ – bạn đã chọn: <b><?=$loE($loXn[$mineXn]['label'])?></b></p>
+			<?php endif; ?>
 			<?php if(!$L['mine']): ?>
 			<p class="dt-lo-muted"><?=$open ? 'Bạn chưa đăng ký giờ ôn trong đợt này.' : 'Bạn không đăng ký giờ ôn trong đợt này.'?></p>
 			<?php endif; ?>
@@ -56,8 +63,8 @@ $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w =
 				<?php if($open): ?>
 				<details class="dt-lo-edit">
 					<summary><i class="fas fa-pen" aria-hidden="true"></i> Sửa</summary>
-					<form method="post" action="index.php?com=cong-giao-vien&amp;tab=lichon" class="dt-lo-form">
-						<input type="hidden" name="dt_act" value="loDangky"><input type="hidden" name="dt_csrf" value="<?=$loE(dt_gv_csrf_token())?>">
+					<form method="post" action="index.php?com=cong-giao-vien&amp;tab=lichon" class="dt-lo-form" data-lo-confirm data-other="<?=$mineTotal - (int)$r['so_gio']?>" data-xn="<?=$loE($mineXn)?>" data-title="<?=$loE(lo_dot_title($dot))?>">
+						<input type="hidden" name="dt_act" value="loDangky"><input type="hidden" name="dt_csrf" value="<?=$loE(dt_gv_csrf_token())?>"><input type="hidden" name="xac_nhan" value="">
 						<input type="hidden" name="id_dot" value="<?=(int)$dot['id']?>"><input type="hidden" name="hang" value="<?=$loE($r['hang'])?>">
 						<label><span>Số giờ (tối đa <?=$max?>)</span><input type="number" name="so_gio" min="<?=max(1, $r['da_xep'])?>" max="<?=$max?>" value="<?=(int)$r['so_gio']?>" required></label>
 						<label class="is-wide"><span>Ghi chú</span><input type="text" name="ghi_chu" maxlength="1000" value="<?=$loE($r['ghi_chu'])?>" placeholder="VD: chỉ tập buổi chiều"></label>
@@ -76,8 +83,8 @@ $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w =
 			<?php endforeach; ?>
 
 			<?php if($open && $canAdd): ?>
-			<form method="post" action="index.php?com=cong-giao-vien&amp;tab=lichon" class="dt-lo-form dt-lo-add">
-				<input type="hidden" name="dt_act" value="loDangky"><input type="hidden" name="dt_csrf" value="<?=$loE(dt_gv_csrf_token())?>">
+			<form method="post" action="index.php?com=cong-giao-vien&amp;tab=lichon" class="dt-lo-form dt-lo-add" data-lo-confirm data-other="<?=$mineTotal?>" data-xn="<?=$loE($mineXn)?>" data-title="<?=$loE(lo_dot_title($dot))?>">
+				<input type="hidden" name="dt_act" value="loDangky"><input type="hidden" name="dt_csrf" value="<?=$loE(dt_gv_csrf_token())?>"><input type="hidden" name="xac_nhan" value="">
 				<input type="hidden" name="id_dot" value="<?=(int)$dot['id']?>">
 				<label><span>Hạng xe</span>
 					<select name="hang" required>
@@ -112,12 +119,77 @@ $loShort = function($date) { $w = (int)date('w', strtotime($date)); return ($w =
 	</article>
 	<?php endforeach; ?>
 </section>
+<div class="dt-lo-modal" data-lo-modal hidden>
+	<div class="dt-lo-dialog" role="dialog" aria-modal="true" aria-labelledby="dt-lo-modal-title">
+		<h3 id="dt-lo-modal-title"><i class="fas fa-clipboard-check" aria-hidden="true"></i> Xác nhận đăng ký giờ ôn</h3>
+		<p class="dt-lo-modal-sub" data-lo-m-title></p>
+		<div class="dt-lo-modal-sum">
+			<div><span>Hạng xe</span><b data-lo-m-hang></b></div>
+			<div><span>Số giờ đăng ký</span><b data-lo-m-gio></b></div>
+			<div><span>Tổng giờ trong đợt</span><b data-lo-m-total></b></div>
+		</div>
+		<div class="dt-lo-modal-warn" data-lo-m-over hidden>
+			<p><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Bạn đăng ký <b>trên <?=$loLimit?> giờ</b>. Vui lòng gửi cho người phụ trách đăng ký, hoặc xác nhận tập song song 2 xe / tập trong 2 ngày:</p>
+			<?php foreach($loXn as $k => $x): ?>
+			<label class="dt-lo-choice"><input type="radio" name="dt_lo_xn_choice" value="<?=$k?>"><i class="fas <?=$x['icon']?>" aria-hidden="true"></i><span><b><?=$loE($x['label'])?></b><small><?=$k === 'song_song' ? 'Đồng ý đứng 2 xe cùng giờ để tập đủ giờ trong ngày.' : ($k === 'hai_ngay' ? 'Chia số giờ ra 2 ngày tập, không tập song song.' : 'Bộ phận đào tạo sẽ liên hệ và xếp lịch giúp bạn.')?></small></span></label>
+			<?php endforeach; ?>
+			<p class="dt-lo-modal-err" data-lo-m-err hidden>Vui lòng chọn một cách xử lý.</p>
+		</div>
+		<div class="dt-lo-modal-actions">
+			<button type="button" class="is-ghost" data-lo-m-cancel>Quay lại sửa</button>
+			<button type="button" data-lo-m-ok><i class="fas fa-check" aria-hidden="true"></i> Xác nhận đăng ký</button>
+		</div>
+	</div>
+</div>
 <script>
 document.querySelectorAll('.dt-lo-add').forEach(function(f){
 	var s = f.querySelector('select[name=hang]'), n = f.querySelector('input[name=so_gio]');
 	function sync(){ var o = s.options[s.selectedIndex]; if(o) n.max = o.getAttribute('data-max'); }
 	s.addEventListener('change', sync); sync();
 });
+(function(){
+	var LIMIT = <?=(int)$loLimit?>, modal = document.querySelector('[data-lo-modal]'), form = null;
+	if(!modal) return;
+	function q(sel){ return modal.querySelector(sel); }
+	function close(){ modal.hidden = true; document.body.classList.remove('dt-lo-noscroll'); form = null; }
+	document.querySelectorAll('[data-lo-confirm]').forEach(function(f){
+		f.addEventListener('submit', function(e){
+			if(f.getAttribute('data-ok') === '1') return;
+			e.preventDefault();
+			form = f;
+			var hang = f.querySelector('[name=hang]').value;
+			var gio = parseInt(f.querySelector('[name=so_gio]').value, 10) || 0, total = (parseInt(f.getAttribute('data-other'), 10) || 0) + gio;
+			q('[data-lo-m-title]').textContent = f.getAttribute('data-title') || '';
+			q('[data-lo-m-hang]').textContent = hang;
+			q('[data-lo-m-gio]').textContent = gio + ' giờ';
+			q('[data-lo-m-total]').textContent = total + ' giờ';
+			var over = total > LIMIT, xn = f.getAttribute('data-xn') || '';
+			q('[data-lo-m-over]').hidden = !over;
+			q('[data-lo-m-err]').hidden = true;
+			modal.querySelectorAll('[name=dt_lo_xn_choice]').forEach(function(r){ r.checked = over && r.value === xn; });
+			modal.classList.toggle('is-over', over);
+			modal.hidden = false;
+			document.body.classList.add('dt-lo-noscroll');
+			(over ? q('[name=dt_lo_xn_choice]') : q('[data-lo-m-ok]')).focus();
+		});
+	});
+	q('[data-lo-m-cancel]').addEventListener('click', close);
+	modal.addEventListener('click', function(e){ if(e.target === modal) close(); });
+	document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !modal.hidden) close(); });
+	q('[data-lo-m-ok]').addEventListener('click', function(){
+		if(!form) return;
+		var xn = '';
+		if(!q('[data-lo-m-over]').hidden)
+		{
+			var c = modal.querySelector('[name=dt_lo_xn_choice]:checked');
+			if(!c) { q('[data-lo-m-err]').hidden = false; return; }
+			xn = c.value;
+		}
+		form.querySelector('[name=xac_nhan]').value = xn;
+		form.setAttribute('data-ok', '1');
+		var f = form; close(); f.submit();
+	});
+})();
 </script>
 <style>
 .dt-lo-tabbadge { display: inline-flex; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #e5484d; color: #fff; font-size: 11px; align-items: center; justify-content: center; }
@@ -183,4 +255,35 @@ document.querySelectorAll('.dt-lo-add').forEach(function(f){
 .dt-lo-time { font-weight: 700; color: #0f172a; font-variant-numeric: tabular-nums; }
 .dt-lo-slot small { margin-left: auto; color: #64748b; }
 @media (max-width: 600px) { .dt-gv-tabs { overflow-x: auto; } .dt-gv-tabs a { padding: 10px 12px; white-space: nowrap; } .dt-lo-form label { min-width: 100%; } }
+.dt-lo-total { margin-left: 8px; padding: 2px 9px; border-radius: 12px; background: #eef2ff; color: #2954f2; font-size: 12px; text-transform: none; letter-spacing: 0; }
+.dt-lo-total.is-over { background: #fef3c7; color: #a16207; }
+.dt-lo-xn { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: #f0f9ff; color: #075985; font-size: 13.5px; }
+.dt-lo-xn i { margin-right: 4px; }
+body.dt-lo-noscroll { overflow: hidden; }
+.dt-lo-modal { position: fixed; inset: 0; z-index: 9999; background: rgba(15,23,42,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dt-lo-modal[hidden] { display: none; }
+.dt-lo-dialog { width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto; background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 20px 50px rgba(15,23,42,.3); }
+.dt-lo-dialog h3 { margin: 0; font-size: 17px; color: #0f172a; }
+.dt-lo-dialog h3 i { color: #2954f2; margin-right: 6px; }
+.dt-lo-modal.is-over .dt-lo-dialog h3 i { color: #d97706; }
+.dt-lo-modal-sub { margin: 4px 0 12px; color: #64748b; font-size: 13px; }
+.dt-lo-modal-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.dt-lo-modal-sum div { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 10px; padding: 8px 10px; }
+.dt-lo-modal-sum span { display: block; font-size: 11.5px; color: #64748b; }
+.dt-lo-modal-sum b { font-size: 15px; color: #0f172a; }
+.dt-lo-modal.is-over .dt-lo-modal-sum div:last-child { background: #fffbeb; border-color: #fde68a; }
+.dt-lo-modal.is-over .dt-lo-modal-sum div:last-child b { color: #b45309; }
+.dt-lo-modal-warn > p { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 13.5px; line-height: 1.45; }
+.dt-lo-choice { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; margin: 0 0 8px; cursor: pointer; }
+.dt-lo-choice:hover { border-color: #9db4ff; }
+.dt-lo-choice:has(input:checked) { border-color: #2954f2; background: #f5f8ff; box-shadow: 0 0 0 2px rgba(41,84,242,.15); }
+.dt-lo-choice input { margin-top: 3px; accent-color: #2954f2; }
+.dt-lo-choice > i { color: #2954f2; margin-top: 3px; width: 16px; text-align: center; }
+.dt-lo-choice span { display: flex; flex-direction: column; font-size: 14px; color: #0f172a; }
+.dt-lo-choice small { color: #64748b; font-size: 12.5px; }
+.dt-lo-modal-warn > p.dt-lo-modal-err { color: #b91c1c; background: none; padding: 0; font-size: 13px; margin: 0 0 6px; }
+.dt-lo-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.dt-lo-modal-actions button { height: 40px; padding: 0 16px; border-radius: 8px; border: none; background: #2954f2; color: #fff; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.dt-lo-modal-actions button.is-ghost { background: #f1f5f9; color: #334155; }
+@media (max-width: 480px) { .dt-lo-modal-sum { grid-template-columns: 1fr 1fr; } }
 </style>

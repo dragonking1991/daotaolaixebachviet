@@ -26,6 +26,62 @@ if(!function_exists('lo_ensure_tables'))
 		);
 	}
 
+	/* Tổng giờ GV đăng ký trong 1 đợt vượt ngưỡng này thì phải chọn cách xử lý (lo_xac_nhan_list). */
+	function lo_gio_canh_bao()
+	{
+		return 12;
+	}
+
+	function lo_xac_nhan_list()
+	{
+		return array(
+			'song_song' => array('label' => 'Tập song song 2 xe', 'short' => 'Song song 2 xe', 'icon' => 'fa-random'),
+			'hai_ngay' => array('label' => 'Tập trong 2 ngày', 'short' => 'Tập 2 ngày', 'icon' => 'fa-calendar-week'),
+			'phu_trach' => array('label' => 'Gửi người phụ trách xếp', 'short' => 'Nhờ phụ trách xếp', 'icon' => 'fa-user-tie'),
+		);
+	}
+
+	/* Bổ sung cột cho bảng đã tạo ở phiên bản trước. Trả về true nếu vừa thêm cột xac_nhan (lần nâng cấp đầu tiên). */
+	function lo_upgrade_columns()
+	{
+		global $d;
+		$have = array();
+		foreach($d->rawQuery('show columns from #_dt_lo_dangky') as $r) $have[strtolower($r['Field'])] = true;
+		$added = false;
+		if(!isset($have['gv_sdt'])) $d->rawQuery("alter table #_dt_lo_dangky add column gv_sdt VARCHAR(20) NOT NULL DEFAULT '' after gv_cccd");
+		if(!isset($have['xac_nhan'])) { $d->rawQuery("alter table #_dt_lo_dangky add column xac_nhan VARCHAR(20) NOT NULL DEFAULT '' after so_gio"); $added = true; }
+		return $added;
+	}
+
+	/* Đổi tên lịch tự động kiểu cũ (1 chữ, VD "Minh" / "Minh V") sang tên 2 chữ. Tên do bộ phận tự đặt được giữ nguyên. */
+	function lo_upgrade_ten_lich()
+	{
+		global $d;
+		$rows = $d->rawQuery('select id, id_dot, id_gv, gv_hoten, ten_lich from #_dt_lo_dangky order by id_dot asc, id asc');
+		$byDot = array();
+		foreach($rows as $r) $byDot[$r['id_dot']][$r['id_gv']] = $r;
+		foreach($byDot as $idDot => $gvs)
+		{
+			$taken = array();
+			$todo = array();
+			foreach($gvs as $idGv => $r)
+			{
+				$words = preg_split('/\s+/u', trim((string)$r['gv_hoten']), -1, PREG_SPLIT_NO_EMPTY);
+				$last = $words ? $words[count($words) - 1] : '';
+				$isOld = $last !== '' && count($words) >= 2 && preg_match('/^'.preg_quote($last, '/').'( \p{Lu}| \d+)?$/u', (string)$r['ten_lich']);
+				if($isOld) $todo[$idGv] = $r; else $taken[] = $r['ten_lich'];
+			}
+			foreach($todo as $idGv => $r)
+			{
+				$name = lo_short_name($r['gv_hoten'], $taken);
+				$base = $name; $i = 2;
+				while(in_array($name, $taken, true)) $name = $base.' '.$i++;
+				$taken[] = $name;
+				$d->rawQuery('update #_dt_lo_dangky set ten_lich = ? where id_dot = ? and id_gv = ?', array(mb_substr($name, 0, 50), (int)$idDot, (int)$idGv));
+			}
+		}
+	}
+
 	function lo_ensure_tables()
 	{
 		global $d;
@@ -61,9 +117,11 @@ if(!function_exists('lo_ensure_tables'))
 				id_gv INT NOT NULL,
 				gv_hoten VARCHAR(255) NOT NULL DEFAULT '',
 				gv_cccd VARCHAR(20) NOT NULL DEFAULT '',
+				gv_sdt VARCHAR(20) NOT NULL DEFAULT '',
 				ten_lich VARCHAR(50) NOT NULL DEFAULT '',
 				hang VARCHAR(30) NOT NULL,
 				so_gio SMALLINT NOT NULL DEFAULT 0,
+				xac_nhan VARCHAR(20) NOT NULL DEFAULT '',
 				ghi_chu VARCHAR(1000) NOT NULL DEFAULT '',
 				uu_tien_ngay DATE NULL DEFAULT NULL,
 				uu_tien_gio_bd TINYINT NULL DEFAULT NULL,
@@ -95,6 +153,7 @@ if(!function_exists('lo_ensure_tables'))
 			if(method_exists($d, 'getLastErrorCode') && $d->getLastErrorCode() !== '00000')
 				throw new RuntimeException('Không thể tạo bảng lịch ôn sát hạch.');
 		}
+		if(lo_upgrade_columns()) lo_upgrade_ten_lich();
 		$ready = true;
 	}
 
@@ -102,8 +161,8 @@ if(!function_exists('lo_ensure_tables'))
 	function lo_insert_dangky($data)
 	{
 		global $d;
-		$cols = array('id_dot', 'id_gv', 'gv_hoten', 'gv_cccd', 'ten_lich', 'hang', 'so_gio', 'ghi_chu', 'uu_tien_ngay', 'uu_tien_gio_bd', 'uu_tien_gio_kt', 'admin_ghi_chu', 'nguon', 'ngaytao', 'ngaycapnhat');
-		$defaults = array('gv_hoten' => '', 'gv_cccd' => '', 'ten_lich' => '', 'ghi_chu' => '', 'uu_tien_ngay' => null, 'uu_tien_gio_bd' => null, 'uu_tien_gio_kt' => null, 'admin_ghi_chu' => '', 'nguon' => 'gv', 'ngaytao' => time(), 'ngaycapnhat' => time());
+		$cols = array('id_dot', 'id_gv', 'gv_hoten', 'gv_cccd', 'gv_sdt', 'ten_lich', 'hang', 'so_gio', 'xac_nhan', 'ghi_chu', 'uu_tien_ngay', 'uu_tien_gio_bd', 'uu_tien_gio_kt', 'admin_ghi_chu', 'nguon', 'ngaytao', 'ngaycapnhat');
+		$defaults = array('gv_hoten' => '', 'gv_cccd' => '', 'gv_sdt' => '', 'ten_lich' => '', 'xac_nhan' => '', 'ghi_chu' => '', 'uu_tien_ngay' => null, 'uu_tien_gio_bd' => null, 'uu_tien_gio_kt' => null, 'admin_ghi_chu' => '', 'nguon' => 'gv', 'ngaytao' => time(), 'ngaycapnhat' => time());
 		$params = array();
 		foreach($cols as $c) $params[] = array_key_exists($c, $data) ? $data[$c] : ($defaults[$c] ?? null);
 		$d->rawQuery('insert into #_dt_lo_dangky ('.implode(', ', $cols).') values ('.implode(', ', array_fill(0, count($cols), '?')).')', $params);
@@ -185,15 +244,43 @@ if(!function_exists('lo_ensure_tables'))
 		return $t;
 	}
 
-	/* Tên ngắn trên lưới lịch: tên gọi (từ cuối); trùng tên trong đợt thì thêm chữ cái đầu của chữ liền trước. */
+	/* Tên trên lưới lịch: 2 chữ cuối của họ tên (VD "Duy Minh") để tránh trùng tên gọi;
+	 * vẫn trùng thì thêm chữ cái đầu của chữ liền trước (VD "Duy Minh V"). */
 	function lo_short_name($hoten, $taken = array())
 	{
 		$words = preg_split('/\s+/u', trim((string)$hoten), -1, PREG_SPLIT_NO_EMPTY);
 		if(!$words) return '';
-		$name = $words[count($words) - 1];
-		if(!in_array($name, $taken, true) || count($words) < 2) return $name;
-		$alt = $name.' '.mb_strtoupper(mb_substr($words[count($words) - 2], 0, 1));
-		return $alt;
+		$n = count($words);
+		$name = $n >= 2 ? $words[$n - 2].' '.$words[$n - 1] : $words[0];
+		if(!in_array($name, $taken, true) || $n < 3) return $name;
+		return $name.' '.mb_strtoupper(mb_substr($words[$n - 3], 0, 1));
+	}
+
+	/* Tổng giờ một GV đã đăng ký trong đợt (trừ hạng $exceptHang). */
+	function lo_gv_total_hours($idDot, $idGv, $exceptHang = '')
+	{
+		global $d;
+		$row = $d->rawQueryOne('select coalesce(sum(so_gio), 0) as n from #_dt_lo_dangky where id_dot = ? and id_gv = ? and hang <> ?', array((int)$idDot, (int)$idGv, (string)$exceptHang));
+		return $row ? (int)$row['n'] : 0;
+	}
+
+	/* Cách xử lý khi vượt ngưỡng giờ áp dụng cho mọi đăng ký của GV trong đợt; dưới ngưỡng thì bỏ trống. */
+	function lo_set_xac_nhan($idDot, $idGv, $xacNhan)
+	{
+		global $d;
+		$total = lo_gv_total_hours($idDot, $idGv);
+		if($total <= lo_gio_canh_bao()) $xacNhan = '';
+		$d->rawQuery('update #_dt_lo_dangky set xac_nhan = ? where id_dot = ? and id_gv = ?', array((string)$xacNhan, (int)$idDot, (int)$idGv));
+	}
+
+	/* GV ngoài hệ thống dùng id_gv âm, duy nhất trong đợt; cùng họ tên (+ CCCD nếu có) thì dùng lại id cũ để gộp các hạng. */
+	function lo_external_gv_id($idDot, $hoten, $cccd)
+	{
+		global $d;
+		foreach($d->rawQuery('select distinct id_gv, gv_hoten, gv_cccd from #_dt_lo_dangky where id_dot = ? and id_gv < 0', array((int)$idDot)) as $r)
+			if(mb_strtolower(trim($r['gv_hoten'])) === mb_strtolower(trim($hoten)) && (string)$r['gv_cccd'] === (string)$cccd) return (int)$r['id_gv'];
+		$row = $d->rawQueryOne('select least(coalesce(min(id_gv), 0), 0) as m from #_dt_lo_dangky where id_dot = ?', array((int)$idDot));
+		return (int)($row['m'] ?? 0) - 1;
 	}
 
 	/* Màu ổn định theo đăng ký để dễ nhìn thấy tính liên tục trên lưới. */
@@ -329,7 +416,8 @@ if(!function_exists('lo_ensure_tables'))
 	 * Quy tắc:
 	 *  1. GV có yêu cầu (ngày/khung giờ) xếp trước, sau đó theo tổng số giờ đăng ký giảm dần.
 	 *  2. Trong 1 ngày, giờ của 1 GV xếp liên tục (bất kể hạng), đổi sang xe khác cùng hạng khi xe đang dùng bận.
-	 *  3. Không xếp liên tục đủ thì xếp song song 2 xe cùng giờ, tối đa $maxParallel giờ/ngày, để tránh đẩy sang ngày sau.
+	 *  3. Không xếp liên tục đủ thì xếp song song 2 xe cùng giờ, tối đa $maxParallel giờ/ngày, để tránh đẩy sang ngày sau
+ *     (trừ GV đã chọn "tập trong 2 ngày" – xac_nhan = hai_ngay – thì không xếp song song).
 	 *  4. Còn thiếu thì chuyển sang ngày tiếp theo; cuối cùng lấp vào chỗ trống còn lại.
 	 * Trả về ['new' => [id_ngay, so_xe, gio, id_dangky][], 'unplaced' => [id_dangky => giờ]]. */
 	function lo_schedule($configs, $regs, $slots, $maxParallel = 3)
@@ -488,6 +576,7 @@ if(!function_exists('lo_ensure_tables'))
 		$runParallel = function($gv, $day) use (&$byGv, &$cfg, &$busy, &$par, &$remain, $maxParallel, $inWindow, $pickXe, $place) {
 			$placed = 0;
 			if(empty($busy[$gv][$day])) return 0;
+			foreach($byGv[$gv] as $r) if(($r['xac_nhan'] ?? '') === 'hai_ngay') return 0;
 			$hours = array_keys($busy[$gv][$day]);
 			sort($hours);
 			foreach($byGv[$gv] as $r)

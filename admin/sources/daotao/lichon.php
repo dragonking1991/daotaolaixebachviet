@@ -351,6 +351,8 @@ function dt_lichon_dk_save()
 	$uuBd = lo_post_hour('uu_tien_gio_bd');
 	$uuKt = lo_post_hour('uu_tien_gio_kt');
 	$tenLich = lo_post_str('ten_lich', 50);
+	$xacNhan = lo_post_str('xac_nhan', 20);
+	if($xacNhan !== '' && !isset(lo_xac_nhan_list()[$xacNhan])) $func->transfer('Cách xử lý khi vượt '.lo_gio_canh_bao().' giờ không hợp lệ.', $back, false);
 	if(!ctype_digit($soGio) || (int)$soGio < 1 || (int)$soGio > 500) $func->transfer('Số giờ đăng ký phải là số nguyên từ 1 đến 500.', $back, false);
 	if(!in_array($hang, lo_hang_list(), true)) $func->transfer('Vui lòng chọn hạng xe.', $back, false);
 	if($uuNgay === false || $uuBd === false || $uuKt === false) $func->transfer('Ưu tiên ngày/giờ không hợp lệ.', $back, false);
@@ -374,29 +376,82 @@ function dt_lichon_dk_save()
 		$d->update('dt_lo_dangky', $data);
 		if($tenLich !== '' && $tenLich !== $row['ten_lich'])
 			$d->rawQuery('update #_dt_lo_dangky set ten_lich = ? where id_dot = ? and id_gv = ?', array($tenLich, $idDot, $row['id_gv']));
+		if((int)$row['id_gv'] < 0)
+		{
+			$ext = lo_post_external_gv($back, true);
+			$d->rawQuery('update #_dt_lo_dangky set gv_hoten = ?, gv_cccd = ?, gv_sdt = ? where id_dot = ? and id_gv = ?', array($ext['hoten'], $ext['cccd'], $ext['sdt'], $idDot, $row['id_gv']));
+		}
+		lo_set_xac_nhan($idDot, $row['id_gv'], $xacNhan);
 		lo_commit_or_fail($back, 'Không thể lưu đăng ký do lỗi cơ sở dữ liệu.');
 		lo_touch_dot($idDot);
-		dt_audit('update', 'lichon_dk', 1, 'id='.$id.' gv='.$row['gv_hoten'].' hang='.$hang.' so_gio='.$soGio);
+		dt_audit('update', 'lichon_dk', 1, 'id='.$id.' gv='.$row['gv_hoten'].' hang='.$hang.' so_gio='.$soGio.($xacNhan !== '' ? ' xac_nhan='.$xacNhan : ''));
 		$warn = (int)$xep['n'] > (int)$soGio ? ' Lưu ý: đã xếp '.(int)$xep['n'].' giờ, nhiều hơn số giờ đăng ký.' : '';
-		$func->transfer('Đã cập nhật đăng ký của '.$row['gv_hoten'].'.'.$warn, $back);
+		$func->transfer('Đã cập nhật đăng ký của '.$row['gv_hoten'].'.'.$warn.lo_over_note($idDot, $row['id_gv']), $back);
 	}
-	$idGv = (int)($_POST['id_gv'] ?? 0);
-	$gv = $idGv ? $d->rawQueryOne('select id, hoten, cccd from #_dt_giaovien where id = ? limit 0,1', array($idGv)) : null;
-	if(!$gv) $func->transfer('Vui lòng chọn giáo viên.', $back, false);
-	lo_lock_dot($idDot);
+	if(lo_post_str('gv_ngoai', 1) === '1')
+	{
+		$ext = lo_post_external_gv($back, false);
+		$gv = $ext['cccd'] !== '' ? $d->rawQueryOne('select id, hoten, cccd from #_dt_giaovien where cccd = ? limit 0,1', array($ext['cccd'])) : null;
+		if($gv) $idGv = (int)$gv['id'];
+		else
+		{
+			lo_lock_dot($idDot);
+			$idGv = lo_external_gv_id($idDot, $ext['hoten'], $ext['cccd']);
+			$gv = array('id' => $idGv, 'hoten' => $ext['hoten'], 'cccd' => $ext['cccd'], 'sdt' => $ext['sdt']);
+		}
+	}
+	else
+	{
+		$idGv = (int)($_POST['id_gv'] ?? 0);
+		$gv = $idGv ? $d->rawQueryOne('select id, hoten, cccd from #_dt_giaovien where id = ? limit 0,1', array($idGv)) : null;
+		if(!$gv) $func->transfer('Vui lòng chọn giáo viên, hoặc chọn "GV ngoài hệ thống" để nhập thông tin.', $back, false);
+	}
+	if($idGv > 0) lo_lock_dot($idDot);
 	$dup = $d->rawQueryOne('select id from #_dt_lo_dangky where id_dot = ? and id_gv = ? and hang = ? limit 0,1', array($idDot, $idGv, $hang));
 	if($dup) lo_rollback_transfer($gv['hoten'].' đã đăng ký hạng '.$hang.' trong đợt này; hãy sửa đăng ký đó.', lo_url($idDot, 'dangky', array('edit_dk' => $dup['id'])).'#lo-dk-form');
 	$data += array(
-		'id_dot' => $idDot, 'id_gv' => $idGv, 'gv_hoten' => $gv['hoten'], 'gv_cccd' => $gv['cccd'],
+		'id_dot' => $idDot, 'id_gv' => $idGv, 'gv_hoten' => $gv['hoten'], 'gv_cccd' => $gv['cccd'], 'gv_sdt' => $gv['sdt'] ?? '',
 		'ten_lich' => $tenLich !== '' ? $tenLich : lo_pick_ten_lich($idDot, $idGv, $gv['hoten']),
 		'nguon' => 'admin', 'ngaytao' => time(),
 	);
 	if(!lo_insert_dangky($data)) lo_rollback_transfer('Không thể lưu đăng ký do lỗi cơ sở dữ liệu.', $back);
 	if($tenLich !== '') $d->rawQuery('update #_dt_lo_dangky set ten_lich = ? where id_dot = ? and id_gv = ?', array($tenLich, $idDot, $idGv));
+	lo_set_xac_nhan($idDot, $idGv, $xacNhan);
 	lo_commit_or_fail($back, 'Không thể lưu đăng ký do lỗi cơ sở dữ liệu.');
 	lo_touch_dot($idDot);
-	dt_audit('create', 'lichon_dk', 1, 'id_dot='.$idDot.' gv='.$gv['hoten'].' hang='.$hang.' so_gio='.$soGio);
-	$func->transfer('Đã thêm đăng ký '.$soGio.' giờ '.$hang.' cho '.$gv['hoten'].'.', $back);
+	dt_audit('create', 'lichon_dk', 1, 'id_dot='.$idDot.' gv='.$gv['hoten'].($idGv < 0 ? ' (ngoai he thong)' : '').' hang='.$hang.' so_gio='.$soGio.($xacNhan !== '' ? ' xac_nhan='.$xacNhan : ''));
+	$func->transfer('Đã thêm đăng ký '.$soGio.' giờ '.$hang.' cho '.$gv['hoten'].($idGv < 0 ? ' (GV ngoài hệ thống)' : '').'.'.lo_over_note($idDot, $idGv), $back);
+}
+
+/* Thông tin GV ngoài hệ thống từ form nhập hộ. */
+function lo_post_external_gv($back, $inTransaction)
+{
+	$hoten = preg_replace('/\s+/u', ' ', lo_post_str('gv_hoten_ngoai', 255));
+	$cccd = preg_replace('/\s+/', '', lo_post_str('gv_cccd_ngoai', 20));
+	$sdt = preg_replace('/[\s.\-]+/', '', lo_post_str('gv_sdt_ngoai', 20));
+	$err = '';
+	if(mb_strlen($hoten) < 2) $err = 'Vui lòng nhập họ tên giáo viên ngoài hệ thống.';
+	elseif($cccd !== '' && !preg_match('/^\d{9,12}$/', $cccd)) $err = 'CCCD phải gồm 9–12 chữ số.';
+	elseif($sdt !== '' && !preg_match('/^\+?\d{8,15}$/', $sdt)) $err = 'Số điện thoại không hợp lệ.';
+	if($err !== '')
+	{
+		if($inTransaction) lo_rollback_transfer($err, $back);
+		global $func;
+		$func->transfer($err, $back, false);
+	}
+	return array('hoten' => $hoten, 'cccd' => $cccd, 'sdt' => $sdt);
+}
+
+/* Nhắc bộ phận khi tổng giờ của GV vượt ngưỡng mà chưa chọn cách xử lý. */
+function lo_over_note($idDot, $idGv)
+{
+	global $d;
+	$total = lo_gv_total_hours($idDot, $idGv);
+	if($total <= lo_gio_canh_bao()) return '';
+	$row = $d->rawQueryOne('select xac_nhan from #_dt_lo_dangky where id_dot = ? and id_gv = ? limit 0,1', array((int)$idDot, (int)$idGv));
+	$list = lo_xac_nhan_list();
+	$xn = $row ? (string)$row['xac_nhan'] : '';
+	return ' Tổng '.$total.' giờ (> '.lo_gio_canh_bao().'h): '.(isset($list[$xn]) ? $list[$xn]['label'] : 'chưa chọn cách xử lý (song song 2 xe / 2 ngày)').'.';
 }
 
 function dt_lichon_dk_delete()
@@ -412,6 +467,7 @@ function dt_lichon_dk_delete()
 	if(!$row) lo_rollback_transfer('Đăng ký không tồn tại.', $back);
 	$d->rawQuery('delete from #_dt_lo_lich where id_dangky = ?', array($id));
 	$d->rawQuery('delete from #_dt_lo_dangky where id = ?', array($id));
+	lo_set_xac_nhan($idDot, $row['id_gv'], $row['xac_nhan'] ?? '');
 	lo_commit_or_fail($back, 'Không thể xóa đăng ký do lỗi cơ sở dữ liệu.');
 	lo_touch_dot($idDot);
 	dt_audit('delete', 'lichon_dk', 1, 'id='.$id.' gv='.$row['gv_hoten'].' hang='.$row['hang']);
@@ -462,14 +518,33 @@ function dt_lichon_clear()
 	$back = lo_url($idDot, 'xeplich');
 	lo_require_post($back);
 	lo_load_dot_or_fail($idDot);
-	$all = lo_post_str('mode', 10) === 'all';
+	$mode = lo_post_str('mode', 10);
+	if(!in_array($mode, array('auto', 'all', 'gv'), true)) $func->transfer('Kiểu xóa lịch không hợp lệ.', $back, false);
+	$hang = lo_post_str('hang', 30);
+	if($hang !== '') $back = lo_url($idDot, 'xeplich', array('hang' => $hang));
+	$where = 'id_dot = ?';
+	$params = array($idDot);
+	$names = array();
+	if($mode === 'auto') $where .= " and nguon = 'auto'";
+	elseif($mode === 'gv')
+	{
+		$ids = array();
+		foreach((array)($_POST['dk'] ?? array()) as $v) if(is_scalar($v) && ctype_digit((string)$v)) $ids[(int)$v] = true;
+		$ids = array_keys($ids);
+		if(!$ids) $func->transfer('Vui lòng tích chọn giáo viên ở bảng bên phải trước khi xóa lịch.', $back, false);
+		$marks = implode(',', array_fill(0, count($ids), '?'));
+		foreach($d->rawQuery("select ten_lich from #_dt_lo_dangky where id_dot = ? and id in ($marks)", array_merge(array($idDot), $ids)) as $r) $names[] = $r['ten_lich'];
+		$where .= " and id_dangky in ($marks)";
+		$params = array_merge($params, $ids);
+	}
 	lo_lock_dot($idDot);
-	$cnt = $d->rawQueryOne('select count(*) as n from #_dt_lo_lich where id_dot = ?'.($all ? '' : " and nguon = 'auto'"), array($idDot));
-	$d->rawQuery('delete from #_dt_lo_lich where id_dot = ?'.($all ? '' : " and nguon = 'auto'"), array($idDot));
+	$cnt = $d->rawQueryOne('select count(*) as n from #_dt_lo_lich where '.$where, $params);
+	$d->rawQuery('delete from #_dt_lo_lich where '.$where, $params);
 	lo_commit_or_fail($back, 'Không thể xóa lịch do lỗi cơ sở dữ liệu.');
 	lo_touch_dot($idDot);
-	dt_audit('clear', 'lichon', (int)$cnt['n'], 'id_dot='.$idDot.' mode='.($all ? 'all' : 'auto'));
-	$func->transfer('Đã xóa '.(int)$cnt['n'].' giờ '.($all ? 'trên toàn bộ lịch' : 'do hệ thống tự xếp (giữ nguyên các ô xếp tay)').'. Số giờ được trả lại cho giáo viên.', $back);
+	dt_audit('clear', 'lichon', (int)$cnt['n'], 'id_dot='.$idDot.' mode='.$mode.($names ? ' gv='.implode(', ', $names) : ''));
+	$scope = array('auto' => 'do hệ thống tự xếp (giữ nguyên các ô xếp tay)', 'all' => 'trên toàn bộ lịch', 'gv' => 'của '.count($names).' giáo viên đã chọn ('.implode(', ', $names).')');
+	$func->transfer('Đã xóa '.(int)$cnt['n'].' giờ '.$scope[$mode].'. Số giờ được trả lại cho giáo viên.', $back);
 }
 
 function lo_json($data)
@@ -549,13 +624,15 @@ function dt_lichon_export_dk()
 	$rows = lo_dangky_rows($dot['id']);
 	$gvInfo = array();
 	foreach($d->rawQuery('select g.id, g.sdt, g.hang_daotao_phep from #_dt_giaovien g join #_dt_lo_dangky dk on dk.id_gv = g.id where dk.id_dot = ?', array($dot['id'])) as $g) $gvInfo[$g['id']] = $g;
-	$headers = array('STT', 'Họ tên giáo viên', 'Tên trên lịch', 'CCCD', 'Số điện thoại', 'Hạng xe', 'Số giờ đăng ký', 'Đã xếp', 'Còn thiếu', 'Ghi chú của GV', 'Ưu tiên ngày', 'Ưu tiên khung giờ', 'Ghi chú bộ phận');
+	$headers = array('STT', 'Họ tên giáo viên', 'Tên trên lịch', 'CCCD', 'Số điện thoại', 'Hạng xe', 'Số giờ đăng ký', 'Đã xếp', 'Còn thiếu', 'Xác nhận khi > '.lo_gio_canh_bao().'h', 'Ghi chú của GV', 'Ưu tiên ngày', 'Ưu tiên khung giờ', 'Ghi chú bộ phận');
+	$xnList = lo_xac_nhan_list();
 	$out = array(); $i = 0;
 	foreach($rows as $r)
 	{
 		$win = $r['uu_tien_gio_bd'] !== null ? lo_range_label($r['uu_tien_gio_bd'], $r['uu_tien_gio_kt'] !== null ? $r['uu_tien_gio_kt'] : 24) : '';
-		$out[] = array(++$i, $r['gv_hoten'], $r['ten_lich'], $r['gv_cccd'], $gvInfo[$r['id_gv']]['sdt'] ?? '', $r['hang'], (int)$r['so_gio'], $r['da_xep'], max(0, $r['con_lai']),
-			$r['ghi_chu'], $r['uu_tien_ngay'] ? lo_date_vn($r['uu_tien_ngay']) : '', $win, $r['admin_ghi_chu']);
+		$sdt = (int)$r['id_gv'] < 0 ? ($r['gv_sdt'] ?? '') : ($gvInfo[$r['id_gv']]['sdt'] ?? '');
+		$out[] = array(++$i, $r['gv_hoten'].((int)$r['id_gv'] < 0 ? ' (ngoài hệ thống)' : ''), $r['ten_lich'], $r['gv_cccd'], $sdt, $r['hang'], (int)$r['so_gio'], $r['da_xep'], max(0, $r['con_lai']),
+			$xnList[$r['xac_nhan'] ?? '']['label'] ?? '', $r['ghi_chu'], $r['uu_tien_ngay'] ? lo_date_vn($r['uu_tien_ngay']) : '', $win, $r['admin_ghi_chu']);
 	}
 	$file = 'dang-ky-gio-on-'.date('Ymd', strtotime($dot['ngay_sh'])).'.xlsx';
 	dt_xlsx_simple('Đăng ký giờ ôn', $file, $headers, $out, array(3, 4));

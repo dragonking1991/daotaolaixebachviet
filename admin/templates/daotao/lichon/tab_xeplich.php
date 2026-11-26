@@ -31,9 +31,11 @@ foreach($lo_dk as $r) $loHangMiss[$r['hang']] = ($loHangMiss[$r['hang']] ?? 0) +
 		</form>
 		<div class="btn-group mr-2 my-1">
 			<button type="button" class="btn btn-outline-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fas fa-eraser mr-1"></i>Xóa lịch</button>
-			<div class="dropdown-menu">
-				<form method="post" action="index.php?com=daotao&amp;act=lichonClear" onsubmit="return confirm('Xóa các ô do hệ thống tự xếp? Ô xếp tay được giữ lại.')"><input type="hidden" name="_csrf" value="<?=$loCsrf?>"><input type="hidden" name="id_dot" value="<?=$loId?>"><input type="hidden" name="mode" value="auto"><button class="dropdown-item" type="submit"><i class="fas fa-robot mr-2"></i>Chỉ ô tự động</button></form>
-				<form method="post" action="index.php?com=daotao&amp;act=lichonClear" onsubmit="return confirm('Xóa TOÀN BỘ lịch đã xếp của đợt này (kể cả ô xếp tay)?')"><input type="hidden" name="_csrf" value="<?=$loCsrf?>"><input type="hidden" name="id_dot" value="<?=$loId?>"><input type="hidden" name="mode" value="all"><button class="dropdown-item text-danger" type="submit"><i class="fas fa-trash mr-2"></i>Toàn bộ lịch</button></form>
+			<div class="dropdown-menu lo-clear-menu">
+				<form method="post" action="index.php?com=daotao&amp;act=lichonClear" data-lo-clear-gv><input type="hidden" name="_csrf" value="<?=$loCsrf?>"><input type="hidden" name="id_dot" value="<?=$loId?>"><input type="hidden" name="mode" value="gv"><input type="hidden" name="hang" value="<?=$loEsc($lo_hang)?>"><button class="dropdown-item" type="submit"><i class="fas fa-user-check mr-2"></i>Lịch của GV đã tích bên phải <span class="badge badge-pill badge-danger ml-1" data-lo-check-count>0</span></button></form>
+				<form method="post" action="index.php?com=daotao&amp;act=lichonClear" onsubmit="return confirm('Xóa các ô do hệ thống tự xếp? Ô xếp tay được giữ lại.')"><input type="hidden" name="_csrf" value="<?=$loCsrf?>"><input type="hidden" name="id_dot" value="<?=$loId?>"><input type="hidden" name="mode" value="auto"><input type="hidden" name="hang" value="<?=$loEsc($lo_hang)?>"><button class="dropdown-item" type="submit"><i class="fas fa-robot mr-2"></i>Chỉ ô tự động (giữ ô xếp tay)</button></form>
+				<div class="dropdown-divider"></div>
+				<form method="post" action="index.php?com=daotao&amp;act=lichonClear" onsubmit="return confirm('Xóa TOÀN BỘ lịch đã xếp của đợt này (tất cả hạng, kể cả ô xếp tay)?')"><input type="hidden" name="_csrf" value="<?=$loCsrf?>"><input type="hidden" name="id_dot" value="<?=$loId?>"><input type="hidden" name="mode" value="all"><input type="hidden" name="hang" value="<?=$loEsc($lo_hang)?>"><button class="dropdown-item text-danger" type="submit"><i class="fas fa-trash mr-2"></i>Toàn bộ lịch của đợt</button></form>
 			</div>
 		</div>
 		<button type="button" class="btn btn-link btn-sm my-1" data-toggle="collapse" data-target="#lo-rules" aria-expanded="false"><i class="fas fa-question-circle mr-1"></i>Quy tắc xếp tự động</button>
@@ -48,6 +50,7 @@ foreach($lo_dk as $r) $loHangMiss[$r['hang']] = ($loHangMiss[$r['hang']] ?? 0) +
 				<li>Không đủ chỗ liên tục thì xếp <b>song song 2 xe cùng giờ</b>, tối đa <?=(int)$lo_dot['max_song_song']?> giờ/ngày, để tránh đẩy sang ngày sau.</li>
 				<li>Vượt quá giờ sân của ngày thì phần còn lại chuyển sang <b>ngày tập tiếp theo</b>; cuối cùng lấp vào chỗ trống còn lại.</li>
 				<li>“Tự động xếp phần còn thiếu” giữ nguyên lịch hiện có. Bỏ một ô thì số giờ đó <b>trả lại</b> cho GV.</li>
+				<li>GV chọn <b>“Tập trong 2 ngày”</b> (khi đăng ký &gt; <?=lo_gio_canh_bao()?>h) sẽ không bị xếp song song; phần dư chuyển sang ngày khác.</li>
 			</ol>
 		</div>
 	</div>
@@ -111,24 +114,31 @@ foreach($lo_dk as $r) $loHangMiss[$r['hang']] = ($loHangMiss[$r['hang']] ?? 0) +
 				</div>
 				<?php endif; ?>
 				<input type="search" class="form-control form-control-sm mb-1" placeholder="Tìm giáo viên…" data-lo-pq>
-				<div class="custom-control custom-switch small mb-2"><input type="checkbox" class="custom-control-input" id="lo-p-miss" data-lo-pmiss <?=$loMissingOnly ? 'checked' : ''?>><label class="custom-control-label" for="lo-p-miss">Chỉ GV còn thiếu giờ</label></div>
+				<div class="d-flex flex-wrap align-items-center justify-content-between small mb-2">
+					<div class="custom-control custom-switch mr-2"><input type="checkbox" class="custom-control-input" id="lo-p-miss" data-lo-pmiss <?=$loMissingOnly ? 'checked' : ''?>><label class="custom-control-label" for="lo-p-miss">Chỉ GV còn thiếu giờ</label></div>
+					<?php if($loCanEdit && $loHangDk): ?><div class="custom-control custom-checkbox text-nowrap" title="Tích để xóa lịch theo giáo viên (menu Xóa lịch)"><input type="checkbox" class="custom-control-input" id="lo-p-all" data-lo-check-all><label class="custom-control-label" for="lo-p-all">Tích tất cả</label></div><?php endif; ?>
+				</div>
 				<?php if(!$loHangDk): ?>
 				<div class="text-center text-muted small py-3">Chưa có giáo viên đăng ký hạng này.</div>
 				<?php endif; ?>
 				<div class="lo-gv-list">
-				<?php foreach($loHangDk as $r): $miss = max(0, $r['con_lai']); $pct = $r['so_gio'] ? min(100, round($r['da_xep'] * 100 / $r['so_gio'])) : 0; ?>
+				<?php foreach($loHangDk as $r): $miss = max(0, $r['con_lai']); $pct = $r['so_gio'] ? min(100, round($r['da_xep'] * 100 / $r['so_gio'])) : 0; $xn = lo_xac_nhan_list()[$r['xac_nhan'] ?? ''] ?? null; ?>
+					<div class="lo-gv-row" data-lo-gv-row="<?=(int)$r['id']?>">
+					<?php if($loCanEdit): ?><label class="lo-gv-check" title="Tích để xóa lịch của <?=$loEsc($r['gv_hoten'])?>"><input type="checkbox" value="<?=(int)$r['id']?>" data-lo-check aria-label="Chọn <?=$loEsc($r['gv_hoten'])?>"></label><?php endif; ?>
 					<button type="button" class="lo-gv <?=$loFocus === (int)$r['id'] ? 'is-focus' : ''?>" data-lo-gv="<?=(int)$r['id']?>" data-q="<?=$loEsc(mb_strtolower($r['gv_hoten'].' '.$r['ten_lich']))?>" <?=$loCanEdit ? '' : 'disabled'?>>
 						<span class="lo-swatch" style="background:<?=lo_color($r['id_gv'])?>"><?=$loEsc(mb_substr($r['ten_lich'], 0, 1))?></span>
 						<span class="lo-gv-main">
 							<span class="d-flex justify-content-between"><b><?=$loEsc($r['ten_lich'])?></b><span class="lo-gv-count" data-lo-count><?=$r['da_xep']?>/<?=(int)$r['so_gio']?>h</span></span>
 							<span class="progress progress-xxs"><span class="progress-bar <?=$miss ? 'bg-primary' : 'bg-success'?>" data-lo-bar style="width:<?=$pct?>%"></span></span>
-							<small class="d-block text-truncate text-muted"><?=$loEsc($r['gv_hoten'])?></small>
+							<small class="d-block text-truncate text-muted"><?=$loEsc($r['gv_hoten'])?><?=(int)$r['id_gv'] < 0 ? ' · ngoài HT' : ''?></small>
+							<?php if($xn): ?><small class="d-block text-truncate text-info"><i class="fas <?=$xn['icon']?> mr-1"></i><?=$loEsc($xn['short'])?></small><?php endif; ?>
 							<?php if($r['ghi_chu'] !== '' || $r['uu_tien_ngay'] || $r['uu_tien_gio_bd'] !== null): ?>
 							<small class="d-block text-truncate lo-gv-note" title="<?=$loEsc($r['ghi_chu'])?>"><i class="far fa-comment-dots mr-1"></i><?=$loEsc($r['ghi_chu'] !== '' ? $r['ghi_chu'] : 'Có yêu cầu xếp lịch')?></small>
 							<?php endif; ?>
 						</span>
 						<span class="badge <?=$miss ? 'badge-danger' : 'badge-success'?> lo-gv-badge" data-lo-badge><?=$miss ? '−'.$miss.'h' : '✓'?></span>
 					</button>
+					</div>
 				<?php endforeach; ?>
 				</div>
 			</div>
